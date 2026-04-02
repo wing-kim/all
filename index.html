@@ -420,6 +420,14 @@ function renderTimeline(rows){
         end:  m[3]+'.'+(m[4].length===1?'0'+m[4]:m[4])
       };
     }
+    // 케이스1-b: YYYY년 M월 ~ YYYY년 (종료에 월 없음 → 종료연도 12월로)
+    m=s.match(/(\d{4})[년\s]*(\d{1,2})[월]?\s*[~\-～]\s*(\d{4})[년]?\s*$/);
+    if(m){
+      return{
+        start:m[1]+'.'+(m[2].length===1?'0'+m[2]:m[2]),
+        end:  m[3]+'.12'
+      };
+    }
     // 케이스2: YYYY년 M월 ~ N월 (종료에 연도 생략 → 시작 연도 공유)
     m=s.match(/(\d{4})[년\s]*(\d{1,2})[월]?\s*[~\-～]\s*(\d{1,2})[월]?/);
     if(m){
@@ -445,11 +453,12 @@ function renderTimeline(rows){
   let colorIdx=0;
 
   // 헤더/제목 행 제외: 항목명 있고 기간 파싱 가능한 행만
+  // CSV 구조: [0]빈칸 [1]항목명 [2]기간 [3]소요 [4]기타
   const phases=[],milestones=[];
   rows.forEach(r=>{
-    const name=(r[0]||'').trim();
+    const name=(r[1]||'').trim();
     if(!name||name==='항목'||name.includes('프로젝트 타임라인'))return;
-    const range=parseRange(r[1]);
+    const range=parseRange(r[2]);
     if(!range)return;
     if(range.milestone){
       milestones.push({name,start:range.start,end:range.end,color:''});
@@ -700,85 +709,67 @@ function renderPersonal(rows){
 
 /* ══════════════════════════════════════════
    CORP
-   시트 컬럼:
-   [0]연월 [1]진행단계 [2]건축설계 [3]토목설계 [4]감리비 [5]해체공사 [6]신축공사 [7]토지임대료 [8]월총비용 [9]누적비용
-   + 요약 섹션 헤더행: [0]섹션명(비용 없음) / 항목행: [0]항목 [1]납부일정 [2]금액
+   실제 시트 구조:
+   [0]빈칸 [1]항목명 [2]빈칸 [3]금액 [4]계약기간 [5]납부방법 [6]납부방법 상세
+   섹션 헤더: [1]에 "1. 인허가 비용" 같은 텍스트, [3]금액 없음
+   항목행: [1]항목명 (들여쓰기 가능), [3]금액
 ══════════════════════════════════════════ */
 function renderCorp(rows){
   if(!rows||rows.length<2){console.log('[CORP] no data');showNoGid('content-corp','법인 비용');return;}
-  console.log('[CORP] using sheet data');
+  console.log('[CORP] raw rows:', rows.slice(0,5));
 
-  // 월별 데이터: [0]이 YYYY.MM 패턴
-  const mly=rows.filter(r=>String(r[0]||'').match(/^\d{4}[.\-]\d{2}/));
-  // 요약 항목행: 연월 패턴 아님, 금액 컬럼 있음
-  const sumRows=rows.filter(r=>r[0]&&!String(r[0]).match(/^\d{4}[.\-]\d{2}/)&&!String(r[0]).includes('연월'));
+  let sectHtml='', curSect='', curRows=[], curTot=0;
+  let grandTotal=0;
 
-  if(!mly.length&&!sumRows.length){showErr('content-corp','법인 비용');return;}
-
-  const grand=mly.reduce((s,r)=>s+pn(r[8]),0);
-
-  // 섹션 요약 빌드
-  let sectHtml='',curSect='',curRows='',curTot=0;
   function flushSect(){
-    if(!curSect||!curRows)return;
-    sectHtml+=`<div style="margin-bottom:14px">
-      <div class="csh"><span class="csl">📌 ${curSect}</span><span class="cst">${curTot.toLocaleString()}만원</span></div>
-      <div class="ctw"><table class="tbl"><thead><tr><th>항목</th><th>납부 일정</th><th class="num">총액</th></tr></thead><tbody>${curRows}</tbody></table></div></div>`;
-    curSect='';curRows='';curTot=0;
+    if(!curSect)return;
+    const rowsHtml=curRows.map(r=>{
+      const amt=pn(r[3]);
+      return`<tr>
+        <td style="padding-left:${r[1]&&String(r[1]).startsWith(' ')?'22px':'11px'}">${String(r[1]||'').trim()}</td>
+        <td style="color:var(--text-muted);font-size:11px">${r[4]||''}</td>
+        <td style="color:var(--text-muted);font-size:11px">${r[5]||''}</td>
+        <td class="num" style="color:var(--red);font-weight:600">${amt?Math.round(amt/10000).toLocaleString()+'만':'—'}</td>
+      </tr>`;
+    }).join('');
+    sectHtml+=`<div style="margin-bottom:16px">
+      <div class="csh"><span class="csl">📌 ${curSect}</span><span class="cst" style="color:var(--red)">${Math.round(curTot/10000).toLocaleString()}만원</span></div>
+      <div class="ctw"><table class="tbl">
+        <thead><tr><th>항목</th><th>계약기간</th><th>납부방법</th><th class="num">금액</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table></div></div>`;
+    curRows=[];curTot=0;curSect='';
   }
-  sumRows.forEach(r=>{
-    const c0=String(r[0]||'').trim();
-    // 섹션 헤더: 3번째 컬럼 없음
-    if(!r[2]&&!pn(r[2])&&c0){flushSect();curSect=c0;}
-    else if(curSect&&c0){const a=pn(r[2]);curTot+=a;curRows+=`<tr><td>${c0}</td><td style="color:var(--text-muted);font-size:10px;font-family:var(--font-mono)">${r[1]||''}</td><td class="num" style="color:var(--red)">${a.toLocaleString()}만원</td></tr>`;}
+
+  rows.forEach(r=>{
+    const name=String(r[1]||'').trim();
+    if(!name)return;
+    // 헤더/컬럼명 행 스킵
+    if(name==='항목'||name.includes('항목,금액')||name==='1. 인허가 비용'.slice(0,-1))return;
+    const amt=pn(r[3]);
+    // 섹션 헤더: 번호로 시작하거나 금액이 없고 짧은 텍스트
+    const isSectHeader=/^\d+\./.test(name)||(!amt&&!r[4]&&name.length<20&&!name.startsWith('-')&&!name.startsWith('–'));
+    if(isSectHeader){
+      flushSect();
+      curSect=name;
+    } else if(curSect){
+      curTot+=amt;
+      grandTotal+=amt;
+      curRows.push(r);
+    }
   });
   flushSect();
 
-  // 월별 테이블
-  let py2=null;
-  const mR=mly.map(r=>{
-    const ym=String(r[0]||''),yr=ym.split(/[.\-]/)[0];
-    const sep=yr!==py2?`<tr class="yrs"><td colspan="10">── ${yr}년</td></tr>`:'';py2=yr;
-    const fv=n=>{const v=pn(n);return v===0?'<span style="color:var(--text-dim)">-</span>':`<span style="color:${v<0?'var(--red)':'var(--green)'}">${v.toLocaleString()}</span>`;};
-    const tot=pn(r[8]),cum=pn(r[9]);
-    return`${sep}<tr>
-      <td class="tl">${ym}</td><td class="ts2">${r[1]||'—'}</td>
-      <td>${fv(r[2])}</td><td>${fv(r[3])}</td><td>${fv(r[4])}</td>
-      <td>${fv(r[5])}</td><td>${fv(r[6])}</td><td>${fv(r[7])}</td>
-      <td style="color:${tot<0?'var(--red)':'var(--text)'};font-weight:600">${tot?tot.toLocaleString():'—'}</td>
-      <td style="color:var(--red);font-weight:600">${cum?cum.toLocaleString():'—'}</td></tr>`;
-  }).join('');
+  if(!sectHtml){showErr('content-corp','법인 비용');return;}
 
   document.getElementById('content-corp').innerHTML=`
+    <div class="st"><span class="dot"></span>법인 비용 항목<span class="tag">✓ 시트 연동</span></div>
+    ${grandTotal?`<div class="cgb" style="margin-bottom:16px">
+      <span class="gl">법인 총비용 합계</span>
+      <div><span class="gv">${Math.round(grandTotal/10000).toLocaleString()}만원</span>
+      <span class="gn">(≈${(grandTotal/100000000).toFixed(1)}억)</span></div>
+    </div>`:''}
     ${sectHtml}
-    ${grand?`<div class="cgb"><span class="gl">법인 총비용 합계</span><div><span class="gv">${(grand/10000).toLocaleString()}만원</span><span class="gn">(≈${(grand/1000000).toFixed(1)}억)</span></div></div>`:''}
-    ${mly.length?`
-    <div class="st"><span class="dot"></span>법인 비용 월별 상세 (2026.05 ~ 2030.12)<span class="tag">✓ 시트 연동</span></div>
-    <div class="mo">
-      <table class="mtbl" style="min-width:940px">
-        <thead>
-          <tr>
-            <th class="tl" rowspan="2" style="vertical-align:middle;border-right:1px solid var(--border)">연월</th>
-            <th class="tl" rowspan="2" style="vertical-align:middle;border-right:1px solid var(--border)">진행단계</th>
-            <th colspan="2" style="text-align:center;background:rgba(167,139,250,.08);color:var(--accent5);border-bottom:1px solid rgba(167,139,250,.2)">설계비</th>
-            <th style="text-align:center;background:rgba(251,146,60,.08);color:var(--accent6);border-bottom:1px solid rgba(251,146,60,.18)">감리비</th>
-            <th colspan="2" style="text-align:center;background:rgba(239,68,68,.08);color:var(--red);border-bottom:1px solid rgba(239,68,68,.2)">공사비</th>
-            <th style="text-align:center;background:rgba(245,166,35,.08);color:var(--accent3);border-bottom:1px solid rgba(245,166,35,.2)">토지임대</th>
-            <th rowspan="2" style="vertical-align:middle;text-align:right;background:var(--surface2)">월 총비용</th>
-            <th rowspan="2" style="vertical-align:middle;text-align:right;background:var(--surface2)">누적 비용</th>
-          </tr>
-          <tr>
-            <th style="background:rgba(167,139,250,.05);color:var(--accent5)">건축설계</th>
-            <th style="background:rgba(167,139,250,.05);color:var(--accent5)">토목설계</th>
-            <th style="background:rgba(251,146,60,.05);color:var(--accent6)">감리비</th>
-            <th style="background:rgba(239,68,68,.05);color:var(--red)">해체공사</th>
-            <th style="background:rgba(239,68,68,.05);color:var(--red)">신축공사</th>
-            <th style="background:rgba(245,166,35,.05);color:var(--accent3)">토지임대료</th>
-          </tr>
-        </thead>
-        <tbody class="sbody">${mR}</tbody>
-      </table>
-    </div>`:`<div class="status-box" style="padding:22px"><p style="color:var(--text-dim)">월별 데이터가 없습니다.</p></div>`}
   `;
 }
 
