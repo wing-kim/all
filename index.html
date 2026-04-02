@@ -401,56 +401,70 @@ async function testGid(key){
 
 /* ══════════════════════════════════════════
    TIMELINE
-   시트 컬럼: [0]순번 [1]단계명 [2]시작(YYYY.MM) [3]종료(YYYY.MM) [4]색상(gb-xxx) [5]마일스톤(Y)
+   시트 실제 컬럼: [0]항목명 [1]기간("2026년 5월 ~ 9월" 또는 "2026년 5월 ~ 2030년 12월") [2]소요 [3]기타
 ══════════════════════════════════════════ */
 function renderTimeline(rows){
-  // 날짜 정규화: YYYY.MM / YYYY-MM / YYYY/MM / YYYY년 MM월 / YYYY-MM-DD 등 모두 수용
-  function normYM(s){
-    if(!s)return'';
+  console.log('[TIMELINE] raw rows:', rows);
+
+  // "2026년 5월 ~ 9월" or "2028년 12월 ~ 2029년 3월" 파싱
+  // 반환: {start:'2026.05', end:'2026.09'} or null
+  function parseRange(s){
+    if(!s)return null;
     s=String(s).trim();
-    // YYYY-MM-DD 또는 YYYY/MM/DD → YYYY.MM
-    let m=s.match(/(\d{4})[-\/.](\d{1,2})/);
-    if(m)return m[1]+'.'+(m[2].length===1?'0'+m[2]:m[2]);
-    // YYYY년 M월
-    m=s.match(/(\d{4})[년\s]+(\d{1,2})[월]?/);
-    if(m)return m[1]+'.'+(m[2].length===1?'0'+m[2]:m[2]);
-    return s;
+
+    // 케이스1: YYYY년 M월 ~ YYYY년 N월 (둘 다 연도 있음)
+    let m=s.match(/(\d{4})[년\s]*(\d{1,2})[월]?\s*[~\-～]\s*(\d{4})[년\s]*(\d{1,2})[월]?/);
+    if(m){
+      return{
+        start:m[1]+'.'+(m[2].length===1?'0'+m[2]:m[2]),
+        end:  m[3]+'.'+(m[4].length===1?'0'+m[4]:m[4])
+      };
+    }
+    // 케이스2: YYYY년 M월 ~ N월 (종료에 연도 생략 → 시작 연도 공유)
+    m=s.match(/(\d{4})[년\s]*(\d{1,2})[월]?\s*[~\-～]\s*(\d{1,2})[월]?/);
+    if(m){
+      // 종료월이 시작월보다 작으면 다음 해
+      const sy=parseInt(m[1]),sm=parseInt(m[2]),em=parseInt(m[3]);
+      const ey=em<sm?sy+1:sy;
+      return{
+        start:sy+'.'+(m[2].length===1?'0'+m[2]:m[2]),
+        end:  ey+'.'+(em<10?'0'+em:String(em))
+      };
+    }
+    // 케이스3: 단일 월 (마일스톤) - "2028년 12월"
+    m=s.match(/(\d{4})[년\s]*(\d{1,2})[월]?/);
+    if(m){
+      const ym=m[1]+'.'+(m[2].length===1?'0'+m[2]:m[2]);
+      return{start:ym,end:ym,milestone:true};
+    }
+    return null;
   }
-  function isValidYM(s){return/^\d{4}\.\d{2}$/.test(normYM(s));}
 
-  // 디버그: 원본 rows 콘솔 출력
-  console.log('[TIMELINE] raw rows from sheet:', rows.slice(0,5));
+  // 색상 자동 배정 (순서대로 순환)
+  const COLORS=['gb-blue','gb-blue','gb-purple','gb-orange','gb-orange','gb-orange','gb-gray','gb-teal','gb-teal','gb-red','gb-green'];
+  let colorIdx=0;
 
-  // 데이터 필터: 단계명 + 시작 + 종료가 파싱 가능한 행만 (헤더 행 자동 제외)
-  const valid=rows.filter(r=>r[1]&&r[1].trim()&&isValidYM(r[2])&&isValidYM(r[3]));
+  // 헤더/제목 행 제외: 항목명 있고 기간 파싱 가능한 행만
   const phases=[],milestones=[];
+  rows.forEach(r=>{
+    const name=(r[0]||'').trim();
+    if(!name||name==='항목'||name.includes('프로젝트 타임라인'))return;
+    const range=parseRange(r[1]);
+    if(!range)return;
+    if(range.milestone){
+      milestones.push({name,start:range.start,end:range.end,color:''});
+    } else {
+      phases.push({name,start:range.start,end:range.end,color:COLORS[colorIdx++]||'gb-blue'});
+    }
+  });
 
-  if(valid.length>0){
-    console.log('[TIMELINE] using sheet data, valid rows:', valid.length);
-    document.getElementById('tl-src').textContent='';
-    valid.forEach(r=>{
-      const obj={name:r[1].trim(),start:normYM(r[2]),end:normYM(r[3]),color:r[4]?r[4].trim():'gb-blue'};
-      if(String(r[5]||'').toUpperCase()==='Y') milestones.push(obj); else phases.push(obj);
-    });
-  } else {
-    console.log('[TIMELINE] using fallback data — connect gid for live data');
-    document.getElementById('tl-src').textContent='※ gid 연결 시 시트 데이터 자동 반영';
-    // Fallback only shown when no sheet data
-    phases.push(
-      {name:'계획설계',start:'2026.05',end:'2026.08',color:'gb-blue'},
-      {name:'건축심의/건축허가',start:'2026.09',end:'2027.02',color:'gb-blue'},
-      {name:'실시설계',start:'2027.03',end:'2027.08',color:'gb-purple'},
-      {name:'지하안전평가',start:'2027.03',end:'2027.08',color:'gb-orange'},
-      {name:'굴토심의',start:'2027.07',end:'2027.10',color:'gb-orange'},
-      {name:'해체계획서/해체심의/해체허가',start:'2027.09',end:'2028.02',color:'gb-orange'},
-      {name:'여유일정',start:'2028.03',end:'2028.07',color:'gb-gray'},
-      {name:'시공사 PQ입찰 선정',start:'2028.08',end:'2028.10',color:'gb-teal'},
-      {name:'시공사 입찰·계약·착공준비',start:'2028.10',end:'2029.03',color:'gb-teal'},
-      {name:'해체공사',start:'2029.04',end:'2029.06',color:'gb-red'},
-      {name:'신축 공사',start:'2029.07',end:'2030.12',color:'gb-green'}
-    );
-    milestones.push({name:'건물 명도 완료',start:'2028.07',end:'2028.07',color:''});
+  console.log('[TIMELINE] parsed phases:', phases, 'milestones:', milestones);
+
+  if(phases.length===0&&milestones.length===0){
+    document.getElementById('content-timeline').innerHTML=`<div class="status-box"><div style="font-size:28px">⚠️</div><p>타임라인 데이터를 파싱하지 못했습니다.</p><small>시트의 기간 형식을 확인하세요.<br>예: 2026년 5월 ~ 9월</small></div>`;
+    return;
   }
+  document.getElementById('tl-src').textContent='';
 
   function toAbs(ym){const parts=ym.split('.');return parseInt(parts[0]||0)*12+parseInt(parts[1]||1);}
   const allAbs=[...phases,...milestones].flatMap(p=>[toAbs(p.start),toAbs(p.end)]);
@@ -458,13 +472,19 @@ function renderTimeline(rows){
   function pct(a){return(((a-rS)/total)*100).toFixed(4)+'%';}
   const sY=Math.floor(rS/12),eY=Math.floor((rE-1)/12);
 
+  // 착공/준공 동적 계산 (마지막 phase = 공사, 그 전 = 착공)
+  const lastPhase=phases[phases.length-1];
+  const constrPhase=phases.find(p=>p.name.includes('공사')||p.name.includes('신축'))||lastPhase;
+  const milestoneMindo=milestones.find(m=>m.name.includes('명도'))||milestones[0];
+
   // cards
   document.getElementById('cards-timeline').innerHTML=`
     <div class="card cb"><div class="card-label">총 단계</div><div class="card-value">${phases.length}</div><div class="card-sub">개 프로세스</div></div>
-    <div class="card"><div class="card-label">프로젝트 기간</div><div class="card-value">${total}<span style="font-size:12px;font-weight:400">개월</span></div><div class="card-sub">${phases[0]?.start||''} ~ ${phases[phases.length-1]?.end||''}</div></div>
-    <div class="card cg"><div class="card-label">착공 예정</div><div class="card-value sm">2029.07</div><div class="card-sub">신축 공사 시작</div></div>
-    <div class="card cy"><div class="card-label">준공 예정</div><div class="card-value sm">2030.12</div><div class="card-sub">전체 공사 완료</div></div>
-    <div class="card cr"><div class="card-label">건물 명도 완료</div><div class="card-value sm" style="color:var(--red)">2028.07</div><div class="card-sub">임차인 전원 퇴거</div></div>`;
+    <div class="card"><div class="card-label">프로젝트 기간</div><div class="card-value">${total}<span style="font-size:12px;font-weight:400">개월</span></div><div class="card-sub">${phases[0]?.start||''} ~ ${lastPhase?.end||''}</div></div>
+    <div class="card cg"><div class="card-label">착공 예정</div><div class="card-value sm">${constrPhase?.start||'—'}</div><div class="card-sub">${constrPhase?.name||''}</div></div>
+    <div class="card cy"><div class="card-label">준공 예정</div><div class="card-value sm">${lastPhase?.end||'—'}</div><div class="card-sub">전체 공사 완료</div></div>
+    ${milestoneMindo?`<div class="card cr"><div class="card-label">${milestoneMindo.name}</div><div class="card-value sm" style="color:var(--red)">${milestoneMindo.start}</div><div class="card-sub">임차인 전원 퇴거</div></div>`:''}`;
+
 
   // header
   let yH='',mH='';
