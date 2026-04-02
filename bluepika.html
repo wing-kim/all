@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>부동산 포트폴리오 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1f2e;
+    --border: #1f2535;
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --accent3: #2ecb8a;
+    --accent4: #f7a24f;
+    --danger: #f05a5a;
+    --text: #e8eaf0;
+    --text2: #8892aa;
+    --text3: #545e75;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+    --display: 'Playfair Display', serif;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,142,247,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,142,247,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 0 24px 60px; }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text h1 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .logo-text p {
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .last-updated {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent3);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { background: var(--border); color: var(--text); }
+  .refresh-btn.loading .icon { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: var(--surface);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .tab-btn:hover { background: var(--surface2); color: var(--text); }
+  .tab-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+  .tab-btn .tab-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  /* SECTION */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* LOADING / ERROR */
+  .loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 280px;
+    gap: 16px;
+    color: var(--text3);
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .loader p { font-size: 13px; }
+
+  .error-box {
+    background: rgba(240,90,90,0.08);
+    border: 1px solid rgba(240,90,90,0.2);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-family: var(--sans);
+    font-size: 12px;
+    width: 200px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-input::placeholder { color: var(--text3); }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .data-table thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+  }
+  .data-table th:hover { color: var(--text2); }
+  .data-table th.sorted { color: var(--accent); }
+  .data-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(31,37,53,0.6);
+    color: var(--text2);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:hover td { background: var(--surface2); color: var(--text); }
+  .data-table td:first-child { color: var(--text); font-weight: 500; }
+
+  /* Number coloring */
+  .num-pos { color: var(--accent3) !important; }
+  .num-neg { color: var(--danger) !important; }
+  .num-neutral { color: var(--accent) !important; font-family: var(--mono); }
+
+  /* Timeline specific */
+  .timeline-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .timeline-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    align-items: start;
+    transition: border-color 0.2s;
+  }
+  .timeline-card:hover { border-color: var(--accent2); }
+  .timeline-meta { }
+  .timeline-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .timeline-date { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .timeline-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+  }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+  }
+  .bar-label { color: var(--text3); width: 80px; flex-shrink: 0; }
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-val { color: var(--text2); font-family: var(--mono); font-size: 11px; width: 60px; text-align: right; }
+
+  /* Summary cards */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .summary-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .summary-card.c1::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .summary-card.c2::before { background: linear-gradient(90deg, var(--accent3), var(--accent)); }
+  .summary-card.c3::before { background: linear-gradient(90deg, var(--accent4), var(--danger)); }
+  .summary-card.c4::before { background: linear-gradient(90deg, var(--accent2), var(--accent3)); }
+  .card-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .card-value { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--text); }
+  .card-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .page-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: default; }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* Note banner */
+  .note-banner {
+    background: rgba(79,142,247,0.06);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  @media (max-width: 700px) {
+    .timeline-card { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🏢</div>
+      <div class="logo-text">
+        <h1>Portfolio Dashboard</h1>
+        <p>Real Estate Management</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="last-updated">
+        <div class="live-dot"></div>
+        <span id="lastUpdated">—</span>
+      </div>
+      <button class="refresh-btn" onclick="refreshAll()">
+        <span class="icon">↻</span> 새로고침
+      </button>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('timeline', this)">
+      <div class="tab-dot" style="background:var(--accent)"></div> 프로젝트 타임라인
+    </button>
+    <button class="tab-btn" onclick="switchTab('irr', this)">
+      <div class="tab-dot" style="background:var(--accent3)"></div> 신축 IRR
+    </button>
+    <button class="tab-btn" onclick="switchTab('lease', this)">
+      <div class="tab-dot" style="background:var(--accent4)"></div> 임대차계약현황
+    </button>
+    <button class="tab-btn" onclick="switchTab('personal', this)">
+      <div class="tab-dot" style="background:var(--accent2)"></div> 개인비용
+    </button>
+    <button class="tab-btn" onclick="switchTab('corp', this)">
+      <div class="tab-dot" style="background:var(--danger)"></div> 법인비용
+    </button>
+  </div>
+
+  <!-- SECTIONS -->
+  <div id="sec-timeline" class="section active"></div>
+  <div id="sec-irr" class="section"></div>
+  <div id="sec-lease" class="section"></div>
+  <div id="sec-personal" class="section"></div>
+  <div id="sec-corp" class="section"></div>
+
+</div>
+
+<script>
+const SHEET_ID = '17lL6O55R56PGODOu-iM5EBH4a6ZbWEJfkypcdWzlGHA';
+const SHEETS = {
+  timeline:  { gid: '835667947',  label: '프로젝트 타임라인', color: 'var(--accent)' },
+  irr:       { gid: '1343029023', label: '신축 IRR',          color: 'var(--accent3)' },
+  lease:     { gid: '0',          label: '임대차계약현황',    color: 'var(--accent4)' },
+  personal:  { gid: '662143448',  label: '개인비용',          color: 'var(--accent2)' },
+  corp:      { gid: '551803703',  label: '법인비용',          color: 'var(--danger)' }
+};
+
+const state = {};
+const PAGE_SIZE = 50;
+
+// ── fetch CSV from Google Sheets ──────────────────────────────────────────────
+function csvUrl(gid) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+}
+
+async function fetchSheet(key) {
+  const { gid } = SHEETS[key];
+  const url = csvUrl(gid);
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const text = await r.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let inQ = false, row = [], cell = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { inQ = !inQ; continue; }
+    if (!inQ && c === ',') { row.push(cell.trim()); cell = ''; continue; }
+    if (!inQ && (c === '\n' || (c === '\r' && text[i+1] === '\n'))) {
+      if (c === '\r') i++;
+      row.push(cell.trim()); cell = '';
+      if (row.some(x => x)) rows.push(row);
+      row = [];
+      continue;
+    }
+    cell += c;
+  }
+  if (cell || row.length) { row.push(cell.trim()); if (row.some(x => x)) rows.push(row); }
+  return rows;
+}
+
+// ── render helpers ────────────────────────────────────────────────────────────
+function fmtCell(v) {
+  if (!v) return '<span style="color:var(--text3)">—</span>';
+  // numbers
+  const n = Number(v.replace(/[,%\s]/g, ''));
+  if (!isNaN(n) && v.replace(/[,%\s\-\.]/g,'').length > 0) {
+    const isPercent = v.includes('%');
+    const isNeg = n < 0;
+    const cls = isNeg ? 'num-neg' : (n > 0 && (isPercent || v.includes(',')) ? 'num-pos' : 'num-neutral');
+    return `<span class="${cls}">${v}</span>`;
+  }
+  return v;
+}
+
+function summaryCards(rows, color) {
+  if (!rows || rows.length < 2) return '';
+  const header = rows[0];
+  const data = rows.slice(1).filter(r => r.some(c => c));
+  const nums = [];
+  header.forEach((h, i) => {
+    const col = data.map(r => parseFloat((r[i]||'').replace(/[,%\s]/g,''))).filter(x => !isNaN(x));
+    if (col.length && h) {
+      const sum = col.reduce((a,b)=>a+b,0);
+      const avg = sum/col.length;
+      nums.push({ h, sum, avg, count: col.length });
+    }
+  });
+  if (!nums.length) return '';
+  const top = nums.slice(0,4);
+  const cls = ['c1','c2','c3','c4'];
+  return `<div class="summary-grid">${top.map((n,i)=>`
+    <div class="summary-card ${cls[i]}">
+      <div class="card-label">${n.h}</div>
+      <div class="card-value">${fmtNumber(n.sum)}</div>
+      <div class="card-sub">평균 ${fmtNumber(n.avg)} · ${n.count}건</div>
+    </div>`).join('')}</div>`;
+}
+
+function fmtNumber(n) {
+  if (Math.abs(n) >= 1e8) return (n/1e8).toFixed(1)+'억';
+  if (Math.abs(n) >= 1e4) return (n/1e4).toFixed(0)+'만';
+  return n.toFixed(1);
+}
+
+function renderTable(rows, containerId, searchable=true, page=1) {
+  const container = document.getElementById(containerId);
+  if (!rows || rows.length < 1) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📭</div>데이터가 없습니다</div>`;
+    return;
+  }
+  const header = rows[0];
+  let data = rows.slice(1).filter(r => r.some(c => c));
+
+  const q = (container.__search||'').toLowerCase();
+  if (q) data = data.filter(r => r.some(c => (c||'').toLowerCase().includes(q)));
+
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const p = Math.min(Math.max(1, page), totalPages);
+  const slice = data.slice((p-1)*PAGE_SIZE, p*PAGE_SIZE);
+
+  const thHTML = header.map((h,i) => `<th onclick="sortTable('${containerId}',${i})" ${container.__sortCol===i ? 'class="sorted"':''}>
+    ${h||('col'+(i+1))} ${container.__sortCol===i ? (container.__sortAsc?'↑':'↓') : ''}
+  </th>`).join('');
+
+  const tbHTML = slice.map(r => `<tr>${header.map((_,i) => `<td title="${r[i]||''}">${fmtCell(r[i]||'')}</td>`).join('')}</tr>`).join('');
+
+  const pageHTML = totalPages > 1 ? `
+    <div class="pagination">
+      <span>${total}건 · ${p}/${totalPages}페이지</span>
+      <button class="page-btn" onclick="changePage('${containerId}',${p-1})" ${p<=1?'disabled':''}>‹</button>
+      ${Array.from({length:Math.min(5,totalPages)},(_,i)=>{
+        let pg = Math.max(1,Math.min(p-2+i,totalPages-4+i));
+        pg = Math.max(1,Math.min(pg,totalPages));
+        return `<button class="page-btn ${p===pg?'active':''}" onclick="changePage('${containerId}',${pg})">${pg}</button>`;
+      }).join('')}
+      <button class="page-btn" onclick="changePage('${containerId}',${p+1})" ${p>=totalPages?'disabled':''}>›</button>
+    </div>` : `<div class="pagination"><span>${total}건</span></div>`;
+
+  const searchHTML = searchable ? `<input class="search-input" placeholder="🔍 검색..." value="${container.__search||''}" oninput="onSearch('${containerId}',this.value)">` : '';
+
+  container.innerHTML = `
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">
+          데이터
+          <span class="badge">${total}행</span>
+        </div>
+        ${searchHTML}
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr>${thHTML}</tr></thead>
+          <tbody>${tbHTML}</tbody>
+        </table>
+      </div>
+      ${pageHTML}
+    </div>`;
+}
+
+function sortTable(id, col) {
+  const c = document.getElementById(id);
+  if (c.__sortCol === col) c.__sortAsc = !c.__sortAsc;
+  else { c.__sortCol = col; c.__sortAsc = true; }
+  const rows = state[c.__key];
+  if (!rows) return;
+  const data = rows.slice(1);
+  data.sort((a,b) => {
+    const av = a[col]||'', bv = b[col]||'';
+    const an = parseFloat(av.replace(/[,%\s]/g,'')), bn = parseFloat(bv.replace(/[,%\s]/g,''));
+    if (!isNaN(an) && !isNaN(bn)) return c.__sortAsc ? an-bn : bn-an;
+    return c.__sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  renderTable([rows[0],...data], id, true, 1);
+  c.__key = c.__key; // restore
+}
+
+function onSearch(id, val) {
+  const c = document.getElementById(id); c.__search = val;
+  renderTable(state[c.__key], id, true, 1);
+}
+
+function changePage(id, p) {
+  const c = document.getElementById(id);
+  renderTable(state[c.__key], id, true, p);
+}
+
+// ── section renderers ─────────────────────────────────────────────────────────
+function renderSection(key, rows) {
+  state[key] = rows;
+  const secId = `sec-${key}`;
+  const sec = document.getElementById(secId);
+  sec.innerHTML = '';
+
+  const note = `<div class="note-banner">📡 Google Sheets와 실시간 연동 · ${SHEETS[key].label}</div>`;
+
+  if (key === 'timeline') {
+    const cards = summaryCards(rows, SHEETS[key].color);
+    sec.innerHTML = note + cards + renderTimelineHTML(rows);
+  } else {
+    const tableContainerId = `tbl-${key}`;
+    const cards = summaryCards(rows, SHEETS[key].color);
+    sec.innerHTML = note + cards + `<div id="${tableContainerId}"></div>`;
+    const c = document.getElementById(tableContainerId);
+    c.__key = key; c.__search = ''; c.__sortCol = -1;
+    renderTable(rows, tableContainerId, true, 1);
+  }
+}
+
+function renderTimelineHTML(rows) {
+  if (!rows || rows.length < 2) return `<div class="empty"><div class="empty-icon">📭</div>데이터 없음</div>`;
+  const header = rows[0];
+  const data = rows.slice(1).filter(r => r.some(c=>c));
+
+  // try to find progress-like numeric cols
+  const numCols = header.map((h,i)=>({h,i})).filter(({h})=>/진행|완료|%|rate|progress/i.test(h));
+
+  if (numCols.length === 0) {
+    // fallback: generic table
+    const tblId = 'tbl-timeline-fallback';
+    const html = `<div id="${tblId}"></div>`;
+    setTimeout(()=>{
+      const c = document.getElementById(tblId);
+      if(c){ c.__key='timeline'; c.__search=''; c.__sortCol=-1; renderTable(rows,tblId,true,1); }
+    },0);
+    return html;
+  }
+
+  const nameCol = 0;
+  const dateCol = header.findIndex(h=>/날짜|일정|date|기간/i.test(h));
+  const colors = ['var(--accent)','var(--accent3)','var(--accent4)','var(--accent2)','var(--danger)'];
+
+  return `<div class="timeline-grid">${data.map((row,ri)=>{
+    const bars = numCols.map((nc,ni)=>{
+      const val = parseFloat((row[nc.i]||'').replace(/[%,]/g,''));
+      const pct = isNaN(val)?0:Math.min(100,Math.max(0,val));
+      return `<div class="bar-row">
+        <div class="bar-label">${nc.h}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[ni%colors.length]}"></div></div>
+        <div class="bar-val">${row[nc.i]||'—'}</div>
+      </div>`;
+    }).join('');
+
+    const otherCols = header.map((h,i)=>{
+      if(i===nameCol||i===dateCol||numCols.find(n=>n.i===i)) return null;
+      const v = row[i];
+      if(!v||!h) return null;
+      return `<div style="font-size:11px;color:var(--text3);margin-top:4px"><span style="color:var(--text3)">${h}: </span><span style="color:var(--text2)">${v}</span></div>`;
+    }).filter(Boolean).join('');
+
+    return `<div class="timeline-card">
+      <div class="timeline-meta">
+        <div class="timeline-name">${row[nameCol]||'항목 '+(ri+1)}</div>
+        ${dateCol>=0&&row[dateCol]?`<div class="timeline-date">📅 ${row[dateCol]}</div>`:''}
+        ${otherCols}
+      </div>
+      <div class="timeline-bar-wrap">${bars}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── loading ───────────────────────────────────────────────────────────────────
+function showLoader(secId) {
+  document.getElementById(secId).innerHTML = `<div class="loader"><div class="spinner"></div><p>데이터 불러오는 중...</p></div>`;
+}
+
+function showError(secId, msg) {
+  document.getElementById(secId).innerHTML = `
+    <div class="error-box">⚠️ 데이터를 불러올 수 없습니다: ${msg}<br><br>
+    <small>구글 시트 공유 설정을 <strong>"링크 있는 모든 사용자 · 뷰어"</strong>로 변경해주세요.</small></div>`;
+}
+
+async function loadSection(key) {
+  const secId = `sec-${key}`;
+  showLoader(secId);
+  try {
+    const rows = await fetchSheet(key);
+    renderSection(key, rows);
+  } catch(e) {
+    showError(secId, e.message);
+  }
+}
+
+// ── tab switching ─────────────────────────────────────────────────────────────
+const loaded = new Set();
+function switchTab(key, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(`sec-${key}`).classList.add('active');
+  if (!loaded.has(key)) { loaded.add(key); loadSection(key); }
+}
+
+async function refreshAll() {
+  const btn = document.querySelector('.refresh-btn');
+  btn.classList.add('loading');
+  loaded.clear();
+  const active = document.querySelector('.tab-btn.active');
+  const activeKey = active ? active.textContent.trim() : null;
+
+  // find current active key
+  let currentKey = 'timeline';
+  for(const [k] of Object.entries(SHEETS)) {
+    if(document.getElementById(`sec-${k}`).classList.contains('active')) { currentKey = k; break; }
+  }
+  loaded.add(currentKey);
+  await loadSection(currentKey);
+  btn.classList.remove('loading');
+  updateTimestamp();
+}
+
+function updateTimestamp() {
+  document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString('ko-KR');
+}
+
+// ── init ──────────────────────────────────────────────────────────────────────
+loaded.add('timeline');
+loadSection('timeline');
+updateTimestamp();
+setInterval(() => {
+  for(const [k] of Object.entries(SHEETS)) {
+    if(document.getElementById(`sec-${k}`).classList.contains('active')) {
+      loadSection(k); updateTimestamp(); break;
+    }
+  }
+}, 5 * 60 * 1000); // auto-refresh every 5 min
+</script>
+</body>
+</html>
