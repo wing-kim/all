@@ -119,11 +119,10 @@ td:first-child{color:var(--t1);font-weight:500}
 .empty-i{font-size:36px;margin-bottom:12px}
 
 /* ═══════════════════════════════════════════════════
-   TIMELINE — 간트 차트 스타일 (단색 바 + 넓은 행간)
+   TIMELINE — 간트 차트 스타일 (단색 바 + 여유 행간)
 ═══════════════════════════════════════════════════ */
 .tl-wrap{padding:0 24px 24px}
 
-/* 눈금 헤더 행 */
 .tl-ruler-row{display:flex;align-items:stretch;padding-bottom:10px;
   border-bottom:1px solid var(--border2);margin-bottom:0}
 .tl-ruler-lbl{width:220px;flex-shrink:0;display:flex;align-items:flex-end;
@@ -140,7 +139,6 @@ td:first-child{color:var(--t1);font-weight:500}
   justify-content:flex-end;font-size:9px;color:var(--t4);text-transform:uppercase;
   letter-spacing:1px;padding-left:10px;padding-bottom:4px}
 
-/* 현재시점 수직선 (ruler 위) */
 .tl-now-line{position:absolute;top:0;bottom:-1px;width:2px;
   background:var(--blue);box-shadow:0 0 6px rgba(59,127,255,.5);z-index:10;border-radius:1px}
 .tl-now-tag{position:absolute;top:3px;left:50%;transform:translateX(-50%);
@@ -150,22 +148,20 @@ td:first-child{color:var(--t1);font-weight:500}
 
 /* 각 행 — 여유 있는 줄간격 */
 .g-row{display:flex;align-items:center;
-  padding:14px 0;                         /* ← 행간 확보 */
+  padding:14px 0;
   border-bottom:1px solid rgba(34,38,54,.5);
   transition:background .12s}
 .g-row:last-child{border-bottom:none}
-.g-row:hover{background:rgba(59,127,255,.035)}
+.g-row:hover{background:rgba(59,127,255,.03)}
 .g-info{width:220px;flex-shrink:0;padding-right:16px}
 .g-name{font-size:13px;font-weight:500;color:var(--t1);line-height:1.4}
 .g-period-txt{font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:3px}
 .g-bar-area{flex:1;position:relative;height:32px;display:flex;align-items:center}
 
-/* 연도 세로 그리드 (배경) */
 .g-vline{position:absolute;top:0;bottom:0;width:1px;
   background:rgba(42,48,80,.35);pointer-events:none}
-/* 현재시점 수직선 (각 행) */
 .g-now-line{position:absolute;top:0;bottom:0;width:2px;
-  background:rgba(59,127,255,.25);z-index:4;pointer-events:none;border-radius:1px}
+  background:rgba(59,127,255,.22);z-index:4;pointer-events:none;border-radius:1px}
 
 /* 트랙 & 바 — 단색 직사각형 */
 .g-track{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
@@ -177,16 +173,16 @@ td:first-child{color:var(--t1);font-weight:500}
 .g-dur{width:76px;flex-shrink:0;text-align:right;padding-left:10px;
   font-family:var(--mono);font-size:11.5px;color:var(--t2)}
 
-/* ── 단색 팔레트 (그라데이션 제거) ── */
-.gc0{background:#4a7eff}   /* 블루       */
-.gc1{background:#6c5ce7}   /* 퍼플       */
-.gc2{background:#00b894}   /* 그린       */
-.gc3{background:#e17055}   /* 오렌지     */
-.gc4{background:#6c5ce7}   /* 퍼플       */
-.gc5{background:#0984e3}   /* 딥 블루    */
-.gc6{background:#00b894}   /* 그린       */
-.gc7{background:#d63031}   /* 레드       */
-.gc8{background:#74b9ff}   /* 라이트 블루 */
+/* ── 단색 팔레트 ── */
+.gc0{background:#4a7eff}
+.gc1{background:#6c5ce7}
+.gc2{background:#00b894}
+.gc3{background:#e17055}
+.gc4{background:#6c5ce7}
+.gc5{background:#0984e3}
+.gc6{background:#00b894}
+.gc7{background:#d63031}
+.gc8{background:#74b9ff}
 
 /* ═══════════════════════════════════════════════════
    IRR
@@ -221,73 +217,89 @@ td:first-child{color:var(--t1);font-weight:500}
 .irr-row-item:last-child{border-bottom:none}
 
 /* ═══════════════════════════════════════════════════
-   LEASE — 3개 요약 패널 + 임차인 상세 카드
+   LEASE — 표 기반 레이아웃 (건물별 그룹화)
 ═══════════════════════════════════════════════════ */
-.lease-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px}
 
-.lease-summary-panel{
-  background:var(--s1);border:1px solid var(--border);
-  border-radius:var(--r);overflow:hidden;position:relative;
+/* 건물 그룹 섹션 */
+.ls-section{margin-bottom:28px}
+
+/* 건물 그룹 헤더 */
+.ls-group-head{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;
+  background:var(--s2);
+  border:1px solid var(--border);
+  border-radius:var(--r) var(--r) 0 0;
+  border-bottom:none;
 }
-.lease-summary-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.lsp-0::before{background:linear-gradient(90deg,var(--green),#3b7fff)}
-.lsp-1::before{background:linear-gradient(90deg,#3b7fff,#6c48f5)}
-.lsp-2::before{background:linear-gradient(90deg,var(--purple),var(--red))}
+.ls-group-bar{width:3px;height:18px;border-radius:2px;flex-shrink:0}
+.ls-group-title{font-size:13px;font-weight:600;color:var(--t1)}
+.ls-group-meta{font-size:11px;color:var(--t3);margin-left:4px}
+.ls-group-sum{margin-left:auto;display:flex;gap:16px;align-items:center}
+.ls-sum-item{font-size:11px;color:var(--t3)}
+.ls-sum-item strong{font-family:var(--mono);font-size:12px;font-weight:500}
+.ls-sum-item strong.green{color:var(--green)}
+.ls-sum-item strong.blue{color:var(--blue)}
+.ls-sum-item strong.purple{color:var(--purple)}
 
-.lsp-head{padding:13px 16px 11px;border-bottom:1px solid var(--border);
-  background:var(--s2);display:flex;align-items:center;gap:10px}
-.lsp-accent{width:3px;height:20px;border-radius:2px;flex-shrink:0}
-.lsp-0 .lsp-accent{background:var(--green)}
-.lsp-1 .lsp-accent{background:var(--blue)}
-.lsp-2 .lsp-accent{background:var(--purple)}
-.lsp-addr{font-size:13px;font-weight:600;color:var(--t1)}
-.lsp-meta{font-size:10px;color:var(--t3);margin-top:2px}
+/* 테이블 래퍼 */
+.ls-table-wrap{
+  border:1px solid var(--border);
+  border-top:none;
+  border-radius:0 0 var(--r) var(--r);
+  overflow:hidden;
+}
 
-.lsp-body{padding:13px 16px}
-.lsp-row{display:flex;justify-content:space-between;align-items:center;
-  padding:6px 0;border-bottom:1px solid rgba(34,38,54,.6)}
-.lsp-row:last-child{border-bottom:none}
-.lsp-key{font-size:11px;color:var(--t3)}
-.lsp-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--t1)}
-.lsp-val.green{color:var(--green)}
-.lsp-val.yellow{color:var(--yellow)}
-.lsp-val.blue{color:var(--blue)}
-.lsp-val.purple{color:var(--purple)}
+/* 테이블 */
+.ls-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.ls-table thead tr{background:var(--s2);border-bottom:2px solid var(--border2)}
+.ls-table th{
+  padding:9px 14px;text-align:left;
+  font-size:10px;font-weight:600;
+  color:var(--t3);text-transform:uppercase;
+  letter-spacing:.9px;white-space:nowrap;
+}
+.ls-table th.r{text-align:right}
+.ls-table td{
+  padding:11px 14px;
+  border-bottom:1px solid rgba(34,38,54,.55);
+  color:var(--t2);
+  white-space:nowrap;
+  vertical-align:middle;
+}
+.ls-table tbody tr:last-child td{border-bottom:none}
+.ls-table tbody tr:hover td{background:rgba(59,127,255,.035);color:var(--t1)}
+/* 합계 행 */
+.ls-table tr.sum-row td{
+  background:rgba(26,31,46,.7);
+  border-top:1px solid var(--border2);
+  font-weight:600;
+  color:var(--t1);
+}
+/* 셀 정렬 */
+.ls-table td.r{text-align:right;font-family:var(--mono)}
+.ls-table td.name{color:var(--t1);font-weight:500;font-size:13px}
+.ls-table td.floor{color:var(--t2);font-size:12px}
 
-.lsp-tenants{margin-top:10px;padding-top:10px;border-top:1px solid rgba(34,38,54,.6);
-  display:flex;flex-wrap:wrap;gap:5px}
-.lsp-tenant-tag{font-size:10px;padding:2px 8px;border-radius:20px;
-  background:var(--s3);border:1px solid var(--border2);color:var(--t2)}
+/* 만료 상태 배지 — 차분한 단색 */
+.exp-badge{
+  display:inline-block;
+  padding:2px 8px;border-radius:4px;
+  font-size:10.5px;font-weight:600;letter-spacing:.3px;
+  white-space:nowrap;border:1px solid;
+}
+.exp-ok   {background:rgba(0,184,148,.09); color:#00b894;border-color:rgba(0,184,148,.2)}
+.exp-warn {background:rgba(245,188,48,.09);color:#c49a00;border-color:rgba(245,188,48,.2)}
+.exp-near {background:rgba(240,112,48,.09);color:#e05a00;border-color:rgba(240,112,48,.2)}
+.exp-done {background:rgba(180,60,60,.09); color:#c05050;border-color:rgba(180,60,60,.2)}
+.exp-none {background:rgba(74,82,112,.09); color:var(--t3);border-color:rgba(74,82,112,.2)}
 
-/* 임차인 상세 섹션 */
-.lease-detail-section{margin-bottom:24px}
-.lease-detail-head{display:flex;align-items:center;gap:12px;
-  padding:11px 18px;background:var(--s2);
-  border:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;border-bottom:none}
-.ldetail-bar{width:4px;height:20px;border-radius:2px;flex-shrink:0}
-.ldetail-title{font-size:13px;font-weight:600;color:var(--t1)}
-.ldetail-sub{font-size:11px;color:var(--t3);margin-left:auto}
-
-.tenant-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
-  gap:12px;padding:14px;border:1px solid var(--border);border-top:none;
-  border-radius:0 0 var(--r) var(--r);background:rgba(15,17,24,.4)}
-
-.tenant-card{background:var(--s1);border:1px solid var(--border);
-  border-radius:var(--r);overflow:hidden;transition:border-color .18s,transform .18s}
-.tenant-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.tenant-card-head{display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-bottom:1px solid var(--border);background:var(--s2)}
-.tenant-name{font-size:13px;font-weight:600;color:var(--t1)}
-.tenant-card-body{padding:12px 14px}
-.tenant-row{display:flex;justify-content:space-between;align-items:center;
-  padding:5px 0;border-bottom:1px solid rgba(34,38,54,.5);font-size:12px}
-.tenant-row:last-child{border-bottom:none}
-.tenant-key{color:var(--t3);flex-shrink:0;min-width:75px}
-.tenant-val{font-family:var(--mono);font-size:11.5px;color:var(--t2);text-align:right}
-.tenant-val.pos{color:var(--green)}
-.tenant-val.warn{color:var(--yellow)}
-.tenant-val.exp{color:var(--red)}
-.tenant-val.blue{color:var(--blue)}
+/* 금액 색상 */
+.amt-green{color:var(--green)!important}
+.amt-blue {color:var(--blue)!important}
+.amt-purple{color:var(--purple)!important}
+.amt-muted{color:var(--t4)!important}
+.amt-total{color:var(--t1)!important;font-weight:600}
 
 .pg{background:var(--s2);border:1px solid var(--border);color:var(--t2);
   padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;
@@ -297,13 +309,14 @@ td:first-child{color:var(--t1);font-weight:500}
 .pg.on{background:var(--blue);border-color:var(--blue);color:#fff}
 
 @media(max-width:900px){
-  .irr-addr-grid,.lease-summary-grid{grid-template-columns:1fr}
+  .irr-addr-grid{grid-template-columns:1fr}
   .g-row{flex-wrap:wrap}.g-info{width:100%}
+  .ls-group-sum{display:none}
+  .ls-table{font-size:11.5px}
 }
 @media(max-width:600px){
   .page{padding:0 14px 60px}.kpi-row{grid-template-columns:1fr 1fr}
   .brand-name{font-size:22px}.irr-metrics{grid-template-columns:1fr}
-  .tenant-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -456,8 +469,8 @@ function renderTimeline(rows){
 
   // 컬럼: col1=항목, col2=기간, col3=소요, col4=기타
   const ni=1,pi=2,di=3,oi=4;
-  const YEAR_START=2026,YEAR_END=2031;         /* 2031까지 확장(공사기간 포함) */
-  const TOTAL_MONTHS=(YEAR_END-YEAR_START+1)*12;
+  const YEAR_START=2026,YEAR_END=2030;
+  const TOTAL_MONTHS=(YEAR_END-YEAR_START+1)*12; // 60개월
 
   // 현재 시점 계산
   const now=new Date();
@@ -522,14 +535,14 @@ function renderTimeline(rows){
 
   // 눈금 헤더
   const rulerHTML=`<div class="tl-ruler-row">
-    <div class="tl-ruler-lbl">항목</div>
+    <div class="tl-ruler-lbl">연도</div>
     <div class="tl-ruler-track">
       <div class="tl-ruler-years">${yearSegs.join('')}</div>
       <div class="tl-now-line" style="left:${nowPct}%">
         <div class="tl-now-tag">NOW</div>
       </div>
     </div>
-    <div class="tl-dur-head">소요</div>
+    <div class="tl-dur-head">기간</div>
   </div>`;
 
   // Gantt rows
@@ -678,181 +691,208 @@ function renderIRR(rows){
 }
 
 /* ════════════════════════════════════════════════════════════
-   3. LEASE — 3개 요약 패널 + 임차인 상세 카드
+   3. LEASE — 표 기반 · 건물별 그룹화
    ★ 구글 시트 데이터 100% 실시간 반영
-   · 압구정로112    → 시트 데이터 그대로
-   · 압구정로8길 3  → 디파이넘버, 블루피카 (2명)
-   · 토지임대료     → 블루피카 (1명)
+   ★ 하드코딩 없음 — 모든 값은 시트에서 직접 읽어옴
 ════════════════════════════════════════════════════════════ */
 function renderLease(rows){
   const sec=document.getElementById('sec-lease');
   if(!rows||rows.length<2){sec.innerHTML=errHTML('데이터 없음');return;}
 
+  /* ── 헤더 행 찾기 ── */
   const hi=findHdrRow(rows);
   const hdr=rows[hi];
   const data=rows.slice(hi+1).filter(r=>r.some(c=>c));
 
-  /* 컬럼 인덱스 — 시트 헤더에서 자동 탐색 (구글 시트 변경 즉시 반영) */
+  /* ── 컬럼 자동 탐색 (구글 시트 헤더 변경 시 자동 반영) ── */
   const addrIdx    =hdr.findIndex(h=>/주소|소재지|위치|물건|건물|부동산/i.test(h));
+  const floorIdx   =hdr.findIndex(h=>/층|floor/i.test(h));
   const nameIdx    =hdr.findIndex(h=>/임차인|사용자|회사|성명|이름|name|tenant/i.test(h));
   const rentIdx    =hdr.findIndex(h=>/월세|월임대료|임대료(?!보)/i.test(h));
   const depositIdx =hdr.findIndex(h=>/보증금|deposit/i.test(h));
+  const mgmtIdx    =hdr.findIndex(h=>/관리비|관리료|maintenance/i.test(h));
   const landRentIdx=hdr.findIndex(h=>/토지임대료|토지료|지대/i.test(h));
-  const statusIdx  =hdr.findIndex(h=>/상태|계약|현황|status/i.test(h));
+  const statusIdx  =hdr.findIndex(h=>/상태|계약상태|현황|status/i.test(h));
   const startIdx   =hdr.findIndex(h=>/시작|계약시작|임대시작|from|start/i.test(h));
   const endIdx     =hdr.findIndex(h=>/종료|만료|계약종료|to|end/i.test(h));
   const areaIdx    =hdr.findIndex(h=>/면적|평수|㎡|평/i.test(h));
   const useIdx     =hdr.findIndex(h=>/용도|업종|업무/i.test(h));
 
-  /* ── 데이터 분류:
-     1) 주소 컬럼 있으면 주소로 분류
-     2) 임차인명으로 fallback (디파이넘버→B, 블루피카+토지임대료→C, 나머지→A)
-     토지임대료 섹션(C)은 landRentIdx>0 && rentIdx=0 인 행 또는 '블루피카' + 토지임대료
-  */
-  const DISP={A:'압구정로 112',B:'압구정로8길 3',C:'토지임대료'};
-  const grpA=[],grpB=[],grpC=[];
+  /* ── 헬퍼 ── */
+  function amt(r,idx){return idx>=0?parseAmt(r[idx]):0;}
+  function str(r,idx){return idx>=0?(r[idx]||''):'';} // 시트 원본 문자열 그대로
 
+  /* ── 만료 상태 배지 ──
+     endIdx 가 있으면 계약종료일로 계산, 없으면 statusIdx 텍스트 사용 */
+  function expBadge(r){
+    const stTxt=str(r,statusIdx).trim();
+    if(stTxt){
+      if(/만료|종료|해지/i.test(stTxt)) return`<span class="exp-badge exp-done">${stTxt}</span>`;
+      if(/예정|임박|주의/i.test(stTxt)) return`<span class="exp-badge exp-near">${stTxt}</span>`;
+      if(/유효|활성|계약중|진행/i.test(stTxt)) return`<span class="exp-badge exp-ok">${stTxt}</span>`;
+    }
+    const endTxt=str(r,endIdx).trim();
+    if(!endTxt) return`<span class="exp-badge exp-none">—</span>`;
+    const m=endTxt.match(/(\d{4})/);
+    if(!m) return`<span class="exp-badge exp-none">${endTxt}</span>`;
+    const yr=parseInt(m[1]);
+    const now=new Date().getFullYear();
+    const diff=yr-now;
+    if(diff<0)  return`<span class="exp-badge exp-done">만료 (${yr})</span>`;
+    if(diff===0)return`<span class="exp-badge exp-near">올해 만료</span>`;
+    if(diff===1)return`<span class="exp-badge exp-warn">내년 만료 (${yr})</span>`;
+    return`<span class="exp-badge exp-ok">${yr}</span>`;
+  }
+
+  /* ── 금액 표시 (0 또는 미입력 → dash) ── */
+  function amtCell(v,cls){
+    if(!v||v===0) return`<span class="amt-muted">—</span>`;
+    return`<span class="${cls||''}">${fmtBig(v)}원</span>`;
+  }
+
+  /* ── 건물별 그룹화
+     addrIdx 있으면 주소값으로, 없으면 임차인명 패턴으로 fallback ── */
+  const groupMap=new Map();
   data.forEach(r=>{
-    const addr=String(r[addrIdx]||'').replace(/\s/g,'');
-    const name=String(r[nameIdx]||'');
-    const rent =rentIdx>=0?parseAmt(r[rentIdx]):0;
-    const lrent=landRentIdx>=0?parseAmt(r[landRentIdx]):0;
+    let addr=str(r,addrIdx).trim();
+    if(!addr){
+      const name=str(r,nameIdx);
+      const lrent=amt(r,landRentIdx);
+      const rent =amt(r,rentIdx);
+      if(/토지/.test(name)||(lrent>0&&rent===0)) addr='토지임대';
+      else if(/디파이넘버|defynumber/i.test(name)) addr='압구정로8길 3';
+      else if(/블루피카/i.test(name)&&lrent===0) addr='압구정로8길 3';
+      else addr='압구정로 112';
+    }
+    if(!groupMap.has(addr)) groupMap.set(addr,[]);
+    groupMap.get(addr).push(r);
+  });
 
-    /* 토지임대료 전용 판별 */
-    const isToraji=
-      /토지/.test(addr)||
-      (/블루피카/i.test(name)&&lrent>0&&rent===0)||
-      (!addr&&/블루피카/i.test(name)&&lrent>0&&rent===0);
+  const GRP_COLORS=['#4a7eff','#00b894','#6c5ce7','#e17055','#0984e3'];
 
-    /* 주소 컬럼 기반 분류 */
-    if(addr){
-      if(/토지/.test(addr)||isToraji)            grpC.push(r);
-      else if(/압구정로8길/.test(addr))           grpB.push(r);
-      else if(/압구정로/.test(addr))              grpA.push(r);
-      else                                        grpA.push(r);
-    }else{
-      /* 주소 없음: 임차인명으로 추정 */
-      if(isToraji)                                grpC.push(r);
-      else if(/디파이넘버|defynumber/i.test(name))grpB.push(r);
-      else if(/블루피카/i.test(name)&&!isToraji)  grpB.push(r);
-      else                                        grpA.push(r);
+  /* ── 그룹별 테이블 HTML 생성 ── */
+  function groupSection(addr,rows,colorIdx){
+    const color=GRP_COLORS[colorIdx%GRP_COLORS.length];
+    const sumRent  =rows.map(r=>amt(r,rentIdx)).reduce((a,b)=>a+b,0);
+    const sumDep   =rows.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
+    const sumMgmt  =rows.map(r=>amt(r,mgmtIdx)).reduce((a,b)=>a+b,0);
+    const sumLrent =rows.map(r=>amt(r,landRentIdx)).reduce((a,b)=>a+b,0);
+    const sumMonth =sumRent+sumMgmt+sumLrent;
+
+    const sumHTML=[
+      sumRent ?`<div class="ls-sum-item">월임대료 <strong class="green">${fmtBig(sumRent)}원</strong></div>`:'',
+      sumLrent?`<div class="ls-sum-item">토지임대료 <strong class="purple">${fmtBig(sumLrent)}원</strong></div>`:'',
+      sumDep  ?`<div class="ls-sum-item">보증금 <strong class="blue">${fmtBig(sumDep)}원</strong></div>`:'',
+    ].filter(Boolean).join('');
+
+    const tbodyCells=rows.map(r=>{
+      const name  =str(r,nameIdx)||'—';
+      const floor =str(r,floorIdx);
+      const start =str(r,startIdx);
+      const end   =str(r,endIdx);
+      const area  =str(r,areaIdx);
+      const use   =str(r,useIdx);
+      const rent  =amt(r,rentIdx);
+      const dep   =amt(r,depositIdx);
+      const mgmt  =amt(r,mgmtIdx);
+      const lrent =amt(r,landRentIdx);
+      const monthly=rent+mgmt+lrent;
+
+      return`<tr>
+        <td class="name">${name}</td>
+        <td class="floor">${floor||'—'}</td>
+        <td>${area||'—'}</td>
+        <td>${use||'—'}</td>
+        <td>${start||'—'}</td>
+        <td>${end||'—'}</td>
+        <td>${expBadge(r)}</td>
+        <td class="r">${amtCell(dep,'amt-blue')}</td>
+        <td class="r">${amtCell(rent,'amt-green')}</td>
+        <td class="r">${amtCell(mgmt,'')}</td>
+        <td class="r">${amtCell(lrent,'amt-purple')}</td>
+        <td class="r">${monthly>0?`<span class="amt-total">${fmtBig(monthly)}원</span>`:`<span class="amt-muted">—</span>`}</td>
+      </tr>`;
+    }).join('');
+
+    const sumRow=`<tr class="sum-row">
+      <td colspan="7">합 계</td>
+      <td class="r">${amtCell(sumDep,'amt-blue')}</td>
+      <td class="r">${amtCell(sumRent,'amt-green')}</td>
+      <td class="r">${amtCell(sumMgmt,'')}</td>
+      <td class="r">${amtCell(sumLrent,'amt-purple')}</td>
+      <td class="r">${sumMonth>0?`<span class="amt-total">${fmtBig(sumMonth)}원</span>`:`<span class="amt-muted">—</span>`}</td>
+    </tr>`;
+
+    return`<div class="ls-section">
+      <div class="ls-group-head">
+        <div class="ls-group-bar" style="background:${color}"></div>
+        <div class="ls-group-title">${addr}</div>
+        <div class="ls-group-meta">${rows.length}건</div>
+        <div class="ls-group-sum">${sumHTML}</div>
+      </div>
+      <div class="ls-table-wrap">
+        <div style="overflow-x:auto">
+          <table class="ls-table">
+            <thead>
+              <tr>
+                <th>임차인</th>
+                <th>층</th>
+                <th>면적</th>
+                <th>용도</th>
+                <th>계약 시작</th>
+                <th>계약 종료</th>
+                <th>만료 상태</th>
+                <th class="r">보증금</th>
+                <th class="r">월 임대료</th>
+                <th class="r">관리비</th>
+                <th class="r">토지임대료</th>
+                <th class="r">월 합계</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tbodyCells}
+              ${sumRow}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /* ── KPI 집계 ── */
+  const totalRent =data.map(r=>amt(r,rentIdx)).reduce((a,b)=>a+b,0);
+  const totalLrent=data.map(r=>amt(r,landRentIdx)).reduce((a,b)=>a+b,0);
+  const totalDep  =data.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
+  let aC=0,eC=0,wC=0;
+  data.forEach(r=>{
+    const stTxt=str(r,statusIdx).trim();
+    const endTxt=str(r,endIdx).trim();
+    if(/만료|종료|해지/i.test(stTxt)){eC++;return;}
+    if(/예정|임박|주의/i.test(stTxt)){wC++;return;}
+    if(/유효|활성|계약중|진행/i.test(stTxt)){aC++;return;}
+    if(endTxt){
+      const m=endTxt.match(/(\d{4})/);
+      if(m){const diff=parseInt(m[1])-new Date().getFullYear();
+        if(diff<0){eC++;return;}
+        if(diff<=1){wC++;return;}
+      }
+      aC++;
     }
   });
 
-  /* 토지임대료 그룹 fallback:
-     만약 grpC가 비어있다면 전체 data에서 블루피카+토지임대료>0 추출 */
-  if(grpC.length===0&&landRentIdx>=0){
-    data.forEach(r=>{
-      const name=String(r[nameIdx]||'');
-      const lrent=parseAmt(r[landRentIdx]);
-      if(/블루피카/i.test(name)&&lrent>0&&!grpC.includes(r))grpC.push(r);
-    });
-  }
-
-  /* ── 헬퍼 ── */
-  function sumF(grp,idx){return idx>=0?grp.map(r=>parseAmt(r[idx])).filter(x=>x>0).reduce((a,b)=>a+b,0):0;}
-  function getNames(grp){return[...new Set(grp.map(r=>nameIdx>=0?(r[nameIdx]||''):'').filter(Boolean))];}
-  function sBadge(st){
-    if(/유효|계약중|활성|진행/i.test(st))return`<span class="sbadge sb-active">${st||'유효'}</span>`;
-    if(/만료|종료|해지/i.test(st))return`<span class="sbadge sb-expire">${st||'만료'}</span>`;
-    if(/예정|임박|주의/i.test(st))return`<span class="sbadge sb-warn">${st||'주의'}</span>`;
-    return st?`<span class="sbadge sb-neutral">${st}</span>`:'';
-  }
-
-  /* ── 임차인 카드 ── */
-  function tenantCard(r,mode){
-    const name =nameIdx>=0?(r[nameIdx]||'임차인'):'임차인';
-    const rent =rentIdx>=0?parseAmt(r[rentIdx]):0;
-    const dep  =depositIdx>=0?parseAmt(r[depositIdx]):0;
-    const lrent=landRentIdx>=0?parseAmt(r[landRentIdx]):0;
-    const st   =statusIdx>=0?(r[statusIdx]||''):'';
-    const s    =startIdx>=0?(r[startIdx]||''):'';
-    const e    =endIdx>=0?(r[endIdx]||''):'';
-    const area =areaIdx>=0?(r[areaIdx]||''):'';
-    const use  =useIdx>=0?(r[useIdx]||''):'';
-    const showRent =mode!=='land'&&rent>0;
-    const showLand =mode==='land'&&lrent>0;
-    return `<div class="tenant-card">
-      <div class="tenant-card-head"><div class="tenant-name">${name}</div><div>${sBadge(st)}</div></div>
-      <div class="tenant-card-body">
-        ${showRent?`<div class="tenant-row"><span class="tenant-key">월 임대료</span><span class="tenant-val pos">${fmtBig(rent)}원</span></div>`:''}
-        ${dep?`<div class="tenant-row"><span class="tenant-key">보증금</span><span class="tenant-val">${fmtBig(dep)}원</span></div>`:''}
-        ${showLand?`<div class="tenant-row"><span class="tenant-key">토지임대료</span><span class="tenant-val warn">${fmtBig(lrent)}원/월</span></div>`:''}
-        ${area?`<div class="tenant-row"><span class="tenant-key">면적</span><span class="tenant-val blue">${area}</span></div>`:''}
-        ${use?`<div class="tenant-row"><span class="tenant-key">용도</span><span class="tenant-val">${use}</span></div>`:''}
-        ${s?`<div class="tenant-row"><span class="tenant-key">계약 시작</span><span class="tenant-val">${s}</span></div>`:''}
-        ${e?`<div class="tenant-row"><span class="tenant-key">계약 종료</span><span class="tenant-val ${/만료|종료/i.test(st)?'exp':''}">${e}</span></div>`:''}
-      </div>
-    </div>`;
-  }
-
-  /* ── 요약 패널 ── */
-  function summaryPanel(panelIdx,addr,grp){
-    const tr=sumF(grp,rentIdx),td=sumF(grp,depositIdx),tl=sumF(grp,landRentIdx);
-    const names=getNames(grp);
-    const isLand=panelIdx===2;
-    return `<div class="lease-summary-panel lsp-${panelIdx}">
-      <div class="lsp-head"><div class="lsp-accent"></div>
-        <div><div class="lsp-addr">${addr}</div>
-          <div class="lsp-meta">${grp.length}건 계약</div></div></div>
-      <div class="lsp-body">
-        ${!isLand&&tr?`<div class="lsp-row"><span class="lsp-key">월 임대료</span><span class="lsp-val green">${fmtBig(tr)}원</span></div>`:''}
-        ${!isLand&&td?`<div class="lsp-row"><span class="lsp-key">보증금</span><span class="lsp-val">${fmtBig(td)}원</span></div>`:''}
-        ${tl?`<div class="lsp-row"><span class="lsp-key">토지임대료</span><span class="lsp-val ${isLand?'purple':'yellow'}">${fmtBig(tl)}원/월</span></div>`:''}
-        ${!tr&&!td&&!tl?`<div class="lsp-row"><span class="lsp-key" style="color:var(--t4)">데이터 없음</span></div>`:''}
-        ${names.length?`<div class="lsp-tenants">${names.map(n=>`<span class="lsp-tenant-tag">${n}</span>`).join('')}</div>`:''}
-      </div>
-    </div>`;
-  }
-
-  /* ── 상세 섹션 ── */
-  function detailSection(title,grp,barColor,mode){
-    if(!grp.length)return`<div class="lease-detail-section">
-      <div class="lease-detail-head"><div class="ldetail-bar" style="background:${barColor}"></div>
-        <div class="ldetail-title">${title}</div><div class="ldetail-sub">0건</div></div>
-      <div class="tenant-grid"><div class="empty"><div class="empty-i">📭</div>해당 임차인 데이터가 시트에 없습니다</div></div>
-    </div>`;
-    return `<div class="lease-detail-section">
-      <div class="lease-detail-head"><div class="ldetail-bar" style="background:${barColor}"></div>
-        <div class="ldetail-title">${title}</div><div class="ldetail-sub">${grp.length}건</div></div>
-      <div class="tenant-grid">${grp.map(r=>tenantCard(r,mode)).join('')}</div>
-    </div>`;
-  }
-
-  /* ── 전체 KPI ── */
-  const tr=sumF(data,rentIdx),tl=sumF(data,landRentIdx),td=sumF(data,depositIdx);
-  let aC=0,eC=0,wC=0;
-  if(statusIdx>=0)data.forEach(r=>{
-    const v=(r[statusIdx]||'').trim();
-    if(/유효|계약중|활성|진행/i.test(v))aC++;
-    else if(/만료|종료|해지/i.test(v))eC++;
-    else if(/예정|임박|주의/i.test(v))wC++;
-  });
+  const sections=[...groupMap.entries()].map(([addr,rows],i)=>groupSection(addr,rows,i)).join('');
 
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 임대차계약현황</div>
-
-    <!-- KPI -->
     <div class="kpi-row">
       <div class="kpi b"><div class="kpi-lbl">총 계약</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">임대차 건수</div></div>
       ${aC?`<div class="kpi g"><div class="kpi-lbl">계약 유효</div><div class="kpi-val">${aC}</div><div class="kpi-sub">진행중</div></div>`:''}
       ${eC?`<div class="kpi r"><div class="kpi-lbl">만료·종료</div><div class="kpi-val">${eC}</div><div class="kpi-sub">종료</div></div>`:''}
-      ${wC?`<div class="kpi y"><div class="kpi-lbl">주의</div><div class="kpi-val">${wC}</div><div class="kpi-sub">임박·예정</div></div>`:''}
-      ${tr?`<div class="kpi g"><div class="kpi-lbl">월임대료 합계</div><div class="kpi-val">${fmtBig(tr)}원</div><div class="kpi-sub">전체</div></div>`:''}
-      ${tl?`<div class="kpi p"><div class="kpi-lbl">토지임대료 합계</div><div class="kpi-val">${fmtBig(tl)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
+      ${wC?`<div class="kpi y"><div class="kpi-lbl">주의</div><div class="kpi-val">${wC}</div><div class="kpi-sub">곧 만료</div></div>`:''}
+      ${totalRent?`<div class="kpi g"><div class="kpi-lbl">월임대료 합계</div><div class="kpi-val">${fmtBig(totalRent)}원</div><div class="kpi-sub">전체 건물</div></div>`:''}
+      ${totalLrent?`<div class="kpi p"><div class="kpi-lbl">토지임대료</div><div class="kpi-val">${fmtBig(totalLrent)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
     </div>
-
-    <!-- 3개 요약 패널 -->
-    <div class="lease-summary-grid">
-      ${summaryPanel(0,DISP.A,grpA)}
-      ${summaryPanel(1,DISP.B,grpB)}
-      ${summaryPanel(2,DISP.C,grpC)}
-    </div>
-
-    <!-- 임차인 상세 -->
-    ${detailSection(DISP.A+' · 임차인 상세',grpA,'var(--green)','rent')}
-    ${detailSection(DISP.B+' · 임차인 상세 — 디파이넘버 · 블루피카',grpB,'var(--blue)','rent')}
-    ${detailSection(DISP.C+' · 토지임대 상세 — 블루피카',grpC,'var(--purple)','land')}
+    ${sections||`<div class="empty"><div class="empty-i">📭</div>임차인 데이터가 없습니다</div>`}
   `;
 }
 
