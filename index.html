@@ -238,6 +238,23 @@ td:first-child{color:var(--t1);font-weight:500}
 .amt-purple{color:var(--purple)!important}.amt-muted{color:var(--t4)!important}
 .amt-total{color:var(--t1)!important;font-weight:600}
 
+/* ═══ LEASE 요약 행 ═══════════════════════════════════════ */
+.ls-summary-row{display:flex;flex-wrap:wrap;gap:0;
+  border:1px solid var(--border);border-top:none;border-bottom:none;
+  background:var(--s2)}
+.ls-summary-item{display:flex;flex-direction:column;gap:4px;
+  padding:12px 20px;border-right:1px solid var(--border);min-width:120px;flex:1}
+.ls-summary-item:last-child{border-right:none}
+.ls-si-total{background:rgba(79,124,255,.05);border-left:2px solid #4F7CFF}
+.ls-si-lbl{font-size:10px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px}
+.ls-si-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--t2)}
+.ls-si-val.green{color:var(--green)}
+.ls-si-val.blue{color:var(--blue)}
+.ls-si-val.purple{color:var(--purple)}
+.ls-si-val.white{color:var(--t1)}
+/* 그룹 헤더 bar 단일화 */
+.ls-group-bar{width:3px;height:18px;border-radius:2px;flex-shrink:0;background:#4F7CFF!important}
+
 /* ═══════════════════════════════════════════════════
    PERSONAL COST — Cash Flow 분석
 ═══════════════════════════════════════════════════ */
@@ -1270,10 +1287,11 @@ function renderLease(rows){
     groupMap.get(addr).push(r);
   });
 
-  const GRP_COLORS=['#4a7eff','#00b894','#6c5ce7','#e17055','#0984e3'];
+  /* 단일 블루 계열 — 투자 보고용 */
+  const GRP_ACCENT='#4F7CFF';
 
   function groupSection(addr,gRows,colorIdx){
-    const color=GRP_COLORS[colorIdx%GRP_COLORS.length];
+    const color=GRP_ACCENT;
     const sumRent=gRows.map(r=>amt(r,rentIdx)).reduce((a,b)=>a+b,0);
     const sumDep=gRows.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
     const sumMgmt=gRows.map(r=>amt(r,mgmtIdx)).reduce((a,b)=>a+b,0);
@@ -1290,8 +1308,7 @@ function renderLease(rows){
       return`<tr>
         <td class="name">${str(r,nameIdx)||'—'}</td>
         <td class="floor">${str(r,floorIdx)||'—'}</td>
-        <td>${str(r,areaIdx)||'—'}</td>
-        <td>${str(r,useIdx)||'—'}</td>
+        ${areaIdx>=0?`<td>${str(r,areaIdx)||'—'}</td>`:''}
         <td>${str(r,startIdx)||'—'}</td>
         <td>${str(r,endIdx)||'—'}</td>
         <td>${expBadge(r)}</td>
@@ -1302,25 +1319,34 @@ function renderLease(rows){
         <td class="r">${monthly>0?`<span class="amt-total">${fmtBig(monthly)}원</span>`:`<span class="amt-muted">—</span>`}</td>
       </tr>`;
     }).join('');
+    const colSpanBase=areaIdx>=0?6:5;
     const sumRow=`<tr class="sum-row">
-      <td colspan="7">합 계</td>
+      <td colspan="${colSpanBase}">합 계</td>
       <td class="r">${amtCell(sumDep,'amt-blue')}</td>
       <td class="r">${amtCell(sumRent,'amt-green')}</td>
       <td class="r">${amtCell(sumMgmt,'')}</td>
       <td class="r">${amtCell(sumLrent,'amt-purple')}</td>
       <td class="r">${sumMonth>0?`<span class="amt-total">${fmtBig(sumMonth)}원</span>`:`<span class="amt-muted">—</span>`}</td>
     </tr>`;
+    /* 섹션 요약 카드 */
+    const summaryItems=[
+      sumRent?`<div class="ls-summary-item"><span class="ls-si-lbl">월 임대료</span><span class="ls-si-val green">${fmtBig(sumRent)}원</span></div>`:'',
+      sumLrent?`<div class="ls-summary-item"><span class="ls-si-lbl">토지임대료</span><span class="ls-si-val purple">${fmtBig(sumLrent)}원</span></div>`:'',
+      sumMgmt?`<div class="ls-summary-item"><span class="ls-si-lbl">관리비</span><span class="ls-si-val">${fmtBig(sumMgmt)}원</span></div>`:'',
+      sumDep?`<div class="ls-summary-item"><span class="ls-si-lbl">보증금</span><span class="ls-si-val blue">${fmtBig(sumDep)}원</span></div>`:'',
+      sumMonth?`<div class="ls-summary-item ls-si-total"><span class="ls-si-lbl">월 합계</span><span class="ls-si-val white">${fmtBig(sumMonth)}원</span></div>`:'',
+    ].filter(Boolean).join('');
     return`<div class="ls-section">
       <div class="ls-group-head">
         <div class="ls-group-bar" style="background:${color}"></div>
         <div class="ls-group-title">${addr}</div>
         <div class="ls-group-meta">${gRows.length}건</div>
-        <div class="ls-group-sum">${sumHTML}</div>
       </div>
+      ${summaryItems?`<div class="ls-summary-row">${summaryItems}</div>`:''}
       <div class="ls-table-wrap"><div style="overflow-x:auto">
         <table class="ls-table">
           <thead><tr>
-            <th>임차인</th><th>층</th><th>면적</th><th>용도</th>
+            <th>임차인</th><th>층</th>${areaIdx>=0?'<th>면적</th>':''}
             <th>계약 시작</th><th>계약 종료</th><th>만료 상태</th>
             <th class="r">보증금</th><th class="r">월 임대료</th>
             <th class="r">관리비</th><th class="r">토지임대료</th><th class="r">월 합계</th>
@@ -1343,16 +1369,33 @@ function renderLease(rows){
       if(m){const diff=parseInt(m[1])-new Date().getFullYear();
         if(diff<0){eC++;return;}if(diff<=1){wC++;return;}}aC++;}
   });
-  const sections=[...groupMap.entries()].map(([a,r],i)=>groupSection(a,r,i)).join('');
+  /* 섹션 순서 고정 — 시트 데이터 기준, 합계·빈 그룹 제거 */
+  const SECTION_ORDER=['압구정로112','압구정로8길3','토지임대료'];
+  /* 합계·건물·빈값 등 무효 그룹 필터 */
+  const INVALID_GROUP=/^합계$|^건물$|^\s*$/i;
+  const validEntries=[...groupMap.entries()].filter(([a])=>!INVALID_GROUP.test(a));
+
+  /* 고정 순서로 재배열: ORDER에 있는 것 먼저, 나머지 뒤에 */
+  function normalizeAddr(a){return a.replace(/\s/g,'').replace(/[가-힣]/g,m=>m);}
+  const ordered=[];
+  SECTION_ORDER.forEach(key=>{
+    const found=validEntries.find(([a])=>normalizeAddr(a).includes(normalizeAddr(key))||normalizeAddr(key).includes(normalizeAddr(a)));
+    if(found&&!ordered.includes(found))ordered.push(found);
+  });
+  validEntries.forEach(e=>{if(!ordered.includes(e))ordered.push(e);});
+
+  const sections=ordered.map(([a,r],i)=>groupSection(a,r,i)).join('');
+  const totalDep=data.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
+  const totalMonth=totalRent+data.map(r=>amt(r,mgmtIdx)).reduce((a,b)=>a+b,0)+totalLrent;
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 임대차계약현황</div>
     <div class="kpi-row">
       <div class="kpi b"><div class="kpi-lbl">총 계약</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">임대차 건수</div></div>
-      ${aC?`<div class="kpi g"><div class="kpi-lbl">계약 유효</div><div class="kpi-val">${aC}</div><div class="kpi-sub">진행중</div></div>`:''}
-      ${eC?`<div class="kpi r"><div class="kpi-lbl">만료·종료</div><div class="kpi-val">${eC}</div><div class="kpi-sub">종료</div></div>`:''}
-      ${wC?`<div class="kpi y"><div class="kpi-lbl">주의</div><div class="kpi-val">${wC}</div><div class="kpi-sub">곧 만료</div></div>`:''}
-      ${totalRent?`<div class="kpi g"><div class="kpi-lbl">월임대료 합계</div><div class="kpi-val">${fmtBig(totalRent)}원</div><div class="kpi-sub">전체 건물</div></div>`:''}
-      ${totalLrent?`<div class="kpi p"><div class="kpi-lbl">토지임대료</div><div class="kpi-val">${fmtBig(totalLrent)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
+      ${aC?`<div class="kpi b"><div class="kpi-lbl">계약 유효</div><div class="kpi-val">${aC}</div><div class="kpi-sub">진행중</div></div>`:''}
+      ${eC?`<div class="kpi b"><div class="kpi-lbl">만료·종료</div><div class="kpi-val">${eC}</div><div class="kpi-sub">종료</div></div>`:''}
+      ${wC?`<div class="kpi b"><div class="kpi-lbl">주의</div><div class="kpi-val">${wC}</div><div class="kpi-sub">곧 만료</div></div>`:''}
+      ${totalRent?`<div class="kpi b"><div class="kpi-lbl">월임대료 합계</div><div class="kpi-val">${fmtBig(totalRent)}원</div><div class="kpi-sub">전체 건물</div></div>`:''}
+      ${totalLrent?`<div class="kpi b"><div class="kpi-lbl">토지임대료</div><div class="kpi-val">${fmtBig(totalLrent)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
     </div>
     ${sections||`<div class="empty"><div class="empty-i">📭</div>임차인 데이터가 없습니다</div>`}`;
 }
