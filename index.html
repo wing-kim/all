@@ -73,16 +73,12 @@ header{display:flex;align-items:center;justify-content:space-between;
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:22px}
 .kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
   padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
-.kpi:hover{border-color:var(--border2);transform:translateY(-2px)}
-.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.kpi.b::after{background:var(--blue-g)}
-.kpi.g::after{background:linear-gradient(90deg,var(--green),var(--blue))}
-.kpi.y::after{background:linear-gradient(90deg,var(--yellow),var(--orange))}
-.kpi.p::after{background:linear-gradient(90deg,var(--purple),#f03860)}
-.kpi.r::after{background:linear-gradient(90deg,var(--red),var(--orange))}
-.kpi-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:9px}
-.kpi-val{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--t1)}
-.kpi-sub{font-size:11px;color:var(--t3);margin-top:4px}
+.kpi:hover{border-color:rgba(79,124,255,.4);transform:translateY(-2px)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:#4F7CFF}
+.kpi.b::after,.kpi.g::after,.kpi.y::after,.kpi.p::after,.kpi.r::after{background:#4F7CFF}
+.kpi-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.kpi-val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--t1);letter-spacing:-.5px}
+.kpi-sub{font-size:10.5px;color:var(--t4);margin-top:5px;font-weight:400}
 
 .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
@@ -143,29 +139,29 @@ td:first-child{color:var(--t1);font-weight:500}
   font-family:var(--mono);font-size:8px;color:var(--blue);
   background:rgba(8,9,13,.95);padding:1px 5px;border-radius:3px;
   white-space:nowrap;letter-spacing:.5px}
-.g-row{display:flex;align-items:center;padding:14px 0;
+.g-row{display:flex;align-items:center;padding:11px 0;
   border-bottom:1px solid rgba(34,38,54,.5);transition:background .12s}
 .g-row:last-child{border-bottom:none}
 .g-row:hover{background:rgba(59,127,255,.03)}
 .g-info{width:220px;flex-shrink:0;padding-right:16px}
 .g-name{font-size:13px;font-weight:500;color:var(--t1);line-height:1.4}
 .g-period-txt{font-family:var(--mono);font-size:10px;color:var(--t3);margin-top:3px}
-.g-bar-area{flex:1;position:relative;height:32px;display:flex;align-items:center}
+.g-bar-area{flex:1;position:relative;height:36px;display:flex;align-items:center}
 .g-vline{position:absolute;top:0;bottom:0;width:1px;
   background:rgba(42,48,80,.35);pointer-events:none}
 .g-now-line{position:absolute;top:0;bottom:0;width:2px;
   background:rgba(59,127,255,.22);z-index:4;pointer-events:none;border-radius:1px}
 .g-track{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
-  height:10px;background:rgba(26,31,46,.9);border-radius:3px;
-  border:1px solid rgba(42,48,80,.6)}
+  height:14px;background:rgba(20,24,38,.95);border-radius:3px;
+  border:1px solid rgba(42,48,80,.55)}
 .g-fill{height:100%;border-radius:3px;position:absolute;
   transition:width .8s cubic-bezier(.4,0,.2,1)}
 .g-dur{width:76px;flex-shrink:0;text-align:right;padding-left:10px;
   font-family:var(--mono);font-size:11.5px;color:var(--t2)}
-/* 단색 팔레트 */
-.gc0{background:#4a7eff}.gc1{background:#6c5ce7}.gc2{background:#00b894}
-.gc3{background:#e17055}.gc4{background:#6c5ce7}.gc5{background:#0984e3}
-.gc6{background:#00b894}.gc7{background:#d63031}.gc8{background:#74b9ff}
+/* 투자 보고용 블루-슬레이트 팔레트 */
+.gc0{background:#4F7CFF}.gc1{background:#3a6ee8}.gc2{background:#2d5fd4}
+.gc3{background:#5a88ff}.gc4{background:#3a6ee8}.gc5{background:#4F7CFF}
+.gc6{background:#2d5fd4}.gc7{background:#5a88ff}.gc8{background:#3a6ee8}
 
 /* ═══════════════════════════════════════════════════
    IRR
