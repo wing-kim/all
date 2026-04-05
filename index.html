@@ -958,7 +958,7 @@ function renderIRR(rows){
     {addr:'압구정로 8길 3',rows:data, _propData:propB, _col:col8}
   ];
 
-  const CARD_ACCENTS=['#4F7CFF','#3a6ee8'];
+  var CARD_ACCENTS=['#4F7CFF','#3a6ee8'];
 
   /* ── irrCalcRun을 위한 합산 데이터 노출 ──
      계산기는 두 필지 합산값을 사용하므로
@@ -989,7 +989,7 @@ function renderIRR(rows){
 
     /* ── [UI 레이어] buildPropertyCard — 이미 위에서 처리됨 ── */
   /* (아래 calcHTML, _irrSheetData 등 기존 계산기 구조는 그대로 유지) */
-  const CARD_ACCENTS=['#4F7CFF','#3a6ee8']; /* 계산기 슬라이더 초기화에 필요 */
+  var CARD_ACCENTS=['#4F7CFF','#3a6ee8']; /* 계산기 슬라이더 초기화에 필요 */
 
   /* ── [계산기 UI] 슬라이더/입력 패널 HTML ── */
   /* 각 입력값은 DOM id로 관리 → 원본 시트 데이터에 일절 영향 없음 */
