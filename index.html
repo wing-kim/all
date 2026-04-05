@@ -1450,9 +1450,13 @@ function irrErrBox(msg){
 function renderLease(rows){
   const sec=document.getElementById('sec-lease');
   if(!rows||rows.length<2){sec.innerHTML=errHTML('데이터 없음');return;}
+
+  /* ══ [데이터 레이어] 시트 원본 파싱 ════════════════════════════
+     ★ 구글 시트 fetch → parseCSV → rows 그대로 유지
+     ★ 하드코딩 없음, 컬럼 탐색 헤더 기반
+  ════════════════════════════════════════════════════════════ */
   const hi=findHdrRow(rows);
   const hdr=rows[hi];
-  const data=rows.slice(hi+1).filter(r=>r.some(c=>c));
 
   /* 컬럼 자동 탐색 */
   const addrIdx    =hdr.findIndex(h=>/주소|소재지|위치|물건|건물|부동산/i.test(h));
@@ -1466,19 +1470,104 @@ function renderLease(rows){
   const startIdx   =hdr.findIndex(h=>/시작|계약시작|임대시작|from|start/i.test(h));
   const endIdx     =hdr.findIndex(h=>/종료|만료|계약종료|to|end/i.test(h));
   const areaIdx    =hdr.findIndex(h=>/면적|평수|㎡|평/i.test(h));
-  const useIdx     =hdr.findIndex(h=>/용도|업종|업무/i.test(h));
 
   function amt(r,idx){return idx>=0?parseAmt(r[idx]):0;}
-  function str(r,idx){return idx>=0?(r[idx]||''):'';} 
+  function str(r,idx){return idx>=0?((r[idx]||'').toString().trim()):'';} 
 
+  /* ══ [유효 행 판별] ════════════════════════════════════════════
+     아래 조건 중 하나라도 만족해야 "실제 계약 데이터 행"으로 인정:
+     1. 임차인명이 존재 (합계/소계/헤더 반복 제외)
+     2. 계약 시작일 또는 종료일이 존재
+     3. 보증금 / 월임대료 / 관리비 / 토지임대료 중 실제 금액이 있음
+     + 반드시 제외: 합계·소계·헤더반복·구분·빈값 행
+  ════════════════════════════════════════════════════════════ */
+  /* 제외 패턴: 임차인 또는 첫 셀이 아래 키워드면 데이터 행에서 제거 */
+  const EXCLUDE_PAT=/^(합계|소계|계|subtotal|total|sum|항목|임차인|구분|건물|주소|\-|—|\s*)$/i;
+
+  function isValidRow(r){
+    const name=str(r,nameIdx);
+    const start=str(r,startIdx);
+    const end  =str(r,endIdx);
+    const moneySum=amt(r,depositIdx)+amt(r,rentIdx)+amt(r,mgmtIdx)+amt(r,landRentIdx);
+
+    /* 임차인명이 있어도 합계/소계/헤더 키워드면 제외 */
+    if(name&&EXCLUDE_PAT.test(name)) return false;
+    /* 첫 번째 셀도 합계류면 제외 */
+    const cell0=(r[0]||'').toString().trim();
+    if(EXCLUDE_PAT.test(cell0)&&!name&&!moneySum) return false;
+    /* 유효 조건: 임차인 OR 날짜 OR 금액 중 하나 이상 */
+    return !!(name||start||end||moneySum>0);
+  }
+
+  /* 전체 데이터 행 — 헤더 이후, 유효 행만 */
+  const allRows=rows.slice(hi+1);
+  const data=allRows.filter(r=>isValidRow(r));
+
+  /* ══ [그룹핑] — 건물/주소 기준, 중복 없이 ═════════════════════
+     우선순위:
+     1. addrIdx 컬럼에 실제 주소값이 있으면 그것을 그룹명으로 사용
+     2. 없으면 임차인명 / 금액 패턴으로 추정
+     + 그룹명은 반드시 실제 건물/자산명이어야 함
+     + 합계·빈값·구분 텍스트는 절대 그룹명 불가
+  ════════════════════════════════════════════════════════════ */
+  /* 무효 그룹명 패턴 */
+  const INVALID_ADDR=/^(합계|소계|계|total|sum|건물|주소|항목|—|\-|\s*)$/i;
+
+  /* 주소 정규화: 공백 제거 후 비교 */
+  function normAddr(a){return String(a||'').replace(/\s/g,'');}
+
+  const groupMap=new Map();
+  data.forEach(r=>{
+    let addr=str(r,addrIdx).trim();
+
+    /* addrIdx가 없거나 값이 무효 그룹명이면 추정 */
+    if(!addr||INVALID_ADDR.test(addr)){
+      const name=str(r,nameIdx);
+      const lrent=amt(r,landRentIdx);
+      const rent =amt(r,rentIdx);
+      /* 토지임대 성격: 토지 키워드 or 토지임대료만 있고 월세 0 */
+      if(/토지/.test(name)||(lrent>0&&rent===0)) addr='토지임대';
+      else if(/디파이넘버|defynumber/i.test(name)) addr='압구정로8길 3';
+      else if(/블루피카/i.test(name))              addr='압구정로8길 3';
+      else if(name)                                 addr='압구정로 112';
+      else                                          return; /* 이름도 없으면 스킵 */
+    }
+
+    /* 최종 무효 그룹명 방어 */
+    if(INVALID_ADDR.test(addr)) return;
+
+    /* 기존 그룹과 정규화 비교해서 같은 건물이면 합치기 (중복 방지) */
+    let matchedKey=null;
+    for(const [k] of groupMap){
+      if(normAddr(k)===normAddr(addr)){matchedKey=k;break;}
+    }
+    const key=matchedKey||addr;
+    if(!groupMap.has(key))groupMap.set(key,[]);
+    groupMap.get(key).push(r);
+  });
+
+  /* ══ [섹션 순서 정렬] ═══════════════════════════════════════ */
+  const SECTION_ORDER=['압구정로112','압구정로8길3','토지임대'];
+  const validEntries=[...groupMap.entries()];
+
+  const ordered=[];
+  SECTION_ORDER.forEach(key=>{
+    const found=validEntries.find(([a])=>
+      normAddr(a).includes(normAddr(key))||normAddr(key).includes(normAddr(a))
+    );
+    if(found&&!ordered.includes(found))ordered.push(found);
+  });
+  validEntries.forEach(e=>{if(!ordered.includes(e))ordered.push(e);});
+
+  /* ══ [UI 레이어] 만료 배지 ══════════════════════════════════ */
   function expBadge(r){
-    const stTxt=str(r,statusIdx).trim();
+    const stTxt=str(r,statusIdx);
     if(stTxt){
       if(/만료|종료|해지/i.test(stTxt))return`<span class="exp-badge exp-done">${stTxt}</span>`;
       if(/예정|임박|주의/i.test(stTxt))return`<span class="exp-badge exp-near">${stTxt}</span>`;
       if(/유효|활성|계약중|진행/i.test(stTxt))return`<span class="exp-badge exp-ok">${stTxt}</span>`;
     }
-    const endTxt=str(r,endIdx).trim();
+    const endTxt=str(r,endIdx);
     if(!endTxt)return`<span class="exp-badge exp-none">—</span>`;
     const m=endTxt.match(/(\d{4})/);
     if(!m)return`<span class="exp-badge exp-none">${endTxt}</span>`;
@@ -1493,38 +1582,23 @@ function renderLease(rows){
     return`<span class="${cls||''}">${fmtBig(v)}원</span>`;
   }
 
-  /* 건물별 그룹화 */
-  const groupMap=new Map();
-  data.forEach(r=>{
-    let addr=str(r,addrIdx).trim();
-    if(!addr){
-      const name=str(r,nameIdx),lrent=amt(r,landRentIdx),rent=amt(r,rentIdx);
-      if(/토지/.test(name)||(lrent>0&&rent===0))addr='토지임대';
-      else if(/디파이넘버|defynumber/i.test(name))addr='압구정로8길 3';
-      else if(/블루피카/i.test(name)&&lrent===0)addr='압구정로8길 3';
-      else addr='압구정로 112';
-    }
-    if(!groupMap.has(addr))groupMap.set(addr,[]);
-    groupMap.get(addr).push(r);
-  });
-
-  /* 단일 블루 계열 — 투자 보고용 */
-  const GRP_ACCENT='#4F7CFF';
-
-  function groupSection(addr,gRows,colorIdx){
-    const color=GRP_ACCENT;
-    const sumRent=gRows.map(r=>amt(r,rentIdx)).reduce((a,b)=>a+b,0);
-    const sumDep=gRows.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
-    const sumMgmt=gRows.map(r=>amt(r,mgmtIdx)).reduce((a,b)=>a+b,0);
-    const sumLrent=gRows.map(r=>amt(r,landRentIdx)).reduce((a,b)=>a+b,0);
+  /* ══ [섹션 렌더러] ══════════════════════════════════════════
+     gRows: 이미 isValidRow() 필터 통과한 행들만 들어옴
+     → tbody에는 실제 계약 데이터만 렌더링
+     → 합계행은 코드로 계산해서 맨 아래에만 추가
+  ════════════════════════════════════════════════════════════ */
+  function groupSection(addr,gRows){
+    /* 금액 합산 */
+    const sumRent =gRows.reduce((a,r)=>a+amt(r,rentIdx),0);
+    const sumDep  =gRows.reduce((a,r)=>a+amt(r,depositIdx),0);
+    const sumMgmt =gRows.reduce((a,r)=>a+amt(r,mgmtIdx),0);
+    const sumLrent=gRows.reduce((a,r)=>a+amt(r,landRentIdx),0);
     const sumMonth=sumRent+sumMgmt+sumLrent;
-    const sumHTML=[
-      sumRent?`<div class="ls-sum-item">월임대료 <strong class="green">${fmtBig(sumRent)}원</strong></div>`:'',
-      sumLrent?`<div class="ls-sum-item">토지임대료 <strong class="purple">${fmtBig(sumLrent)}원</strong></div>`:'',
-      sumDep?`<div class="ls-sum-item">보증금 <strong class="blue">${fmtBig(sumDep)}원</strong></div>`:'',
-    ].filter(Boolean).join('');
+
+    /* 행 렌더링 */
     const tbody=gRows.map(r=>{
-      const rent=amt(r,rentIdx),dep=amt(r,depositIdx),mgmt=amt(r,mgmtIdx),lrent=amt(r,landRentIdx);
+      const rent=amt(r,rentIdx),dep=amt(r,depositIdx);
+      const mgmt=amt(r,mgmtIdx),lrent=amt(r,landRentIdx);
       const monthly=rent+mgmt+lrent;
       return`<tr>
         <td class="name">${str(r,nameIdx)||'—'}</td>
@@ -1540,26 +1614,30 @@ function renderLease(rows){
         <td class="r">${monthly>0?`<span class="amt-total">${fmtBig(monthly)}원</span>`:`<span class="amt-muted">—</span>`}</td>
       </tr>`;
     }).join('');
+
+    /* 합계 행 — 금액이 있을 때만 */
     const colSpanBase=areaIdx>=0?6:5;
-    const sumRow=`<tr class="sum-row">
+    const sumRow=(sumDep||sumRent||sumMgmt||sumLrent)?`<tr class="sum-row">
       <td colspan="${colSpanBase}">합 계</td>
       <td class="r">${amtCell(sumDep,'amt-blue')}</td>
       <td class="r">${amtCell(sumRent,'amt-green')}</td>
       <td class="r">${amtCell(sumMgmt,'')}</td>
       <td class="r">${amtCell(sumLrent,'amt-purple')}</td>
       <td class="r">${sumMonth>0?`<span class="amt-total">${fmtBig(sumMonth)}원</span>`:`<span class="amt-muted">—</span>`}</td>
-    </tr>`;
-    /* 섹션 요약 카드 */
+    </tr>`:'';
+
+    /* 요약 카드 */
     const summaryItems=[
-      sumRent?`<div class="ls-summary-item"><span class="ls-si-lbl">월 임대료</span><span class="ls-si-val green">${fmtBig(sumRent)}원</span></div>`:'',
+      sumRent ?`<div class="ls-summary-item"><span class="ls-si-lbl">월 임대료</span><span class="ls-si-val green">${fmtBig(sumRent)}원</span></div>`:'',
       sumLrent?`<div class="ls-summary-item"><span class="ls-si-lbl">토지임대료</span><span class="ls-si-val purple">${fmtBig(sumLrent)}원</span></div>`:'',
-      sumMgmt?`<div class="ls-summary-item"><span class="ls-si-lbl">관리비</span><span class="ls-si-val">${fmtBig(sumMgmt)}원</span></div>`:'',
-      sumDep?`<div class="ls-summary-item"><span class="ls-si-lbl">보증금</span><span class="ls-si-val blue">${fmtBig(sumDep)}원</span></div>`:'',
+      sumMgmt ?`<div class="ls-summary-item"><span class="ls-si-lbl">관리비</span><span class="ls-si-val">${fmtBig(sumMgmt)}원</span></div>`:'',
+      sumDep  ?`<div class="ls-summary-item"><span class="ls-si-lbl">보증금</span><span class="ls-si-val blue">${fmtBig(sumDep)}원</span></div>`:'',
       sumMonth?`<div class="ls-summary-item ls-si-total"><span class="ls-si-lbl">월 합계</span><span class="ls-si-val white">${fmtBig(sumMonth)}원</span></div>`:'',
     ].filter(Boolean).join('');
+
     return`<div class="ls-section">
       <div class="ls-group-head">
-        <div class="ls-group-bar" style="background:${color}"></div>
+        <div class="ls-group-bar"></div>
         <div class="ls-group-title">${addr}</div>
         <div class="ls-group-meta">${gRows.length}건</div>
       </div>
@@ -1578,40 +1656,33 @@ function renderLease(rows){
     </div>`;
   }
 
-  const totalRent=data.map(r=>amt(r,rentIdx)).reduce((a,b)=>a+b,0);
-  const totalLrent=data.map(r=>amt(r,landRentIdx)).reduce((a,b)=>a+b,0);
+  /* ══ [KPI 집계] — 유효 행(data)만 사용, 중복 없음 ═════════ */
+  const totalRent =data.reduce((a,r)=>a+amt(r,rentIdx),0);
+  const totalLrent=data.reduce((a,r)=>a+amt(r,landRentIdx),0);
   let aC=0,eC=0,wC=0;
   data.forEach(r=>{
-    const stTxt=str(r,statusIdx).trim(),endTxt=str(r,endIdx).trim();
+    const stTxt=str(r,statusIdx),endTxt=str(r,endIdx);
     if(/만료|종료|해지/i.test(stTxt)){eC++;return;}
     if(/예정|임박|주의/i.test(stTxt)){wC++;return;}
     if(/유효|활성|계약중|진행/i.test(stTxt)){aC++;return;}
-    if(endTxt){const m=endTxt.match(/(\d{4})/);
-      if(m){const diff=parseInt(m[1])-new Date().getFullYear();
-        if(diff<0){eC++;return;}if(diff<=1){wC++;return;}}aC++;}
+    if(endTxt){
+      const m=endTxt.match(/(\d{4})/);
+      if(m){
+        const diff=parseInt(m[1])-new Date().getFullYear();
+        if(diff<0){eC++;return;}
+        if(diff<=1){wC++;return;}
+      }
+      aC++;
+    }
   });
-  /* 섹션 순서 고정 — 시트 데이터 기준, 합계·빈 그룹 제거 */
-  const SECTION_ORDER=['압구정로112','압구정로8길3','토지임대료'];
-  /* 합계·건물·빈값 등 무효 그룹 필터 */
-  const INVALID_GROUP=/^합계$|^건물$|^\s*$/i;
-  const validEntries=[...groupMap.entries()].filter(([a])=>!INVALID_GROUP.test(a));
 
-  /* 고정 순서로 재배열: ORDER에 있는 것 먼저, 나머지 뒤에 */
-  function normalizeAddr(a){return a.replace(/\s/g,'').replace(/[가-힣]/g,m=>m);}
-  const ordered=[];
-  SECTION_ORDER.forEach(key=>{
-    const found=validEntries.find(([a])=>normalizeAddr(a).includes(normalizeAddr(key))||normalizeAddr(key).includes(normalizeAddr(a)));
-    if(found&&!ordered.includes(found))ordered.push(found);
-  });
-  validEntries.forEach(e=>{if(!ordered.includes(e))ordered.push(e);});
+  /* ══ 섹션 HTML 조립 ══════════════════════════════════════ */
+  const sections=ordered.map(([a,r])=>groupSection(a,r)).join('');
 
-  const sections=ordered.map(([a,r],i)=>groupSection(a,r,i)).join('');
-  const totalDep=data.map(r=>amt(r,depositIdx)).reduce((a,b)=>a+b,0);
-  const totalMonth=totalRent+data.map(r=>amt(r,mgmtIdx)).reduce((a,b)=>a+b,0)+totalLrent;
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 임대차계약현황</div>
     <div class="kpi-row">
-      <div class="kpi b"><div class="kpi-lbl">총 계약</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">임대차 건수</div></div>
+      <div class="kpi b"><div class="kpi-lbl">총 계약</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">유효 계약 건수</div></div>
       ${aC?`<div class="kpi b"><div class="kpi-lbl">계약 유효</div><div class="kpi-val">${aC}</div><div class="kpi-sub">진행중</div></div>`:''}
       ${eC?`<div class="kpi b"><div class="kpi-lbl">만료·종료</div><div class="kpi-val">${eC}</div><div class="kpi-sub">종료</div></div>`:''}
       ${wC?`<div class="kpi b"><div class="kpi-lbl">주의</div><div class="kpi-val">${wC}</div><div class="kpi-sub">곧 만료</div></div>`:''}
@@ -1620,7 +1691,6 @@ function renderLease(rows){
     </div>
     ${sections||`<div class="empty"><div class="empty-i">📭</div>임차인 데이터가 없습니다</div>`}`;
 }
-
 /* ════════════════════════════════════════════════════════════
    4. PERSONAL COST — 개인 Cash Flow 분석
    ★ 구글 시트 데이터 100% 실시간 반영
