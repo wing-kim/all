@@ -2278,21 +2278,7 @@ function renderPersonal(rows){
     ${parseNote}
     ${kpiHTML}
     ${summaryHTML}
-    ${cfHTML}
-    <div class="cf-section" style="margin-bottom:0">
-      <div class="cf-section-head" style="cursor:pointer;user-select:none"
-        onclick="var b=document.getElementById('personal-raw');b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.raw-toggle').textContent=b.style.display==='none'?'▶ 펼치기':'▼ 접기'">
-        <div class="cf-section-bar" style="background:var(--t4)"></div>
-        <div class="cf-section-title" style="color:var(--t3)">원본 데이터
-          <span class="raw-toggle" style="font-size:11px;font-weight:400;color:var(--t4);margin-left:6px">▶ 펼치기</span>
-        </div>
-        <div class="cf-section-sub">${rows.length}행 · 클릭하여 열기</div>
-      </div>
-      <div id="personal-raw" style="display:none;border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)">
-        <div id="personal-tbl"></div>
-      </div>
-    </div>`;
-  drawTable('personal',rows,'personal-tbl');
+    ${cfHTML}`;
 }
 /* ════════════════════════════════════════════════════════════
    5. CORP — 법인비용 Cash Flow
