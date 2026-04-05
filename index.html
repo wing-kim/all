@@ -322,6 +322,8 @@ td:first-child{color:var(--t1);font-weight:500}
   border-radius:0 0 var(--r) var(--r);overflow:hidden}
 .cf-table{width:100%;border-collapse:collapse;font-size:12.5px}
 .cf-table thead tr{background:var(--s2);border-bottom:2px solid var(--border2)}
+.cf-table thead tr:last-child th{border-bottom:none}
+.cf-table thead tr:first-child th{border-bottom:1px solid var(--border)}
 .cf-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;
   color:var(--t3);text-transform:uppercase;letter-spacing:.9px;white-space:nowrap}
 .cf-table th.r{text-align:right}
@@ -1988,9 +1990,9 @@ function renderPersonal(rows){
     return null;
   }
 
-  /* ══ 월별 통합 캐시플로우 생성 ════════════════════════════
+  /* ══ [항목 분해 캐시플로우 생성] ════════════════════════════
      각 항목의 기간(시작월~종료월)을 월 단위로 펼쳐서
-     매월 수입/지출을 집계
+     항목별 컬럼으로 분해 표시
   ════════════════════════════════════════════════════════ */
   /* 기간 범위 자동 탐지 */
   let minY=9999,maxY=0;
@@ -2003,38 +2005,73 @@ function renderPersonal(rows){
   if(minY===9999){minY=new Date().getFullYear();maxY=minY+4;}
   maxY=Math.min(maxY,minY+9); /* 최대 10년 */
 
-  /* 월별 맵 생성 */
-  const cfMap={};
-  function cfKey(y,m){return `${y}-${String(m).padStart(2,'0')}`;}
+  /* ── 항목명 → UI 컬럼명 변환 ── */
+  function toColName(itemName){
+    const n=String(itemName||'').trim();
+    if(/월임대료.*112|임대.*112/i.test(n))    return '임대(112)';
+    if(/월관리비.*112|관리비.*112/i.test(n))   return '관리비(112)';
+    if(/월임대료.*8길3|임대.*8길3/i.test(n))   return '임대(8길3)';
+    if(/월관리비.*8길3|관리비.*8길3/i.test(n)) return '관리비(8길3)';
+    if(/토지임대료/i.test(n))                  return '토지임대료';
+    if(/대출.*112/i.test(n))                   return '대출(112)';
+    if(/고정비.*112/i.test(n))                 return '고정비(112)';
+    if(/대출.*8길3/i.test(n))                  return '대출(8길3)';
+    if(/고정비.*8길3/i.test(n))                return '고정비(8길3)';
+    return n||'기타';
+  }
 
-  function addMonths(items,field){
+  /* 컬럼 순서 정의 */
+  const COL_ORDER_INC=['임대(112)','관리비(112)','임대(8길3)','관리비(8길3)','토지임대료'];
+  const COL_ORDER_EXP=['대출(112)','고정비(112)','대출(8길3)','고정비(8길3)'];
+
+  /* 각 항목에 컬럼명 부여 */
+  incomeItems.forEach(o=>{ o.col=toColName(o.item); });
+  expenseItems.forEach(o=>{ o.col=toColName(o.item); });
+
+  /* 실제 데이터에 존재하는 컬럼만 추출 (순서 유지) */
+  const activeIncCols=COL_ORDER_INC.filter(c=>incomeItems.some(o=>o.col===c));
+  const activeExpCols=COL_ORDER_EXP.filter(c=>expenseItems.some(o=>o.col===c));
+  /* 정의에 없는 항목도 포함 */
+  incomeItems.forEach(o=>{ if(!activeIncCols.includes(o.col))activeIncCols.push(o.col); });
+  expenseItems.forEach(o=>{ if(!activeExpCols.includes(o.col))activeExpCols.push(o.col); });
+  const allCols=[...activeIncCols,...activeExpCols];
+
+  /* 월별 맵 생성 — 항목별 */
+  function cfKey(y,m){return `${y}-${String(m).padStart(2,'0')}`;}
+  const cfMap={};
+
+  function addMonthsByCol(items){
     items.forEach(o=>{
       const p=parsePeriod(o.period);
       if(!p||!o.amount)return;
-      /* 시작월~종료월 loop */
       let cy=p.sy,cm=p.sm;
       while(cy<p.ey||(cy===p.ey&&cm<=p.em)){
         if(cy>=minY&&cy<=maxY){
           const k=cfKey(cy,cm);
-          if(!cfMap[k])cfMap[k]={y:cy,m:cm,inc:0,exp:0};
-          cfMap[k][field]+=o.amount;
+          if(!cfMap[k]){cfMap[k]={y:cy,m:cm}; allCols.forEach(c=>{cfMap[k][c]=0;});}
+          cfMap[k][o.col]=(cfMap[k][o.col]||0)+o.amount;
         }
         cm++;if(cm>12){cm=1;cy++;}
       }
     });
   }
-  addMonths(incomeItems,'inc');
-  addMonths(expenseItems,'exp');
+  addMonthsByCol(incomeItems);
+  addMonthsByCol(expenseItems);
 
-  /* 정렬된 월별 배열 */
+  /* 정렬된 월별 배열 + 순현금흐름 계산 */
   const cfRows=Object.keys(cfMap).sort().map(k=>{
     const r=cfMap[k];
-    return{y:r.y,m:r.m,inc:r.inc,exp:r.exp,net:r.inc-r.exp};
+    const incSum=activeIncCols.reduce((a,c)=>a+(r[c]||0),0);
+    const expSum=activeExpCols.reduce((a,c)=>a+(r[c]||0),0);
+    return{...r, incSum, expSum, net:incSum-expSum};
   });
 
   /* 누적 계산 */
   let cumNet=0;
   cfRows.forEach(r=>{r.cum=cumNet+=r.net;});
+
+  /* 기존 호환용 inc/exp 필드 (KPI 등에서 사용) */
+  cfRows.forEach(r=>{r.inc=r.incSum;r.exp=r.expSum;});
 
   /* ══ [KPI] 색상 강화 ══════════════════════════════════════
      총수입→green / 총지출→red / 순현금흐름→blue강조 / 총항목→purple
@@ -2134,94 +2171,133 @@ function renderPersonal(rows){
      탭 3개: 통합(수입+지출) / 수입만 / 지출만
      탭 전환은 순수 JS — 데이터 재계산 없음
   ════════════════════════════════════════════════════════ */
+  /* ══ [항목 분해 캐시플로우 테이블 빌더] ════════════════════
+     연월 | 수입항목... | 지출항목... | 순현금흐름 | 누적
+  ════════════════════════════════════════════════════════ */
+  const totalCols=allCols.length+3; /* 연월 + allCols + 순현금흐름 + 누적 */
   const noDataRow=(cols)=>`<tr><td colspan="${cols}" style="text-align:center;padding:30px;color:var(--t4)">
     해당 기간 데이터 없음</td></tr>`;
 
-  /* 통합 탭: 연월 | 수입 | 지출 | 순현금흐름 | 누적 */
+  /* 만원 단위 포맷 (0→"-") */
+  function fmtW(v){
+    if(!v||v===0)return`<span class="dim">—</span>`;
+    const w=Math.round(v/10000);
+    if(w===0)return`<span class="dim">—</span>`;
+    return w.toLocaleString('ko-KR')+'만';
+  }
+
   function buildAllTable(){
-    if(!cfRows.length)return noDataRow(5);
-    let html='',lastY=null,yrInc=0,yrExp=0;
-    cfRows.forEach(({y,m,inc,exp,net,cum})=>{
+    if(!cfRows.length)return noDataRow(totalCols);
+    let html='',lastY=null;
+    /* 연도 소계용 */
+    let yrCols={};allCols.forEach(c=>{yrCols[c]=0;});
+    let yrNet=0;
+
+    cfRows.forEach(({y,m,...r})=>{
       if(y!==lastY){
-        if(lastY!==null)html+=`<tr class="yr-total">
-          <td>${lastY}년 소계</td>
-          <td class="r"><span class="inc">${fmtBig(yrInc)}원</span></td>
-          <td class="r"><span class="exp">${fmtBig(yrExp)}원</span></td>
-          <td class="r"><span class="${yrInc-yrExp>=0?'neu':'exp'}">${yrInc-yrExp>=0?'+':''}${fmtBig(yrInc-yrExp)}원</span></td>
-          <td></td></tr>`;
-        html+=`<tr class="yr-group"><td colspan="5">${y}년</td></tr>`;
-        lastY=y;yrInc=0;yrExp=0;
+        if(lastY!==null){
+          /* 연도 소계 행 */
+          const yrIncSum=activeIncCols.reduce((a,c)=>a+(yrCols[c]||0),0);
+          const yrExpSum=activeExpCols.reduce((a,c)=>a+(yrCols[c]||0),0);
+          html+=`<tr class="yr-total">
+            <td>${lastY}년 소계</td>
+            ${activeIncCols.map(c=>`<td class="r">${yrCols[c]?`<span class="inc" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+            ${activeExpCols.map(c=>`<td class="r">${yrCols[c]?`<span class="exp" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+            <td class="r"><span class="${yrNet>=0?'neu':'exp'}" style="font-size:11px">${yrNet>=0?'+':''}${fmtW(yrNet)}</span></td>
+            <td></td>
+          </tr>`;
+          allCols.forEach(c=>{yrCols[c]=0;});yrNet=0;
+        }
+        html+=`<tr class="yr-group"><td colspan="${totalCols}">${y}년</td></tr>`;
+        lastY=y;
       }
-      yrInc+=inc;yrExp+=exp;
+      allCols.forEach(c=>{yrCols[c]=(yrCols[c]||0)+(r[c]||0);});
+      const net=r.net,cum=r.cum;
+      yrNet+=net;
       html+=`<tr>
         <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
-        <td class="r">${inc?`<span class="inc">${fmtBig(inc)}원</span>`:`<span class="dim">—</span>`}</td>
-        <td class="r">${exp?`<span class="exp">${fmtBig(exp)}원</span>`:`<span class="dim">—</span>`}</td>
-        <td class="r"><span class="${net>=0?'neu':'exp'}" style="font-weight:600">${net>=0?'+':''}${fmtBig(net)}원</span></td>
-        <td class="r" style="font-size:11px;color:var(--t3)">${cum>=0?'+':''}${fmtBig(cum)}원</td>
+        ${activeIncCols.map(c=>`<td class="r">${r[c]?`<span class="inc">${fmtW(r[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        ${activeExpCols.map(c=>`<td class="r">${r[c]?`<span class="exp">${fmtW(r[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        <td class="r"><span class="${net>=0?'neu':'exp'}" style="font-weight:700">${net>=0?'+':''}${fmtW(net)}</span></td>
+        <td class="r" style="font-size:11px;color:var(--t3)">${cum>=0?'+':''}${fmtW(cum)}</td>
       </tr>`;
     });
-    if(lastY)html+=`<tr class="yr-total">
-      <td>${lastY}년 소계</td>
-      <td class="r"><span class="inc">${fmtBig(yrInc)}원</span></td>
-      <td class="r"><span class="exp">${fmtBig(yrExp)}원</span></td>
-      <td class="r"><span class="${yrInc-yrExp>=0?'neu':'exp'}">${yrInc-yrExp>=0?'+':''}${fmtBig(yrInc-yrExp)}원</span></td>
-      <td></td></tr>`;
+    /* 마지막 연도 소계 */
+    if(lastY){
+      const yrIncSum=activeIncCols.reduce((a,c)=>a+(yrCols[c]||0),0);
+      html+=`<tr class="yr-total">
+        <td>${lastY}년 소계</td>
+        ${activeIncCols.map(c=>`<td class="r">${yrCols[c]?`<span class="inc" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        ${activeExpCols.map(c=>`<td class="r">${yrCols[c]?`<span class="exp" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        <td class="r"><span class="${yrNet>=0?'neu':'exp'}" style="font-size:11px">${yrNet>=0?'+':''}${fmtW(yrNet)}</span></td>
+        <td></td>
+      </tr>`;
+    }
     return html;
   }
 
-  /* 수입 탭: 연월 | 수입 | 누적 수입 */
+  /* 수입 탭: 연월 | 수입항목별 | 수입 계 | 누적 수입 */
   function buildIncTable(){
-    const rows=cfRows.filter(r=>r.inc>0);
-    if(!rows.length)return noDataRow(3);
-    let html='',lastY=null,yrSum=0,cum=0;
-    rows.forEach(({y,m,inc})=>{
+    const rows=cfRows.filter(r=>r.incSum>0);
+    if(!rows.length)return noDataRow(activeIncCols.length+3);
+    let html='',lastY=null,yrCols={},yrSum=0,cum=0;
+    activeIncCols.forEach(c=>{yrCols[c]=0;});
+    rows.forEach(({y,m,...r})=>{
       if(y!==lastY){
         if(lastY!==null)html+=`<tr class="yr-total">
           <td>${lastY}년 소계</td>
-          <td class="r"><span class="inc">${fmtBig(yrSum)}원</span></td>
+          ${activeIncCols.map(c=>`<td class="r">${yrCols[c]?`<span class="inc" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+          <td class="r"><span class="inc" style="font-size:11px">${fmtW(yrSum)}</span></td>
           <td></td></tr>`;
-        html+=`<tr class="yr-group"><td colspan="3">${y}년</td></tr>`;
-        lastY=y;yrSum=0;
+        html+=`<tr class="yr-group"><td colspan="${activeIncCols.length+3}">${y}년</td></tr>`;
+        lastY=y;activeIncCols.forEach(c=>{yrCols[c]=0;});yrSum=0;
       }
-      yrSum+=inc;cum+=inc;
+      const rowInc=r.incSum;yrSum+=rowInc;cum+=rowInc;
+      activeIncCols.forEach(c=>{yrCols[c]=(yrCols[c]||0)+(r[c]||0);});
       html+=`<tr>
         <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
-        <td class="r"><span class="inc">${fmtBig(inc)}원</span></td>
-        <td class="r" style="font-size:11px;color:var(--t3)">+${fmtBig(cum)}원</td>
+        ${activeIncCols.map(c=>`<td class="r">${r[c]?`<span class="inc">${fmtW(r[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        <td class="r"><span class="inc" style="font-weight:600">${fmtW(rowInc)}</span></td>
+        <td class="r" style="font-size:11px;color:var(--t3)">+${fmtW(cum)}</td>
       </tr>`;
     });
     if(lastY)html+=`<tr class="yr-total">
       <td>${lastY}년 소계</td>
-      <td class="r"><span class="inc">${fmtBig(yrSum)}원</span></td>
+      ${activeIncCols.map(c=>`<td class="r">${yrCols[c]?`<span class="inc" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+      <td class="r"><span class="inc" style="font-size:11px">${fmtW(yrSum)}</span></td>
       <td></td></tr>`;
     return html;
   }
 
-  /* 지출 탭: 연월 | 지출 | 누적 지출 */
+  /* 지출 탭: 연월 | 지출항목별 | 지출 계 | 누적 지출 */
   function buildExpTable(){
-    const rows=cfRows.filter(r=>r.exp>0);
-    if(!rows.length)return noDataRow(3);
-    let html='',lastY=null,yrSum=0,cum=0;
-    rows.forEach(({y,m,exp})=>{
+    const rows=cfRows.filter(r=>r.expSum>0);
+    if(!rows.length)return noDataRow(activeExpCols.length+3);
+    let html='',lastY=null,yrCols={},yrSum=0,cum=0;
+    activeExpCols.forEach(c=>{yrCols[c]=0;});
+    rows.forEach(({y,m,...r})=>{
       if(y!==lastY){
         if(lastY!==null)html+=`<tr class="yr-total">
           <td>${lastY}년 소계</td>
-          <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+          ${activeExpCols.map(c=>`<td class="r">${yrCols[c]?`<span class="exp" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+          <td class="r"><span class="exp" style="font-size:11px">${fmtW(yrSum)}</span></td>
           <td></td></tr>`;
-        html+=`<tr class="yr-group"><td colspan="3">${y}년</td></tr>`;
-        lastY=y;yrSum=0;
+        html+=`<tr class="yr-group"><td colspan="${activeExpCols.length+3}">${y}년</td></tr>`;
+        lastY=y;activeExpCols.forEach(c=>{yrCols[c]=0;});yrSum=0;
       }
-      yrSum+=exp;cum+=exp;
+      const rowExp=r.expSum;yrSum+=rowExp;cum+=rowExp;
+      activeExpCols.forEach(c=>{yrCols[c]=(yrCols[c]||0)+(r[c]||0);});
       html+=`<tr>
         <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
-        <td class="r"><span class="exp">${fmtBig(exp)}원</span></td>
-        <td class="r" style="font-size:11px;color:var(--t3)">-${fmtBig(cum)}원</td>
+        ${activeExpCols.map(c=>`<td class="r">${r[c]?`<span class="exp">${fmtW(r[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+        <td class="r"><span class="exp" style="font-weight:600">${fmtW(rowExp)}</span></td>
+        <td class="r" style="font-size:11px;color:var(--t3)">-${fmtW(cum)}</td>
       </tr>`;
     });
     if(lastY)html+=`<tr class="yr-total">
       <td>${lastY}년 소계</td>
-      <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+      ${activeExpCols.map(c=>`<td class="r">${yrCols[c]?`<span class="exp" style="font-size:11px">${fmtW(yrCols[c])}</span>`:`<span class="dim">—</span>`}</td>`).join('')}
+      <td class="r"><span class="exp" style="font-size:11px">${fmtW(yrSum)}</span></td>
       <td></td></tr>`;
     return html;
   }
@@ -2245,26 +2321,32 @@ function renderPersonal(rows){
   const cfHTML=`<div class="cf-section">
     <div class="cf-section-head">
       <div class="cf-section-bar" style="background:var(--blue)"></div>
-      <div class="cf-section-title">월별 캐시플로우</div>
-      <div class="cf-section-sub">${cfRows.length}개월</div>
+      <div class="cf-section-title">월별 캐시플로우 · 항목 분해</div>
+      <div class="cf-section-sub">${cfRows.length}개월 · 만원 단위</div>
     </div>
     <div style="background:var(--s1);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r)">
       <!-- 탭 바 -->
       <div class="cf-tab-bar" id="cf-tabs">
-        <button class="cf-tab-btn active" onclick="cfTab('all',this)">수입+지출 통합</button>
+        <button class="cf-tab-btn active" onclick="cfTab('all',this)">항목 분해</button>
         <button class="cf-tab-btn"        onclick="cfTab('inc',this)">수입</button>
         <button class="cf-tab-btn"        onclick="cfTab('exp',this)">지출</button>
       </div>
-      <!-- 통합 -->
+      <!-- 항목 분해 통합 -->
       <div class="cf-tab-pane active" id="cf-pane-all" style="overflow-x:auto">
         <table class="cf-table">
-          <thead><tr>
-            <th>연월</th>
-            <th class="r" style="color:var(--green)">수입</th>
-            <th class="r" style="color:var(--red)">지출</th>
-            <th class="r" style="color:var(--blue)">순현금흐름</th>
-            <th class="r">누적</th>
-          </tr></thead>
+          <thead>
+            <tr>
+              <th rowspan="2">연월</th>
+              ${activeIncCols.length?`<th colspan="${activeIncCols.length}" style="text-align:center;color:var(--green);border-bottom:2px solid var(--green);background:rgba(34,209,134,.05)">📥 수입</th>`:''}
+              ${activeExpCols.length?`<th colspan="${activeExpCols.length}" style="text-align:center;color:var(--red);border-bottom:2px solid var(--red);background:rgba(240,56,96,.05)">📤 지출</th>`:''}
+              <th rowspan="2" class="r" style="color:var(--blue)">순현금흐름</th>
+              <th rowspan="2" class="r">누적</th>
+            </tr>
+            <tr>
+              ${activeIncCols.map(c=>`<th class="r" style="color:var(--green);font-size:9.5px;background:rgba(34,209,134,.04)">${c}</th>`).join('')}
+              ${activeExpCols.map(c=>`<th class="r" style="color:var(--red);font-size:9.5px;background:rgba(240,56,96,.04)">${c}</th>`).join('')}
+            </tr>
+          </thead>
           <tbody>${buildAllTable()}</tbody>
         </table>
       </div>
@@ -2273,7 +2355,8 @@ function renderPersonal(rows){
         <table class="cf-table">
           <thead><tr>
             <th>연월</th>
-            <th class="r" style="color:var(--green)">월 수입</th>
+            ${activeIncCols.map(c=>`<th class="r" style="color:var(--green)">${c}</th>`).join('')}
+            <th class="r" style="color:var(--green)">월 수입 계</th>
             <th class="r">누적 수입</th>
           </tr></thead>
           <tbody>${buildIncTable()}</tbody>
@@ -2284,7 +2367,8 @@ function renderPersonal(rows){
         <table class="cf-table">
           <thead><tr>
             <th>연월</th>
-            <th class="r" style="color:var(--red)">월 지출</th>
+            ${activeExpCols.map(c=>`<th class="r" style="color:var(--red)">${c}</th>`).join('')}
+            <th class="r" style="color:var(--red)">월 지출 계</th>
             <th class="r">누적 지출</th>
           </tr></thead>
           <tbody>${buildExpTable()}</tbody>
