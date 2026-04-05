@@ -795,208 +795,199 @@ function renderIRR(rows){
   function norm(s){return String(s||'').replace(/[\s　]/g,'').toLowerCase();}
 
   /* 필지명 정규화 */
-  function classifyAddr(raw){
-    const s=norm(raw);
-    if(/압구정.*112|112.*압구정|압구정로112/.test(s)) return '압구정로 112';
-    if(/압구정.*8길|8길.*압구정|압구정로8길/.test(s))  return '압구정로8길 3';
-    return null;
+  /* ══════════════════════════════════════════════════════════════
+     [데이터 레이어] IRR 시트 — 행=항목, 열=필지 구조 전용 파서
+     시트 구조:
+       열0: 항목명 (매입연도 / 면적 / 매입 총액 / 대출 / ...)
+       열1: 압구정로 112 값
+       열2: 압구정로 8길 3 값
+       열3: 비고 (선택)
+     헤더 행: 항목 | 압구정로 112 | 압구정로 8길 3 | 비고
+     ★ 하드코딩 없음 — 헤더/행 라벨 기반 자동 탐색
+  ══════════════════════════════════════════════════════════════ */
+
+  /* ── 정규화 유틸: 공백·특수문자 제거 + 소문자 ── */
+  function n(s){return String(s||'').replace(/[\s　\(\)（）]/g,'').toLowerCase();}
+
+  /* ── 열 탐색: 헤더에서 필지명 컬럼 인덱스 찾기 ──
+     "압구정로 112", "압구정로112", "압구정로112호" 등 모두 대응
+     "압구정로 8길", "압구정로8길", "압구정로8길3" 등 모두 대응  */
+  function findCol112(hdr){
+    return hdr.findIndex(h=>{
+      const s=n(h);
+      return /압구정.*112/.test(s)||/112.*압구정/.test(s);
+    });
+  }
+  function findCol8(hdr){
+    return hdr.findIndex(h=>{
+      const s=n(h);
+      return /압구정.*8길/.test(s)||/8길.*압구정/.test(s);
+    });
   }
 
-  /* ── 구조 감지 ──────────────────────────────────────────────
-     헤더 행(hdr) 또는 첫 번째 컬럼에 필지 주소가 있으면 구조A
-     헤더 행에 필지 주소가 있으면 구조B                        */
-  const hdrAddr0=classifyAddr(hdr[0]); // 첫 헤더가 주소면 구조B 힌트
-  const hdrHasAddr=hdr.some(h=>classifyAddr(h));
-  const col0HasAddr=data.some(r=>classifyAddr(r[0]));
+  /* ── 항목명 열 탐색: 숫자가 아닌 텍스트 컬럼 ──
+     보통 열0, 하지만 필지 컬럼과 겹치면 제외 */
+  const col112=findCol112(hdr);
+  const col8  =findCol8(hdr);
+  /* 항목명 열: 필지 열이 아닌 첫 번째 열 */
+  const labelCol=[0,1,2,3].find(i=>i!==col112&&i!==col8&&hdr[i]!==undefined)??0;
 
-  /* 구조B 판별: 헤더에 필지명이 있는 경우 */
-  const isStructureB=hdrHasAddr&&!col0HasAddr;
+  /* 비고 열 탐색 */
+  const noteCol=hdr.findIndex((h,i)=>i!==col112&&i!==col8&&i!==labelCol&&/비고|메모|note|remark/i.test(h));
 
-  console.log('[IRR 구조 감지]',{
-    isStructureB, hdrHasAddr, col0HasAddr,
-    hdr: hdr.map((h,i)=>`[${i}]${h}`),
-    first3rows: data.slice(0,3).map(r=>r.join(' | '))
+  console.log('[IRR 시트 구조]',{
+    col112, col8, labelCol, noteCol,
+    headers: hdr.map((h,i)=>`[${i}]"${h}"`).join(', '),
+    sampleRows: data.slice(0,3).map(r=>r.join(' | '))
   });
 
-  /* ══ 구조B 파싱: 행=속성(항목명), 열=필지 ═══════════════════
-     예시:
-       헤더:  항목     | 압구정로112 | 압구정로8길3
-       행1:   매입가   | 70000000000 | 61000000000
-       행2:   대출     | 35000000000 | 5000
-       ...
-  ════════════════════════════════════════════════════════════ */
-  function parseStructureB(){
-    /* 필지별 컬럼 인덱스 탐색 */
-    const colA=hdr.findIndex(h=>classifyAddr(h)==='압구정로 112');
-    const colB=hdr.findIndex(h=>classifyAddr(h)==='압구정로8길 3');
-    /* 속성(항목) 컬럼 — 0번 또는 첫 번째 텍스트 컬럼 */
-    const labelCol=hdr.findIndex((h,i)=>i!==colA&&i!==colB&&h);
+  /* ── 행 라벨 기반 값 추출 ──────────────────────────────────────
+     propPats: 항목명에 매칭할 정규식 배열 (OR 조건)
+     colIdx:   읽을 열 인덱스 (col112 or col8)
+  ─────────────────────────────────────────────────────────────── */
+  function getVal(propPats, colIdx){
+    if(colIdx<0) return '';
+    const row=data.find(r=>propPats.some(p=>p.test(n(r[labelCol]||r[0]||''))));
+    if(!row) return '';
+    return (row[colIdx]||'').trim();
+  }
+  function getNum(propPats, colIdx){
+    const raw=getVal(propPats,colIdx);
+    if(!raw) return 0;
+    return parseAmt(raw);
+  }
 
-    console.log('[IRR 구조B 컬럼]',{colA,colB,labelCol});
-
-    /* 행에서 속성명을 보고 값 추출 */
-    function rowVal(propPat,colIdx){
-      if(colIdx<0)return 0;
-      const r=data.find(row=>propPat.test(norm(row[labelCol]||row[0]||'')));
-      return r?parseAmt(r[colIdx]):0;
-    }
-    function rowStr(propPat,colIdx){
-      if(colIdx<0)return '';
-      const r=data.find(row=>propPat.test(norm(row[labelCol]||row[0]||'')));
-      return r?(r[colIdx]||''):'';
-    }
-
-    function buildCard(addr,col,tagLabel,tagCls,accent){
-      if(col<0)return '';
-      const buyP   =rowVal(/매입가|매입총액|취득가|매매가/,col);
-      const loan   =rowVal(/대출(?!금리)|차입|담보/,col);
-      const deposit=rowVal(/보증금/,col);
-      const rent   =rowVal(/월세|월임대료|임대료/,col);
-      const landPr =rowVal(/공시지가(?!기준|합|총)|단위공시|㎡당/,col);
-      const landTot=rowVal(/공시지가기준|공시.*총|토지가격/,col);
-      const loanR  =rowStr(/금리|이율|대출금리/,col);
-      const year   =rowStr(/매입년|매입연도|취득년|취득일/,col);
-      const area   =rowStr(/면적|㎡|평수/,col);
-      const note   =rowStr(/비고|메모/,col);
-      const areaNum=parseFloat(String(area).replace(/[^0-9.]/g,''))||0;
-      const landCalc=landTot||(landPr&&areaNum?landPr*areaNum:0);
-      const metaLine=[year?`${year}년 매입`:'',area,note].filter(Boolean).join(' · ');
-      const hasData=buyP||loan||deposit||rent||landPr||landCalc;
-      const row=(lbl,val,cls='')=>val?`<div class="prop-row"><span class="prop-key">${lbl}</span><span class="prop-val${cls?' '+cls:''}">${val}</span></div>`:'';
-      return `<div class="prop-card" style="--accent:${accent}">
-        <div class="prop-head">
-          <div><div class="prop-addr">${addr}</div>${metaLine?`<div class="prop-meta">${metaLine}</div>`:''}</div>
-          <span class="irr-addr-tag ${tagCls}">${tagLabel}</span>
-        </div>
-        <div class="prop-body">
-          ${hasData?`
-            ${row('매입 총액',buyP?fmtBig(buyP)+'원':'','pv-red')}
-            ${row('대출',loan?fmtBig(loan)+'원':'','pv-blue')}
-            ${row('보증금',deposit?fmtBig(deposit)+'원':'')}
-            ${row('월 임대료',rent?fmtBig(rent)+'원/월':'','pv-green')}
-            ${loanR?row('대출 금리',loanR):''}
-            ${row('공시지가',landPr?fmtBig(landPr)+'원/㎡':'')}
-            ${landCalc?`<div class="prop-land-box"><span class="prop-land-lbl">🏛️ 공시지가 기준 토지 가격</span><span class="prop-land-val">${fmtBig(landCalc)}원</span></div>`:''}
-          `:`<div style="padding:14px 0;text-align:center;font-size:12px;color:var(--t4)">
-            시트에서 값을 읽지 못했습니다.<br>
-            <span style="font-size:10px">F12 콘솔 → [IRR 구조B 컬럼] 확인</span>
-          </div>`}
-        </div>
-      </div>`;
-    }
-
-    /* 구조B용 groups도 생성 (irrCalcRun에서 사용) */
-    const grpA={addr:'압구정로 112', rows:data.map(r=>({...r, _val:r[colA]}))};
-    const grpB={addr:'압구정로8길 3',rows:data.map(r=>({...r, _val:r[colB]}))};
-
+  /* ── 필지별 값 수집 ─────────────────────────────────────────── */
+  function extractProp(colIdx){
     return{
-      html:[
-        buildCard('압구정로 112',colA,'A필지','tag-a','#4F7CFF'),
-        buildCard('압구정로8길 3',colB,'B필지','tag-b','#3a6ee8')
-      ].filter(Boolean).join(''),
-      groups:[grpA,grpB],
-      colA,colB,labelCol
+      /* 연도: 숫자 4자리 그대로 표시 */
+      year    : getVal([/매입연도|매입년|취득년|취득일|매입일/],colIdx),
+      /* 면적: 숫자 값 + ㎡ */
+      area    : getVal([/면적/],colIdx),
+      /* 금액 항목들 */
+      buyP    : getNum([/매입총액|매입가|취득가|매매가|매입금액/],colIdx),
+      loan    : getNum([/대출(?!금리)/],colIdx),
+      deposit : getNum([/보증금/],colIdx),
+      rent    : getNum([/월세|월임대료|임대료(?!보)/],colIdx),
+      landPr  : getNum([/공시지가(?!기준|합|총|현재)/],colIdx),
+      landTot : getNum([/현재가치|공시지가기준|토지가격|공시총액/],colIdx),
+      loanRate: getVal([/금리|이율|대출금리/],colIdx),
+      note    : noteCol>=0?getVal([/.*/],noteCol):'',
     };
   }
 
-  /* ══ 구조A 파싱: 행=필지, 열=속성 ════════════════════════════ */
-  function parseStructureA(){
-    /* 컬럼 탐색 */
-    function fi(pats){return hdr.findIndex(h=>pats.some(p=>p.test(norm(h))));}
-    const addrIdx    =fi([/주소|소재지|위치|필지|부동산|건물명|address/]);
-    const yearIdx    =fi([/매입년|매입연도|취득년|year|매입일/]);
-    const areaIdx    =fi([/면적|㎡|평수|area/]);
-    const buyPriceIdx=fi([/매입가|매입총액|취득가|purchase|매입금액|매매가/]);
-    const loanIdx    =fi([/대출(?!금리|이율)|loan(?!rate)|담보|차입|융자/]);
-    const depositIdx =fi([/보증금|deposit/]);
-    const rentIdx    =fi([/월세|월임대료|임대료(?!보)|월수입|rent/]);
-    const landPrIdx  =fi([/공시지가(?!기준|합계|총액)|단위공시|㎡당공시/]);
-    const landTotIdx =fi([/공시지가기준|공시.*총|토지가격|공시총액/]);
-    const loanRateIdx=fi([/금리|이율|대출금리|interest/]);
-    const noteIdx    =fi([/비고|메모|note/]);
+  const propA=col112>=0?extractProp(col112):null;
+  const propB=col8  >=0?extractProp(col8  ):null;
 
-    /* 필지별 그룹핑 */
-    let groups=[];
-    const tryGroup=(keyFn)=>{
-      const map={};
-      data.forEach(r=>{
-        const k=classifyAddr(keyFn(r))||keyFn(r)||'기타';
-        if(!map[k])map[k]=[];
-        map[k].push(r);
-      });
-      return Object.entries(map).filter(([a])=>a!=='기타').map(([addr,rows])=>({addr,rows}));
-    };
+  console.log('[IRR 필지값]',{
+    A: propA,
+    B: propB
+  });
 
-    if(addrIdx>=0) groups=tryGroup(r=>(r[addrIdx]||'').trim());
-    if(!groups.length) groups=tryGroup(r=>r.map(c=>classifyAddr(c)).find(v=>v)||'');
-    if(!groups.length){
-      const h=Math.ceil(data.length/2);
-      groups=[{addr:'압구정로 112',rows:data.slice(0,h)},{addr:'압구정로8길 3',rows:data.slice(h)}];
+  /* ── 카드 HTML 빌더 ─────────────────────────────────────────── */
+  function buildCard(addr,p,tagLabel,tagCls,accent){
+    if(!p) return '';
+
+    /* 면적 숫자 추출 */
+    const areaNum=parseFloat(String(p.area).replace(/[^0-9.]/g,''))||0;
+    /* 현재가치 우선, 없으면 공시지가 × 면적 */
+    const landCalc=p.landTot||(p.landPr&&areaNum?p.landPr*areaNum:0);
+
+    const hasData=p.buyP||p.loan||p.deposit||p.rent||p.landPr||landCalc;
+
+    /* 메타 한 줄: 연도 + 면적 */
+    const metaParts=[
+      p.year?`${p.year}년 매입`:'',
+      areaNum?`${areaNum.toLocaleString()}㎡`:(p.area?p.area+'㎡':'')
+    ].filter(Boolean);
+    const metaLine=metaParts.join(' · ');
+
+    /* 행 빌더 */
+    const row=(lbl,val,cls='')=>val
+      ?`<div class="prop-row"><span class="prop-key">${lbl}</span><span class="prop-val${cls?' '+cls:''}">${val}</span></div>`
+      :'';
+
+    const noDataMsg=`<div style="padding:14px 0;text-align:center;font-size:12px;color:var(--t4)">
+      시트에서 값을 읽지 못했습니다.<br>
+      <span style="font-size:10px">F12 콘솔 → [IRR 시트 구조] 로그에서<br>헤더와 행 목록을 확인하세요</span>
+    </div>`;
+
+    return`<div class="prop-card" style="--accent:${accent}">
+      <div class="prop-head">
+        <div>
+          <div class="prop-addr">${addr}</div>
+          ${metaLine?`<div class="prop-meta">${metaLine}</div>`:''}
+        </div>
+        <span class="irr-addr-tag ${tagCls}">${tagLabel}</span>
+      </div>
+      <div class="prop-body">
+        ${hasData?`
+          ${row('매입 총액', p.buyP   ?fmtBig(p.buyP)+'원'    :'','pv-red')}
+          ${row('대출',      p.loan   ?fmtBig(p.loan)+'원'    :'','pv-blue')}
+          ${row('보증금',    p.deposit?fmtBig(p.deposit)+'원' :'')}
+          ${row('월 임대료', p.rent   ?fmtBig(p.rent)+'원/월' :'','pv-green')}
+          ${p.loanRate?row('대출 금리',p.loanRate):''}
+          ${row('공시지가',  p.landPr ?fmtBig(p.landPr)+'원/㎡':'')}
+          ${landCalc?`<div class="prop-land-box">
+            <span class="prop-land-lbl">🏛️ 현재 토지 가치</span>
+            <span class="prop-land-val">${fmtBig(landCalc)}원</span>
+          </div>`:''}
+        `:noDataMsg}
+      </div>
+    </div>`;
+  }
+
+  /* ── 카드 HTML 조립 ── */
+  const propCardsHTML=[
+    buildCard('압구정로 112',  propA,'A필지','tag-a','#4F7CFF'),
+    buildCard('압구정로 8길 3',propB,'B필지','tag-b','#3a6ee8')
+  ].filter(Boolean).join('');
+
+  /* ── groups 생성 (irrCalcRun 계산기에 필요) ── */
+  /* 구조B에서 각 필지의 집약 데이터를 계산기가 참조할 수 있도록 pseudo-row 생성 */
+  function makeGroupRow(p){
+    /* 계산기가 사용하는 av(r,idx) 패턴 대신 직접 값 배열을 만들어 전달 */
+    const r=new Array(hdr.length).fill('');
+    if(col112>=0||col8>=0){
+      /* buyPriceIdx 등 계산기 참조용 인덱스는 _irrSheetData에서 설정 */
     }
-    groups.sort((a,b)=>(/112/.test(a.addr)?0:1)-(/112/.test(b.addr)?0:1));
-
-    const ACCENTS=['#4F7CFF','#3a6ee8'];
-    const html=groups.map((g,idx)=>{
-      const{addr,rows:gd}=g;
-      const rep=gd[0]||[];
-      const sumAv=(ci)=>ci>=0?gd.reduce((s,r)=>s+av(r,ci),0):0;
-      const year   =sv(rep,yearIdx)||gd.map(r=>sv(r,yearIdx)).find(v=>v)||'';
-      const area   =sv(rep,areaIdx)||gd.map(r=>sv(r,areaIdx)).find(v=>v)||'';
-      const buyP   =av(rep,buyPriceIdx)||sumAv(buyPriceIdx);
-      const loan   =av(rep,loanIdx)||sumAv(loanIdx);
-      const deposit=av(rep,depositIdx)||sumAv(depositIdx);
-      const rent   =av(rep,rentIdx)||sumAv(rentIdx);
-      const landPr =av(rep,landPrIdx)||sumAv(landPrIdx);
-      const landTot=av(rep,landTotIdx)||sumAv(landTotIdx);
-      const loanR  =sv(rep,loanRateIdx)||gd.map(r=>sv(r,loanRateIdx)).find(v=>v&&/\d/.test(v))||'';
-      const note   =sv(rep,noteIdx);
-      const areaNum=parseFloat(String(area).replace(/[^0-9.]/g,''))||0;
-      const landCalc=landTot||(landPr&&areaNum?landPr*areaNum:0);
-      const metaLine=[year?`${year}년 매입`:'',area,note].filter(Boolean).join(' · ');
-      const tagLabel=idx===0?'A필지':'B필지';
-      const tagCls  =idx===0?'tag-a':'tag-b';
-      const hasData=buyP||loan||deposit||rent||landPr||landCalc;
-      const row=(lbl,val,cls='')=>val?`<div class="prop-row"><span class="prop-key">${lbl}</span><span class="prop-val${cls?' '+cls:''}">${val}</span></div>`:'';
-      return `<div class="prop-card" style="--accent:${ACCENTS[idx%2]}">
-        <div class="prop-head">
-          <div><div class="prop-addr">${addr}</div>${metaLine?`<div class="prop-meta">${metaLine}</div>`:''}</div>
-          <span class="irr-addr-tag ${tagCls}">${tagLabel}</span>
-        </div>
-        <div class="prop-body">
-          ${hasData?`
-            ${row('매입 총액',buyP?fmtBig(buyP)+'원':'','pv-red')}
-            ${row('대출',loan?fmtBig(loan)+'원':'','pv-blue')}
-            ${row('보증금',deposit?fmtBig(deposit)+'원':'')}
-            ${row('월 임대료',rent?fmtBig(rent)+'원/월':'','pv-green')}
-            ${loanR?row('대출 금리',loanR):''}
-            ${row('공시지가',landPr?fmtBig(landPr)+'원/㎡':'')}
-            ${landCalc?`<div class="prop-land-box"><span class="prop-land-lbl">🏛️ 공시지가 기준 토지 가격</span><span class="prop-land-val">${fmtBig(landCalc)}원</span></div>`:''}
-            ${gd.length>1?`<div style="margin-top:8px;font-size:10px;color:var(--t4)">${gd.length}개 행 합산 기준</div>`:''}
-          `:`<div style="padding:14px 0;text-align:center;font-size:12px;color:var(--t4)">
-            시트에서 값을 읽지 못했습니다.<br>
-            <span style="font-size:10px">F12 콘솔 → [IRR 구조 감지] 확인 후 알려주세요</span>
-          </div>`}
-        </div>
-      </div>`;
-    }).join('');
-    return{html,groups};
+    return r;
   }
+  const groups=[
+    {addr:'압구정로 112',  rows:data, _propData:propA, _col:col112},
+    {addr:'압구정로 8길 3',rows:data, _propData:propB, _col:col8}
+  ];
 
-  /* ══ 구조 선택 및 실행 ═══════════════════════════════════════ */
-  let propCardsHTML='', groups=[];
-  if(isStructureB){
-    const r=parseStructureB();
-    propCardsHTML=r.html;
-    groups=r.groups;
-    /* irrCalcRun용 인덱스 — 구조B에서는 colA/colB를 사용 */
-    window._irrStructureB={colA:r.colA,colB:r.colB,labelCol:r.labelCol,data};
-  }else{
-    const r=parseStructureA();
-    propCardsHTML=r.html;
-    groups=r.groups;
-  }
+  const CARD_ACCENTS=['#4F7CFF','#3a6ee8'];
 
-  /* ── [UI 레이어] buildPropertyCard — 이미 위에서 처리됨 ── */
+  /* ── irrCalcRun을 위한 합산 데이터 노출 ──
+     계산기는 두 필지 합산값을 사용하므로
+     propA + propB 합산을 _irrSheetData에 저장 */
+  const _totalBuy    =(propA?.buyP   ||0)+(propB?.buyP   ||0);
+  const _totalLoan   =(propA?.loan   ||0)+(propB?.loan   ||0);
+  const _totalDep    =(propA?.deposit||0)+(propB?.deposit||0);
+  const _totalRent   =(propA?.rent   ||0)+(propB?.rent   ||0);
+  const _totalAreaNum=
+    (parseFloat(String(propA?.area||'').replace(/[^0-9.]/g,''))||0)+
+    (parseFloat(String(propB?.area||'').replace(/[^0-9.]/g,''))||0);
+  const _totalLandVal=
+    (propA?.landTot||0)+(propB?.landTot||0)||
+    ((propA?.landPr||0)*(parseFloat(String(propA?.area||'').replace(/[^0-9.]/g,''))||0))+
+    ((propB?.landPr||0)*(parseFloat(String(propB?.area||'').replace(/[^0-9.]/g,''))||0));
+
+  /* ── irrSheetData 설정 (irrCalcRun 전용) ──
+     구조B에서는 컬럼 인덱스 대신 직접 값을 저장하는 특수 구조 사용 */
+  window._irrSheetData={
+    groups,hdr,
+    /* 구조B 직접값 (irrCalcRun에서 우선 사용) */
+    _isStructureB:true,
+    _totalBuy, _totalLoan, _totalDep, _totalRent, _totalAreaNum, _totalLandVal,
+    /* 구조A fallback 인덱스 (사용 안 됨) */
+    addrIdx:-1,areaIdx:-1,buyPriceIdx:-1,loanIdx:-1,
+    depositIdx:-1,rentIdx:-1,landPrIdx:-1,landTotIdx:-1
+  };
+
+    /* ── [UI 레이어] buildPropertyCard — 이미 위에서 처리됨 ── */
   /* (아래 calcHTML, _irrSheetData 등 기존 계산기 구조는 그대로 유지) */
   const CARD_ACCENTS=['#4F7CFF','#3a6ee8']; /* 계산기 슬라이더 초기화에 필요 */
 
@@ -1266,20 +1257,35 @@ function irrCalcRun(){
   const av=(r,i)=>i>=0?parseAmt(r[i]):0;
   const sv=(r,i)=>i>=0?(r[i]||''):'';
 
-  /* 두 필지 합산 */
+  /* 두 필지 합산 ─────────────────────────────────────────────────
+     구조B(행=항목, 열=필지): _irrSheetData에 직접값 저장됨 → 우선 사용
+     구조A(행=필지, 열=속성): 컬럼 인덱스로 계산 (기존 방식)
+  ─────────────────────────────────────────────────────────────── */
   let totalBuy=0,totalLoan=0,totalDep=0,totalRent=0,totalArea=0,totalLandVal=0;
-  sd.groups.forEach((g,gi)=>{
-    g.rows.forEach(r=>{
-      totalBuy   +=av(r,sd.buyPriceIdx);
-      totalLoan  +=av(r,sd.loanIdx);
-      totalDep   +=av(r,sd.depositIdx);
-      totalRent  +=av(r,sd.rentIdx);
-      const a=parseFloat(String(sv(r,sd.areaIdx)).replace(/[^0-9.]/g,''))||0;
-      totalArea  +=a;
-      const lp=av(r,sd.landPrIdx),lt=av(r,sd.landTotIdx);
-      totalLandVal+=lt||(lp*a);
+
+  if(sd._isStructureB){
+    /* 구조B: renderIRR에서 미리 계산한 합산값 직접 사용 */
+    totalBuy    =sd._totalBuy    ||0;
+    totalLoan   =sd._totalLoan   ||0;
+    totalDep    =sd._totalDep    ||0;
+    totalRent   =sd._totalRent   ||0;
+    totalArea   =sd._totalAreaNum||0;
+    totalLandVal=sd._totalLandVal||0;
+  }else{
+    /* 구조A: 컬럼 인덱스 기반 계산 (기존 방식) */
+    sd.groups.forEach((g)=>{
+      g.rows.forEach(r=>{
+        totalBuy   +=av(r,sd.buyPriceIdx);
+        totalLoan  +=av(r,sd.loanIdx);
+        totalDep   +=av(r,sd.depositIdx);
+        totalRent  +=av(r,sd.rentIdx);
+        const a=parseFloat(String(sv(r,sd.areaIdx)).replace(/[^0-9.]/g,''))||0;
+        totalArea  +=a;
+        const lp=av(r,sd.landPrIdx),lt=av(r,sd.landTotIdx);
+        totalLandVal+=lt||(lp*a);
+      });
     });
-  });
+  }
 
   /* 데이터 충분성 검사 */
   const missing=[];
@@ -1287,7 +1293,7 @@ function irrCalcRun(){
   if(!totalArea) missing.push('면적(시트)');
   if(missing.length){
     box.style.display='block';
-    box.innerHTML=irrErrBox('계산용 값 부족 — 시트에 다음 컬럼을 확인하세요: '+missing.join(', '));
+    box.innerHTML=irrErrBox('계산용 값 부족 — 시트에 다음 컬럼을 확인하세요: '+missing.join(', ')+'<br><small>F12 콘솔 → [IRR 시트 구조] 로그를 확인하세요</small>');
     return;
   }
 
