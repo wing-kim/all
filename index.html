@@ -336,10 +336,34 @@ td:first-child{color:var(--t1);font-weight:500}
 /* 행 종류별 스타일 */
 .cf-table tr.income-row td{color:var(--t2)}
 .cf-table tr.expense-row td{color:var(--t2)}
-.cf-table tr.subtotal-row td{background:rgba(26,31,46,.6);
-  border-top:1px solid var(--border2);font-weight:600;color:var(--t1)}
-.cf-table tr.net-row td{background:rgba(59,127,255,.07);
-  border-top:2px solid var(--blue);font-weight:700}
+
+/* 섹션 구분 헤더 — 수입/지출 그룹명 */
+.cf-table tr.section-head td{
+  background:var(--s3);
+  border-top:2px solid var(--border2);
+  border-bottom:1px solid var(--border2);
+  padding:7px 14px;
+  font-size:11px;font-weight:700;
+  letter-spacing:.6px;color:var(--t1);
+}
+.cf-table tr.section-head.inc-head td{border-left:3px solid var(--green)}
+.cf-table tr.section-head.exp-head td{border-left:3px solid var(--red)}
+
+/* 소계 행 */
+.cf-table tr.subtotal-row td{
+  background:rgba(26,31,46,.5);
+  border-top:1px solid var(--border);
+  font-weight:600;color:var(--t1);
+  padding:8px 14px;
+}
+/* 순현금흐름 행 */
+.cf-table tr.net-row td{
+  background:rgba(59,127,255,.07);
+  border-top:2px solid rgba(59,127,255,.4);
+  font-weight:700;
+  padding:10px 14px;
+}
+/* 캐시플로우 연도 그룹 */
 .cf-table tr.yr-group td{background:var(--s2);font-size:11px;font-weight:600;
   color:var(--t3);letter-spacing:.5px;border-top:1px solid var(--border2)}
 .cf-table tr.yr-total td{background:rgba(26,31,46,.8);font-weight:600;
@@ -2073,22 +2097,33 @@ function renderPersonal(rows){
         </tr></thead>
         <tbody>
           ${incomeItems.length?`
-            <tr class="yr-group"><td colspan="5">▸ 수입 항목</td></tr>
+            <tr class="section-head inc-head">
+              <td colspan="5">📥 수입 항목 <span style="font-weight:400;font-size:10px;color:var(--t3);margin-left:6px">${incomeItems.length}건</span></td>
+            </tr>
             ${incomeItems.map(o=>summaryRow(o)).join('')}
-            <tr class="subtotal-row"><td colspan="4">소계 — 수입</td>
-              <td class="r"><span class="inc">${fmtBig(totalIncome)}원/월</span></td></tr>`
+            <tr class="subtotal-row">
+              <td colspan="3">소계 — 수입</td>
+              <td class="r"><span class="inc">${fmtBig(totalIncome)}원</span></td>
+              <td class="r" style="color:var(--t3);font-size:11px">/월</td>
+            </tr>`
           :`<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--t4)">수입 항목 없음</td></tr>`}
           ${expenseItems.length?`
-            <tr class="yr-group"><td colspan="5">▸ 지출 항목</td></tr>
+            <tr class="section-head exp-head">
+              <td colspan="5">📤 지출 항목 <span style="font-weight:400;font-size:10px;color:var(--t3);margin-left:6px">${expenseItems.length}건</span></td>
+            </tr>
             ${expenseItems.map(o=>summaryRow(o)).join('')}
-            <tr class="subtotal-row"><td colspan="4">소계 — 지출</td>
-              <td class="r"><span class="exp">${fmtBig(totalExpense)}원/월</span></td></tr>`
+            <tr class="subtotal-row">
+              <td colspan="3">소계 — 지출</td>
+              <td class="r"><span class="exp">${fmtBig(totalExpense)}원</span></td>
+              <td class="r" style="color:var(--t3);font-size:11px">/월</td>
+            </tr>`
           :''}
           <tr class="net-row">
-            <td colspan="4" style="font-size:13px">월 순현금흐름 (수입 − 지출)</td>
-            <td class="r" style="font-size:14px;font-weight:700;color:${netCF>=0?'var(--blue)':'var(--red)'}">
-              ${netCF>=0?'+':''}${fmtBig(netCF)}원/월
+            <td colspan="3" style="font-size:13px">💰 월 순현금흐름 (수입 − 지출)</td>
+            <td class="r" style="font-size:15px;font-weight:700;color:${netCF>=0?'var(--blue)':'var(--red)'}">
+              ${netCF>=0?'+':''}${fmtBig(netCF)}원
             </td>
+            <td class="r" style="color:var(--t3);font-size:11px">/월</td>
           </tr>
         </tbody>
       </table>
