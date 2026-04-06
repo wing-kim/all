@@ -88,9 +88,9 @@ header{display:flex;align-items:center;justify-content:space-between;
 .kpi.y:hover{border-color:rgba(232,160,32,.35)}
 .kpi.p:hover{border-color:rgba(139,92,246,.35)}
 .kpi.r:hover{border-color:rgba(232,64,64,.35)}
-.kpi-lbl{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.kpi-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:600}
 .kpi-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.3px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi-sub{font-size:9.5px;color:var(--t4);margin-top:4px;font-weight:400}
+.kpi-sub{font-size:9.5px;color:#6b7899;margin-top:4px;font-weight:400}
 
 .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
@@ -149,8 +149,9 @@ td:first-child{color:var(--t1);font-weight:500}
   background:var(--blue);box-shadow:0 0 6px rgba(59,127,255,.5);z-index:10;border-radius:1px}
 .tl-now-tag{position:absolute;top:3px;left:50%;transform:translateX(-50%);
   font-family:var(--mono);font-size:8px;color:var(--blue);
-  background:rgba(8,9,13,.95);padding:1px 5px;border-radius:3px;
-  white-space:nowrap;letter-spacing:.5px}
+  background:rgba(8,9,13,.95);padding:2px 6px;border-radius:3px;
+  white-space:nowrap;letter-spacing:.3px;font-weight:600;
+  border:1px solid rgba(59,127,255,.25)}
 .g-row{display:flex;align-items:center;padding:10px 0;
   border-bottom:1px solid rgba(34,38,54,.5);transition:background .12s;min-height:44px}
 .g-row:last-child{border-bottom:none}
@@ -176,7 +177,7 @@ td:first-child{color:var(--t1);font-weight:500}
 .g-fill{height:100%;border-radius:4px;position:absolute;
   transition:width .8s cubic-bezier(.4,0,.2,1)}
 .g-dur{width:72px;flex-shrink:0;text-align:right;padding-left:10px;
-  font-family:var(--mono);font-size:11px;color:var(--t3);white-space:nowrap}
+  font-family:var(--mono);font-size:11px;color:#8890aa;white-space:nowrap;font-weight:500}
 /* 단계별 구별 색상 — 절제된 톤, 형광/그라데이션 없음 */
 .gc0{background:#4F7CFF}  /* 블루 */
 .gc1{background:#22c98a}  /* 에메랄드 */
@@ -781,7 +782,7 @@ function renderTimeline(rows){
     <div class="tl-ruler-track">
       <div class="tl-ruler-years">${yearSegs.join('')}</div>
       <div class="tl-now-line" style="left:${nowPct}%">
-        <div class="tl-now-tag">NOW</div>
+        <div class="tl-now-tag">NOW · ${now.getFullYear()}년 ${now.getMonth()+1}월</div>
       </div>
     </div>
     <div class="tl-dur-head">기간</div>
