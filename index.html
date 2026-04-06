@@ -132,9 +132,9 @@ td:first-child{color:var(--t1);font-weight:500}
 .tl-wrap{padding:0 24px 24px}
 .tl-ruler-row{display:flex;align-items:stretch;padding-bottom:10px;
   border-bottom:1px solid var(--border2);margin-bottom:0}
-.tl-ruler-lbl{width:220px;flex-shrink:0;display:flex;align-items:flex-end;
+.tl-ruler-lbl{width:260px;flex-shrink:0;display:flex;align-items:flex-end;
   font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:1px;
-  padding-right:16px;padding-bottom:4px}
+  padding-right:14px;padding-bottom:4px}
 .tl-ruler-track{flex:1;position:relative;height:30px}
 .tl-ruler-years{display:flex;height:100%;position:absolute;inset:0}
 .tl-year-seg{flex:1;display:flex;align-items:center;justify-content:center;
@@ -142,7 +142,7 @@ td:first-child{color:var(--t1);font-weight:500}
   border-left:1px solid var(--border);position:relative}
 .tl-year-seg:first-child{border-left:none}
 .tl-year-seg.cur-y{color:var(--blue);font-weight:700}
-.tl-dur-head{width:76px;flex-shrink:0;display:flex;align-items:flex-end;
+.tl-dur-head{width:72px;flex-shrink:0;display:flex;align-items:flex-end;
   justify-content:flex-end;font-size:9px;color:var(--t4);text-transform:uppercase;
   letter-spacing:1px;padding-left:10px;padding-bottom:4px}
 .tl-now-line{position:absolute;top:0;bottom:-1px;width:2px;
@@ -715,11 +715,19 @@ function renderTimeline(rows){
   const YEAR_START=2026,YEAR_END=2030;
   const TOTAL_MONTHS=(YEAR_END-YEAR_START+1)*12; // 60개월
 
-  // 현재 시점 계산
+  // 현재 시점 계산 — 일(day) 단위까지 정밀 계산
   const now=new Date();
-  const nowOff=(now.getFullYear()-YEAR_START)*12+now.getMonth();
-  const nowPct=Math.max(0,Math.min(100,(nowOff/TOTAL_MONTHS)*100)).toFixed(2);
   const curYear=now.getFullYear();
+  // 타임라인 전체 시작/종료를 Date 객체로 정의
+  const tlStart=new Date(YEAR_START,0,1);          // 2026-01-01
+  const tlEnd=new Date(YEAR_END+1,0,1);            // 2031-01-01 (exclusive)
+  const tlTotalMs=tlEnd.getTime()-tlStart.getTime();
+  const nowElapsedMs=now.getTime()-tlStart.getTime();
+  // 타임라인 범위 내인지 확인
+  const nowInRange=now>=tlStart && now<tlEnd;
+  // 정밀 비율 계산 (범위 밖이면 0으로 설정, 표시는 숨김)
+  const nowPctRaw=nowInRange?(nowElapsedMs/tlTotalMs*100):0;
+  const nowPct=nowPctRaw.toFixed(4);
 
   function parsePeriod(s){
     if(!s)return null; s=String(s).trim();
@@ -772,18 +780,24 @@ function renderTimeline(rows){
     vLinePcts.push(((y-YEAR_START)*12/TOTAL_MONTHS*100).toFixed(2));
 
   function makeOverlays(){
+    const nowLineHTML=nowInRange
+      ?`<div class="g-now-line" style="left:${nowPct}%"></div>`
+      :'';
     return vLinePcts.map(p=>`<div class="g-vline" style="left:${p}%"></div>`).join('')
-      +`<div class="g-now-line" style="left:${nowPct}%"></div>`;
+      +nowLineHTML;
   }
 
-  // 눈금 헤더
+  // 눈금 헤더 — NOW 라인: tl-ruler-track 내부, % 좌표 동일 기준
+  const nowLineRuler=nowInRange
+    ?`<div class="tl-now-line" style="left:${nowPct}%">
+        <div class="tl-now-tag">NOW · ${now.getFullYear()}년 ${now.getMonth()+1}월</div>
+      </div>`
+    :'';
   const rulerHTML=`<div class="tl-ruler-row">
     <div class="tl-ruler-lbl">연도</div>
     <div class="tl-ruler-track">
       <div class="tl-ruler-years">${yearSegs.join('')}</div>
-      <div class="tl-now-line" style="left:${nowPct}%">
-        <div class="tl-now-tag">NOW · ${now.getFullYear()}년 ${now.getMonth()+1}월</div>
-      </div>
+      ${nowLineRuler}
     </div>
     <div class="tl-dur-head">기간</div>
   </div>`;
