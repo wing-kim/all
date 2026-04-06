@@ -3391,29 +3391,7 @@ function renderCorp(rows){
   /* 요약 합계 (핵심 항목만) */
   const summaryTotal=[...summaryGroupMap.values()].reduce((a,v)=>a+v.total,0);
 
-  const summaryHTML=`<div class="cf-section">
-    <div class="cf-section-head">
-      <div class="cf-section-bar" style="background:#4F7CFF"></div>
-      <div class="cf-section-title">카테고리별 요약</div>
-      <div class="cf-section-sub">핵심 항목 · 총 ${fmtBig(grandTotal)}원</div>
-    </div>
-    <div class="cf-table-wrap"><div style="overflow-x:auto">
-      <table class="cf-table">
-        <thead><tr>
-          <th>항목</th>
-          <th>기간</th>
-          <th class="r">금액</th>
-        </tr></thead>
-        <tbody>
-          ${summaryRows||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">데이터 없음</td></tr>'}
-          <tr class="subtotal-row">
-            <td colspan="2" style="font-weight:700">합 계</td>
-            <td class="r"><span class="exp" style="font-weight:700">${fmtBig(grandTotal)}원</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div></div>
-  </div>`;
+
 
   /* ══ 기간 범위 파악 (Leaf Node 기반) ═══════════════════ */
   let minYear=9999,maxYear=0;
@@ -3547,6 +3525,30 @@ function renderCorp(rows){
   /* grandTotal = Leaf Node만 합산 → 중복 없음 */
   const grandTotal=[...catTotals.values()].reduce((a,b)=>a+b,0);
 
+
+  const summaryHTML=`<div class="cf-section">
+    <div class="cf-section-head">
+      <div class="cf-section-bar" style="background:#4F7CFF"></div>
+      <div class="cf-section-title">카테고리별 요약</div>
+      <div class="cf-section-sub">핵심 항목 · 총 ${fmtBig(grandTotal)}원</div>
+    </div>
+    <div class="cf-table-wrap"><div style="overflow-x:auto">
+      <table class="cf-table">
+        <thead><tr>
+          <th>항목</th>
+          <th>기간</th>
+          <th class="r">금액</th>
+        </tr></thead>
+        <tbody>
+          ${summaryRows||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">데이터 없음</td></tr>'}
+          <tr class="subtotal-row">
+            <td colspan="2" style="font-weight:700">합 계</td>
+            <td class="r"><span class="exp" style="font-weight:700">${fmtBig(grandTotal)}원</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>`;
   console.log('[법인비용] 카테고리별 총액:', Object.fromEntries(catTotals));
   console.log('[법인비용] 총 법인비용(Leaf Node):', grandTotal);
 
