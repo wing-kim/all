@@ -320,8 +320,8 @@ td:first-child{color:var(--t1);font-weight:500}
   padding:5px 14px;border-right:1px solid var(--border);flex:1}
 .ls-summary-item:last-child{border-right:none}
 .ls-si-total{background:rgba(79,124,255,.04);border-left:2px solid #4F7CFF}
-.ls-si-lbl{font-size:8.5px;color:var(--t4);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
-.ls-si-val{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--t2);white-space:nowrap}
+.ls-si-lbl{font-size:8.5px;color:#6b7899;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;font-weight:600}
+.ls-si-val{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--t1);white-space:nowrap}
 .ls-si-val.green {color:var(--green)}
 .ls-si-val.blue  {color:var(--blue)}
 .ls-si-val.purple{color:var(--purple)}
@@ -2185,13 +2185,13 @@ function renderLease(rows){
     const sumDep  =gRows.reduce((a,r)=>a+amt(r,depositIdx),0);
     const sumMgmt =gRows.reduce((a,r)=>a+amt(r,mgmtIdx),0);
     const sumLrent=gRows.reduce((a,r)=>a+amt(r,landRentIdx),0);
-    const sumMonth=sumRent+sumMgmt+sumLrent;
+    const sumMonth=sumRent+sumMgmt;
 
     /* 행 렌더링 */
-    const tbody=gRows.map(r=>{
+      const tbody=gRows.map(r=>{
       const rent=amt(r,rentIdx),dep=amt(r,depositIdx);
-      const mgmt=amt(r,mgmtIdx),lrent=amt(r,landRentIdx);
-      const monthly=rent+mgmt+lrent;
+      const mgmt=amt(r,mgmtIdx);
+      const monthly=rent+mgmt;
       return`<tr>
         <td class="name">${str(r,nameIdx)||'—'}</td>
         <td class="floor">${str(r,floorIdx)||'—'}</td>
@@ -2202,26 +2202,23 @@ function renderLease(rows){
         <td class="r">${amtCell(dep,'amt-blue')}</td>
         <td class="r">${amtCell(rent,'amt-green')}</td>
         <td class="r">${amtCell(mgmt,'')}</td>
-        <td class="r">${amtCell(lrent,'amt-purple')}</td>
         <td class="r">${monthly>0?`<span class="amt-total">${fmtBig(monthly)}원</span>`:`<span class="amt-muted">—</span>`}</td>
       </tr>`;
     }).join('');
 
     /* 합계 행 — 금액이 있을 때만 */
     const colSpanBase=areaIdx>=0?6:5;
-    const sumRow=(sumDep||sumRent||sumMgmt||sumLrent)?`<tr class="sum-row">
+    const sumRow=(sumDep||sumRent||sumMgmt)?`<tr class="sum-row">
       <td colspan="${colSpanBase}">합 계</td>
       <td class="r">${amtCell(sumDep,'amt-blue')}</td>
       <td class="r">${amtCell(sumRent,'amt-green')}</td>
       <td class="r">${amtCell(sumMgmt,'')}</td>
-      <td class="r">${amtCell(sumLrent,'amt-purple')}</td>
       <td class="r">${sumMonth>0?`<span class="amt-total">${fmtBig(sumMonth)}원</span>`:`<span class="amt-muted">—</span>`}</td>
     </tr>`:'';
 
     /* 요약 카드 */
     const summaryItems=[
       sumRent ?`<div class="ls-summary-item"><span class="ls-si-lbl">월 임대료</span><span class="ls-si-val green">${fmtBig(sumRent)}원</span></div>`:'',
-      sumLrent?`<div class="ls-summary-item"><span class="ls-si-lbl">토지임대료</span><span class="ls-si-val purple">${fmtBig(sumLrent)}원</span></div>`:'',
       sumMgmt ?`<div class="ls-summary-item"><span class="ls-si-lbl">관리비</span><span class="ls-si-val">${fmtBig(sumMgmt)}원</span></div>`:'',
       sumDep  ?`<div class="ls-summary-item"><span class="ls-si-lbl">보증금</span><span class="ls-si-val blue">${fmtBig(sumDep)}원</span></div>`:'',
       sumMonth?`<div class="ls-summary-item ls-si-total"><span class="ls-si-lbl">월 합계</span><span class="ls-si-val white">${fmtBig(sumMonth)}원</span></div>`:'',
@@ -2237,10 +2234,10 @@ function renderLease(rows){
       <div class="ls-table-wrap"><div style="overflow-x:auto">
         <table class="ls-table">
           <thead><tr>
-            <th>임차인</th><th>층</th>${areaIdx>=0?'<th>면적</th>':''}
+            <th>임차인</th><th>층</th>${areaIdx>=0?'<th>면적 (m²)</th>':''}
             <th>계약 시작</th><th>계약 종료</th><th>만료 상태</th>
             <th class="r">보증금</th><th class="r">월 임대료</th>
-            <th class="r">관리비</th><th class="r">토지임대료</th><th class="r">월 합계</th>
+            <th class="r">관리비</th><th class="r">월 합계</th>
           </tr></thead>
           <tbody>${tbody}${sumRow}</tbody>
         </table>
@@ -2284,7 +2281,6 @@ function renderLease(rows){
       ${totalRent?`<div class="kpi p"><div class="kpi-lbl">월 임대료</div><div class="kpi-val" style="color:var(--purple)">${fmtBig(totalRent)}원</div><div class="kpi-sub">전체 합산</div></div>`:''}
       ${totalMgmt?`<div class="kpi b"><div class="kpi-lbl">관리비</div><div class="kpi-val">${fmtBig(totalMgmt)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
       ${totalDep?`<div class="kpi b"><div class="kpi-lbl">보증금</div><div class="kpi-val">${fmtBig(totalDep)}원</div><div class="kpi-sub">전체 합산</div></div>`:''}
-      ${totalLrent?`<div class="kpi b"><div class="kpi-lbl">토지임대료</div><div class="kpi-val">${fmtBig(totalLrent)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
     </div>
     ${sections||`<div class="empty"><div class="empty-i">📭</div>임차인 데이터가 없습니다</div>`}`;
 }
