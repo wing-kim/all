@@ -3573,62 +3573,6 @@ function renderCorp(rows){
     ${catKpiHTML}
   </div>`;
 
-  /* ══ [섹션 1] 카테고리별 요약표 — 개인비용 탭 스타일 ════ */
-  const summaryRows=catOrder.map(cat=>{
-    const crows=catMap.get(cat);
-    const total=catTotals.get(cat);
-    /* 기간 요약 — 파싱된 날짜 사용 */
-    let periodSummary='—';
-    const drs=crows.map(r=>getDateRange(r)).filter(d=>d.hasStart);
-    if(drs.length>0){
-      const minS=drs.reduce((a,d)=>d.sy*100+d.sm<a.sy*100+a.sm?d:a,drs[0]);
-      const maxE=drs.filter(d=>d.hasEnd).reduce((a,d)=>d.ey*100+d.em>a.ey*100+a.em?d:a,{ey:0,em:0});
-      const sLabel=`${minS.sy}.${String(minS.sm).padStart(2,'0')}`;
-      const eLabel=maxE.ey>0?`${maxE.ey}.${String(maxE.em).padStart(2,'0')}`:'진행중';
-      periodSummary=`${sLabel} ~ ${eLabel}`;
-    }
-    /* 납부방법 요약 */
-    const scheds=crows.map(r=>getPaySchedule(r));
-    const methodLabels=[...new Set(scheds.map(s=>{
-      if(s.type==='dates')   return`${s.dates.length}회 분할`;
-      if(s.type==='lump')    return'일시납';
-      if(s.type==='installment') return`${s.count}회 분할`;
-      if(s.type==='range')   return'기간납부';
-      return'매월';
-    }))].join(' / ');
-    return`<tr>
-      <td class="label">${cat}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--t3)">${periodSummary}</td>
-      <td style="font-size:11px;color:var(--t3)">${methodLabels||'—'}</td>
-      <td class="r" style="font-family:var(--mono);font-size:11px;color:var(--t3)">${crows.length}건</td>
-      <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
-    </tr>`;
-  }).join('');
-
-  const summaryHTML=`<div class="cf-section">
-    <div class="cf-section-head">
-      <div class="cf-section-bar" style="background:#4F7CFF"></div>
-      <div class="cf-section-title">카테고리별 요약</div>
-      <div class="cf-section-sub">핵심 항목 · 총 ${fmtBig(grandTotal)}원</div>
-    </div>
-    <div class="cf-table-wrap"><div style="overflow-x:auto">
-      <table class="cf-table">
-        <thead><tr>
-          <th>항목</th>
-          <th>기간</th>
-          <th class="r">금액</th>
-        </tr></thead>
-        <tbody>
-          ${summaryRows||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">데이터 없음</td></tr>'}
-          <tr class="subtotal-row">
-            <td colspan="2" style="font-weight:700">합 계</td>
-            <td class="r"><span class="exp" style="font-weight:700">${fmtBig(grandTotal)}원</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div></div>
-  </div>`;
-
   /* 상세 그룹 정의 */
   const DETAIL_GROUPS=[
     {label:'🏗️ 건축 & 토목 설계비', test:r=>{
