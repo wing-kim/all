@@ -201,6 +201,27 @@ td:first-child{color:var(--t1);font-weight:500}
 .g-bar-area{cursor:crosshair}
 
 /* ═══════════════════════════════════════════════════
+   TIMELINE HOVER GUIDE LINE — 마우스 hover 세로 기준선
+═══════════════════════════════════════════════════ */
+.tl-hover-line{
+  position:absolute;
+  top:0;bottom:0;
+  width:1px;
+  /* NOW 라인(파란색)과 구분: 청록/시안 계열, 은은하게 */
+  background:rgba(34,211,238,.45);
+  box-shadow:0 0 5px rgba(34,211,238,.25);
+  pointer-events:none;
+  z-index:20;
+  border-radius:1px;
+  opacity:0;
+  transition:opacity .12s;
+  will-change:left;
+}
+.tl-hover-line.show{opacity:1}
+/* hover line을 담는 컨테이너: 타임라인 전체 rows 높이를 관통 */
+.tl-gantt-body{position:relative}
+
+/* ═══════════════════════════════════════════════════
    IRR
 ═══════════════════════════════════════════════════ */
 .irr-addr-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
@@ -770,7 +791,10 @@ function renderTimeline(rows){
       </div>
       <div class="tl-wrap">
         ${rulerHTML}
-        ${gRows}
+        <div class="tl-gantt-body" id="tl-gantt-body">
+          <div class="tl-hover-line" id="tl-hover-line"></div>
+          ${gRows}
+        </div>
       </div>
     </div>`;
 
@@ -794,6 +818,10 @@ function renderTimeline(rows){
       document.body.appendChild(tip);
     }
 
+    /* hover 가이드라인 엘리먼트 (tl-gantt-body 내부, 1개 재사용) */
+    const ganttBody=sec.querySelector('#tl-gantt-body');
+    const hoverLine=sec.querySelector('#tl-hover-line');
+
     /* 바 영역에서 비율 → 날짜 문자열 */
     function pctToDate(pct){
       const totalMonths=TOTAL_MONTHS;
@@ -811,21 +839,35 @@ function renderTimeline(rows){
         const pct=Math.max(0,Math.min(100,(e.clientX-rect.left)/rect.width*100));
         const dateStr=pctToDate(pct);
 
-        /* 항목 기간 정보도 같이 표시 */
+        /* 항목 기간 정보도 같이 표시 — 기존 tooltip 유지 */
         const periodInfo=item&&item.periodTxt?` (${item.periodTxt})`:'';
         tip.textContent=dateStr+periodInfo;
         tip.classList.add('show');
         tip.style.left=(e.clientX+14)+'px';
         tip.style.top =(e.clientY-32)+'px';
+
+        /* hover 가이드라인: g-bar-area 기준 X → ganttBody 기준 X로 변환
+           모든 행의 bar-area는 동일한 left offset을 가지므로
+           첫 번째 bar-area rect를 기준으로 삼아 일관된 좌표 유지 */
+        if(hoverLine&&ganttBody){
+          const bodyRect=ganttBody.getBoundingClientRect();
+          const lineLeft=e.clientX-bodyRect.left;
+          hoverLine.style.left=lineLeft+'px';
+          hoverLine.classList.add('show');
+        }
       });
 
       area.addEventListener('mouseleave',()=>{
         tip.classList.remove('show');
+        if(hoverLine) hoverLine.classList.remove('show');
       });
     });
 
-    /* 스크롤 시 툴팁 숨김 */
-    window.addEventListener('scroll',()=>tip.classList.remove('show'),{passive:true});
+    /* 스크롤 시 툴팁·가이드라인 숨김 */
+    window.addEventListener('scroll',()=>{
+      tip.classList.remove('show');
+      if(hoverLine) hoverLine.classList.remove('show');
+    },{passive:true});
   })();
 }
 
