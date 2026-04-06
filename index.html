@@ -3109,72 +3109,6 @@ function renderCorp(rows){
   /* 카테고리별 그룹핑 후 Leaf Node 식별
      같은 카테고리(getCat 기준) 내에서
      totalIdx 행의 금액이 다른 행들의 금액 합계와 근사하면 부모로 간주 */
-  function getCat(r){
-    const raw=(sv(r,catIdx)||sv(r,itemIdx)||sv(r,stageIdx)||'').trim();
-    const c=raw.toLowerCase();
-    /* 세부 분류 → 요청 그룹명으로 통합 */
-    if(/토지.*임대|토지료|지대/.test(c))          return '토지임대료';
-    if(/신축.*공사|공사비|시공/.test(c))           return '공사비';
-    if(/해체.*공사/.test(c))                       return '공사비';
-    if(/감리/.test(c))                             return '감리비';
-    if(/설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전/.test(c)) return '설계비';
-    if(/면허세|채권|경계복원/.test(c))             return '설계비'; /* 요약에서 설계비 그룹으로 */
-    if(/대출|이자|금융/.test(c))                   return '금융비용';
-    if(/세금|취득|등록|인지/.test(c))              return '세금·공과금';
-    return raw||'기타';
-  }
-
-  /* 요약 표시 대상 핵심 항목 — 항목명 기반 분류 */
-  function getSummaryGroup(r){
-    const item=(sv(r,itemIdx)||sv(r,catIdx)||'').trim().toLowerCase();
-    if(/건축.*설계/.test(item))                         return '건축설계비';
-    if(/토목.*설계|흙막이/.test(item))                  return '토목설계비';
-    if(/해체.*심의|해체.*허가|해체.*신고/.test(item))   return '해체심의·허가·신고';
-    if(/상주.*감리|건축.*감리/.test(item))               return '상주 감리비';
-    if(/해체.*감리|지상.*감리/.test(item))               return '해체 감리비';
-    if(/면허세|채권/.test(item))                        return '면허세·채권매입';
-    if(/경계복원/.test(item))                           return '경계복원측량';
-    if(/토지.*임대|토지료/.test(item))                  return '토지임대료';
-    if(/신축.*공사/.test(item))                         return '신축공사비';
-    if(/해체.*공사/.test(item))                         return '해체공사비';
-    return null; /* 요약에서 제외 */
-  }
-
-  /* 요약용 그룹 집계 */
-  const summaryGroupOrder=['건축설계비','토목설계비','해체심의·허가·신고','상주 감리비','해체 감리비','면허세·채권매입','경계복원측량','토지임대료','해체공사비','신축공사비'];
-  const summaryGroupMap=new Map();
-  summaryGroupOrder.forEach(g=>summaryGroupMap.set(g,{total:0,rows:[]}));
-
-  leafData.forEach(r=>{
-    const g=getSummaryGroup(r);
-    if(!g) return;
-    if(!summaryGroupMap.has(g)) summaryGroupMap.set(g,{total:0,rows:[]});
-    summaryGroupMap.get(g).total+=getTotal(r);
-    summaryGroupMap.get(g).rows.push(r);
-  });
-
-  /* 요약표 행 — 존재하는 그룹만 */
-  const summaryRows=summaryGroupOrder
-    .filter(g=>summaryGroupMap.get(g)&&summaryGroupMap.get(g).total>0)
-    .map(g=>{
-      const {total,rows}=summaryGroupMap.get(g);
-      /* 기간 요약 */
-      const drs=rows.map(r=>getDateRange(r)).filter(d=>d.hasStart);
-      let periodSummary='—';
-      if(drs.length>0){
-        const minS=drs.reduce((a,d)=>d.sy*100+d.sm<a.sy*100+a.sm?d:a,drs[0]);
-        const maxE=drs.filter(d=>d.hasEnd).reduce((a,d)=>d.ey*100+d.em>a.ey*100+a.em?d:a,{ey:0,em:0});
-        periodSummary=`${minS.sy}.${String(minS.sm).padStart(2,'0')}${maxE.ey>0?' ~ '+maxE.ey+'.'+String(maxE.em).padStart(2,'0'):'~'}`;
-      }
-      return`<tr>
-        <td class="label" style="color:#c9d1e8">${g}</td>
-        <td style="font-family:var(--mono);font-size:11px;color:#8890aa">${periodSummary}</td>
-        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
-      </tr>`;
-    }).join('');
-
-  /* 요약 합계 (핵심 항목만) */
-  const summaryTotal=[...summaryGroupMap.values()].reduce((a,v)=>a+v.total,0);
 
   /* ══ [납부방법 상세 파싱] ══════════════════════════════════
      납부방법 상세 컬럼 우선 → 납부방법 컬럼 → 기본값
@@ -3389,6 +3323,73 @@ function renderCorp(rows){
     const name=sv(r,itemIdx)||sv(r,catIdx)||'(항목없음)';
     console.log('[합산 포함]', name, getTotal(r));
   });
+
+  function getCat(r){
+    const raw=(sv(r,catIdx)||sv(r,itemIdx)||sv(r,stageIdx)||'').trim();
+    const c=raw.toLowerCase();
+    /* 세부 분류 → 요청 그룹명으로 통합 */
+    if(/토지.*임대|토지료|지대/.test(c))          return '토지임대료';
+    if(/신축.*공사|공사비|시공/.test(c))           return '공사비';
+    if(/해체.*공사/.test(c))                       return '공사비';
+    if(/감리/.test(c))                             return '감리비';
+    if(/설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전/.test(c)) return '설계비';
+    if(/면허세|채권|경계복원/.test(c))             return '설계비'; /* 요약에서 설계비 그룹으로 */
+    if(/대출|이자|금융/.test(c))                   return '금융비용';
+    if(/세금|취득|등록|인지/.test(c))              return '세금·공과금';
+    return raw||'기타';
+  }
+
+  /* 요약 표시 대상 핵심 항목 — 항목명 기반 분류 */
+  function getSummaryGroup(r){
+    const item=(sv(r,itemIdx)||sv(r,catIdx)||'').trim().toLowerCase();
+    if(/건축.*설계/.test(item))                         return '건축설계비';
+    if(/토목.*설계|흙막이/.test(item))                  return '토목설계비';
+    if(/해체.*심의|해체.*허가|해체.*신고/.test(item))   return '해체심의·허가·신고';
+    if(/상주.*감리|건축.*감리/.test(item))               return '상주 감리비';
+    if(/해체.*감리|지상.*감리/.test(item))               return '해체 감리비';
+    if(/면허세|채권/.test(item))                        return '면허세·채권매입';
+    if(/경계복원/.test(item))                           return '경계복원측량';
+    if(/토지.*임대|토지료/.test(item))                  return '토지임대료';
+    if(/신축.*공사/.test(item))                         return '신축공사비';
+    if(/해체.*공사/.test(item))                         return '해체공사비';
+    return null; /* 요약에서 제외 */
+  }
+
+  /* 요약용 그룹 집계 */
+  const summaryGroupOrder=['건축설계비','토목설계비','해체심의·허가·신고','상주 감리비','해체 감리비','면허세·채권매입','경계복원측량','토지임대료','해체공사비','신축공사비'];
+  const summaryGroupMap=new Map();
+  summaryGroupOrder.forEach(g=>summaryGroupMap.set(g,{total:0,rows:[]}));
+
+  leafData.forEach(r=>{
+    const g=getSummaryGroup(r);
+    if(!g) return;
+    if(!summaryGroupMap.has(g)) summaryGroupMap.set(g,{total:0,rows:[]});
+    summaryGroupMap.get(g).total+=getTotal(r);
+    summaryGroupMap.get(g).rows.push(r);
+  });
+
+  /* 요약표 행 — 존재하는 그룹만 */
+  const summaryRows=summaryGroupOrder
+    .filter(g=>summaryGroupMap.get(g)&&summaryGroupMap.get(g).total>0)
+    .map(g=>{
+      const {total,rows}=summaryGroupMap.get(g);
+      /* 기간 요약 */
+      const drs=rows.map(r=>getDateRange(r)).filter(d=>d.hasStart);
+      let periodSummary='—';
+      if(drs.length>0){
+        const minS=drs.reduce((a,d)=>d.sy*100+d.sm<a.sy*100+a.sm?d:a,drs[0]);
+        const maxE=drs.filter(d=>d.hasEnd).reduce((a,d)=>d.ey*100+d.em>a.ey*100+a.em?d:a,{ey:0,em:0});
+        periodSummary=`${minS.sy}.${String(minS.sm).padStart(2,'0')}${maxE.ey>0?' ~ '+maxE.ey+'.'+String(maxE.em).padStart(2,'0'):'~'}`;
+      }
+      return`<tr>
+        <td class="label" style="color:#c9d1e8">${g}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:#8890aa">${periodSummary}</td>
+        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
+      </tr>`;
+    }).join('');
+
+  /* 요약 합계 (핵심 항목만) */
+  const summaryTotal=[...summaryGroupMap.values()].reduce((a,v)=>a+v.total,0);
 
   /* ══ 기간 범위 파악 (Leaf Node 기반) ═══════════════════ */
   let minYear=9999,maxYear=0;
