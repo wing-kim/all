@@ -3140,8 +3140,11 @@ function renderCorp(rows){
   const noteIdx    =hdr.findIndex(h=>/비고|메모|note|remark/i.test(h));
   const stageIdx   =hdr.findIndex(h=>/단계|phase|stage|공정/i.test(h));
 
+  /* 실제 시트 헤더 전체 출력 (디버그) */
+  console.warn('[법인비용] ★ 전체 헤더:', hdr.map((h,i)=>`[${i}]"${h}"`).join(' | '));
+  console.warn('[법인비용] ★ 1행 데이터:', data[0]?data[0].map((v,i)=>`[${i}]"${v}"`).join(' | '):'없음');
   console.log('[법인비용] 헤더 탐색 결과:', {
-    hdr: hdr.slice(0,15),
+    hdr: hdr.slice(0,20),
     itemIdx, catIdx, amtIdx, totalIdx,
     startIdx, endIdx, periodIdx,
     methodIdx, methodDetIdx, countIdx, noteIdx
