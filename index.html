@@ -3186,31 +3186,39 @@ function renderCorp(rows){
     return 0;
   }
 
-  /* 컬럼 인덱스 탐색 — 시트 컬럼 순서: 항목|금액|계약기간|소요기간|납부방법|납부방법상세 */
+  /* 컬럼 인덱스 탐색
+     시트 상세 섹션 컬럼 순서: 구분 | 항목 | 금액 | 계약기간 | 소요기간 | 납부방법 | 납부방법 상세
+     시트 요약/토지 섹션 컬럼 순서: 항목 | 금액 | 계약기간 | 소요기간 | 납부방법 | 비고
+  */
   function getColIdx(hdr){
-    const idx={};
+    const idx={amt:undefined,item:undefined,cat:undefined,
+               contract:undefined,period:undefined,
+               method:undefined,methodDet:undefined,note:undefined};
     hdr.forEach((h,i)=>{
       const s=String(h||'').trim();
       if(!s) return;
-      if(/^항목$|^구분명$|^내역$|^비목$/i.test(s))          idx.item=i;
-      else if(/^구분$|^대분류$/i.test(s))                    idx.cat=i;
-      else if(/^금액$/i.test(s))                             idx.amt=i;
-      else if(/^계약기간$/i.test(s))                         idx.contract=i;
-      else if(/^소요기간$/i.test(s))                         idx.period=i;
-      else if(/납부방법\s*상세|납부.*상세/i.test(s))         idx.methodDet=i;
-      else if(/^납부방법$|납부.*방법$/i.test(s))             idx.method=i;
-      else if(/^비고$|^메모$/i.test(s))                      idx.note=i;
+      if(/^항목$|^구분명$|^내역$|^비목$/i.test(s))               idx.item=i;
+      else if(/^구분$|^대분류$/i.test(s))                         idx.cat=i;
+      else if(/^금액$/i.test(s))                                  idx.amt=i;
+      else if(/^계약기간$/i.test(s))                              idx.contract=i;
+      else if(/^소요기간$/i.test(s))                              idx.period=i;
+      else if(/납부방법.*상세|납부.*상세|납부방법\s상세/i.test(s)) idx.methodDet=i;
+      else if(/^납부방법$|^납부\s*방법$/i.test(s))                idx.method=i;
+      else if(/^비고$|^메모$/i.test(s))                           idx.note=i;
     });
-    /* fallback: 명확한 이름 없으면 위치 기반 탐색 */
+    /* fallback — item이 없으면 위치 기반: 구분 다음 텍스트 컬럼 */
     if(idx.item===undefined){
-      /* 첫 번째 순수 텍스트 컬럼 */
-      for(let i=0;i<Math.min(hdr.length,4);i++){
+      const catI=idx.cat!==undefined?idx.cat:-1;
+      for(let i=0;i<Math.min(hdr.length,5);i++){
+        if(i===catI) continue; /* 구분 컬럼 건너뜀 */
         const s=String(hdr[i]||'').trim();
-        if(s && !/^\d/.test(s) && !/합계|sum|total/i.test(s)){idx.item=i;break;}
+        if(s && !/^\d/.test(s) && !/합계|sum|total|금액|기간|납부|비고/i.test(s)){
+          idx.item=i; break;
+        }
       }
     }
     console.log('[컬럼탐색] hdr:', hdr.map((h,i)=>`[${i}]"${h}"`).join('|'));
-    console.log('[컬럼탐색] 결과:', idx);
+    console.log('[컬럼탐색] 결과:', JSON.stringify(idx));
     return idx;
   }
 
@@ -3234,11 +3242,18 @@ function renderCorp(rows){
     return 0;
   }
 
-  /* 계약기간 파싱 */
+  /* 계약기간 파싱
+     ★ [수정] YYYY-MM-DD ~ YYYY-MM-DD 형식 지원 (일 포함)
+        기존 정규식은 "2026-05-01 ~ 2027-08-31" 같은 형식을 null 반환함
+        → 일(DD) 포함 패턴을 먼저 시도, 이후 월까지만 있는 패턴 시도 */
   function parseContract(s){
     s=String(s||'').trim();
     if(!s||s==='-'||s==='—') return null;
-    const m=s.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]+[^\d]*(\d{4})[.\-\/](\d{1,2})/);
+    /* 1순위: YYYY-MM-DD ~ YYYY-MM-DD (일 포함) */
+    let m=s.match(/(\d{4})[.\-\/](\d{1,2})[.\-\/]\d{1,2}\s*[~～–]+\s*(\d{4})[.\-\/](\d{1,2})[.\-\/]\d{1,2}/);
+    if(m) return{sy:+m[1],sm:+m[2],ey:+m[3],em:+m[4]};
+    /* 2순위: YYYY-MM ~ YYYY-MM (일 없음) */
+    m=s.match(/(\d{4})[.\-\/](\d{1,2})\s*[~～–]+\s*(\d{4})[.\-\/](\d{1,2})(?!\d)/);
     if(m) return{sy:+m[1],sm:+m[2],ey:+m[3],em:+m[4]};
     return null;
   }
@@ -3254,7 +3269,7 @@ function renderCorp(rows){
 
   /* 계약기간 문자열 생성 */
   function contractStr(r, idx){
-    if(idx.contract>=0){
+    if(idx.contract!==undefined&&idx.contract>=0){
       const s=sv(r,idx.contract);
       if(s&&s!=='-'&&s!='—') return s;
     }
@@ -3263,7 +3278,7 @@ function renderCorp(rows){
 
   /* 소요기간 문자열 */
   function periodStr(r, idx){
-    if(idx.period>=0){
+    if(idx.period!==undefined&&idx.period>=0){
       const s=sv(r,idx.period);
       if(s&&s!=='-'&&s!='—') return s;
     }
@@ -3275,7 +3290,7 @@ function renderCorp(rows){
 
   /* 소요기간(숫자) */
   function periodMonths(r, idx){
-    if(idx.period>=0){
+    if(idx.period!==undefined&&idx.period>=0){
       const p=parsePeriodMo(sv(r,idx.period));
       if(p>0) return p;
     }
@@ -3286,13 +3301,13 @@ function renderCorp(rows){
 
   /* 납부방법 */
   function methodStr(r, idx){
-    if(idx.method>=0){const s=sv(r,idx.method);if(s&&s!=='-'&&s!=='—')return s;}
+    if(idx.method!==undefined&&idx.method>=0){const s=sv(r,idx.method);if(s&&s!=='-'&&s!=='—')return s;}
     return '—';
   }
 
   /* 납부방법 상세 */
   function methodDetStr(r, idx){
-    if(idx.methodDet>=0){const s=sv(r,idx.methodDet);if(s&&s!=='-'&&s!=='—')return s;}
+    if(idx.methodDet!==undefined&&idx.methodDet>=0){const s=sv(r,idx.methodDet);if(s&&s!=='-'&&s!=='—')return s;}
     return '';
   }
 
@@ -3322,7 +3337,7 @@ function renderCorp(rows){
     /* 납부방법 상세 우선 */
     const det=methodDetStr(r,idx);
     if(det){
-      /* "YY-MM / YY-MM / ..." 형식 */
+      /* "YY-MM / YY-MM / ..." 형식 — 특정 날짜 목록 */
       if(/\//.test(det)){
         const parts=det.split('/').map(p=>p.trim()).filter(Boolean);
         const dates=parts.map(parseYM).filter(Boolean);
@@ -3331,19 +3346,25 @@ function renderCorp(rows){
       /* 기간 범위 */
       const rng=det.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]+[^\d]*(\d{4})[.\-\/](\d{1,2})/);
       if(rng) return{type:'range',sy:+rng[1],sm:+rng[2],ey:+rng[3],em:+rng[4]};
-      /* 단일 날짜 (일시납) */
-      const ym=parseYM(det);
-      if(ym) return{type:'lump',ym};
+      /* 단일 날짜 (일시납) — YYYY-MM-DD 또는 YYYY-MM */
+      const ym=parseYM(det.replace(/\d{4}-\d{2}-(\d{2})/,(_,dd)=>'').trim()||det);
+      const ymFull=det.match(/(\d{4})[.\-\/](\d{1,2})/);
+      if(ymFull&&!/\//.test(det)) return{type:'lump',ym:{y:+ymFull[1],m:+ymFull[2]}};
       if(/매월/i.test(det)) return{type:'monthly'};
     }
     /* 납부방법 컬럼 기반 */
-    const m=String(sv(r,idx.method)||'').toLowerCase();
-    if(/매월|monthly|분할.*납부|월납/i.test(m)) return{type:'monthly'};
-    if(/일시납|lump|once|전액/i.test(m)) return{type:'lump',ym:null};
-    /* 4회 분할 등 */
-    const n=parseInt(m.replace(/[^0-9]/g,''));
-    if(!isNaN(n)&&n>1) return{type:'installment',count:n};
-    return{type:'monthly'}; /* 기본: 매월 */
+    const meth=String(sv(r,idx.method)||'').trim();
+    const ml=meth.toLowerCase();
+    /* N회 분할 — 숫자가 명시된 경우 */
+    const nMatch=meth.match(/(\d+)\s*회/);
+    if(nMatch){const n=+nMatch[1];if(n>1) return{type:'installment',count:n};}
+    /* 매월 납부 */
+    if(/매월|monthly|월납/i.test(ml)) return{type:'monthly'};
+    /* 일시납 */
+    if(/일시납|lump|once|전액/i.test(ml)) return{type:'lump',ym:null};
+    /* 분할 납부 (N 미지정) → monthly 로 처리 (계약기간 균등 분배) */
+    if(/분할/i.test(ml)) return{type:'monthly'};
+    return{type:'monthly'}; /* 기본: 매월 균등 */
   }
 
   /* ══════════════════════════════════════════════════════════
@@ -3359,15 +3380,17 @@ function renderCorp(rows){
     const items=[];
     data.forEach(r=>{
       if(isSumRow(r,idx)) return;
-      const item=sv(r,idx.item)||sv(r,idx.cat)||'';
-      if(!item) return;
+      /* 항목명: item 컬럼 우선, 없으면 cat 컬럼 사용 */
+      const itemVal = (idx.item!==undefined ? sv(r,idx.item) : '') ||
+                      (idx.cat!==undefined  ? sv(r,idx.cat)  : '');
+      if(!itemVal) return;
       const amt=getAmt(r,idx);
       if(amt<=0) return;
       const cp=parseContract(contractStr(r,idx));
       const sch=parseSchedule(r,idx);
       items.push({
-        item,
-        cat: idx.cat>=0?sv(r,idx.cat):'',
+        item: itemVal,
+        cat: idx.cat!==undefined ? sv(r,idx.cat) : '',
         amt,
         contractRaw: contractStr(r,idx),
         periodRaw:   periodStr(r,idx),
@@ -3391,13 +3414,13 @@ function renderCorp(rows){
     const data=rows.slice(hi+1).filter(r=>r.some(c=>c));
     data.forEach(r=>{
       if(isSumRow(r,idx)) return;
-      const item=sv(r,idx.item)||sv(r,idx.cat)||'';
-      if(!item) return;
+      const itemVal=(idx.item!==undefined?sv(r,idx.item):'')||(idx.cat!==undefined?sv(r,idx.cat):'');
+      if(!itemVal) return;
       const amt=getAmt(r,idx);
       if(amt<=0) return;
       const cp=parseContract(contractStr(r,idx));
       const sch=parseSchedule(r,idx);
-      detailItems.push({item,cat:sv(r,idx.cat||0)||'',amt,
+      detailItems.push({item:itemVal,cat:idx.cat!==undefined?sv(r,idx.cat):'',amt,
         contractRaw:contractStr(r,idx),periodRaw:periodStr(r,idx),
         periodMo:periodMonths(r,idx),methodRaw:methodStr(r,idx),
         methodDetRaw:methodDetStr(r,idx),cp,sch});
@@ -3595,24 +3618,24 @@ function renderCorp(rows){
        표시 컬럼: 항목 / 계약기간 / 소요기간 / 납부방법 / 금액
      ★ [수정1] 컬럼 width 공통 기준 (3개 표 동일 적용)
   ══════════════════════════════════════════════════════════ */
-  /* ── [수정1 PATCH] 공통 colgroup HTML — 3개 표에 동일 적용
-       항목: 나머지 공간, 계약기간: 200px, 소요기간: 88px, 납부방법: 110px, 금액: 110px ── */
+  /* ── 공통 colgroup — 3개 표에 동일 적용
+       항목: 나머지(auto), 계약기간: 200px, 소요기간: 85px, 납부방법: 115px, 금액: 105px ── */
   const CORP_COLGROUP=`<colgroup>
     <col>
     <col style="width:200px">
-    <col style="width:88px">
-    <col style="width:110px">
-    <col style="width:110px">
+    <col style="width:85px">
+    <col style="width:115px">
+    <col style="width:105px">
   </colgroup>`;
-  /* 공통 th 셀 스타일 — 정렬 통일 */
+  /* 공통 th 스타일 */
   const TH_CONTRACT='style="width:200px;text-align:left"';
-  const TH_PERIOD  ='style="width:88px;text-align:center"';
-  const TH_METHOD  ='style="width:110px;text-align:center"';
-  const TH_AMT     ='class="r" style="width:110px"';
+  const TH_PERIOD  ='style="width:85px;text-align:center"';
+  const TH_METHOD  ='style="width:115px;text-align:center"';
+  const TH_AMT     ='class="r" style="width:105px"';
   /* 공통 td 스타일 — 기존 padding/font 유지 */
   const TD_CONTRACT='style="font-family:var(--mono);font-size:11px;color:#8890aa;width:200px"';
-  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center;width:88px"';
-  const TD_METHOD  ='style="font-size:10.5px;color:#8890aa;text-align:center;width:110px"';
+  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center;width:85px"';
+  const TD_METHOD  ='style="font-size:10.5px;color:#8890aa;text-align:center;width:115px"';
 
   function buildSummaryHTML(){
     const src = summaryItems.length>0 ? summaryItems : detailItems;
