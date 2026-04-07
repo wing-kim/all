@@ -547,6 +547,8 @@ td:first-child{color:var(--t1);font-weight:500}
 ═══════════════════════════════════════════════════════════ */
 /* 요약/상세/토지 표: overflow-x auto 유지 (좌우 스크롤 허용) */
 #sec-corp .cf-section:not(:last-of-type) .cf-table-wrap{overflow-x:auto}
+/* [컬럼 정렬 수정] 요약/상세/토지 3개 표: table-layout:fixed로 전체 너비 균등 분배 */
+#sec-corp .cf-section:not(:last-of-type) .cf-table{table-layout:fixed;width:100%}
 
 @media(max-width:900px){
   .prop-grid,.calc-grid,.irr-res-grid{grid-template-columns:1fr}
@@ -3668,7 +3670,9 @@ function renderCorp(rows){
      ★ [수정1] 컬럼 width 공통 기준 (3개 표 동일 적용)
   ══════════════════════════════════════════════════════════ */
   /* ── 공통 colgroup — 3개 표에 동일 적용
+       table-layout:fixed + width:100% 로 전체 너비 균등 분배
        항목: 나머지(auto), 계약기간: 200px, 소요기간: 85px, 납부방법: 115px, 금액: 105px ── */
+  const CORP_TABLE_STYLE='style="width:100%;table-layout:fixed"';
   const CORP_COLGROUP=`<colgroup>
     <col>
     <col style="width:200px">
@@ -3682,9 +3686,9 @@ function renderCorp(rows){
   const TH_METHOD  ='style="width:115px;text-align:center"';
   const TH_AMT     ='class="r" style="width:105px"';
   /* 공통 td 스타일 — 기존 padding/font 유지 */
-  const TD_CONTRACT='style="font-family:var(--mono);font-size:11px;color:#8890aa;width:200px"';
-  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center;width:85px"';
-  const TD_METHOD  ='style="font-size:10.5px;color:#8890aa;text-align:center;width:115px"';
+  const TD_CONTRACT='style="font-family:var(--mono);font-size:11px;color:#8890aa"';
+  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center"';
+  const TD_METHOD  ='style="font-size:10.5px;color:#8890aa;text-align:center"';
 
   function buildSummaryHTML(){
     const src = summaryItems.length>0 ? summaryItems : detailItems;
