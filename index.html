@@ -541,22 +541,12 @@ td:first-child{color:var(--t1);font-weight:500}
 .irr-assum-tags span{font-size:10px;padding:2px 9px;border-radius:20px;
   background:var(--s3);border:1px solid var(--border2);color:var(--t3);font-family:var(--mono)}
 
-/* ═══ [수정3] 법인비용 캐시플로우 — 고밀도 테이블 ═══════════
-   - table-layout:fixed 로 컬럼 너비 엄격 제어
-   - td/th padding 최소화 (4px)
-   - font-size 10px
-   - overflow-x 제거 (한 화면 표시)
+/* ═══ [수정3 PATCH] 법인비용 캐시플로우 — 고밀도 (월별 테이블 전용)
+   요약/상세/토지 3개 표: 기존 스타일 그대로 유지
+   월별 캐시플로우 표만 압축 적용
 ═══════════════════════════════════════════════════════════ */
-#sec-corp .cf-table-wrap{overflow:hidden}
-#sec-corp .cf-table th{padding:5px 4px;font-size:9px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#sec-corp .cf-table td{padding:4px 4px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-#sec-corp .cf-table td.ym{font-size:10px;padding:4px 6px;color:var(--t2)}
-#sec-corp .cf-table td.r{font-size:10px;padding:4px 4px}
-#sec-corp .cf-table tr.yr-group td{font-size:10px;padding:4px 8px}
-#sec-corp .cf-table tr.yr-total td{font-size:10px;padding:4px 6px}
-#sec-corp .cf-table tr.subtotal-row td{font-size:10px;padding:5px 6px}
-/* 요약/상세/토지 표 3개는 기존 밀도 유지 (overflow-x auto 허용) */
-#sec-corp .cf-section:not(:last-child) .cf-table-wrap{overflow-x:auto}
+/* 요약/상세/토지 표: overflow-x auto 유지 (좌우 스크롤 허용) */
+#sec-corp .cf-section:not(:last-of-type) .cf-table-wrap{overflow-x:auto}
 
 @media(max-width:900px){
   .prop-grid,.calc-grid,.irr-res-grid{grid-template-columns:1fr}
@@ -3466,51 +3456,77 @@ function renderCorp(rows){
   const months=[];
   for(let y=CF_START_Y;y<=CF_END_Y;y++) for(let m=1;m<=12;m++) months.push({y,m});
 
-  /* 항목별 월 배분 */
+  /* 항목별 월 배분
+     ★ [캐시플로우 수정] 계약기간(cp) 기준 엄격 적용
+        - cp 있으면 계약기간 외 월에는 반드시 0
+        - installment: base 월 계산 버그 수정 (12진법 연산)
+        - monthly/분할납부: 계약기간 개월수로 나눔 (periodMo 아닌 cp 기반)
+        - 일시납: 계약기간 시작 월 1회
+  */
   function amtInMonth(o, y, m){
-    const{amt,periodMo,cp,sch}=o;
+    const{amt,cp,sch}=o;
     const cur=y*100+m;
 
-    /* 시작/종료 YM */
-    let sYM, eYM;
+    /* 계약기간 시작/종료 결정 */
+    let sY,sM,eY,eM;
     if(cp){
-      sYM=cp.sy*100+cp.sm;
-      eYM=cp.ey*100+cp.em;
+      sY=cp.sy; sM=cp.sm; eY=cp.ey; eM=cp.em;
     } else {
-      sYM=CF_START_Y*100+1;
-      const e0=(CF_START_Y*12)+(periodMo-1);
-      eYM=Math.floor(e0/12)*100+(e0%12+1);
+      /* cp 없으면 계산 불가 → 0 반환 (계약기간 외) */
+      return 0;
     }
+    const sYM=sY*100+sM;
+    const eYM=eY*100+eM;
+
+    /* 계약기간 내 개월 수 */
+    const totalMo=(eY-sY)*12+(eM-sM)+1;
 
     switch(sch.type){
+
+      /* 특정 날짜 목록 (26-05/26-09/…) */
       case'dates':{
+        /* 날짜가 계약기간 내에 있는 경우만 */
         const f=sch.dates.find(d=>d.y===y&&d.m===m);
-        return f?amt/sch.dates.length:0;
+        if(!f) return 0;
+        return amt/sch.dates.length;
       }
+
+      /* 일시납 */
       case'lump':{
         if(sch.ym) return(sch.ym.y===y&&sch.ym.m===m)?amt:0;
-        return cur===sYM?amt:0;
+        /* 납부 날짜 미지정 → 계약 시작 월 */
+        return(cur===sYM)?amt:0;
       }
+
+      /* N회 분할 납부 — 계약기간 시작월부터 N개월 간격 없이 순차 배분 */
       case'installment':{
-        const perPay=amt/sch.count;
-        if(!cp) return 0;
-        const base=cp.sy*12+cp.sm-1;
-        for(let i=0;i<sch.count;i++){
-          const pm=base+i;
-          if(Math.floor(pm/12)===y&&(pm%12)+1===m) return perPay;
+        if(cur<sYM||cur>eYM) return 0;
+        const n=sch.count;
+        /* 계약기간을 n등분: 각 구간 첫 달에 지급 */
+        const interval=Math.max(1,Math.floor(totalMo/n));
+        for(let i=0;i<n;i++){
+          /* i번째 납부 월 계산 */
+          const absM=(sY*12+sM-1)+(i*interval);
+          const py=Math.floor(absM/12);
+          const pm=(absM%12)+1;
+          if(py===y&&pm===m) return amt/n;
         }
         return 0;
       }
+
+      /* 기간 범위 지정 */
       case'range':{
         const rS=sch.sy*100+sch.sm, rE=sch.ey*100+sch.em;
         if(cur<rS||cur>rE) return 0;
         const mc=(sch.ey-sch.sy)*12+(sch.em-sch.sm)+1;
         return mc>0?amt/mc:amt;
       }
+
+      /* 매월 / 분할납부 (N 미지정) → 계약기간 내 균등 분배 */
       case'monthly':
       default:{
         if(cur<sYM||cur>eYM) return 0;
-        return periodMo>0?amt/periodMo:amt;
+        return totalMo>0?amt/totalMo:amt;
       }
     }
   }
@@ -3579,22 +3595,23 @@ function renderCorp(rows){
        표시 컬럼: 항목 / 계약기간 / 소요기간 / 납부방법 / 금액
      ★ [수정1] 컬럼 width 공통 기준 (3개 표 동일 적용)
   ══════════════════════════════════════════════════════════ */
-  /* ── [수정1 PATCH] 공통 colgroup HTML — 3개 표에 동일 적용 ── */
+  /* ── [수정1 PATCH] 공통 colgroup HTML — 3개 표에 동일 적용
+       항목: 나머지 공간, 계약기간: 200px, 소요기간: 88px, 납부방법: 110px, 금액: 110px ── */
   const CORP_COLGROUP=`<colgroup>
-    <col style="width:auto;min-width:160px">
-    <col style="width:180px;min-width:160px">
-    <col style="width:90px;min-width:80px">
-    <col style="width:110px;min-width:100px">
-    <col style="width:110px;min-width:100px">
+    <col>
+    <col style="width:200px">
+    <col style="width:88px">
+    <col style="width:110px">
+    <col style="width:110px">
   </colgroup>`;
   /* 공통 th 셀 스타일 — 정렬 통일 */
-  const TH_CONTRACT='style="width:180px;min-width:160px"';
-  const TH_PERIOD  ='style="width:90px;min-width:80px;text-align:center"';
-  const TH_METHOD  ='style="width:110px;min-width:100px;text-align:center"';
-  const TH_AMT     ='class="r" style="width:110px;min-width:100px"';
-  /* 공통 td 스타일 */
-  const TD_CONTRACT='style="font-family:var(--mono);font-size:11px;color:#8890aa;width:180px"';
-  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center;width:90px"';
+  const TH_CONTRACT='style="width:200px;text-align:left"';
+  const TH_PERIOD  ='style="width:88px;text-align:center"';
+  const TH_METHOD  ='style="width:110px;text-align:center"';
+  const TH_AMT     ='class="r" style="width:110px"';
+  /* 공통 td 스타일 — 기존 padding/font 유지 */
+  const TD_CONTRACT='style="font-family:var(--mono);font-size:11px;color:#8890aa;width:200px"';
+  const TD_PERIOD  ='style="font-size:11px;color:#a0a8c0;text-align:center;width:88px"';
   const TD_METHOD  ='style="font-size:10.5px;color:#8890aa;text-align:center;width:110px"';
 
   function buildSummaryHTML(){
@@ -3810,16 +3827,6 @@ function renderCorp(rows){
       return '#8890aa';
     }
 
-    /* ── [수정3] 컬럼 너비 계산: 전체 가용 너비에서 고정폭 제외 후 균등 분배 ──
-       연월(54px) + 항목들 + 월합계(64px) + 누적(60px)
-       항목 수가 많을수록 각 컬럼 폭 축소 (최소 44px) */
-    const N=activeItems.length;
-    const FIXED_W=54+64+60; // 연월+월합계+누적
-    /* 전체 테이블 최대 너비: 섹션 패딩 감안 */
-    const MAX_TABLE=1380;
-    const avail=Math.max(MAX_TABLE-FIXED_W, N*44);
-    const itemW=Math.max(44, Math.floor(avail/N));
-
     /* ── 항목별 전체 합계 ── */
     const itemTotals=activeItems.map((_,ai)=>{
       const oi=cfItems.indexOf(activeItems[ai]);
@@ -3833,13 +3840,13 @@ function renderCorp(rows){
       if(y!==lastY){
         if(lastY!==null&&yrSum>0){
           bodyHTML+=`<tr class="yr-total">
-            <td style="font-size:10px">${lastY}년 소계</td>
+            <td>${lastY}년 소계</td>
             ${activeItems.map((_,ai)=>{
               const oi=cfItems.indexOf(activeItems[ai]);
               const v=yrByItem[ai];
-              return`<td class="r">${v>0?`<span class="exp" style="font-size:9px">${fmtBig(v)}</span>`:`<span class="dim">—</span>`}</td>`;
+              return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
             }).join('')}
-            <td class="r"><span class="exp" style="font-size:10px">${fmtBig(yrSum)}</span></td>
+            <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
             <td class="r"></td>
           </tr>`;
         }
@@ -3854,71 +3861,64 @@ function renderCorp(rows){
         yrByItem[ai]=(yrByItem[ai]||0)+(byItem[oi]||0);
       });
       bodyHTML+=`<tr>
-        <td class="ym" style="font-size:10px;padding:4px 6px">${y}.${String(m).padStart(2,'0')}</td>
+        <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
         ${activeItems.map((_,ai)=>{
           const oi=cfItems.indexOf(activeItems[ai]);
           const v=byItem[oi]||0;
-          return`<td class="r" style="padding:4px 4px">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}</span>`:`<span class="dim">—</span>`}</td>`;
+          return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
         }).join('')}
-        <td class="r" style="padding:4px 5px"><span class="exp" style="font-size:10px;font-weight:600">${fmtBig(total)}</span></td>
-        <td class="r" style="padding:4px 5px"><span class="neu" style="font-size:9.5px">${fmtBig(cumTotal)}</span></td>
+        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
+        <td class="r"><span class="neu" style="font-size:11px">${fmtBig(cumTotal)}원</span></td>
       </tr>`;
     });
 
     /* 마지막 연도 소계 */
     if(lastY&&yrSum>0){
       bodyHTML+=`<tr class="yr-total">
-        <td style="font-size:10px">${lastY}년 소계</td>
+        <td>${lastY}년 소계</td>
         ${activeItems.map((_,ai)=>{
           const v=yrByItem[ai];
-          return`<td class="r">${v>0?`<span class="exp" style="font-size:9px">${fmtBig(v)}</span>`:`<span class="dim">—</span>`}</td>`;
+          return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
         }).join('')}
-        <td class="r"><span class="exp" style="font-size:10px">${fmtBig(yrSum)}</span></td>
+        <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
         <td class="r"></td>
       </tr>`;
     }
 
     /* 전체 합계 행 */
     bodyHTML+=`<tr class="subtotal-row">
-      <td style="font-weight:700;font-size:10px">전체 합계</td>
-      ${activeItems.map((_,ai)=>`<td class="r"><span class="exp" style="font-size:10px;font-weight:600">${fmtBig(itemTotals[ai])}</span></td>`).join('')}
-      <td class="r"><span class="exp" style="font-weight:700;font-size:10px">${fmtBig(cumTotal)}</span></td>
+      <td style="font-weight:700">전체 합계</td>
+      ${activeItems.map((_,ai)=>`<td class="r"><span class="exp" style="font-weight:600">${fmtBig(itemTotals[ai])}원</span></td>`).join('')}
+      <td class="r"><span class="exp" style="font-weight:700">${fmtBig(cumTotal)}원</span></td>
       <td class="r"></td>
     </tr>`;
 
-    /* ── [수정3] 헤더: 항목 그룹 색상 구분 ── */
+    /* ── 헤더: 항목 그룹 색상 구분 ── */
     const theadCols=activeItems.map(o=>{
       const color=itemColor(o);
       const sn=shortName(o.item);
-      return`<th class="r" title="${o.item}" style="color:${color};font-size:9px;padding:5px 4px;width:${itemW}px;max-width:${itemW}px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:rgba(0,0,0,.15)">${sn}</th>`;
+      return`<th class="r" title="${o.item}" style="color:${color};font-size:9px;white-space:nowrap;background:rgba(0,0,0,.15)">${sn}</th>`;
     }).join('');
 
-    /* ── [수정3] table-layout:fixed + 단위 생략(만원 단위 fmtBig 이미 적용) ── */
     return`<div class="cf-section">
       <div class="cf-section-head">
         <div class="cf-section-bar" style="background:var(--orange)"></div>
         <div class="cf-section-title">월별 비용 캐시플로우</div>
-        <div class="cf-section-sub">${CF_START_Y}–${CF_END_Y} · 총 ${fmtBig(cumTotal)}원 · 단위: 만원</div>
+        <div class="cf-section-sub">${CF_START_Y}–${CF_END_Y} · 총 ${fmtBig(cumTotal)}원</div>
       </div>
-      <div class="cf-table-wrap">
-        <table class="cf-table" style="table-layout:fixed;width:100%;font-size:10px">
-          <colgroup>
-            <col style="width:54px">
-            ${activeItems.map(()=>`<col style="width:${itemW}px">`).join('')}
-            <col style="width:64px">
-            <col style="width:60px">
-          </colgroup>
+      <div class="cf-table-wrap"><div style="overflow-x:auto">
+        <table class="cf-table">
           <thead>
             <tr>
-              <th style="color:#a8b0c8;font-weight:700;font-size:9px;padding:5px 6px">연월</th>
+              <th style="color:#a8b0c8;font-weight:700;min-width:70px">연월</th>
               ${theadCols}
-              <th class="r" style="color:#ef4444;font-weight:700;font-size:9px;padding:5px 5px">월합계</th>
-              <th class="r" style="color:#60a5fa;font-weight:700;font-size:9px;padding:5px 5px">누적</th>
+              <th class="r" style="color:#ef4444;font-weight:700;min-width:80px">월 합계</th>
+              <th class="r" style="color:#60a5fa;font-weight:700;min-width:80px">누적</th>
             </tr>
           </thead>
           <tbody>${bodyHTML}</tbody>
         </table>
-      </div>
+      </div></div>
     </div>`;
   }
 
