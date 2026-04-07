@@ -2117,10 +2117,22 @@ function renderLease(rows){
      3. 보증금 / 월임대료 / 관리비 / 토지임대료 중 실제 금액이 있음
      + 반드시 제외: 합계·소계·헤더반복·구분·빈값 행
   ════════════════════════════════════════════════════════════ */
-  /* 제외 패턴: 임차인 또는 첫 셀이 아래 키워드면 데이터 행에서 제거 */
+  /* 제외 패턴: 임차인 또는 어느 셀이든 아래 키워드면 데이터 행에서 제거 */
   const EXCLUDE_PAT=/^(합계|소계|계|subtotal|total|sum|항목|임차인|구분|건물|주소|\-|—|\s*)$/i;
 
+  /* [수정] 행 전체 셀에서 합계 키워드가 있는지 검사 — 합계 행 중복 집계 방지 */
+  const SUM_ROW_PAT=/^(합계|소계|계|subtotal|total|sum)$/i;
+  function isSumRow(r){
+    return r.some(c=>{
+      const s=(c||'').toString().trim();
+      return SUM_ROW_PAT.test(s);
+    });
+  }
+
   function isValidRow(r){
+    /* 먼저 합계/소계 행이면 무조건 제외 */
+    if(isSumRow(r)) return false;
+
     const name=str(r,nameIdx);
     const start=str(r,startIdx);
     const end  =str(r,endIdx);
