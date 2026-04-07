@@ -564,13 +564,13 @@ td:first-child{color:var(--t1);font-weight:500}
 <div class="page">
 
 <header>
-  <div class="brand">
+  <div class="brand" onclick="goHome()" title="홈으로 이동 · 전체 새로고침" style="cursor:pointer">
     <span class="brand-name">BLUEPIKA</span>
     <span class="brand-sub">Dashboard</span>
   </div>
   <div class="header-r">
     <div class="sync-badge"><div class="dot"></div><span id="syncTime">—</span></div>
-    <button class="btn-ref" id="btnRef" onclick="refreshCurrent()">
+    <button class="btn-ref" id="btnRef" onclick="reloadAll()">
       <span class="ico">↻</span> 새로고침
     </button>
   </div>
@@ -841,10 +841,10 @@ function renderTimeline(rows){
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 프로젝트 타임라인</div>
     <div class="kpi-row">
-      <div class="kpi b"><div class="kpi-lbl">총 단계</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">프로젝트 항목</div></div>
-      <div class="kpi g"><div class="kpi-lbl">총 소요 기간</div><div class="kpi-val">${totalM}개월</div><div class="kpi-sub">예상 전체 기간</div></div>
-      <div class="kpi y"><div class="kpi-lbl">타임라인 범위</div><div class="kpi-val">${YEAR_START}–${YEAR_END}</div><div class="kpi-sub">5개년 계획</div></div>
-      <div class="kpi p"><div class="kpi-lbl">착공 예정</div><div class="kpi-val">2029</div><div class="kpi-sub">공사 시작 연도</div></div>
+      <div class="kpi b"><div class="kpi-lbl" style="color:#e5e7eb">총 단계</div><div class="kpi-val" style="color:#60a5fa">${data.length}</div><div class="kpi-sub" style="color:#9ca3af">프로젝트 항목</div></div>
+      <div class="kpi g"><div class="kpi-lbl" style="color:#e5e7eb">총 소요 기간</div><div class="kpi-val" style="color:#34d399">${totalM}개월</div><div class="kpi-sub" style="color:#9ca3af">예상 전체 기간</div></div>
+      <div class="kpi y"><div class="kpi-lbl" style="color:#e5e7eb">타임라인 범위</div><div class="kpi-val" style="color:#fbbf24">${YEAR_START}–${YEAR_END}</div><div class="kpi-sub" style="color:#9ca3af">5개년 계획</div></div>
+      <div class="kpi p"><div class="kpi-lbl" style="color:#e5e7eb">착공 예정</div><div class="kpi-val" style="color:#a78bfa">2029</div><div class="kpi-sub" style="color:#9ca3af">공사 시작 연도</div></div>
     </div>
     <div class="card">
       <div class="card-head">
@@ -2310,13 +2310,13 @@ function renderLease(rows){
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 임대차계약현황</div>
     <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(0,140px));justify-content:start;">
-      <div class="kpi b"><div class="kpi-lbl">총 계약</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">유효 계약 건수</div></div>
-      ${aC?`<div class="kpi g"><div class="kpi-lbl">계약 유효</div><div class="kpi-val" style="color:var(--green)">${aC}</div><div class="kpi-sub">진행중</div></div>`:''}
-      ${eC?`<div class="kpi r"><div class="kpi-lbl">만료·종료</div><div class="kpi-val" style="color:var(--red)">${eC}</div><div class="kpi-sub">종료</div></div>`:''}
-      ${wC?`<div class="kpi y"><div class="kpi-lbl">주의</div><div class="kpi-val" style="color:var(--yellow)">${wC}</div><div class="kpi-sub">곧 만료</div></div>`:''}
-      ${totalRent?`<div class="kpi p"><div class="kpi-lbl">월 임대료</div><div class="kpi-val" style="color:var(--purple)">${fmtBig(totalRent)}원</div><div class="kpi-sub">전체 합산</div></div>`:''}
-      ${totalMgmt?`<div class="kpi b"><div class="kpi-lbl">관리비</div><div class="kpi-val">${fmtBig(totalMgmt)}원</div><div class="kpi-sub">월 기준</div></div>`:''}
-      ${totalDep?`<div class="kpi b"><div class="kpi-lbl">보증금</div><div class="kpi-val">${fmtBig(totalDep)}원</div><div class="kpi-sub">전체 합산</div></div>`:''}
+      <div class="kpi b"><div class="kpi-lbl" style="color:#e5e7eb">총 계약</div><div class="kpi-val" style="color:#60a5fa">${data.length}</div><div class="kpi-sub" style="color:#9ca3af">유효 계약 건수</div></div>
+      ${aC?`<div class="kpi g"><div class="kpi-lbl" style="color:#e5e7eb">계약 유효</div><div class="kpi-val" style="color:var(--green)">${aC}</div><div class="kpi-sub" style="color:#9ca3af">진행중</div></div>`:''}
+      ${eC?`<div class="kpi r"><div class="kpi-lbl" style="color:#e5e7eb">만료·종료</div><div class="kpi-val" style="color:var(--red)">${eC}</div><div class="kpi-sub" style="color:#9ca3af">종료</div></div>`:''}
+      ${wC?`<div class="kpi y"><div class="kpi-lbl" style="color:#e5e7eb">주의</div><div class="kpi-val" style="color:var(--yellow)">${wC}</div><div class="kpi-sub" style="color:#9ca3af">곧 만료</div></div>`:''}
+      ${totalRent?`<div class="kpi p"><div class="kpi-lbl" style="color:#e5e7eb">월 임대료</div><div class="kpi-val" style="color:var(--purple)">${fmtBig(totalRent)}원</div><div class="kpi-sub" style="color:#9ca3af">전체 합산</div></div>`:''}
+      ${totalMgmt?`<div class="kpi b"><div class="kpi-lbl" style="color:#e5e7eb">관리비</div><div class="kpi-val" style="color:#60a5fa">${fmtBig(totalMgmt)}원</div><div class="kpi-sub" style="color:#9ca3af">월 기준</div></div>`:''}
+      ${totalDep?`<div class="kpi b"><div class="kpi-lbl" style="color:#e5e7eb">보증금</div><div class="kpi-val" style="color:#60a5fa">${fmtBig(totalDep)}원</div><div class="kpi-sub" style="color:#9ca3af">전체 합산</div></div>`:''}
     </div>
     ${sections||`<div class="empty"><div class="empty-i">📭</div>임차인 데이터가 없습니다</div>`}`;
 }
@@ -4007,6 +4007,39 @@ async function refreshCurrent(){
   await load(CUR);
   LOADED.add(CUR);
   btn.classList.remove('spin');
+}
+
+/* ══ [수정] 전체 탭 데이터 일괄 새로고침 ══════════════════
+   새로고침 버튼 클릭 시 모든 탭 fetch → cache 업데이트 → 현재 탭 render
+══════════════════════════════════════════════════════════ */
+async function reloadAll(){
+  const btn=document.getElementById('btnRef');
+  btn.classList.add('spin');
+  /* 모든 탭 LOADED 캐시 초기화 */
+  Object.keys(TABS).forEach(k=>LOADED.delete(k));
+  /* 전체 탭 병렬 fetch */
+  const keys=Object.keys(TABS);
+  await Promise.allSettled(keys.map(k=>load(k)));
+  /* 현재 탭 다시 render (load에서 이미 처리되지만 CUR이 확실히 on 상태인지 보장) */
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById(`sec-${CUR}`).classList.add('on');
+  btn.classList.remove('spin');
+}
+
+/* ══ [수정] 브랜드 클릭 — 홈(타임라인) 이동 + 전체 새로고침 ══
+   1. 타임라인 탭 활성화
+   2. 전체 데이터 새로고침
+══════════════════════════════════════════════════════════ */
+async function goHome(){
+  /* 타임라인 탭 버튼 찾아 활성화 */
+  const tabBtns=document.querySelectorAll('.tab');
+  tabBtns.forEach(b=>b.classList.remove('on'));
+  tabBtns[0].classList.add('on'); /* 첫 번째 탭 = 프로젝트 타임라인 */
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('sec-timeline').classList.add('on');
+  CUR='timeline';
+  /* 전체 데이터 새로고침 */
+  await reloadAll();
 }
 
 /* ══ INIT ══════════════════════════════════════════════════ */
