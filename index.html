@@ -1179,8 +1179,8 @@ function renderIRR(rows){
   <div class="irr-calc-wrap">
     <!-- 시나리오 탭 -->
     <div class="calc-scenario-bar">
-      <button class="calc-scen-btn active" onclick="irrSetScenario('conservative',this)">🔵 보수적</button>
-      <button class="calc-scen-btn"        onclick="irrSetScenario('base',this)">🟢 기본</button>
+      <button class="calc-scen-btn"        onclick="irrSetScenario('conservative',this)">🔵 보수적</button>
+      <button class="calc-scen-btn active" id="irr-scen-base" onclick="irrSetScenario('base',this)">🟢 기본</button>
       <button class="calc-scen-btn"        onclick="irrSetScenario('optimistic',this)">🟡 낙관적</button>
     </div>
 
@@ -1335,6 +1335,14 @@ function renderIRR(rows){
     </div>`;
 
   /* 슬라이더 초기화는 위 데이터 레이어에서 처리됨 */
+
+  /* ── [수정] 초기 시나리오: "기본"을 실제 상태값/슬라이더/버튼 모두 동기화 ──
+     HTML에서 버튼 active를 기본으로 선언했지만,
+     슬라이더 value도 irrSetScenario('base') 한 번 실행해서 완전 일치 보장 */
+  setTimeout(()=>{
+    const baseBtn=document.getElementById('irr-scen-base');
+    if(baseBtn) irrSetScenario('base', baseBtn);
+  }, 0);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1864,29 +1872,29 @@ function irrCalcRun(){
 
       <!-- KPI 그리드 -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
-        <div class="kpi r"><div class="kpi-lbl">총 자기자본 투입</div>
-          <div class="kpi-val">${fmtBig(totalInvest)}원</div>
-          <div class="kpi-sub">매입+신축 자기자본</div></div>
+        <div class="kpi r"><div class="kpi-lbl" style="color:#e5e7eb">총 자기자본 투입</div>
+          <div class="kpi-val" style="color:#ef4444">${fmtBig(totalInvest)}원</div>
+          <div class="kpi-sub" style="color:#9ca3af">매입+신축 자기자본</div></div>
         <div class="kpi ${equityMultiple>=2?'g':'y'}">
-          <div class="kpi-lbl">Equity Multiple</div>
-          <div class="kpi-val">${equityMultiple.toFixed(2)}x</div>
-          <div class="kpi-sub">총 회수 / 총 투자</div></div>
+          <div class="kpi-lbl" style="color:#e5e7eb">Equity Multiple</div>
+          <div class="kpi-val" style="color:${equityMultiple>=2?'#34d399':'#fbbf24'}">${equityMultiple.toFixed(2)}x</div>
+          <div class="kpi-sub" style="color:#9ca3af">총 회수 / 총 투자</div></div>
         <div class="kpi ${coc>=0.05?'g':'y'}">
-          <div class="kpi-lbl">Cash-on-Cash (1년)</div>
-          <div class="kpi-val">${(coc*100).toFixed(1)}%</div>
-          <div class="kpi-sub">1년차 현금수익률</div></div>
+          <div class="kpi-lbl" style="color:#e5e7eb">Cash-on-Cash (1년)</div>
+          <div class="kpi-val" style="color:${coc>=0.05?'#34d399':'#fbbf24'}">${(coc*100).toFixed(1)}%</div>
+          <div class="kpi-sub" style="color:#9ca3af">1년차 현금수익률</div></div>
         <div class="kpi g">
-          <div class="kpi-lbl">예상 자산가치</div>
-          <div class="kpi-val">${fmtBig(exitVal)}원</div>
-          <div class="kpi-sub">EXIT 시점 추정</div></div>
+          <div class="kpi-lbl" style="color:#e5e7eb">예상 자산가치</div>
+          <div class="kpi-val" style="color:#34d399">${fmtBig(exitVal)}원</div>
+          <div class="kpi-sub" style="color:#9ca3af">EXIT 시점 추정</div></div>
         <div class="kpi ${netProfit>=0?'g':'r'}">
-          <div class="kpi-lbl">총 순수익</div>
-          <div class="kpi-val">${fmtBig(netProfit)}원</div>
-          <div class="kpi-sub">EXIT+임대-총투자</div></div>
+          <div class="kpi-lbl" style="color:#e5e7eb">총 순수익</div>
+          <div class="kpi-val" style="color:${netProfit>=0?'#34d399':'#ef4444'}">${fmtBig(netProfit)}원</div>
+          <div class="kpi-sub" style="color:#9ca3af">EXIT+임대-총투자</div></div>
         <div class="kpi b">
-          <div class="kpi-lbl">회수기간</div>
-          <div class="kpi-val">${payback!==null?payback+'년':'미수렴'}</div>
-          <div class="kpi-sub">누적 흑자 전환 시점</div></div>
+          <div class="kpi-lbl" style="color:#e5e7eb">회수기간</div>
+          <div class="kpi-val" style="color:#60a5fa">${payback!==null?payback+'년':'미수렴'}</div>
+          <div class="kpi-sub" style="color:#9ca3af">누적 흑자 전환 시점</div></div>
       </div>
     </div>
   </div>
