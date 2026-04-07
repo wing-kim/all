@@ -2903,6 +2903,15 @@ function renderPersonal(rows){
     html += isDetailMode ? rowsDetail(depItems) : rowsSummary(depItems);
     if(!depItems.length) html += `<tr><td colspan="3" style="padding:8px 14px;color:var(--t4);font-size:11px">항목 없음</td></tr>`;
 
+    /* 전체 합계 행 — 맨 아래 */
+    const grandTotal = loanTotal + depTotal;
+    if(grandTotal > 0){
+      html += `<tr class="split-subtotal">
+        <td colspan="2">지출 전체 합계</td>
+        <td class="r"><span class="exp">${fmtBig(grandTotal)}원</span></td>
+      </tr>`;
+    }
+
     return html;
   }
 
@@ -2922,8 +2931,8 @@ function renderPersonal(rows){
         <table class="cf-split-table">
           <thead><tr><th>임차인</th><th class="r">월 임대료</th><th class="r">월 관리비</th></tr></thead>
           <tbody>
+            ${incSummaryRows||`<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">수입 항목 없음</td></tr>`}
             ${(()=>{
-              /* ── [수정] 수입 합산 행 — 지출 그룹 헤더 방식과 동일 ── */
               const incRentTotal = useDetail
                 ? incDetailFiltered.reduce((a,o)=>a+(o.rent||0),0)
                 : summaryIncItems.filter(o=>/임대료/.test(o.item)).reduce((a,o)=>a+(o.amount||0),0);
@@ -2931,15 +2940,12 @@ function renderPersonal(rows){
                 ? incDetailFiltered.reduce((a,o)=>a+(o.mgmt||0),0)
                 : summaryIncItems.filter(o=>/관리비/.test(o.item)).reduce((a,o)=>a+(o.amount||0),0);
               const incMonthTotal = incRentTotal + incMgmtTotal;
-              const sumRow = (incRentTotal||incMgmtTotal) ? `<tr class="exp-group-head loan-head" style="border-left:3px solid #22c55e">
-                <td colspan="3" style="color:#22c55e">
-                  📥 월 수입 합계
-                  <span style="float:right;font-weight:700;color:#22c55e;font-family:var(--mono)">${fmtBig(incMonthTotal)}원</span>
-                </td>
+              return (incMonthTotal>0) ? `<tr class="split-subtotal">
+                <td>월 수입 합계</td>
+                <td class="r"><span class="inc">${fmtBig(incRentTotal)}원</span></td>
+                <td class="r"><span class="inc">${fmtBig(incMgmtTotal)}원</span></td>
               </tr>` : '';
-              return sumRow;
             })()}
-            ${incSummaryRows||`<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">수입 항목 없음</td></tr>`}
           </tbody>
         </table>
       </div>
