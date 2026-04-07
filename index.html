@@ -3420,11 +3420,11 @@ function renderCorp(rows){
     const c=raw.toLowerCase();
     /* 세부 분류 → 요청 그룹명으로 통합 */
     if(/토지.*임대|토지료|지대/.test(c))          return '토지임대료';
-    if(/신축.*공사|공사비|시공/.test(c))           return '공사비';
+    if(/신축.*공사|공사비(?!.*해체)|시공/.test(c)) return '공사비';
     if(/해체.*공사/.test(c))                       return '공사비';
     if(/감리/.test(c))                             return '감리비';
+    if(/면허세|채권|경계복원/.test(c))             return '인허가·기타';
     if(/설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전/.test(c)) return '설계비';
-    if(/면허세|채권|경계복원/.test(c))             return '설계비'; /* 요약에서 설계비 그룹으로 */
     if(/대출|이자|금융/.test(c))                   return '금융비용';
     if(/세금|취득|등록|인지/.test(c))              return '세금·공과금';
     return raw||'기타';
@@ -3438,8 +3438,7 @@ function renderCorp(rows){
     if(/해체.*심의|해체.*허가|해체.*신고/.test(item))   return '해체심의·허가·신고';
     if(/상주.*감리|건축.*감리/.test(item))               return '상주 감리비';
     if(/해체.*감리|지상.*감리/.test(item))               return '해체 감리비';
-    if(/면허세|채권/.test(item))                        return '면허세·채권매입';
-    if(/경계복원/.test(item))                           return '경계복원측량';
+    if(/면허세|채권|경계복원/.test(item))              return '면허세·채권매입·경계복원';
     if(/토지.*임대|토지료/.test(item))                  return '토지임대료';
     if(/신축.*공사/.test(item))                         return '신축공사비';
     if(/해체.*공사/.test(item))                         return '해체공사비';
@@ -3447,7 +3446,7 @@ function renderCorp(rows){
   }
 
   /* 요약용 그룹 집계 */
-  const summaryGroupOrder=['건축설계비','토목설계비','해체심의·허가·신고','상주 감리비','해체 감리비','면허세·채권매입','경계복원측량','토지임대료','해체공사비','신축공사비'];
+  const summaryGroupOrder=['건축설계비','토목설계비','해체심의·허가·신고','상주 감리비','해체 감리비','면허세·채권매입·경계복원','토지임대료','해체공사비','신축공사비'];
   const summaryGroupMap=new Map();
   summaryGroupOrder.forEach(g=>summaryGroupMap.set(g,{total:0,rows:[]}));
 
@@ -3621,7 +3620,7 @@ function renderCorp(rows){
     <div class="cf-section-head">
       <div class="cf-section-bar" style="background:#4F7CFF"></div>
       <div class="cf-section-title">카테고리별 요약</div>
-      <div class="cf-section-sub">핵심 항목 · 총 ${fmtBig(grandTotal)}원</div>
+      <div class="cf-section-sub">핵심 항목 · 총 ${fmtBig(summaryTotal||grandTotal)}원</div>
     </div>
     <div class="cf-table-wrap"><div style="overflow-x:auto">
       <table class="cf-table">
@@ -3665,28 +3664,29 @@ function renderCorp(rows){
   const topCats=catOrder.slice(0,3);
   const catKpiHTML=topCats.map((cat,i)=>{
     const colors=['r','p','o'];
+    const valColors=['#ef4444','#a78bfa','#fb923c'];
     return`<div class="kpi ${colors[i]||'b'}">
-      <div class="kpi-lbl" style="color:#e5e7eb">${cat}</div>
-      <div class="kpi-val" style="color:var(--red)">${fmtBig(catTotals.get(cat))}원</div>
+      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">${cat}</div>
+      <div class="kpi-val" style="color:${valColors[i]||'#ef4444'}">${fmtBig(catTotals.get(cat))}원</div>
       <div class="kpi-sub" style="color:#9ca3af">${catMap.get(cat).length}건</div>
     </div>`;
   }).join('');
 
   const kpiHTML=`<div class="kpi-row">
     <div class="kpi b">
-      <div class="kpi-lbl" style="color:#e5e7eb">총 법인비용</div>
-      <div class="kpi-val" style="color:var(--red)">${fmtBig(grandTotal)}원</div>
-      <div class="kpi-sub" style="color:#9ca3af">${totalItems}건 · ${catOrder.length}개 카테고리</div>
+      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">총 법인비용</div>
+      <div class="kpi-val" style="color:#ef4444">${fmtBig(grandTotal)}원</div>
+      <div class="kpi-sub" style="color:#a8b0c8">${totalItems}건 · ${catOrder.length}개 카테고리</div>
     </div>
     <div class="kpi g">
-      <div class="kpi-lbl" style="color:#e5e7eb">평균 월 지출</div>
-      <div class="kpi-val">${fmtBig(avgMonthly)}원</div>
-      <div class="kpi-sub" style="color:#9ca3af">지출 발생 ${nonZeroMonths}개월 기준</div>
+      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">평균 월 지출</div>
+      <div class="kpi-val" style="color:#34d399">${fmtBig(avgMonthly)}원</div>
+      <div class="kpi-sub" style="color:#a8b0c8">지출 발생 ${nonZeroMonths}개월 기준</div>
     </div>
     ${maxMonth.total>0?`<div class="kpi y">
-      <div class="kpi-lbl" style="color:#e5e7eb">최대 지출 월</div>
-      <div class="kpi-val">${maxMonth.y}.${String(maxMonth.m).padStart(2,'0')}</div>
-      <div class="kpi-sub" style="color:#9ca3af">${fmtBig(maxMonth.total)}원</div>
+      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">최대 지출 월</div>
+      <div class="kpi-val" style="color:#fbbf24">${maxMonth.y}.${String(maxMonth.m).padStart(2,'0')}</div>
+      <div class="kpi-sub" style="color:#a8b0c8">${fmtBig(maxMonth.total)}원</div>
     </div>`:''}
     ${catKpiHTML}
   </div>`;
@@ -3695,11 +3695,14 @@ function renderCorp(rows){
   const DETAIL_GROUPS=[
     {label:'🏗️ 건축 & 토목 설계비', test:r=>{
       const it=(sv(r,itemIdx)||sv(r,catIdx)||'').toLowerCase();
-      return /설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전|면허세|채권|경계복원/.test(it);
+      /* 면허세/채권/경계복원은 감리비 그룹에 포함하므로 여기서 제외 */
+      return /설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전/.test(it)
+          && !/면허세|채권|경계복원/.test(it);
     }},
     {label:'👷 감리비', test:r=>{
       const it=(sv(r,itemIdx)||sv(r,catIdx)||'').toLowerCase();
-      return /감리/.test(it);
+      /* 감리 항목 + 면허세·채권매입·경계복원측량 함께 포함 */
+      return /감리|면허세|채권|경계복원/.test(it);
     }},
     {label:'🏢 공사비', test:r=>{
       const it=(sv(r,itemIdx)||sv(r,catIdx)||'').toLowerCase();
@@ -3726,9 +3729,9 @@ function renderCorp(rows){
       }
       const soyo=period>1?`${period}개월`:'—';
       return`<tr>
-        <td class="label" style="padding-left:20px;color:#c9d1e8">${item}</td>
-        <td style="font-family:var(--mono);font-size:11px;color:#8890aa">${periodStr}</td>
-        <td style="font-size:11px;color:#8890aa;text-align:center">${soyo}</td>
+        <td class="label" style="padding-left:20px;color:#d6daf0;font-weight:500">${item}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${periodStr}</td>
+        <td style="font-size:11px;color:#a0a8c0;text-align:center">${soyo}</td>
         <td class="r"><span class="exp">${total?fmtBig(total)+'원':'—'}</span></td>
       </tr>`;
     }).join('');
@@ -3845,13 +3848,20 @@ function renderCorp(rows){
       <table class="cf-table">
         <thead>
           <tr>
-            <th rowspan="2" style="color:#8890aa">연월</th>
-            ${activeCats.length?`<th colspan="${activeCats.length}" style="text-align:center;color:var(--red);border-bottom:2px solid var(--red);background:rgba(240,56,96,.05)">📤 비용 항목별</th>`:''}
-            <th rowspan="2" class="r" style="color:var(--red)">월 합계</th>
-            <th rowspan="2" class="r" style="color:var(--blue)">누적</th>
+            <th rowspan="2" style="color:#a8b0c8;font-weight:700">연월</th>
+            ${activeCats.length?`<th colspan="${activeCats.length}" style="text-align:center;color:#ef4444;border-bottom:2px solid #ef4444;background:rgba(240,56,96,.05);font-weight:700">📤 비용 항목별</th>`:''}
+            <th rowspan="2" class="r" style="color:#ef4444;font-weight:700">월 합계</th>
+            <th rowspan="2" class="r" style="color:#60a5fa;font-weight:700">누적</th>
           </tr>
           <tr>
-            ${activeCats.map(cat=>`<th class="r" style="color:#e5e7eb;font-size:9.5px;background:rgba(240,56,96,.04)">${cat}</th>`).join('')}
+            ${activeCats.map(cat=>{
+              const display={
+                '설계비':'🏗️ 설계비','감리비':'👷 감리비','공사비':'🏢 공사비',
+                '토지임대료':'🏛️ 토지임대료','인허가·기타':'📋 인허가·기타',
+                '금융비용':'💰 금융','세금·공과금':'📑 세금'
+              };
+              return`<th class="r" style="color:#d1d5eb;font-size:9.5px;background:rgba(240,56,96,.04)">${display[cat]||cat}</th>`;
+            }).join('')}
           </tr>
         </thead>
         <tbody>${monthTableHTML||'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t4)">월별 배분 데이터 없음 — 시트에 시작일/종료일 또는 기간을 입력해주세요</td></tr>'}</tbody>
