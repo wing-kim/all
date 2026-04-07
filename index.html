@@ -2518,7 +2518,17 @@ function renderPersonal(rows){
   }
 
   /* 가로형 요약에서도 대출 항목은 수입으로 분류하지 않음 */
-  const summaryIncItems=blockToItems(incomeBlock,'수입').filter(o=>!/대출/.test(o.item));
+  /* summaryIncItems: 임대/관리비 성격 항목만 포함 (화이트리스트 방식으로 강화)
+     - 대출, 숫자만 있는 항목명, 라벨 잔재, 금액없는 항목 모두 제외 */
+  const summaryIncItems=blockToItems(incomeBlock,'수입').filter(o=>{
+    const it=(o.item||'').trim();
+    if(!it||it==='(항목없음)') return false;
+    if(/대출/.test(it)) return false;
+    if(/^[\d,\s.]+$/.test(it)) return false;           // 숫자/금액만 있는 항목명 제외
+    if(/^(금액|항목|기간|수입기간|납부기간)/.test(it)) return false; // 라벨 잔재 제외
+    if(!o.amount) return false;                         // 금액 없는 항목 제외
+    return true;
+  });
   const summaryExpItems=blockToItems(expenseBlock,'지출');
 
   /* ══════════════════════════════════════════════════════════
@@ -2818,14 +2828,16 @@ function renderPersonal(rows){
      - 대출금은 자금 조달 항목 → 수입 상세에서 제외
      - name이 "금액", "항목" 등 라벨 문자인 행도 제외 (파싱 잔재)
      - rent=0이고 mgmt=0인 빈 행도 제외 */
-  const INCOME_LABEL_EXCLUDE = /^(금액|항목|기간|수입기간|납부기간)$/;
+  const INCOME_LABEL_EXCLUDE = /^(금액|항목|기간|수입기간|납부기간)/;
   const incDetailFiltered = useDetail
     ? incDetail.filter(o => {
         const nameStr = (o.name||'').trim();
+        const bldStr  = (o.building||'').trim();
         if(!nameStr) return false;
-        if(INCOME_LABEL_EXCLUDE.test(nameStr)) return false;          // 라벨 행 제외
-        if(/대출/.test(nameStr+(o.building||''))) return false;       // 대출 제외
-        if(!o.rent && !o.mgmt) return false;                          // 금액 없는 행 제외
+        if(INCOME_LABEL_EXCLUDE.test(nameStr)) return false;          // 라벨 잔재 행 제외
+        if(/^[\d,\s.]+$/.test(nameStr)) return false;                 // 숫자만 있는 항목명 제외 ("금액 37,000,000" 등)
+        if(/대출/.test(nameStr+bldStr)) return false;                 // 대출 항목 제외
+        if(!o.rent && !o.mgmt) return false;                          // 수입 금액 없는 행 제외
         return true;
       })
     : incDetail;
