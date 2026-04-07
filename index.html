@@ -70,9 +70,10 @@ header{display:flex;align-items:center;justify-content:space-between;
   border-radius:var(--r2);padding:10px 14px;
   font-size:11px;color:var(--t3);margin-bottom:20px}
 
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:16px}
 .kpi{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
-  padding:9px 14px;position:relative;overflow:hidden;transition:border-color .2s,transform .18s}
+  padding:14px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .18s;
+  min-height:80px}
 .kpi:hover{transform:translateY(-2px)}
 /* 상단 컬러 바: 클래스별 단색 구분 — 그라데이션/형광 없음 */
 .kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
@@ -88,9 +89,9 @@ header{display:flex;align-items:center;justify-content:space-between;
 .kpi.y:hover{border-color:rgba(232,160,32,.35)}
 .kpi.p:hover{border-color:rgba(139,92,246,.35)}
 .kpi.r:hover{border-color:rgba(232,64,64,.35)}
-.kpi-lbl{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;font-weight:600}
-.kpi-val{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--t1);letter-spacing:-.3px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi-sub{font-size:9.5px;color:#6b7899;margin-top:4px;font-weight:400}
+.kpi-lbl{font-size:10px;color:#e5e7eb;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.kpi-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--t1);letter-spacing:-.3px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi-sub{font-size:10px;color:#9ca3af;margin-top:5px;font-weight:400}
 
 .card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
 .card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
@@ -2334,7 +2335,7 @@ function renderLease(rows){
 
   sec.innerHTML=`
     <div class="notice">📡 구글 시트 실시간 연동 · 임대차계약현황</div>
-    <div class="kpi-row" style="grid-template-columns:repeat(auto-fit,minmax(0,140px));justify-content:start;">
+    <div class="kpi-row">
       <div class="kpi b"><div class="kpi-lbl" style="color:#e5e7eb">총 계약</div><div class="kpi-val" style="color:#60a5fa">${data.length}</div><div class="kpi-sub" style="color:#9ca3af">유효 계약 건수</div></div>
       ${aC?`<div class="kpi g"><div class="kpi-lbl" style="color:#e5e7eb">계약 유효</div><div class="kpi-val" style="color:var(--green)">${aC}</div><div class="kpi-sub" style="color:#9ca3af">진행중</div></div>`:''}
       ${eC?`<div class="kpi r"><div class="kpi-lbl" style="color:#e5e7eb">만료·종료</div><div class="kpi-val" style="color:var(--red)">${eC}</div><div class="kpi-sub" style="color:#9ca3af">종료</div></div>`:''}
@@ -2836,7 +2837,7 @@ function renderPersonal(rows){
     </div>
     <div class="kpi b" style="border:1.5px solid rgba(59,127,255,.35)">
       <div class="kpi-lbl" style="color:#e5e7eb">이번 달 순현금흐름</div>
-      <div class="kpi-val" style="color:${curMonthNet>=0?'#22c55e':'#ef4444'};font-size:17px;font-weight:700">
+      <div class="kpi-val" style="color:${curMonthNet>=0?'#22c55e':'#ef4444'}">
         ${curMonthNet>=0?'+':''}${fmtBig(curMonthNet)}원
       </div>
       <div class="kpi-sub" style="color:#9ca3af">수입 − 지출</div>
@@ -3649,7 +3650,7 @@ function renderCorp(rows){
     const cnt=g==='토지임대료'?landItems.length:detailItems.filter(o=>getGroup(o)===g).length;
     const lbl={설계비:'🏗️ 설계비',감리비:'👷 감리비',기타비용:'📋 기타비용',공사비:'🏢 공사비',토지임대료:'🏛️ 토지임대료'}[g]||g;
     return`<div class="kpi ${cls}">
-      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">${lbl}</div>
+      <div class="kpi-lbl" style="color:#e5e7eb">${lbl}</div>
       <div class="kpi-val" style="color:${color}">${fmtBig(v)}원</div>
       <div class="kpi-sub" style="color:#9ca3af">${cnt}건</div>
     </div>`;
@@ -3657,19 +3658,19 @@ function renderCorp(rows){
 
   const kpiHTML=`<div class="kpi-row">
     <div class="kpi b">
-      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">총 법인비용</div>
+      <div class="kpi-lbl" style="color:#e5e7eb">총 법인비용</div>
       <div class="kpi-val" style="color:#ef4444">${fmtBig(grandTotal)}원</div>
-      <div class="kpi-sub" style="color:#a8b0c8">신축비 ${fmtBig(detailGrand)}원 + 임대료 ${fmtBig(landGrand)}원</div>
+      <div class="kpi-sub" style="color:#9ca3af">신축비 ${fmtBig(detailGrand)}원 + 임대료 ${fmtBig(landGrand)}원</div>
     </div>
     <div class="kpi g">
-      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">평균 월 지출</div>
+      <div class="kpi-lbl" style="color:#e5e7eb">평균 월 지출</div>
       <div class="kpi-val" style="color:#34d399">${fmtBig(avgMonthly)}원</div>
-      <div class="kpi-sub" style="color:#a8b0c8">지출 발생 ${nonZeroMo}개월 기준</div>
+      <div class="kpi-sub" style="color:#9ca3af">지출 발생 ${nonZeroMo}개월 기준</div>
     </div>
     ${maxMo.total>0?`<div class="kpi y">
-      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">최대 지출 월</div>
+      <div class="kpi-lbl" style="color:#e5e7eb">최대 지출 월</div>
       <div class="kpi-val" style="color:#fbbf24">${maxMo.y}.${String(maxMo.m).padStart(2,'0')}</div>
-      <div class="kpi-sub" style="color:#a8b0c8">${fmtBig(maxMo.total)}원</div>
+      <div class="kpi-sub" style="color:#9ca3af">${fmtBig(maxMo.total)}원</div>
     </div>`:''}
     ${kpiGrpHTML}
   </div>`;
@@ -3999,7 +4000,7 @@ function renderCorp(rows){
         <table class="cf-table">
           <thead>
             <tr>
-              <th style="color:#a8b0c8;font-weight:700;min-width:70px">연월</th>
+              <th style="color:#9ca3af;font-weight:700;min-width:70px">연월</th>
               ${theadCols}
               <th class="r" style="color:#ef4444;font-weight:700;min-width:80px">월 합계</th>
               <th class="r" style="color:#60a5fa;font-weight:700;min-width:80px">누적</th>
