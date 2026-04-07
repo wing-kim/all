@@ -3107,12 +3107,13 @@ function renderCost(k,rows){
 }
 
 /* ════════════════════════════════════════════════════════════
-   renderCorp — 법인비용 Cash Flow 전용 렌더러 (v4)
-   ★ 시트 3개 구역 분리 파싱:
-       1. 신축 전체 비용 요약  → 카테고리별 요약
-       2. 신축 전체 비용 상세  → 항목별 상세 + 월별 캐시플로우
-       3. 법인 토지임대료      → 별도 섹션 + 캐시플로우 포함
+   renderCorp — 법인비용 Cash Flow 전용 렌더러 (v5)
+   ★ 시트 3개 구역 정확 분리 파싱
+   ★ 컬럼 순서: 항목|금액|계약기간|소요기간|납부방법|납부방법상세
+   ★ 금액 컬럼 정확 탐색 (합계행 제외, 숫자 컬럼 우선)
    ★ 납부방법별 캐시플로우: 매월/4회분할/일시납 정확 반영
+   ★ 상세 항목별 캐시플로우 (큰 덩어리 X, 세부 항목별)
+   ★ 2026-01 ~ 2030-12 전체 기간 표시
    ★ 구글시트 연동 유지 (fetch 방식 그대로)
 ════════════════════════════════════════════════════════════ */
 function renderCorp(rows){
@@ -3121,28 +3122,24 @@ function renderCorp(rows){
 
   /* ══════════════════════════════════════════════════════════
      [STEP 1] 시트를 3개 구역으로 분리
-     구역 경계: 셀 A(또는 첫 번째 컬럼)에 구역 제목이 있는 행 기준
-     구역명 패턴:
-       "신축 전체 비용 요약"
-       "신축 전체 비용 상세"
-       "법인 토지임대료"
+     구역 경계: 행의 어느 셀이든 구역명 패턴과 일치하는 행 기준
   ══════════════════════════════════════════════════════════ */
-  const SECT_SUMMARY=/신축.*비용.*요약|전체.*비용.*요약|비용.*요약/i;
-  const SECT_DETAIL =/신축.*비용.*상세|전체.*비용.*상세|비용.*상세/i;
-  const SECT_LAND   =/토지.*임대료|법인.*토지|임대료.*섹션/i;
+  const SECT_SUMMARY=/신축.*전체.*비용.*요약|전체.*비용.*요약|1\.*신축|^1\./i;
+  const SECT_DETAIL =/신축.*전체.*비용.*상세|전체.*비용.*상세|2\.*신축|^2\./i;
+  const SECT_LAND   =/토지.*임대료|법인.*토지|3\.*법인|^3\./i;
 
-  /* 구역 시작 행 인덱스 탐색 */
   let summarySecStart=-1, detailSecStart=-1, landSecStart=-1;
   rows.forEach((r,i)=>{
-    const first=String(r[0]||r[1]||'').trim();
-    if(SECT_SUMMARY.test(first) && summarySecStart<0) summarySecStart=i;
-    else if(SECT_DETAIL.test(first) && detailSecStart<0) detailSecStart=i;
-    else if(SECT_LAND.test(first) && landSecStart<0) landSecStart=i;
+    const rowText = r.map(c=>String(c||'').trim()).join(' ');
+    if(summarySecStart<0 && SECT_SUMMARY.test(rowText)) summarySecStart=i;
+    else if(detailSecStart<0 && SECT_DETAIL.test(rowText)) detailSecStart=i;
+    else if(landSecStart<0 && SECT_LAND.test(rowText)) landSecStart=i;
   });
 
-  console.log('[법인비용 v4] 구역 시작 행:', {summarySecStart,detailSecStart,landSecStart});
+  console.log('[법인비용 v5] 구역 시작 행:', {summarySecStart,detailSecStart,landSecStart});
+  console.log('[법인비용 v5] 전체 행 수:', rows.length);
+  rows.slice(0,5).forEach((r,i)=>console.log(`[행${i}]`, r.slice(0,6).join(' | ')));
 
-  /* 구역별 행 슬라이싱 헬퍼 */
   function sliceSec(start, ...nextStarts){
     if(start<0) return [];
     const nexts=nextStarts.filter(n=>n>start).sort((a,b)=>a-b);
@@ -3151,496 +3148,394 @@ function renderCorp(rows){
   }
 
   const summaryRows_raw = sliceSec(summarySecStart, detailSecStart, landSecStart);
-  const detailRows_raw  = sliceSec(detailSecStart,  landSecStart);
+  const detailRows_raw  = sliceSec(detailSecStart, landSecStart);
   const landRows_raw    = sliceSec(landSecStart);
 
-  /* ── 구역을 찾지 못한 경우 fallback: 전체를 상세로 처리 ── */
-  const fallbackMode = (detailSecStart<0 && summarySecStart<0 && landSecStart<0);
-  const allDataRows = fallbackMode
-    ? rows.slice(findHdrRow(rows)+1).filter(r=>r.some(c=>c))
-    : [];
+  const fallbackMode = (summarySecStart<0 && detailSecStart<0 && landSecStart<0);
 
-  console.log('[법인비용 v4] 구역 행 수:', {
-    요약: summaryRows_raw.length, 상세: detailRows_raw.length,
-    토지임대료: landRows_raw.length, fallback: fallbackMode
+  console.log('[법인비용 v5] 구역 행 수:', {
+    요약:summaryRows_raw.length, 상세:detailRows_raw.length,
+    토지임대료:landRows_raw.length, fallback:fallbackMode
   });
+  if(summaryRows_raw.length>0) console.log('[요약 첫행]', summaryRows_raw[0]);
+  if(detailRows_raw.length>0) console.log('[상세 첫행]', detailRows_raw[0]);
+  if(landRows_raw.length>0) console.log('[토지 첫행]', landRows_raw[0]);
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 2] 구역별 헤더 탐색 및 컬럼 인덱스 파싱
+     [STEP 2] 공통 헬퍼
   ══════════════════════════════════════════════════════════ */
-  function findSectionHeader(secRows){
-    /* 첫 번째 비어있지 않고 텍스트가 2개 이상인 행 = 헤더 */
-    for(let i=0;i<Math.min(secRows.length,4);i++){
-      if(secRows[i].filter(c=>String(c||'').trim()).length>=2) return i;
+  const SUMMARY_KW=/^(합계|소계|계$|합산|total|sum|subtotal|grand|전체|총계)/i;
+  const DATE_LIKE=/^\d{4}[.\-\/]\d{2}|^\d{8}$/;
+
+  function sv(r,i){return i>=0&&i<r.length?String(r[i]||'').trim():'';}
+  function numVal(s){return parseFloat(String(s||'').replace(/[,\s₩원]/g,''))||0;}
+
+  /* 헤더 찾기: 텍스트 셀이 2개 이상인 첫 행 */
+  function findHdr(secRows){
+    for(let i=0;i<Math.min(secRows.length,5);i++){
+      const filled=secRows[i].filter(c=>String(c||'').trim()&&isNaN(Number(String(c||'').replace(/[,]/g,'')))).length;
+      if(filled>=2) return i;
     }
     return 0;
   }
 
-  function getColIndices(hdr){
-    return {
-      itemIdx:    hdr.findIndex(h=>/항목|내용|내역|name|item|비목|구분명/i.test(h)),
-      catIdx:     hdr.findIndex(h=>/카테고리|category|구분|대분류|유형/i.test(h)),
-      amtIdx:     hdr.findIndex(h=>/금액(?!합|계)|월금액|단가|amount|월.*임대|임대료(?!합)/i.test(h)),
-      totalIdx:   hdr.findIndex(h=>/총액|합계|total(?!.*detail)|sum|총계|총.*금액/i.test(h)),
-      startIdx:   hdr.findIndex(h=>/시작|start|from|착공|착수|계약.*시작|계약.*일/i.test(h)),
-      endIdx:     hdr.findIndex(h=>/종료|end|to$|완료|계약.*종료|납부.*종료/i.test(h)),
-      contractIdx:hdr.findIndex(h=>/계약기간/i.test(h)),
-      periodIdx:  hdr.findIndex(h=>/소요기간|소요|period|개월|duration/i.test(h)),
-      methodDetIdx:hdr.findIndex(h=>/납부.*방법.*상세|납부.*상세|상세.*납부|payment.*detail/i.test(h)),
-      methodIdx:  hdr.findIndex((h,i,arr)=>{
-        const detI=arr.findIndex(x=>/납부.*방법.*상세|납부.*상세|상세.*납부|payment.*detail/i.test(x));
-        return i!==detI && /납부.*방법|지급.*방법|납부방법|payment(?!.*detail)/i.test(h);
-      }),
-      noteIdx:    hdr.findIndex(h=>/비고|메모|note|remark/i.test(h)),
-    };
-  }
-
-  /* ══════════════════════════════════════════════════════════
-     [STEP 3] 공통 헬퍼 함수 (컬럼 인덱스 기반)
-  ══════════════════════════════════════════════════════════ */
-  const DATE_LIKE=/^\d{8}$|^\d{4}[.\-\/]\d{2}/;
-  const SUMMARY_KW=/^(합계|소계|계$|합산|total|sum|subtotal|grand|전체|총계)/i;
-
-  function sv(r,i){return i>=0?(String(r[i]||'').trim()):''}
-  function av(r,i){return i>=0?parseAmt(r[i]):0}
-
-  function parseShortYM(s){
-    s=s.trim();
-    const m1=s.match(/^(\d{4})[.\-\/](\d{1,2})/);
-    if(m1)return{y:+m1[1],m:+m1[2]};
-    const m2=s.match(/^(\d{2})[.\-\/](\d{2})$/);
-    if(m2){const yr=+m2[1];return{y:yr<50?2000+yr:1900+yr,m:+m2[2]};}
-    return null;
-  }
-
-  function parseMethodDetail(detStr){
-    const s=String(detStr||'').trim();
-    if(!s||s==='—'||s==='-') return null;
-    if(/^매월$|^monthly$/i.test(s)) return{type:'monthly'};
-    if(/\//.test(s)){
-      const parts=s.split('/').map(p=>p.trim()).filter(Boolean);
-      const dates=parts.map(parseShortYM).filter(Boolean);
-      if(dates.length>=2) return{type:'dates',dates};
+  /* 컬럼 인덱스 탐색 — 시트 컬럼 순서: 항목|금액|계약기간|소요기간|납부방법|납부방법상세 */
+  function getColIdx(hdr){
+    const idx={};
+    hdr.forEach((h,i)=>{
+      const s=String(h||'').trim();
+      if(!s) return;
+      if(/^항목$|^구분명$|^내역$|^비목$/i.test(s))          idx.item=i;
+      else if(/^구분$|^대분류$/i.test(s))                    idx.cat=i;
+      else if(/^금액$/i.test(s))                             idx.amt=i;
+      else if(/^계약기간$/i.test(s))                         idx.contract=i;
+      else if(/^소요기간$/i.test(s))                         idx.period=i;
+      else if(/납부방법\s*상세|납부.*상세/i.test(s))         idx.methodDet=i;
+      else if(/^납부방법$|납부.*방법$/i.test(s))             idx.method=i;
+      else if(/^비고$|^메모$/i.test(s))                      idx.note=i;
+    });
+    /* fallback: 명확한 이름 없으면 위치 기반 탐색 */
+    if(idx.item===undefined){
+      /* 첫 번째 순수 텍스트 컬럼 */
+      for(let i=0;i<Math.min(hdr.length,4);i++){
+        const s=String(hdr[i]||'').trim();
+        if(s && !/^\d/.test(s) && !/합계|sum|total/i.test(s)){idx.item=i;break;}
+      }
     }
-    const rng=s.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]{1,2}[^\d]*(\d{4})[.\-\/](\d{1,2})/);
-    if(rng) return{type:'range',sy:+rng[1],sm:+rng[2],ey:+rng[3],em:+rng[4]};
-    const single=parseShortYM(s);
-    if(single) return{type:'lump',ym:single};
-    return null;
+    console.log('[컬럼탐색] hdr:', hdr.map((h,i)=>`[${i}]"${h}"`).join('|'));
+    console.log('[컬럼탐색] 결과:', idx);
+    return idx;
   }
 
-  function parseContractPeriod(s){
-    /* "2026.05 ~ 2027.08" 또는 "2026-05-01 ~ 2027-08-31" */
+  /* 금액 파싱: 해당 컬럼이 명확하면 사용, 없으면 행에서 유효 숫자 찾기 */
+  function getAmt(r, idx){
+    /* amt 컬럼이 있으면 최우선 */
+    if(idx.amt>=0){
+      const v=numVal(r[idx.amt]);
+      if(v>0) return v;
+    }
+    /* 없으면 숫자 컬럼 탐색 (날짜, 텍스트, 기간 제외) */
+    const skip=new Set(Object.values(idx).filter(x=>x>=0));
+    for(let i=0;i<r.length;i++){
+      if(skip.has(i)) continue;
+      const raw=String(r[i]||'').trim();
+      if(!raw||DATE_LIKE.test(raw)) continue;
+      const v=numVal(raw);
+      /* 최소 10만원 이상, 100조 미만 (일반 비용 범위) */
+      if(v>=100000 && v<1e14) return v;
+    }
+    return 0;
+  }
+
+  /* 계약기간 파싱 */
+  function parseContract(s){
     s=String(s||'').trim();
     if(!s||s==='-'||s==='—') return null;
-    const rng=s.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]{1,2}[^\d]*(\d{4})[.\-\/](\d{1,2})/);
-    if(rng) return{sy:+rng[1],sm:+rng[2],ey:+rng[3],em:+rng[4]};
+    const m=s.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]+[^\d]*(\d{4})[.\-\/](\d{1,2})/);
+    if(m) return{sy:+m[1],sm:+m[2],ey:+m[3],em:+m[4]};
     return null;
   }
 
-  function isSummaryRow(r, cols){
-    const name=(sv(r,cols.itemIdx)||sv(r,cols.catIdx)||'').trim();
+  /* 소요기간(개월수) 파싱 */
+  function parsePeriodMo(s){
+    s=String(s||'').trim();
+    const m=s.match(/(\d+)\s*개월/);
+    if(m){const p=+m[1];if(p>0&&p<=240)return p;}
+    if(/^\d{1,3}$/.test(s)){const p=+s;if(p>0&&p<=240)return p;}
+    return 0;
+  }
+
+  /* 계약기간 문자열 생성 */
+  function contractStr(r, idx){
+    if(idx.contract>=0){
+      const s=sv(r,idx.contract);
+      if(s&&s!=='-'&&s!='—') return s;
+    }
+    return '—';
+  }
+
+  /* 소요기간 문자열 */
+  function periodStr(r, idx){
+    if(idx.period>=0){
+      const s=sv(r,idx.period);
+      if(s&&s!=='-'&&s!='—') return s;
+    }
+    /* 계약기간에서 계산 */
+    const cp=parseContract(contractStr(r,idx));
+    if(cp){const d=(cp.ey-cp.sy)*12+(cp.em-cp.sm)+1;if(d>0)return d+'개월';}
+    return '—';
+  }
+
+  /* 소요기간(숫자) */
+  function periodMonths(r, idx){
+    if(idx.period>=0){
+      const p=parsePeriodMo(sv(r,idx.period));
+      if(p>0) return p;
+    }
+    const cp=parseContract(contractStr(r,idx));
+    if(cp){const d=(cp.ey-cp.sy)*12+(cp.em-cp.sm)+1;if(d>0&&d<=240)return d;}
+    return 1;
+  }
+
+  /* 납부방법 */
+  function methodStr(r, idx){
+    if(idx.method>=0){const s=sv(r,idx.method);if(s&&s!=='-'&&s!=='—')return s;}
+    return '—';
+  }
+
+  /* 납부방법 상세 */
+  function methodDetStr(r, idx){
+    if(idx.methodDet>=0){const s=sv(r,idx.methodDet);if(s&&s!=='-'&&s!=='—')return s;}
+    return '';
+  }
+
+  /* 합계행 여부 */
+  function isSumRow(r, idx){
+    const name=(sv(r,idx.item)||sv(r,idx.cat)||r.slice(0,4).map(c=>String(c||'')).join('')).trim();
     if(SUMMARY_KW.test(name)) return true;
     for(let i=0;i<Math.min(r.length,5);i++){
-      const v=String(r[i]||'').trim();
-      if(v&&SUMMARY_KW.test(v)) return true;
+      if(SUMMARY_KW.test(String(r[i]||'').trim())) return true;
     }
     return false;
   }
 
-  /* 기간(개월수) 파싱 — 수치만, 날짜 파싱 절대 금지 */
-  function getPeriodFromRow(r, cols){
-    /* 소요기간 컬럼 우선 */
-    if(cols.periodIdx>=0){
-      const raw=sv(r,cols.periodIdx);
-      const mMo=raw.match(/(\d+)\s*개월/);
-      if(mMo){const p=+mMo[1];if(p>0&&p<=240)return p;}
-      if(/^\d{1,3}$/.test(raw)){const p=+raw;if(p>0&&p<=240)return p;}
-    }
-    /* 계약기간 컬럼 파싱 */
-    if(cols.contractIdx>=0){
-      const cp=parseContractPeriod(sv(r,cols.contractIdx));
-      if(cp){const d=(cp.ey-cp.sy)*12+(cp.em-cp.sm)+1;if(d>0&&d<=240)return d;}
-    }
-    /* 시작+종료 */
-    if(cols.startIdx>=0&&cols.endIdx>=0){
-      const ms=sv(r,cols.startIdx).match(/(\d{4})[.\-\/](\d{1,2})/);
-      const me=sv(r,cols.endIdx).match(/(\d{4})[.\-\/](\d{1,2})/);
-      if(ms&&me){const d=(+me[1]-+ms[1])*12+(+me[2]-+ms[2]);if(d>=0&&d<=240)return d+1;}
-    }
-    return 1;
+  /* ══════════════════════════════════════════════════════════
+     [STEP 3] 납부 스케줄 파싱 (YY-MM / YYYY-MM / 매월 / 일시납)
+  ══════════════════════════════════════════════════════════ */
+  function parseYM(s){
+    s=String(s||'').trim();
+    const m1=s.match(/^(\d{4})[.\-\/](\d{1,2})/);
+    if(m1)return{y:+m1[1],m:+m1[2]};
+    const m2=s.match(/^(\d{2})[.\-\/](\d{2})$/);
+    if(m2){const y=+m2[1];return{y:y<50?2000+y:1900+y,m:+m2[2]};}
+    return null;
   }
 
-  function getDateRangeFromRow(r, cols){
-    /* 계약기간 컬럼 우선 */
-    if(cols.contractIdx>=0){
-      const cp=parseContractPeriod(sv(r,cols.contractIdx));
-      if(cp) return{hasStart:true,hasEnd:true,sy:cp.sy,sm:cp.sm,ey:cp.ey,em:cp.em};
+  function parseSchedule(r, idx){
+    /* 납부방법 상세 우선 */
+    const det=methodDetStr(r,idx);
+    if(det){
+      /* "YY-MM / YY-MM / ..." 형식 */
+      if(/\//.test(det)){
+        const parts=det.split('/').map(p=>p.trim()).filter(Boolean);
+        const dates=parts.map(parseYM).filter(Boolean);
+        if(dates.length>=2) return{type:'dates',dates};
+      }
+      /* 기간 범위 */
+      const rng=det.match(/(\d{4})[.\-\/](\d{1,2})[^\d]*[~～–\-]+[^\d]*(\d{4})[.\-\/](\d{1,2})/);
+      if(rng) return{type:'range',sy:+rng[1],sm:+rng[2],ey:+rng[3],em:+rng[4]};
+      /* 단일 날짜 (일시납) */
+      const ym=parseYM(det);
+      if(ym) return{type:'lump',ym};
+      if(/매월/i.test(det)) return{type:'monthly'};
     }
-    const ss=sv(r,cols.startIdx||0);
-    const es=sv(r,cols.endIdx||0);
-    const ms=ss.match(/(\d{4})[.\-\/년\s]*(\d{1,2})/);
-    const me=es.match(/(\d{4})[.\-\/년\s]*(\d{1,2})/);
-    return{
-      hasStart:!!ms,hasEnd:!!me,
-      sy:ms?+ms[1]:0,sm:ms?+ms[2]:1,
-      ey:me?+me[1]:0,em:me?+me[2]:12,
-    };
-  }
-
-  function getMonthlyAmtFromRow(r, cols){
-    if(cols.amtIdx>=0){const v=av(r,cols.amtIdx);if(v)return v;}
-    const skipSet=new Set(Object.values(cols).filter(i=>i>=0));
-    for(let i=0;i<r.length;i++){
-      if(skipSet.has(i)) continue;
-      const raw=String(r[i]||'').trim();
-      if(!raw||DATE_LIKE.test(raw)) continue;
-      const v=parseAmt(raw);
-      if(v>=1000&&v<1e12) return v;
-    }
-    return 0;
-  }
-
-  function getTotalFromRow(r, cols){
-    if(cols.totalIdx>=0){const t=av(r,cols.totalIdx);if(t&&t<1e13)return t;}
-    const mv=getMonthlyAmtFromRow(r,cols);
-    if(!mv) return 0;
-    const p=getPeriodFromRow(r,cols);
-    const res=mv*p;
-    return res<1e13?res:mv;
-  }
-
-  function getPayScheduleFromRow(r, cols){
-    const detStr=sv(r,cols.methodDetIdx);
-    const det=parseMethodDetail(detStr);
-    if(det) return det;
-    const m=String(sv(r,cols.methodIdx)||'').trim().toLowerCase();
-    if(/매월|monthly|월납/.test(m)) return{type:'monthly'};
+    /* 납부방법 컬럼 기반 */
+    const m=String(sv(r,idx.method)||'').toLowerCase();
+    if(/매월|monthly|분할.*납부|월납/i.test(m)) return{type:'monthly'};
+    if(/일시납|lump|once|전액/i.test(m)) return{type:'lump',ym:null};
+    /* 4회 분할 등 */
     const n=parseInt(m.replace(/[^0-9]/g,''));
     if(!isNaN(n)&&n>1) return{type:'installment',count:n};
-    if(/일시|lump|once|전액/.test(m)) return{type:'lump',ym:null};
-    return{type:'monthly'};
+    return{type:'monthly'}; /* 기본: 매월 */
   }
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 4] 구역별 파싱 — 데이터 추출
+     [STEP 4] 구역별 항목 파싱
   ══════════════════════════════════════════════════════════ */
+  function parseSec(secRows, secName){
+    if(!secRows.length) return [];
+    const hi=findHdr(secRows);
+    const hdr=secRows[hi];
+    const idx=getColIdx(hdr);
+    const data=secRows.slice(hi+1).filter(r=>r.some(c=>String(c||'').trim()));
 
-  /* ── A. 신축 전체 비용 요약 파싱 ── */
-  function parseSummarySection(srows){
-    if(!srows.length) return [];
-    const hi=findSectionHeader(srows);
-    const hdr=srows[hi];
-    const cols=getColIndices(hdr);
-    const data=srows.slice(hi+1).filter(r=>r.some(c=>String(c||'').trim()));
-    return data
-      .filter(r=>!isSummaryRow(r,cols))
-      .map(r=>{
-        const item=sv(r,cols.itemIdx)||sv(r,cols.catIdx)||'';
-        const total=getTotalFromRow(r,cols);
-        if(!item&&!total) return null;
-        return{item, total, r, cols};
-      })
-      .filter(Boolean);
-  }
-
-  /* ── B. 신축 전체 비용 상세 파싱 ── */
-  function parseDetailSection(srows){
-    if(!srows.length) return [];
-    const hi=findSectionHeader(srows);
-    const hdr=srows[hi];
-    const cols=getColIndices(hdr);
-    console.log('[법인비용 v4][상세 헤더]', hdr.map((h,i)=>`[${i}]"${h}"`).join('|'));
-    console.log('[법인비용 v4][상세 컬럼]', cols);
-    const data=srows.slice(hi+1).filter(r=>r.some(c=>String(c||'').trim()));
-    const items=data
-      .filter(r=>!isSummaryRow(r,cols))
-      .map(r=>{
-        const item=sv(r,cols.itemIdx)||sv(r,cols.catIdx)||'';
-        const total=getTotalFromRow(r,cols);
-        if(!item||total<=0) return null;
-        /* 계약기간 우선, 없으면 시작/종료 */
-        let contractStr=cols.contractIdx>=0?sv(r,cols.contractIdx):'';
-        if(!contractStr&&cols.startIdx>=0){
-          const dr=getDateRangeFromRow(r,cols);
-          if(dr.hasStart&&dr.hasEnd)
-            contractStr=`${dr.sy}.${String(dr.sm).padStart(2,'0')} ~ ${dr.ey}.${String(dr.em).padStart(2,'0')}`;
-          else if(dr.hasStart)
-            contractStr=`${dr.sy}.${String(dr.sm).padStart(2,'0')} ~`;
-        }
-        const periodMonths=getPeriodFromRow(r,cols);
-        const methodStr=cols.methodIdx>=0?sv(r,cols.methodIdx):'';
-        const methodDetStr=cols.methodDetIdx>=0?sv(r,cols.methodDetIdx):'';
-        const dr=getDateRangeFromRow(r,cols);
-        const sched=getPayScheduleFromRow(r,cols);
-        return{
-          item, total,
-          contractStr: contractStr||'—',
-          periodMonths,
-          methodStr: methodStr||'—',
-          methodDetStr: methodDetStr||'—',
-          dr, sched, cols, r,
-        };
-      })
-      .filter(Boolean);
-    /* 부모(합계) 행 제거 — 같은 명칭 그룹 내 중복 */
-    const byItem=new Map();
-    items.forEach((o,i)=>{
-      const key=o.item;
-      if(!byItem.has(key)) byItem.set(key,[]);
-      byItem.get(key).push({o,i});
-    });
-    const parentIdx=new Set();
-    byItem.forEach(arr=>{
-      if(arr.length<=1) return;
-      const tots=arr.map(x=>x.o.total);
-      const sum=tots.reduce((a,b)=>a+b,0);
-      arr.forEach(({o,i})=>{
-        const rest=sum-o.total;
-        if(rest>0&&Math.abs(o.total-rest)/Math.max(o.total,rest)<0.05){
-          if(SUMMARY_KW.test(o.item)||/합계|소계|계$/.test(o.item)) parentIdx.add(i);
-        }
+    const items=[];
+    data.forEach(r=>{
+      if(isSumRow(r,idx)) return;
+      const item=sv(r,idx.item)||sv(r,idx.cat)||'';
+      if(!item) return;
+      const amt=getAmt(r,idx);
+      if(amt<=0) return;
+      const cp=parseContract(contractStr(r,idx));
+      const sch=parseSchedule(r,idx);
+      items.push({
+        item,
+        cat: idx.cat>=0?sv(r,idx.cat):'',
+        amt,
+        contractRaw: contractStr(r,idx),
+        periodRaw:   periodStr(r,idx),
+        periodMo:    periodMonths(r,idx),
+        methodRaw:   methodStr(r,idx),
+        methodDetRaw:methodDetStr(r,idx),
+        cp, sch,
       });
+      console.log(`[${secName}] "${item}" amt=${amt} contract=${contractStr(r,idx)} period=${periodStr(r,idx)} method=${methodStr(r,idx)} det=${methodDetStr(r,idx)}`);
     });
-    return items.filter((_,i)=>!parentIdx.has(i));
+    return items;
   }
 
-  /* ── C. 법인 토지임대료 파싱 ── */
-  function parseLandSection(srows){
-    if(!srows.length) return [];
-    const hi=findSectionHeader(srows);
-    const hdr=srows[hi];
-    const cols=getColIndices(hdr);
-    console.log('[법인비용 v4][토지임대료 헤더]', hdr.map((h,i)=>`[${i}]"${h}"`).join('|'));
-    const data=srows.slice(hi+1).filter(r=>r.some(c=>String(c||'').trim()));
-    return data
-      .filter(r=>!isSummaryRow(r,cols))
-      .map(r=>{
-        const item=sv(r,cols.itemIdx)||sv(r,cols.catIdx)||'토지 월임대료';
-        const total=getTotalFromRow(r,cols);
-        if(total<=0) return null;
-        let contractStr=cols.contractIdx>=0?sv(r,cols.contractIdx):'';
-        if(!contractStr&&cols.startIdx>=0){
-          const dr=getDateRangeFromRow(r,cols);
-          if(dr.hasStart&&dr.hasEnd)
-            contractStr=`${dr.sy}.${String(dr.sm).padStart(2,'0')} ~ ${dr.ey}.${String(dr.em).padStart(2,'0')}`;
-        }
-        const periodMonths=getPeriodFromRow(r,cols);
-        const methodStr=cols.methodIdx>=0?sv(r,cols.methodIdx):'매월';
-        const methodDetStr=cols.methodDetIdx>=0?sv(r,cols.methodDetIdx):'';
-        const dr=getDateRangeFromRow(r,cols);
-        const sched=getPayScheduleFromRow(r,cols);
-        return{
-          item, total,
-          contractStr:contractStr||'—',
-          periodMonths,
-          methodStr:methodStr||'매월',
-          methodDetStr:methodDetStr||'—',
-          dr, sched, cols, r,
-        };
-      })
-      .filter(Boolean);
-  }
+  let summaryItems=[], detailItems=[], landItems=[];
 
-  /* ══ 파싱 실행 ══ */
-  let summaryItems, detailItems, landItems;
   if(fallbackMode){
-    /* 구역 구분 없는 시트 → 전체를 상세로 fallback */
+    /* 구역 구분 없는 경우 전체를 상세로 처리 */
     const hi=findHdrRow(rows);
     const hdr=rows[hi];
-    const cols=getColIndices(hdr);
+    const idx=getColIdx(hdr);
     const data=rows.slice(hi+1).filter(r=>r.some(c=>c));
-    summaryItems=[];
-    detailItems=data
-      .filter(r=>!isSummaryRow(r,cols))
-      .map(r=>{
-        const item=sv(r,cols.itemIdx)||sv(r,cols.catIdx)||'';
-        const total=getTotalFromRow(r,cols);
-        if(!item||total<=0) return null;
-        const dr=getDateRangeFromRow(r,cols);
-        const sched=getPayScheduleFromRow(r,cols);
-        let contractStr=cols.contractIdx>=0?sv(r,cols.contractIdx):'';
-        if(!contractStr&&dr.hasStart&&dr.hasEnd)
-          contractStr=`${dr.sy}.${String(dr.sm).padStart(2,'0')} ~ ${dr.ey}.${String(dr.em).padStart(2,'0')}`;
-        return{item,total,contractStr:contractStr||'—',
-          periodMonths:getPeriodFromRow(r,cols),
-          methodStr:cols.methodIdx>=0?sv(r,cols.methodIdx):'—',
-          methodDetStr:cols.methodDetIdx>=0?sv(r,cols.methodDetIdx):'—',
-          dr,sched,cols,r};
-      }).filter(Boolean);
-    landItems=[];
+    data.forEach(r=>{
+      if(isSumRow(r,idx)) return;
+      const item=sv(r,idx.item)||sv(r,idx.cat)||'';
+      if(!item) return;
+      const amt=getAmt(r,idx);
+      if(amt<=0) return;
+      const cp=parseContract(contractStr(r,idx));
+      const sch=parseSchedule(r,idx);
+      detailItems.push({item,cat:sv(r,idx.cat||0)||'',amt,
+        contractRaw:contractStr(r,idx),periodRaw:periodStr(r,idx),
+        periodMo:periodMonths(r,idx),methodRaw:methodStr(r,idx),
+        methodDetRaw:methodDetStr(r,idx),cp,sch});
+    });
   } else {
-    summaryItems = parseSummarySection(summaryRows_raw);
-    detailItems  = parseDetailSection(detailRows_raw);
-    landItems    = parseLandSection(landRows_raw);
+    summaryItems = parseSec(summaryRows_raw, '요약');
+    detailItems  = parseSec(detailRows_raw, '상세');
+    landItems    = parseSec(landRows_raw, '토지임대료');
   }
 
-  console.log('[법인비용 v4] 파싱 결과:', {
-    요약: summaryItems.length, 상세: detailItems.length, 토지임대료: landItems.length
-  });
+  console.log('[법인비용 v5] 파싱완료:', {요약:summaryItems.length, 상세:detailItems.length, 토지임대료:landItems.length});
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 5] 카테고리 분류 함수 (상세 + 토지임대료 대상)
+     [STEP 5] 카테고리 분류
   ══════════════════════════════════════════════════════════ */
-  function getCatForItem(itemName){
-    const c=String(itemName||'').toLowerCase();
-    if(/토지.*임대|토지료|지대/.test(c))           return '토지임대료';
-    if(/신축.*공사|공사비(?!.*해체)|시공/.test(c))  return '공사비';
-    if(/해체.*공사/.test(c))                        return '공사비';
-    if(/감리/.test(c))                              return '감리비';
-    if(/면허세|채권|경계복원/.test(c))              return '인허가·기타';
-    if(/설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전/.test(c)) return '설계비';
-    if(/대출|이자|금융/.test(c))                    return '금융비용';
-    if(/세금|취득|등록|인지/.test(c))               return '세금·공과금';
-    return '기타비용';
+  /* 상세 섹션의 구분(cat) 컬럼 → 그룹 매핑 */
+  function getGroup(o){
+    const c=String(o.cat||o.item||'').toLowerCase();
+    /* 구분 컬럼 기반 우선 */
+    if(/건축설계비/i.test(c)) return '설계비';
+    if(/토목설계비/i.test(c)) return '설계비';
+    if(/해체설계비/i.test(c)) return '설계비';
+    if(/상주감리비/i.test(c)) return '감리비';
+    if(/해체감리비/i.test(c)) return '감리비';
+    if(/기타.*비용|기타비/i.test(c)) return '인허가·기타';
+    if(/공사비/i.test(c)) return '공사비';
+    /* 항목명 기반 */
+    if(/설계|측량|지반|굴토|해체.*심의|해체.*허가|해체.*신고|지하.*안전|흙막이/i.test(c)) return '설계비';
+    if(/감리/i.test(c)) return '감리비';
+    if(/면허세|채권|경계복원/i.test(c)) return '인허가·기타';
+    if(/공사|시공/i.test(c)) return '공사비';
+    if(/토지.*임대|토지료|지대/i.test(c)) return '토지임대료';
+    return '기타';
   }
 
   /* ══════════════════════════════════════════════════════════
      [STEP 6] 총액 계산
-     - 신축 전체 비용 상세의 합
-     - 토지임대료는 별도 합산
-     - 중복 없음 (요약 섹션은 KPI 참고용이지 합산에 포함 안 함)
   ══════════════════════════════════════════════════════════ */
-  const detailGrand = detailItems.reduce((a,o)=>a+o.total,0);
-  const landGrand   = landItems.reduce((a,o)=>a+o.total,0);
-  const grandTotal  = detailGrand + landGrand;
+  const detailGrand=detailItems.reduce((a,o)=>a+o.amt,0);
+  const landGrand  =landItems.reduce((a,o)=>a+o.amt,0);
+  const grandTotal =detailGrand+landGrand;
 
-  /* 카테고리별 합계 (상세 기반 + 토지임대료 포함) */
-  const catMap=new Map();
+  /* 그룹별 합계 (상세 기반) */
+  const grpMap=new Map();
   [...detailItems,...landItems].forEach(o=>{
-    const cat=getCatForItem(o.item);
-    catMap.set(cat,(catMap.get(cat)||0)+o.total);
+    const g=o===landItems[0]&&landItems.includes(o)?'토지임대료':getGroup(o);
+    grpMap.set(g,(grpMap.get(g)||0)+o.amt);
   });
+  /* 토지임대료 별도 */
+  if(landGrand>0) grpMap.set('토지임대료',(grpMap.get('토지임대료')||0)+landGrand);
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 7] 기간 범위 탐지 (월별 캐시플로우 축 생성)
+     [STEP 7] 월별 캐시플로우 — 2026.01 ~ 2030.12 고정
   ══════════════════════════════════════════════════════════ */
-  let minYear=9999,maxYear=0;
-  function trackYM(y,m){
-    if(!y||!m) return;
-    if(y<minYear)minYear=y;
-    if(y>maxYear)maxYear=y;
-  }
-  [...detailItems,...landItems].forEach(o=>{
-    const{dr,sched}=o;
-    if(dr.hasStart) trackYM(dr.sy,dr.sm);
-    if(dr.hasEnd)   trackYM(dr.ey,dr.em);
-    if(sched.type==='dates') sched.dates.forEach(d=>trackYM(d.y,d.m));
-    if(sched.type==='lump'&&sched.ym) trackYM(sched.ym.y,sched.ym.m);
-    if(sched.type==='range'){trackYM(sched.sy,sched.sm);trackYM(sched.ey,sched.em);}
-  });
-  if(minYear===9999||maxYear===0){minYear=new Date().getFullYear();maxYear=minYear+5;}
-  maxYear=Math.min(maxYear,minYear+10);
+  const CF_START_Y=2026, CF_END_Y=2030;
+  const months=[];
+  for(let y=CF_START_Y;y<=CF_END_Y;y++) for(let m=1;m<=12;m++) months.push({y,m});
 
-  /* ══════════════════════════════════════════════════════════
-     [STEP 8] 월별 배분 함수 (납부방법별 정확 반영)
-  ══════════════════════════════════════════════════════════ */
+  /* 항목별 월 배분 */
   function amtInMonth(o, y, m){
-    const{dr,sched,total,periodMonths,cols,r}=o;
+    const{amt,periodMo,cp,sch}=o;
     const cur=y*100+m;
-    let startYM=dr.hasStart?dr.sy*100+dr.sm:minYear*100+1;
-    let endYM;
-    if(dr.hasEnd){
-      endYM=dr.ey*100+dr.em;
-    } else if(dr.hasStart){
-      const b0=dr.sy*12+(dr.sm-1);
-      const e0=b0+(periodMonths-1);
-      endYM=Math.floor(e0/12)*100+(e0%12+1);
+
+    /* 시작/종료 YM */
+    let sYM, eYM;
+    if(cp){
+      sYM=cp.sy*100+cp.sm;
+      eYM=cp.ey*100+cp.em;
     } else {
-      startYM=minYear*100+1;
-      const e0=(minYear*12)+(periodMonths-1);
-      endYM=Math.floor(e0/12)*100+(e0%12+1);
+      sYM=CF_START_Y*100+1;
+      const e0=(CF_START_Y*12)+(periodMo-1);
+      eYM=Math.floor(e0/12)*100+(e0%12+1);
     }
 
-    switch(sched.type){
+    switch(sch.type){
       case'dates':{
-        const found=sched.dates.find(d=>d.y===y&&d.m===m);
-        return found?total/sched.dates.length:0;
+        const f=sch.dates.find(d=>d.y===y&&d.m===m);
+        return f?amt/sch.dates.length:0;
       }
       case'lump':{
-        if(sched.ym) return(sched.ym.y===y&&sched.ym.m===m)?total:0;
-        return cur===startYM?total:0;
+        if(sch.ym) return(sch.ym.y===y&&sch.ym.m===m)?amt:0;
+        return cur===sYM?amt:0;
       }
       case'installment':{
-        const cnt=sched.count;
-        const perPay=total/cnt;
-        const base=dr.hasStart?dr.sy*12+dr.sm-1:minYear*12;
-        for(let i=0;i<cnt;i++){
+        const perPay=amt/sch.count;
+        if(!cp) return 0;
+        const base=cp.sy*12+cp.sm-1;
+        for(let i=0;i<sch.count;i++){
           const pm=base+i;
-          const py=Math.floor(pm/12),pmo=(pm%12)+1;
-          if(py===y&&pmo===m) return perPay;
+          if(Math.floor(pm/12)===y&&(pm%12)+1===m) return perPay;
         }
         return 0;
       }
       case'range':{
-        const rS=sched.sy*100+sched.sm;
-        const rE=sched.ey*100+sched.em;
+        const rS=sch.sy*100+sch.sm, rE=sch.ey*100+sch.em;
         if(cur<rS||cur>rE) return 0;
-        const mc=(sched.ey-sched.sy)*12+(sched.em-sched.sm)+1;
-        const mv=getMonthlyAmtFromRow(r,cols);
-        return mv>0?mv:mc>0?total/mc:total;
+        const mc=(sch.ey-sch.sy)*12+(sch.em-sch.sm)+1;
+        return mc>0?amt/mc:amt;
       }
       case'monthly':
       default:{
-        if(cur<startYM||cur>endYM) return 0;
-        const mv=getMonthlyAmtFromRow(r,cols);
-        if(mv>0) return mv;
-        return periodMonths>0?total/periodMonths:total;
+        if(cur<sYM||cur>eYM) return 0;
+        return periodMo>0?amt/periodMo:amt;
       }
     }
   }
 
-  /* ══════════════════════════════════════════════════════════
-     [STEP 9] 월별 캐시플로우 데이터 생성
-     카테고리: 설계비 / 감리비 / 공사비 / 인허가·기타 / 토지임대료 / 기타비용
-  ══════════════════════════════════════════════════════════ */
-  const CF_CAT_ORDER=['설계비','감리비','공사비','인허가·기타','토지임대료','기타비용'];
-  const CF_CAT_DISPLAY={
-    '설계비':'🏗️ 설계비','감리비':'👷 감리비','공사비':'🏢 공사비',
-    '인허가·기타':'📋 인허가·기타','토지임대료':'🏛️ 토지임대료','기타비용':'📦 기타'
-  };
+  /* 캐시플로우에 사용할 항목 목록 (상세 + 토지임대료) */
+  const cfItems=[...detailItems,...landItems];
 
-  /* 실제 사용된 카테고리만 순서 유지 */
-  const usedCats=CF_CAT_ORDER.filter(cat=>catMap.has(cat)&&catMap.get(cat)>0);
-  /* catMap에 없는 추가 카테고리 */
-  [...catMap.keys()].forEach(cat=>{if(!usedCats.includes(cat))usedCats.push(cat);});
-
-  const allItems=[...detailItems,...landItems];
-  const monthList=[];
-  for(let y=minYear;y<=maxYear;y++) for(let m=1;m<=12;m++) monthList.push({y,m});
-
-  const monthlyData=monthList.map(({y,m})=>{
-    const bycat={};
-    usedCats.forEach(cat=>{
-      bycat[cat]=allItems
-        .filter(o=>getCatForItem(o.item)===cat)
-        .reduce((s,o)=>s+amtInMonth(o,y,m),0);
+  /* 월별 합계 계산 */
+  const monthlyData=months.map(({y,m})=>{
+    const byItem={};
+    cfItems.forEach((o,i)=>{
+      byItem[i]=amtInMonth(o,y,m);
     });
-    const total=Object.values(bycat).reduce((a,b)=>a+b,0);
-    return{y,m,bycat,total};
+    const total=Object.values(byItem).reduce((a,b)=>a+b,0);
+    return{y,m,byItem,total};
   });
-  const monthlyFiltered=monthlyData.filter(d=>d.total>0);
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 10] KPI HTML 생성
+     [STEP 8] KPI 생성
   ══════════════════════════════════════════════════════════ */
-  const nonZeroMonths=monthlyFiltered.length;
-  const avgMonthly=nonZeroMonths>0
-    ?monthlyFiltered.reduce((a,d)=>a+d.total,0)/nonZeroMonths:0;
-  const maxMonth=monthlyFiltered.reduce(
-    (best,d)=>d.total>best.total?d:best,{total:0,y:0,m:0});
+  const nonZeroMo=monthlyData.filter(d=>d.total>0).length;
+  const totalCfSum=monthlyData.reduce((a,d)=>a+d.total,0);
+  const avgMonthly=nonZeroMo>0?totalCfSum/nonZeroMo:0;
+  const maxMo=monthlyData.reduce((b,d)=>d.total>b.total?d:b,{total:0,y:0,m:0});
 
-  /* 상위 카테고리 KPI — catMap 기반 */
-  const kpiCats=usedCats.slice(0,4);
-  const kpiCatColors=[['r','#ef4444'],['p','#a78bfa'],['o','#fb923c'],['b','#60a5fa']];
-  const catKpiHTML=kpiCats.map((cat,i)=>{
-    const[cls,color]=kpiCatColors[i]||['b','#60a5fa'];
+  /* 그룹별 KPI (설계비/감리비/공사비/토지임대료) */
+  const KPI_GROUPS=['설계비','감리비','공사비','토지임대료'];
+  const KPI_COLORS=[['r','#ef4444'],['p','#a78bfa'],['o','#fb923c'],['y','#fbbf24']];
+  const kpiGrpHTML=KPI_GROUPS.map((g,i)=>{
+    const v=(()=>{
+      if(g==='토지임대료') return landGrand;
+      return [...detailItems].filter(o=>getGroup(o)===g).reduce((a,o)=>a+o.amt,0);
+    })();
+    if(!v) return '';
+    const[cls,color]=KPI_COLORS[i];
+    const cnt=g==='토지임대료'?landItems.length:detailItems.filter(o=>getGroup(o)===g).length;
     return`<div class="kpi ${cls}">
-      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">${CF_CAT_DISPLAY[cat]||cat}</div>
-      <div class="kpi-val" style="color:${color}">${fmtBig(catMap.get(cat)||0)}원</div>
-      <div class="kpi-sub" style="color:#9ca3af">${allItems.filter(o=>getCatForItem(o.item)===cat).length}건</div>
+      <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">${g==='설계비'?'🏗️ 설계비':g==='감리비'?'👷 감리비':g==='공사비'?'🏢 공사비':'🏛️ 토지임대료'}</div>
+      <div class="kpi-val" style="color:${color}">${fmtBig(v)}원</div>
+      <div class="kpi-sub" style="color:#9ca3af">${cnt}건</div>
     </div>`;
-  }).join('');
+  }).filter(Boolean).join('');
 
   const kpiHTML=`<div class="kpi-row">
     <div class="kpi b">
@@ -3651,68 +3546,56 @@ function renderCorp(rows){
     <div class="kpi g">
       <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">평균 월 지출</div>
       <div class="kpi-val" style="color:#34d399">${fmtBig(avgMonthly)}원</div>
-      <div class="kpi-sub" style="color:#a8b0c8">지출 발생 ${nonZeroMonths}개월 기준</div>
+      <div class="kpi-sub" style="color:#a8b0c8">지출 발생 ${nonZeroMo}개월 기준</div>
     </div>
-    ${maxMonth.total>0?`<div class="kpi y">
+    ${maxMo.total>0?`<div class="kpi y">
       <div class="kpi-lbl" style="color:#d1d5eb;font-size:10px;letter-spacing:.8px">최대 지출 월</div>
-      <div class="kpi-val" style="color:#fbbf24">${maxMonth.y}.${String(maxMonth.m).padStart(2,'0')}</div>
-      <div class="kpi-sub" style="color:#a8b0c8">${fmtBig(maxMonth.total)}원</div>
+      <div class="kpi-val" style="color:#fbbf24">${maxMo.y}.${String(maxMo.m).padStart(2,'0')}</div>
+      <div class="kpi-sub" style="color:#a8b0c8">${fmtBig(maxMo.total)}원</div>
     </div>`:''}
-    ${catKpiHTML}
+    ${kpiGrpHTML}
   </div>`;
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 11] 카테고리별 요약 HTML
-     — 신축 전체 비용 요약 섹션 데이터 기반
-       (요약 섹션 없으면 상세 데이터 기반으로 자동 생성)
+     [STEP 9] 신축 전체 비용 요약 HTML
+     — 요약 섹션 데이터 기반, 없으면 상세 그룹 집계
+       표시 컬럼: 항목 / 계약기간 / 소요기간 / 납부방법 / 금액
   ══════════════════════════════════════════════════════════ */
   function buildSummaryHTML(){
-    /* 요약 섹션이 있으면 그 데이터 사용, 없으면 상세 기반 그룹 집계 */
-    const useSummaryData = summaryItems.length > 0;
+    const src = summaryItems.length>0 ? summaryItems : detailItems;
+    const useSummaryData = summaryItems.length>0;
+    let rowsHTML='', sTotal=0;
 
-    let rows_html='';
-    let sTotal=0;
-
-    if(useSummaryData){
-      /* 요약 섹션 항목 직접 표시 */
-      summaryItems.forEach(o=>{
-        if(!o.total) return;
-        sTotal+=o.total;
-        rows_html+=`<tr>
-          <td class="label" style="color:#c9d1e8">${o.item}</td>
-          <td style="font-size:10px;color:#6b7899">요약</td>
-          <td class="r"><span class="exp" style="font-weight:600">${fmtBig(o.total)}원</span></td>
-        </tr>`;
-      });
-    } else {
-      /* 상세 데이터를 카테고리 그룹으로 묶어 요약 */
-      const GROUP_ORDER=['설계비','감리비','공사비','인허가·기타','토지임대료','기타비용'];
-      GROUP_ORDER.forEach(cat=>{
-        const v=catMap.get(cat)||0;
-        if(!v) return;
-        sTotal+=v;
-        const cnt=allItems.filter(o=>getCatForItem(o.item)===cat).length;
-        rows_html+=`<tr>
-          <td class="label" style="color:#c9d1e8">${CF_CAT_DISPLAY[cat]||cat}</td>
-          <td style="font-size:10px;color:#6b7899">${cnt}건</td>
-          <td class="r"><span class="exp" style="font-weight:600">${fmtBig(v)}원</span></td>
-        </tr>`;
-      });
-    }
+    src.forEach(o=>{
+      sTotal+=o.amt;
+      rowsHTML+=`<tr>
+        <td class="label" style="color:#c9d1e8">${o.item}</td>
+        <td style="font-family:var(--mono);font-size:11px;color:#8890aa">${o.contractRaw||'—'}</td>
+        <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodRaw||'—'}</td>
+        <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodRaw||'—'}</td>
+        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(o.amt)}원</span></td>
+      </tr>`;
+    });
 
     return`<div class="cf-section">
       <div class="cf-section-head">
         <div class="cf-section-bar" style="background:#4F7CFF"></div>
-        <div class="cf-section-title">카테고리별 요약</div>
-        <div class="cf-section-sub">${useSummaryData?'신축 전체 비용 요약 기반':'상세 데이터 집계'} · 총 ${fmtBig(grandTotal)}원</div>
+        <div class="cf-section-title">신축 전체 비용 요약</div>
+        <div class="cf-section-sub">${useSummaryData?'요약 섹션 기반':'상세 데이터 기반'} · 총 ${fmtBig(grandTotal)}원</div>
       </div>
       <div class="cf-table-wrap"><div style="overflow-x:auto">
         <table class="cf-table">
-          <thead><tr><th>항목</th><th>구성</th><th class="r">금액</th></tr></thead>
+          <thead><tr>
+            <th>항목</th>
+            <th>계약기간</th>
+            <th style="text-align:center">소요기간</th>
+            <th style="text-align:center">납부방법</th>
+            <th class="r">금액</th>
+          </tr></thead>
           <tbody>
-            ${rows_html||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--t4)">데이터 없음</td></tr>'}
+            ${rowsHTML||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t4)">데이터 없음</td></tr>'}
             <tr class="subtotal-row">
-              <td colspan="2" style="font-weight:700">합 계</td>
+              <td colspan="4" style="font-weight:700">합 계</td>
               <td class="r"><span class="exp" style="font-weight:700">${fmtBig(grandTotal)}원</span></td>
             </tr>
           </tbody>
@@ -3722,58 +3605,55 @@ function renderCorp(rows){
   }
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 12] 항목별 상세 HTML
-     — 신축 전체 비용 상세 기반 (그룹별 구분 출력)
+     [STEP 10] 신축 전체 비용 상세 HTML
+     그룹: 설계비 / 감리비·인허가 / 공사비
   ══════════════════════════════════════════════════════════ */
   function buildDetailHTML(){
     const GROUPS=[
-      {label:'🏗️ 건축 & 토목 설계비', cats:['설계비']},
-      {label:'👷 감리비 & 인허가', cats:['감리비','인허가·기타']},
-      {label:'🏢 공사비', cats:['공사비']},
-      {label:'📦 기타비용', cats:['기타비용']},
+      {label:'🏗️ 건축 & 토목 설계비', filter:o=>getGroup(o)==='설계비'},
+      {label:'👷 감리비 & 인허가·기타', filter:o=>['감리비','인허가·기타'].includes(getGroup(o))},
+      {label:'🏢 공사비', filter:o=>getGroup(o)==='공사비'},
     ];
 
     let bodyHTML='';
-    const assignedItems=new Set();
+    const assigned=new Set();
 
     GROUPS.forEach(g=>{
-      const matched=detailItems.filter(
-        (o,i)=>!assignedItems.has(i)&&g.cats.includes(getCatForItem(o.item))
-      );
-      matched.forEach(o=>assignedItems.add(detailItems.indexOf(o)));
+      const matched=detailItems.filter((o,i)=>!assigned.has(i)&&g.filter(o));
+      matched.forEach(o=>assigned.add(detailItems.indexOf(o)));
       if(!matched.length) return;
-      const gTotal=matched.reduce((a,o)=>a+o.total,0);
+      const gTot=matched.reduce((a,o)=>a+o.amt,0);
       bodyHTML+=`<tr class="yr-group"><td colspan="5" style="font-weight:700;letter-spacing:.3px">${g.label}</td></tr>`;
       matched.forEach(o=>{
         bodyHTML+=`<tr>
           <td class="label" style="padding-left:20px;color:#d6daf0;font-weight:500">${o.item}</td>
-          <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractStr}</td>
-          <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodMonths>1?o.periodMonths+'개월':'—'}</td>
-          <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodStr||'—'}</td>
-          <td class="r"><span class="exp">${fmtBig(o.total)}원</span></td>
+          <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractRaw||'—'}</td>
+          <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodRaw||'—'}</td>
+          <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodRaw||'—'}</td>
+          <td class="r"><span class="exp">${fmtBig(o.amt)}원</span></td>
         </tr>`;
       });
       bodyHTML+=`<tr class="yr-total">
         <td colspan="4" style="font-size:11px">소 계</td>
-        <td class="r"><span class="exp" style="font-size:11px">${fmtBig(gTotal)}원</span></td>
+        <td class="r"><span class="exp" style="font-size:11px">${fmtBig(gTot)}원</span></td>
       </tr>`;
     });
 
-    /* 미분류 항목 */
-    const unassigned=detailItems.filter((_,i)=>!assignedItems.has(i));
+    /* 미분류 */
+    const unassigned=detailItems.filter((_,i)=>!assigned.has(i));
     if(unassigned.length){
-      const uTotal=unassigned.reduce((a,o)=>a+o.total,0);
-      bodyHTML+=`<tr class="yr-group"><td colspan="5" style="font-weight:700">기타</td></tr>`;
+      const uTot=unassigned.reduce((a,o)=>a+o.amt,0);
+      bodyHTML+=`<tr class="yr-group"><td colspan="5">기타</td></tr>`;
       unassigned.forEach(o=>{
         bodyHTML+=`<tr>
-          <td class="label" style="padding-left:20px;color:#d6daf0;font-weight:500">${o.item}</td>
-          <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractStr}</td>
-          <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodMonths>1?o.periodMonths+'개월':'—'}</td>
-          <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodStr||'—'}</td>
-          <td class="r"><span class="exp">${fmtBig(o.total)}원</span></td>
+          <td class="label" style="padding-left:20px;color:#d6daf0">${o.item}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractRaw||'—'}</td>
+          <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodRaw||'—'}</td>
+          <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodRaw||'—'}</td>
+          <td class="r"><span class="exp">${fmtBig(o.amt)}원</span></td>
         </tr>`;
       });
-      bodyHTML+=`<tr class="yr-total"><td colspan="4" style="font-size:11px">소 계</td><td class="r"><span class="exp" style="font-size:11px">${fmtBig(uTotal)}원</span></td></tr>`;
+      bodyHTML+=`<tr class="yr-total"><td colspan="4" style="font-size:11px">소 계</td><td class="r"><span class="exp" style="font-size:11px">${fmtBig(uTot)}원</span></td></tr>`;
     }
 
     return`<div class="cf-section">
@@ -3785,8 +3665,11 @@ function renderCorp(rows){
       <div class="cf-table-wrap"><div style="overflow-x:auto">
         <table class="cf-table">
           <thead><tr>
-            <th>항목</th><th>계약기간</th><th style="text-align:center">소요기간</th>
-            <th style="text-align:center">납부방법</th><th class="r">금액</th>
+            <th>항목</th>
+            <th>계약기간</th>
+            <th style="text-align:center">소요기간</th>
+            <th style="text-align:center">납부방법</th>
+            <th class="r">금액</th>
           </tr></thead>
           <tbody>
             ${bodyHTML||'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t4)">항목 없음</td></tr>'}
@@ -3801,16 +3684,16 @@ function renderCorp(rows){
   }
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 13] 법인 토지임대료 별도 섹션 HTML
+     [STEP 11] 법인 토지임대료 HTML
   ══════════════════════════════════════════════════════════ */
   function buildLandHTML(){
     if(!landItems.length) return '';
-    const rows_html=landItems.map(o=>`<tr>
+    const rowsHTML=landItems.map(o=>`<tr>
       <td class="label" style="color:#fbbf24;font-weight:600">${o.item}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractStr}</td>
-      <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodMonths>1?o.periodMonths+'개월':'—'}</td>
-      <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodStr||'매월'}</td>
-      <td class="r"><span style="color:#fbbf24;font-family:var(--mono);font-weight:600">${fmtBig(o.total)}원</span></td>
+      <td style="font-family:var(--mono);font-size:11px;color:#a0a8c0">${o.contractRaw||'—'}</td>
+      <td style="font-size:11px;color:#a0a8c0;text-align:center">${o.periodRaw||'—'}</td>
+      <td style="font-size:10.5px;color:#8890aa;text-align:center">${o.methodRaw||'매월 납부'}</td>
+      <td class="r"><span style="color:#fbbf24;font-family:var(--mono);font-weight:600">${fmtBig(o.amt)}원</span></td>
     </tr>`).join('');
 
     return`<div class="cf-section">
@@ -3822,11 +3705,14 @@ function renderCorp(rows){
       <div class="cf-table-wrap"><div style="overflow-x:auto">
         <table class="cf-table">
           <thead><tr>
-            <th>항목</th><th>계약기간</th><th style="text-align:center">소요기간</th>
-            <th style="text-align:center">납부방법</th><th class="r">금액</th>
+            <th>항목</th>
+            <th>계약기간</th>
+            <th style="text-align:center">소요기간</th>
+            <th style="text-align:center">납부방법</th>
+            <th class="r">금액</th>
           </tr></thead>
           <tbody>
-            ${rows_html}
+            ${rowsHTML}
             <tr class="subtotal-row">
               <td colspan="4" style="font-weight:700">토지임대료 합계</td>
               <td class="r"><span style="color:#fbbf24;font-family:var(--mono);font-weight:700">${fmtBig(landGrand)}원</span></td>
@@ -3838,62 +3724,15 @@ function renderCorp(rows){
   }
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 14] 월별 캐시플로우 HTML
+     [STEP 12] 월별 캐시플로우 HTML
+     — 상세 항목별 컬럼 (큰 덩어리 X)
+     — 2026.01 ~ 2030.12 전체 표시
   ══════════════════════════════════════════════════════════ */
   function buildMonthlyHTML(){
-    const activeCats=usedCats.filter(cat=>monthlyData.some(d=>d.bycat[cat]>0));
-    /* 캐시플로우 카테고리별 전체 합계 */
-    const catCfTotals={};
-    activeCats.forEach(cat=>{
-      catCfTotals[cat]=monthlyFiltered.reduce((a,d)=>a+(d.bycat[cat]||0),0);
-    });
+    /* 활성 항목 (해당 기간 내 지출 있는 항목만 컬럼 생성) */
+    const activeItems=cfItems.filter((_,i)=>monthlyData.some(d=>d.byItem[i]>0));
 
-    let cumTotal=0;
-    let bodyHTML='',lastY=null,yrSum=0;
-    const yrByCat={};
-
-    monthlyData.forEach(({y,m,bycat,total})=>{
-      if(y!==lastY){
-        if(lastY!==null&&yrSum>0){
-          bodyHTML+=`<tr class="yr-total">
-            <td>${lastY}년 소계</td>
-            ${activeCats.map(cat=>`<td class="r">${(yrByCat[cat]||0)>0?`<span class="exp" style="font-size:11px">${fmtBig(yrByCat[cat])}원</span>`:`<span class="dim">—</span>`}</td>`).join('')}
-            <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
-            <td class="r"></td>
-          </tr>`;
-        }
-        bodyHTML+=`<tr class="yr-group"><td colspan="${activeCats.length+3}">${y}년</td></tr>`;
-        lastY=y;yrSum=0;
-        activeCats.forEach(c=>{yrByCat[c]=0;});
-      }
-      if(total===0) return;
-      yrSum+=total;cumTotal+=total;
-      activeCats.forEach(c=>{yrByCat[c]=(yrByCat[c]||0)+(bycat[c]||0);});
-      bodyHTML+=`<tr>
-        <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
-        ${activeCats.map(cat=>`<td class="r">${(bycat[cat]||0)>0?`<span class="exp">${fmtBig(bycat[cat])}원</span>`:`<span class="dim">—</span>`}</td>`).join('')}
-        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
-        <td class="r"><span class="neu" style="font-size:11px">${fmtBig(cumTotal)}원</span></td>
-      </tr>`;
-    });
-    if(lastY&&yrSum>0){
-      bodyHTML+=`<tr class="yr-total">
-        <td>${lastY}년 소계</td>
-        ${activeCats.map(cat=>`<td class="r">${(yrByCat[cat]||0)>0?`<span class="exp" style="font-size:11px">${fmtBig(yrByCat[cat])}원</span>`:`<span class="dim">—</span>`}</td>`).join('')}
-        <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
-        <td class="r"></td>
-      </tr>`;
-    }
-    if(cumTotal>0){
-      bodyHTML+=`<tr class="subtotal-row">
-        <td style="font-weight:700">전체 합계</td>
-        ${activeCats.map(cat=>`<td class="r"><span class="exp" style="font-weight:600">${fmtBig(catCfTotals[cat]||0)}원</span></td>`).join('')}
-        <td class="r"><span class="exp" style="font-weight:700">${fmtBig(cumTotal)}원</span></td>
-        <td class="r"></td>
-      </tr>`;
-    }
-
-    if(!monthlyFiltered.length){
+    if(!activeItems.length){
       return`<div class="cf-section">
         <div class="cf-section-head">
           <div class="cf-section-bar" style="background:var(--t4)"></div>
@@ -3905,39 +3744,115 @@ function renderCorp(rows){
       </div>`;
     }
 
+    /* 항목 인덱스 → activeItems 인덱스 매핑 */
+    const activeIdxMap=new Map();
+    activeItems.forEach((o,ai)=>{
+      const oi=cfItems.indexOf(o);
+      activeIdxMap.set(oi,ai);
+    });
+
+    /* 항목별 전체 합계 */
+    const itemTotals=activeItems.map((_,ai)=>{
+      const oi=cfItems.indexOf(activeItems[ai]);
+      return monthlyData.reduce((s,d)=>s+(d.byItem[oi]||0),0);
+    });
+
+    let bodyHTML='',lastY=null,yrSum=0,cumTotal=0;
+    const yrByItem=new Array(activeItems.length).fill(0);
+
+    monthlyData.forEach(({y,m,byItem,total})=>{
+      if(y!==lastY){
+        if(lastY!==null&&yrSum>0){
+          bodyHTML+=`<tr class="yr-total">
+            <td>${lastY}년 소계</td>
+            ${activeItems.map((_,ai)=>{
+              const oi=cfItems.indexOf(activeItems[ai]);
+              const v=yrByItem[ai];
+              return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+            }).join('')}
+            <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+            <td class="r"></td>
+          </tr>`;
+        }
+        bodyHTML+=`<tr class="yr-group"><td colspan="${activeItems.length+3}">${y}년</td></tr>`;
+        lastY=y; yrSum=0;
+        yrByItem.fill(0);
+      }
+      if(total===0) return;
+      yrSum+=total; cumTotal+=total;
+      activeItems.forEach((_,ai)=>{
+        const oi=cfItems.indexOf(activeItems[ai]);
+        yrByItem[ai]=(yrByItem[ai]||0)+(byItem[oi]||0);
+      });
+      bodyHTML+=`<tr>
+        <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
+        ${activeItems.map((_,ai)=>{
+          const oi=cfItems.indexOf(activeItems[ai]);
+          const v=byItem[oi]||0;
+          return`<td class="r">${v>0?`<span class="exp">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+        }).join('')}
+        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
+        <td class="r"><span class="neu" style="font-size:11px">${fmtBig(cumTotal)}원</span></td>
+      </tr>`;
+    });
+
+    /* 마지막 연도 소계 */
+    if(lastY&&yrSum>0){
+      bodyHTML+=`<tr class="yr-total">
+        <td>${lastY}년 소계</td>
+        ${activeItems.map((_,ai)=>{
+          const v=yrByItem[ai];
+          return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+        }).join('')}
+        <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+        <td class="r"></td>
+      </tr>`;
+    }
+
+    /* 전체 합계 행 */
+    bodyHTML+=`<tr class="subtotal-row">
+      <td style="font-weight:700">전체 합계</td>
+      ${activeItems.map((_,ai)=>`<td class="r"><span class="exp" style="font-weight:600">${fmtBig(itemTotals[ai])}원</span></td>`).join('')}
+      <td class="r"><span class="exp" style="font-weight:700">${fmtBig(cumTotal)}원</span></td>
+      <td class="r"></td>
+    </tr>`;
+
+    /* 헤더 행: 항목명 표시 (긴 이름은 축약) */
+    function shortName(name){
+      const n=String(name||'');
+      return n.length>8?n.slice(0,8)+'…':n;
+    }
+
     return`<div class="cf-section">
       <div class="cf-section-head">
         <div class="cf-section-bar" style="background:var(--orange)"></div>
         <div class="cf-section-title">월별 비용 캐시플로우</div>
-        <div class="cf-section-sub">${minYear}–${maxYear} · 총 ${fmtBig(cumTotal)}원</div>
+        <div class="cf-section-sub">${CF_START_Y}–${CF_END_Y} · 총 ${fmtBig(cumTotal)}원</div>
       </div>
       <div class="cf-table-wrap"><div style="overflow-x:auto">
         <table class="cf-table">
           <thead>
             <tr>
-              <th rowspan="2" style="color:#a8b0c8;font-weight:700">연월</th>
-              ${activeCats.length?`<th colspan="${activeCats.length}" style="text-align:center;color:#ef4444;border-bottom:2px solid #ef4444;background:rgba(240,56,96,.05);font-weight:700">📤 비용 항목별</th>`:''}
-              <th rowspan="2" class="r" style="color:#ef4444;font-weight:700">월 합계</th>
-              <th rowspan="2" class="r" style="color:#60a5fa;font-weight:700">누적</th>
-            </tr>
-            <tr>
-              ${activeCats.map(cat=>`<th class="r" style="color:#d1d5eb;font-size:9.5px;background:rgba(240,56,96,.04)">${CF_CAT_DISPLAY[cat]||cat}</th>`).join('')}
+              <th style="color:#a8b0c8;font-weight:700;min-width:70px">연월</th>
+              ${activeItems.map(o=>`<th class="r" style="color:#d1d5eb;font-size:9px;background:rgba(240,56,96,.04);min-width:72px;white-space:nowrap">${shortName(o.item)}</th>`).join('')}
+              <th class="r" style="color:#ef4444;font-weight:700;min-width:80px">월 합계</th>
+              <th class="r" style="color:#60a5fa;font-weight:700;min-width:80px">누적</th>
             </tr>
           </thead>
-          <tbody>${bodyHTML||'<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--t4)">월별 데이터 없음</td></tr>'}</tbody>
+          <tbody>${bodyHTML}</tbody>
         </table>
       </div></div>
     </div>`;
   }
 
   /* ══════════════════════════════════════════════════════════
-     [STEP 15] 최종 렌더링
+     [STEP 13] 최종 렌더링
   ══════════════════════════════════════════════════════════ */
   CACHE['corp_cfn']=null;
   initTS('corp');TS['corp']={search:'',sortCol:-1,sortAsc:true,page:1};
 
   sec.innerHTML=`
-    <div class="notice">📡 구글 시트 실시간 연동 · 법인비용 Cash Flow (v4)</div>
+    <div class="notice">📡 구글 시트 실시간 연동 · 법인비용 Cash Flow (v5)</div>
     ${kpiHTML}
     ${buildSummaryHTML()}
     ${buildDetailHTML()}
@@ -3946,6 +3861,7 @@ function renderCorp(rows){
     <div id="corp-raw" style="display:none"><div id="corp-tbl"></div></div>`;
   drawTable('corp',rows,'corp-tbl');
 }
+
 
 
 
