@@ -4501,8 +4501,8 @@ async function goHome(){
 /* ══ INIT ══════════════════════════════════════════════════ */
 LOADED.add('timeline');
 load('timeline');
-/* 5분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
-setInterval(()=>{LOADED.delete(CUR);load(CUR);},5*60*1000);
+/* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
+setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
 </script>
 </body>
 </html>
