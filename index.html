@@ -542,27 +542,24 @@ td:first-child{color:var(--t1);font-weight:500}
 .irr-assum-tags span{font-size:10px;padding:2px 9px;border-radius:20px;
   background:var(--s3);border:1px solid var(--border2);color:var(--t3);font-family:var(--mono)}
 
-/* ═══ [수정] 법인비용 캐시플로우 — 월별 비용 캐시플로우 테이블은 가로스크롤 허용
-   요약/상세/토지 3개 표: table-layout:fixed + ellipsis
-   월별 캐시플로우(마지막) 표: width:max-content + 가로스크롤, 내용 전체 표시
+/* ═══ 법인비용 캐시플로우 ═══════════════════════════════════
+   요약/상세/토지 표: fixed layout (기존 유지)
+   월별 캐시플로우(.cf-section-monthly): 가로스크롤 + 내용 전체 표시
 ═══════════════════════════════════════════════════════════ */
-/* 요약/상세/토지 표: overflow-x auto + fixed layout */
-#sec-corp .cf-section:not(:last-of-type) .cf-table-wrap{overflow-x:auto}
-#sec-corp .cf-section:not(:last-of-type) .cf-table{table-layout:fixed!important;width:100%!important}
-#sec-corp .cf-section:not(:last-of-type) .cf-table td,
-#sec-corp .cf-section:not(:last-of-type) .cf-table th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sec-corp .cf-section:not(.cf-section-monthly) .cf-table-wrap{overflow-x:auto}
+#sec-corp .cf-section:not(.cf-section-monthly) .cf-table{table-layout:fixed!important;width:100%!important}
+#sec-corp .cf-section:not(.cf-section-monthly) .cf-table td,
+#sec-corp .cf-section:not(.cf-section-monthly) .cf-table th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* 월별 비용 캐시플로우 표: 가로스크롤 + 내용 전체 표시 */
-#sec-corp .cf-section:last-of-type .cf-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-#sec-corp .cf-section:last-of-type .cf-table{table-layout:auto!important;width:max-content!important;min-width:100%}
-#sec-corp .cf-section:last-of-type .cf-table td,
-#sec-corp .cf-section:last-of-type .cf-table th{overflow:visible!important;text-overflow:clip!important;white-space:nowrap!important}
-#sec-corp .cf-section:last-of-type .cf-table th{min-width:120px;padding:10px 14px;font-size:11px}
-#sec-corp .cf-section:last-of-type .cf-table td.ym{min-width:72px;position:sticky;left:0;z-index:1;background:var(--s1)}
-#sec-corp .cf-section:last-of-type .cf-table thead th:first-child{position:sticky;left:0;z-index:3;background:var(--s2)}
-#sec-corp .cf-section:last-of-type .cf-table tr.yr-group td,
-#sec-corp .cf-section:last-of-type .cf-table tr.yr-total td,
-#sec-corp .cf-section:last-of-type .cf-table tr.subtotal-row td{white-space:nowrap!important}
+/* 월별 비용 캐시플로우 전용 */
+#sec-corp .cf-section-monthly .cf-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#sec-corp .cf-section-monthly .cf-table{table-layout:auto!important;width:max-content!important;min-width:100%}
+#sec-corp .cf-section-monthly .cf-table td,
+#sec-corp .cf-section-monthly .cf-table th{overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important;max-width:none!important}
+#sec-corp .cf-section-monthly .cf-table td.ym{position:sticky;left:0;z-index:1;background:var(--s1)}
+#sec-corp .cf-section-monthly .cf-table thead th:first-child{position:sticky;left:0;z-index:3;background:var(--s2)}
+/* 전역 td max-width 오버라이드 */
+#sec-corp .cf-section-monthly td{max-width:none!important;overflow:visible!important;text-overflow:unset!important;white-space:nowrap!important}
 
 @media(max-width:900px){
   .prop-grid,.calc-grid,.irr-res-grid{grid-template-columns:1fr}
@@ -3986,10 +3983,10 @@ function renderCorp(rows){
     const theadCols=activeItems.map(o=>{
       const color=itemColor(o);
       const fullName=String(o.item||'');
-      return`<th class="r" style="color:${color};font-size:11px;white-space:nowrap;min-width:130px;padding:10px 14px">${fullName}</th>`;
+      return`<th class="r" style="color:${color};font-size:11px;min-width:130px;padding:10px 16px">${fullName}</th>`;
     }).join('');
 
-    return`<div class="cf-section">
+    return`<div class="cf-section cf-section-monthly">
       <div class="cf-section-head">
         <div class="cf-section-bar" style="background:var(--orange)"></div>
         <div class="cf-section-title">월별 비용 캐시플로우</div>
@@ -3999,7 +3996,7 @@ function renderCorp(rows){
         <table class="cf-table">
           <thead>
             <tr>
-              <th style="color:#9ca3af;font-weight:700">연월</th>
+              <th class="ym" style="color:#9ca3af;font-weight:700;min-width:80px">연월</th>
               ${theadCols}
               <th class="r" style="color:#ef4444;font-weight:700;min-width:150px">월 합계</th>
               <th class="r" style="color:#60a5fa;font-weight:700;min-width:150px">누적</th>
