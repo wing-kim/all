@@ -2392,7 +2392,7 @@ function irrCalcRun(){
       const fill=isPos?'#22c98a':'#e84040';
       const fillDim=isPos?'rgba(34,201,138,.18)':'rgba(232,64,64,.18)';
       const y=isPos?MID-barH:MID;
-      const lblY=isPos?y-9:y+barH+15;
+      const lblY=isPos?y-9:MID-9;  // 마이너스: 기준선 바로 위 표시
       const val=fSmall(Math.abs(r.net));
       const lblColor = isPos ? '#22c98a' : '#ffffff';
       // 막대 배경 (투명 강조)
