@@ -3872,20 +3872,10 @@ function renderCorp(rows){
 
   /* ══════════════════════════════════════════════════════════
      [STEP 12] 월별 캐시플로우 HTML
-     ★ [수정2] cfItems = detailItems + landItems 기반 재계산
-        - 계약기간 기준 월 생성
-        - 납부방법(매월/분할/일시납) 정확 배분
-        - 계약기간 외 월에는 값 없음
-        - 법인 토지임대료 반드시 포함
-        - 연도별 소계 / 전체 합계 재계산
-     ★ [수정3] UI 밀도 극대화 — 가로 스크롤 제거
-        - 항목명 8자 축약 + title 툴팁
-        - padding 최소화, font-size 10px
-        - 그룹 레이블(설계/감리/공사/임대) 색상 구분 헤더
-        - table-layout:fixed + overflow-x:hidden
+     ★ 항목명 전체 표시 + 금액 원 단위 전체 표시 + 가로 스크롤 허용
   ══════════════════════════════════════════════════════════ */
   function buildMonthlyHTML(){
-    /* ── [수정2] 활성 항목: 계약기간/납부방법 기반 실제 지출 발생 항목만 ── */
+    /* 활성 항목: 실제 지출 발생 항목만 */
     const activeItems=cfItems.filter((_,i)=>monthlyData.some(d=>(d.byItem[i]||0)>0));
 
     if(!activeItems.length){
@@ -3900,13 +3890,7 @@ function renderCorp(rows){
       </div>`;
     }
 
-    /* ── [수정3] 항목명 축약 함수 ── */
-    function shortName(name){
-      const n=String(name||'');
-      return n.length>7?n.slice(0,7)+'…':n;
-    }
-
-    /* ── [수정3] 항목 컬럼 그룹 색상 (설계/감리/공사/토지) ── */
+    /* 항목 컬럼 그룹 색상 */
     function itemColor(o){
       const g=getGroup(o);
       if(g==='설계비') return '#60a5fa';
@@ -3917,7 +3901,13 @@ function renderCorp(rows){
       return '#8890aa';
     }
 
-    /* ── 항목별 전체 합계 ── */
+    /* 금액 전체 표시 함수 (원 단위, 천 단위 구분자) */
+    function fmtFull(n){
+      if(!n||isNaN(n)) return '—';
+      return Math.round(n).toLocaleString('ko-KR');
+    }
+
+    /* 항목별 전체 합계 */
     const itemTotals=activeItems.map((_,ai)=>{
       const oi=cfItems.indexOf(activeItems[ai]);
       return monthlyData.reduce((s,d)=>s+(d.byItem[oi]||0),0);
@@ -3932,11 +3922,10 @@ function renderCorp(rows){
           bodyHTML+=`<tr class="yr-total">
             <td>${lastY}년 소계</td>
             ${activeItems.map((_,ai)=>{
-              const oi=cfItems.indexOf(activeItems[ai]);
               const v=yrByItem[ai];
-              return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+              return`<td class="r">${v>0?`<span class="exp">${fmtFull(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
             }).join('')}
-            <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+            <td class="r"><span class="exp">${fmtFull(yrSum)}원</span></td>
             <td class="r"></td>
           </tr>`;
         }
@@ -3951,14 +3940,14 @@ function renderCorp(rows){
         yrByItem[ai]=(yrByItem[ai]||0)+(byItem[oi]||0);
       });
       bodyHTML+=`<tr>
-        <td class="ym">${y}.${String(m).padStart(2,'0')}</td>
+        <td class="ym" style="min-width:70px">${y}.${String(m).padStart(2,'0')}</td>
         ${activeItems.map((_,ai)=>{
           const oi=cfItems.indexOf(activeItems[ai]);
           const v=byItem[oi]||0;
-          return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+          return`<td class="r" style="min-width:120px">${v>0?`<span class="exp">${fmtFull(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
         }).join('')}
-        <td class="r"><span class="exp" style="font-weight:600">${fmtBig(total)}원</span></td>
-        <td class="r"><span class="neu" style="font-size:11px">${fmtBig(cumTotal)}원</span></td>
+        <td class="r" style="min-width:130px"><span class="exp" style="font-weight:600">${fmtFull(total)}원</span></td>
+        <td class="r" style="min-width:130px"><span class="neu">${fmtFull(cumTotal)}원</span></td>
       </tr>`;
     });
 
@@ -3968,9 +3957,9 @@ function renderCorp(rows){
         <td>${lastY}년 소계</td>
         ${activeItems.map((_,ai)=>{
           const v=yrByItem[ai];
-          return`<td class="r">${v>0?`<span class="exp" style="font-size:10px">${fmtBig(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
+          return`<td class="r">${v>0?`<span class="exp">${fmtFull(v)}원</span>`:`<span class="dim">—</span>`}</td>`;
         }).join('')}
-        <td class="r"><span class="exp">${fmtBig(yrSum)}원</span></td>
+        <td class="r"><span class="exp">${fmtFull(yrSum)}원</span></td>
         <td class="r"></td>
       </tr>`;
     }
@@ -3978,32 +3967,32 @@ function renderCorp(rows){
     /* 전체 합계 행 */
     bodyHTML+=`<tr class="subtotal-row">
       <td style="font-weight:700">전체 합계</td>
-      ${activeItems.map((_,ai)=>`<td class="r"><span class="exp" style="font-weight:600">${fmtBig(itemTotals[ai])}원</span></td>`).join('')}
-      <td class="r"><span class="exp" style="font-weight:700">${fmtBig(cumTotal)}원</span></td>
+      ${activeItems.map((_,ai)=>`<td class="r"><span class="exp" style="font-weight:600">${fmtFull(itemTotals[ai])}원</span></td>`).join('')}
+      <td class="r"><span class="exp" style="font-weight:700">${fmtFull(cumTotal)}원</span></td>
       <td class="r"></td>
     </tr>`;
 
-    /* ── 헤더: 항목 그룹 색상 구분 ── */
+    /* 헤더: 항목명 전체 표시, 그룹 색상 구분 */
     const theadCols=activeItems.map(o=>{
       const color=itemColor(o);
-      const sn=shortName(o.item);
-      return`<th class="r" title="${o.item}" style="color:${color};font-size:9px;white-space:nowrap;background:rgba(0,0,0,.15)">${sn}</th>`;
+      const fullName=String(o.item||'');
+      return`<th class="r" style="color:${color};font-size:11px;white-space:nowrap;background:rgba(0,0,0,.15);min-width:120px;padding:10px 14px">${fullName}</th>`;
     }).join('');
 
     return`<div class="cf-section">
       <div class="cf-section-head">
         <div class="cf-section-bar" style="background:var(--orange)"></div>
         <div class="cf-section-title">월별 비용 캐시플로우</div>
-        <div class="cf-section-sub">${CF_START_Y}–${CF_END_Y} · 총 ${fmtBig(cumTotal)}원</div>
+        <div class="cf-section-sub">${CF_START_Y}–${CF_END_Y} · 총 ${fmtFull(cumTotal)}원</div>
       </div>
-      <div class="cf-table-wrap"><div style="overflow-x:auto">
-        <table class="cf-table">
+      <div class="cf-table-wrap"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="cf-table" style="width:max-content;min-width:100%">
           <thead>
             <tr>
-              <th style="color:#9ca3af;font-weight:700;min-width:70px">연월</th>
+              <th style="color:#9ca3af;font-weight:700;min-width:70px;position:sticky;left:0;z-index:2;background:var(--s2)">연월</th>
               ${theadCols}
-              <th class="r" style="color:#ef4444;font-weight:700;min-width:80px">월 합계</th>
-              <th class="r" style="color:#60a5fa;font-weight:700;min-width:80px">누적</th>
+              <th class="r" style="color:#ef4444;font-weight:700;min-width:130px">월 합계</th>
+              <th class="r" style="color:#60a5fa;font-weight:700;min-width:130px">누적</th>
             </tr>
           </thead>
           <tbody>${bodyHTML}</tbody>
