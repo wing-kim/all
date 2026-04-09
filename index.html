@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ALL 대시보드</title>
+  <title>전체 대시보드</title>
   <style>
     :root{
       --bg:#071225;
@@ -46,7 +46,7 @@
       align-items:center;
       justify-content:space-between;
       gap:16px;
-      margin-bottom:22px;
+      margin-bottom:26px;
     }
 
     .brand{
@@ -70,12 +70,6 @@
       line-height:1.1;
       letter-spacing:-0.02em;
       font-weight:800;
-    }
-
-    .sub{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:14px;
     }
 
     .top-actions{
@@ -116,140 +110,12 @@
       background:rgba(255,255,255,.07);
     }
 
-    .hero{
-      position:relative;
-      overflow:hidden;
-      background:linear-gradient(180deg, rgba(10,20,40,.95), rgba(10,18,34,.92));
-      border:1px solid var(--line);
-      border-radius:28px;
-      padding:28px;
-      box-shadow:var(--shadow);
-      margin-bottom:24px;
-    }
-    .hero:before{
-      content:"";
-      position:absolute; inset:auto -120px -120px auto;
-      width:320px; height:320px; border-radius:50%;
-      background:radial-gradient(circle, rgba(111,140,255,.25), transparent 70%);
-      pointer-events:none;
-    }
-
-    .hero-grid{
-      display:grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap:18px;
-      align-items:stretch;
-    }
-
-    .hero-title{
-      margin:0 0 10px;
-      font-size:28px;
-      font-weight:800;
-      letter-spacing:-0.03em;
-    }
-
-    .hero-desc{
-      margin:0;
-      max-width:760px;
-      color:var(--muted);
-      line-height:1.65;
-      font-size:15px;
-    }
-
-    .mini-stats{
-      margin-top:20px;
-      display:grid;
-      grid-template-columns:repeat(3, minmax(0,1fr));
-      gap:14px;
-    }
-
-    .mini-card{
-      padding:16px 16px 14px;
-      border-radius:18px;
-      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.06);
-    }
-    .mini-card .label{
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:8px;
-    }
-    .mini-card .value{
-      font-size:28px;
-      font-weight:800;
-      letter-spacing:-0.02em;
-    }
-
-    .hero-preview{
-      min-height:220px;
-      border-radius:22px;
-      border:1px solid rgba(255,255,255,.07);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02)),
-        radial-gradient(circle at 20% 20%, rgba(111,140,255,.18), transparent 35%),
-        radial-gradient(circle at 80% 30%, rgba(82,211,166,.12), transparent 30%),
-        radial-gradient(circle at 50% 80%, rgba(255,111,169,.12), transparent 35%),
-        #0b1630;
-      position:relative;
-      overflow:hidden;
-      padding:18px;
-    }
-
-    .preview-window{
-      position:absolute;
-      inset:18px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.07);
-      background:linear-gradient(180deg, rgba(5,10,24,.6), rgba(8,14,28,.82));
-      padding:14px;
-    }
-    .preview-header{
-      display:flex; gap:8px; margin-bottom:14px;
-    }
-    .preview-header span{
-      width:10px; height:10px; border-radius:50%;
-      background:rgba(255,255,255,.25);
-    }
-    .preview-row{
-      display:grid;
-      grid-template-columns:1.1fr .9fr;
-      gap:12px;
-      height:calc(100% - 24px);
-    }
-    .preview-block, .preview-block2{
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.06);
-      background:rgba(255,255,255,.03);
-      position:relative;
-      overflow:hidden;
-    }
-    .preview-block:before{
-      content:"";
-      position:absolute; inset:12px;
-      border-radius:12px;
-      background:
-        linear-gradient(90deg, transparent 0 12%, rgba(111,140,255,.35) 12% 18%, transparent 18% 100%),
-        linear-gradient(180deg, rgba(255,255,255,.03) 1px, transparent 1px);
-      background-size:auto, 100% 34px;
-    }
-    .preview-block2:before{
-      content:"";
-      position:absolute; inset:12px;
-      border-radius:12px;
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.04) 0 22%, transparent 22% 100%),
-        radial-gradient(circle at 20% 60%, rgba(82,211,166,.5), transparent 18%),
-        radial-gradient(circle at 70% 40%, rgba(255,111,169,.42), transparent 16%),
-        radial-gradient(circle at 50% 80%, rgba(111,140,255,.46), transparent 15%);
-      opacity:.95;
-    }
-
     .section-title{
       display:flex;
       justify-content:space-between;
-      align-items:center;
+      align-items:flex-end;
       gap:12px;
-      margin:28px 0 14px;
+      margin:6px 0 18px;
     }
     .section-title h2{
       margin:0;
@@ -257,7 +123,7 @@
       letter-spacing:-0.02em;
     }
     .section-title p{
-      margin:0;
+      margin:6px 0 0;
       color:var(--muted);
       font-size:14px;
     }
@@ -473,15 +339,12 @@
     }
 
     @media (max-width: 1180px){
-      .hero-grid{grid-template-columns:1fr}
       .project-grid{grid-template-columns:1fr}
       .project-card{min-height:auto}
     }
     @media (max-width: 760px){
       .wrap{padding:18px 14px 40px}
       h1{font-size:28px}
-      .hero{padding:20px}
-      .mini-stats{grid-template-columns:1fr}
       .kpi-grid{grid-template-columns:1fr}
       .project-head{flex-direction:column}
       .topbar{align-items:flex-start;flex-direction:column}
@@ -496,8 +359,7 @@
       <div class="brand">
         <div class="brand-badge">📊</div>
         <div>
-          <h1>ALL 대시보드</h1>
-          <div class="sub">프로젝트 허브 화면 · 블루피카 / 케이프혼타워 / 신축</div>
+          <h1>전체 대시보드</h1>
         </div>
       </div>
 
@@ -510,50 +372,10 @@
       </div>
     </header>
 
-    <section class="hero">
-      <div class="hero-grid">
-        <div>
-          <h2 class="hero-title">프로젝트를 한눈에 보고 바로 들어가는 메인 허브</h2>
-          <p class="hero-desc">
-            현재 전체 대시보드는 각 프로젝트로 이동하는 시작 화면 역할을 하도록 구성했습니다.
-            카드형 레이아웃으로 바꾸고, 건물 느낌의 비주얼 영역과 KPI, 주요 기능 요약을 함께 배치해
-            단순 링크 목록이 아니라 실제 대시보드처럼 보이도록 만들었습니다.
-          </p>
-
-          <div class="mini-stats">
-            <div class="mini-card">
-              <div class="label">총 프로젝트</div>
-              <div class="value">3</div>
-            </div>
-            <div class="mini-card">
-              <div class="label">활성 대시보드</div>
-              <div class="value">3</div>
-            </div>
-            <div class="mini-card">
-              <div class="label">메인 화면 타입</div>
-              <div class="value" style="font-size:20px;">카드형 허브</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="hero-preview">
-          <div class="preview-window">
-            <div class="preview-header">
-              <span></span><span></span><span></span>
-            </div>
-            <div class="preview-row">
-              <div class="preview-block"></div>
-              <div class="preview-block2"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <div class="section-title">
       <div>
-        <h2>프로젝트 바로가기</h2>
-        <p>각 카드를 클릭하거나 아래 버튼으로 상세 대시보드로 이동할 수 있게 구성</p>
+        <h2>법인 바로가기</h2>
+        <p>각 카드를 클릭하거나 아래 버튼으로 상세 대시보드로 이동</p>
       </div>
     </div>
 
@@ -681,7 +503,7 @@
           </div>
 
           <div class="card-actions">
-            <a class="card-btn primary" href="sinchuk/index.html" onclick="event.stopPropagation()">대시보드 열기</a>
+            <a class="card-btn primary" href="https://wing-kim.github.io/all/newbuild/" target="_blank" onclick="event.stopPropagation()">대시보드 열기</a>
             <a class="card-btn" href="#" onclick="event.preventDefault(); event.stopPropagation(); alert('미리보기/설정 영역은 추후 연결 가능')">미리보기</a>
           </div>
         </div>
