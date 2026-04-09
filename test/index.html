@@ -2363,9 +2363,9 @@ function irrCalcRun(){
     const curRow=S[rowKey], curCol=S[colKey];
     const nRow=rowSteps.reduce((bi,v,i)=>Math.abs(v-curRow)<Math.abs(rowSteps[bi]-curRow)?i:bi,0);
     const nCol=colSteps.reduce((bi,v,i)=>Math.abs(v-curCol)<Math.abs(colSteps[bi]-curCol)?i:bi,0);
-    let t=`<table style="width:100%;border-collapse:collapse;font-size:11px">
+    let t=`<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed">
       <thead><tr style="background:var(--s3)">
-        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#8890aa;border:1px solid var(--border2);font-weight:600;white-space:nowrap">　</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#8890aa;border:1px solid var(--border2);font-weight:600;white-space:nowrap;width:110px;min-width:110px">　</th>
         ${colSteps.map((c,ci)=>`<th style="padding:8px 10px;text-align:center;font-size:10px;
           color:${ci===nCol?'var(--t1)':'#8890aa'};
           background:${ci===nCol?'rgba(59,127,255,.12)':'var(--s3)'};
@@ -2376,7 +2376,7 @@ function irrCalcRun(){
       const isNR=ri===nRow;
       t+=`<tr>
         <td style="padding:8px 12px;font-family:var(--mono);font-size:10.5px;font-weight:600;
-          white-space:nowrap;
+          white-space:nowrap;width:110px;min-width:110px;
           color:${isNR?'var(--t1)':'#8890aa'};
           background:${isNR?'rgba(59,127,255,.08)':'var(--s2)'};
           border:1px solid ${isNR?'rgba(59,127,255,.25)':'var(--border2)'}">
