@@ -1842,8 +1842,8 @@ function irrCalcRun(){
   const W = 1e8; // 1억 = 1e8원
 
   /* ── 필지별 대출/금리 분리 추출 ── */
-  const loanA_raw = sd._loanA    || (propA?.loan    || 0);   // 원 단위
-  const loanB_raw = sd._loanB    || (propB?.loan    || 0);   // 원 단위
+  const loanA_raw = sd._loanA    || (window._irrProps?.A?.loan    || 0);   // 원 단위
+  const loanB_raw = sd._loanB    || (window._irrProps?.B?.loan    || 0);   // 원 단위
   /* _loanA/B 미존재 시 sd._totalLoan 비중으로 분할 fallback */
   const loanA_ok  = (loanA_raw || (sd._isStructureB ? (window._irrProps?.A?.loan||0) : 0)) / W;
   const loanB_ok  = (loanB_raw || (sd._isStructureB ? (window._irrProps?.B?.loan||0) : 0)) / W;
@@ -1902,11 +1902,13 @@ function irrCalcRun(){
   /* ── 장기보유특별공제 가중치 — 시트 실제 매입가 비율 사용 (하드코딩 제거) ──
      buyA_ok, buyB_ok: 필지별 매입가 (억)
      w1 = buyA / (buyA+buyB), w2 = buyB / (buyA+buyB) */
-  const buyA_ok = (sd._loanA != null ? (propA?.buyP||0) : (sd._totalBuy||0)/2) / W;
-  const buyB_ok = (sd._loanB != null ? (propB?.buyP||0) : (sd._totalBuy||0)/2) / W;
   /* propA/propB는 renderIRR에서 window._irrProps로 노출 */
-  const _buyA = (window._irrProps?.A?.buyP || 0) / W  || buyA_ok;
-  const _buyB = (window._irrProps?.B?.buyP || 0) / W  || buyB_ok;
+  const _propA = window._irrProps?.A;
+  const _propB = window._irrProps?.B;
+  const buyA_ok = (sd._loanA != null ? (_propA?.buyP||0) : (sd._totalBuy||0)/2) / W;
+  const buyB_ok = (sd._loanB != null ? (_propB?.buyP||0) : (sd._totalBuy||0)/2) / W;
+  const _buyA = (_propA?.buyP || 0) / W  || buyA_ok;
+  const _buyB = (_propB?.buyP || 0) / W  || buyB_ok;
   const _totalBuyOk = (_buyA + _buyB) || buyOk;
   const _w1 = _buyA / _totalBuyOk;
   const _w2 = _buyB / _totalBuyOk;
