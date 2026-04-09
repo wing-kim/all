@@ -1300,6 +1300,11 @@ function renderIRR(rows){
     _isStructureB:true,
     _totalBuy, _totalLoan, _totalDep, _totalRent, _totalAreaNum, _totalLandVal,
     _loanRateA, _loanRateB,
+    /* 필지별 대출/토지가치 (이자 분리 계산용) */
+    _loanA : propA?.loan    ||0,
+    _loanB : propB?.loan    ||0,
+    _landValA: (propA?.landTot||0)||((propA?.landPr||0)*(_aNum(propA))),
+    _landValB: (propB?.landTot||0)||((propB?.landPr||0)*(_aNum(propB))),
     addrIdx:-1,areaIdx:-1,buyPriceIdx:-1,loanIdx:-1,
     depositIdx:-1,rentIdx:-1,landPrIdx:-1,landTotIdx:-1
   };
@@ -1823,11 +1828,27 @@ function irrCalcRun(){
   /* ── 단위 통일: 모든 금액을 억(億)으로 ──
      시트 데이터는 원(原) 단위, 억으로 변환 */
   const W = 1e8; // 1억 = 1e8원
-  const buyOk   = totalBuy   / W;   // 총 매입가 (억)
-  const loanOk  = totalLoan  / W;   // 총 대출 (억)
-  const depOk   = totalDep   / W;   // 기존 보증금 (억)
-  const rentOkM = totalRent  / W;   // 월 임대료 합계 (억/월)
-  const landOk  = totalLandVal/ W;  // 공시지가 (억)
+
+  /* ── 필지별 대출/금리 분리 추출 ── */
+  const loanA_raw = sd._loanA    || (propA?.loan    || 0);   // 원 단위
+  const loanB_raw = sd._loanB    || (propB?.loan    || 0);   // 원 단위
+  /* _loanA/B 미존재 시 sd._totalLoan 비중으로 분할 fallback */
+  const loanA_ok  = (loanA_raw || (sd._isStructureB ? (window._irrProps?.A?.loan||0) : 0)) / W;
+  const loanB_ok  = (loanB_raw || (sd._isStructureB ? (window._irrProps?.B?.loan||0) : 0)) / W;
+
+  const buyOk   = (sd._totalBuy    ||0) / W;
+  const loanOk  = (sd._totalLoan   ||0) / W;
+  const depOk   = (sd._totalDep    ||0) / W;
+  const rentOkM = (sd._totalRent   ||0) / W;
+  const landOk  = (sd._totalLandVal||0) / W;
+
+  /* ── 필지별 연 이자 합산 (핵심 수정: 평균금리 제거) ──
+     annualInterest = loanA * rateA + loanB * rateB */
+  const annualInterest = loanA_ok * S.rateA + loanB_ok * S.rateB;
+
+  /* loanA+loanB가 시트에 없으면 전체 대출에 단순 평균 fallback */
+  const _annualInterestFallback = loanOk * (S.rateA + S.rateB) / 2;
+  const annualInt = (loanA_ok + loanB_ok > 0) ? annualInterest : _annualInterestFallback;
 
   /* ── [핵심 계산 - 시뮬레이터 16 방식] ── */
   const constCostOk  = (S.constCost + S.designCost) / W; // 신축 총비용 (억)
@@ -1842,10 +1863,6 @@ function irrCalcRun(){
     return;
   }
 
-  /* 대출 이자 (억/년) */
-  const avgRate       = (S.rateA + S.rateB) / 2;
-  const annualInterest = loanOk * avgRate;
-
   /* 연 임대수익 (억/년) - 공실 전 */
   const annualRent = rentOkM * 12;
 
@@ -1854,9 +1871,17 @@ function irrCalcRun(){
   const constEquity    = constCostOk - constLoan;
   const constLoanInt   = constLoan * S.pfRate;   // 신축대출 연 이자 (억)
 
-  /* 보유세 자동계산 (시트 공시지가 기반, 억 단위) */
-  const holdTax    = calcPropTax(totalLandVal, totalBuy);  // 원→내부계산→억
-  /* 억 단위로 변환 */
+  /* ── 보유세 계산 (calcPropTax 함수로 정확 계산, 배수 추정 금지) ──
+     기존 보유세: 토지가치 + 기존건물가치(매입가 기준)
+     신축 후 보유세: 토지가치 + 신축건물가치(공사비 × 0.4) */
+  const landValRaw   = sd._totalLandVal || 0;                     // 원 단위
+  const bldgValRaw   = (sd._totalBuy    || 0) - landValRaw;       // 기존 건물가치 (원)
+  const newBldgRaw   = (S.constCost + S.designCost) * 0.4;        // 신축 건물 시가표준액 (원)
+
+  /* calcPropTax(landVal원, buildingVal원) */
+  const holdTax    = calcPropTax(landValRaw, bldgValRaw > 0 ? bldgValRaw : (sd._totalBuy||0));
+  const newHTax    = calcPropTax(landValRaw, newBldgRaw);
+
   const holdTaxOk = {
     totalTax : holdTax.totalTax  / W,
     bldgTax  : holdTax.bldgTax   / W,
@@ -1864,19 +1889,25 @@ function irrCalcRun(){
     urbanTax : holdTax.urbanTax  / W,
     eduTax   : holdTax.eduTax    / W,
   };
-  /* 신축 후 보유세 (공사비 기반 건물 시가표준액 반영) */
-  const newBldgStdOk = constCostOk * 0.4;
-  /* 신축 후 보유세는 간략히 holdTax * 1.2 로 추정 (건물 가치 증가 반영) */
   const newHoldTaxOk = {
-    totalTax: holdTaxOk.totalTax * 1.2,
-    bldgTax : holdTaxOk.bldgTax  * 1.2,
-    landTax : holdTaxOk.landTax,
-    urbanTax: holdTaxOk.urbanTax * 1.2,
-    eduTax  : holdTaxOk.eduTax   * 1.2,
+    totalTax : newHTax.totalTax  / W,
+    bldgTax  : newHTax.bldgTax   / W,
+    landTax  : newHTax.landTax   / W,
+    urbanTax : newHTax.urbanTax  / W,
+    eduTax   : newHTax.eduTax    / W,
   };
 
   /* 신축 후 연 임대수익 (억/년) */
   const newAnnualRent = newRentAok * 12;  // 억/월 × 12
+
+  /* ── 장기보유특별공제율 사전 계산 (민감도에서도 동일 사용) ── */
+  const _holdYrs529  = 2025 + S.totalYrs - 2021;
+  const _holdYrs5298 = 2025 + S.totalYrs - 2025;
+  const _lthd529     = lthdRateCalc(_holdYrs529);
+  const _lthd5298    = lthdRateCalc(_holdYrs5298);
+  const _w1 = sd._isStructureB && sd._buy529  ? (sd._buy529 /W)/buyOk : (291.0512/buyOk);
+  const _w2 = sd._isStructureB && sd._buy5298 ? (sd._buy5298/W)/buyOk : (151.15  /buyOk);
+  const lthdAvg = _lthd529*_w1 + _lthd5298*_w2;  // 민감도 함수에서도 참조
 
   /* ── 연도별 현금흐름 배열 구성 (억 단위) ── */
   const rows = [];
@@ -1890,7 +1921,7 @@ function irrCalcRun(){
       /* 임대 보유 기간 */
       row.phase   = '보유·임대';
       row.rental  = annualRent * Math.pow(1+S.rentUp, yr-1) * (1-S.vacancy);
-      row.interest= -annualInterest;
+      row.interest= -annualInt;
       row.htax    = -holdTaxOk.totalTax;
       row.net     = row.rental + row.interest + row.htax;
       row.asset   = buyOk * Math.pow(1+S.priceUp, yr);
@@ -1898,7 +1929,7 @@ function irrCalcRun(){
     } else if(yr <= S.holdYrs + constY){
       /* 철거·신축 기간 */
       row.phase    = '철거·신축';
-      row.interest = -annualInterest;
+      row.interest = -annualInt;
       row.constInt = -constLoanInt;
       row.htax     = -holdTaxOk.totalTax * 0.5;  // 공사 중 보유세 50% 감면
       row.ccost    = -(constEquity / constY);      // 신축 자기자본 분할 투입
@@ -1911,7 +1942,7 @@ function irrCalcRun(){
       row.phase    = '신축 운영';
       row.asset    = buyOk * S.valueMult * Math.pow(1+S.priceUp, yac);
       row.rental   = newAnnualRent * Math.pow(1+S.rentUp, yac-1) * (1-S.newVacancy);
-      row.interest = -annualInterest;
+      row.interest = -annualInt;
       row.constInt = -constLoanInt;
       row.htax     = -newHoldTaxOk.totalTax;
       row.net      = row.rental + row.interest + row.constInt + row.htax;
@@ -1928,15 +1959,7 @@ function irrCalcRun(){
       const sp   = row.asset;
       const gain = sp - buyOk - constCostOk - acqTax;  // 양도차익
 
-      /* 장기보유특별공제 — 매입연도 기반 가중평균 */
-      const holdYrs529  = 2025 + S.totalYrs - 2021;
-      const holdYrs5298 = 2025 + S.totalYrs - 2025;
-      const lthd529     = lthdRateCalc(holdYrs529);
-      const lthd5298    = lthdRateCalc(holdYrs5298);
-      /* 매입가 비중 가중평균 (시트 데이터에서 비중 계산) */
-      const w1 = sd._isStructureB && sd._buy529  ? (sd._buy529  /W)/buyOk : (291.0512/buyOk);
-      const w2 = sd._isStructureB && sd._buy5298 ? (sd._buy5298 /W)/buyOk : (151.15  /buyOk);
-      const lthdAvg  = lthd529*w1 + lthd5298*w2;
+      /* 장기보유특별공제 — 루프 외부에서 사전 계산된 lthdAvg 사용 */
       const lthdAmt  = Math.max(0, gain) * lthdAvg;
       const taxableGain   = Math.max(0, gain - lthdAmt);
       const taxableIncome = Math.max(0, taxableGain - 0.025); // 기본공제 250만
@@ -1953,10 +1976,10 @@ function irrCalcRun(){
       row.gain             = gain;
       row.lthdAmt          = lthdAmt;
       row.lthdAvg          = lthdAvg;
-      row.lthd529          = lthd529;
-      row.lthd5298         = lthd5298;
-      row.holdYrs529       = holdYrs529;
-      row.holdYrs5298      = holdYrs5298;
+      row.lthd529          = _lthd529;
+      row.lthd5298         = _lthd5298;
+      row.holdYrs529       = _holdYrs529;
+      row.holdYrs5298      = _holdYrs5298;
       row.taxableGain      = taxableGain;
       row.progressiveTaxOnly = cgt;
       row.cgt              = totalTaxAmt;
@@ -2176,7 +2199,7 @@ function irrCalcRun(){
     iRow('└ 기존 보증금', fBig(depOk)+'억', '')+
     iRow('매입 자기자본', fBig(equity)+'억', 'red')+
     iRow('LTV', (loanOk/buyOk*100).toFixed(1)+'%', loanOk/buyOk>0.7?'red':'green')+
-    iRow('연간 이자 비용', fBig(annualInterest)+'억/년', 'red')+
+    iRow('연간 이자 비용', fBig(annualInt)+'억/년', 'red')+
     iRow('연간 임대 수익', fBig(annualRent)+'억/년', 'green')+
     iRow('보유세 (재산세+도시분+교육세)', fBig(holdTaxOk.totalTax)+'억/년', 'red')+
     `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">` +
@@ -2283,30 +2306,38 @@ function irrCalcRun(){
     const cc2=(so.constCost+so.designCost)/W;
     const eq2=buyOk-loanOk-depOk+buyOk*so.acqTaxRate;
     if(eq2<=0)return null;
-    const avgR2=(so.rateA+so.rateB)/2;
-    const annI2=loanOk*avgR2;
+    /* 필지별 이자 합산 (메인 로직과 동일) */
+    const annI2=(loanA_ok+loanB_ok>0)
+      ? loanA_ok*so.rateA + loanB_ok*so.rateB
+      : loanOk*(so.rateA+so.rateB)/2;
     const pfL2=cc2*so.pfRatio;
     const pfI2=pfL2*so.pfRate;
+    /* 보유세: calcPropTax 동일 로직 */
+    const ht2  = calcPropTax(landValRaw, bldgValRaw>0?bldgValRaw:(sd._totalBuy||0));
+    const ht2ok= ht2.totalTax/W;
+    const nBldg2= (so.constCost+so.designCost)*0.4;
+    const nht2  = calcPropTax(landValRaw, nBldg2);
+    const nht2ok= nht2.totalTax/W;
     const cfs=[-eq2];
     for(let yr=1;yr<=so.totalYrs;yr++){
-      const arb2=(totalRent/W)*12;
+      const arb2=(sd._totalRent/W)*12;
       if(yr<=so.holdYrs){
-        cfs.push(arb2*Math.pow(1+so.rentUp,yr-1)*(1-so.vacancy)-annI2-holdTaxOk.totalTax);
+        cfs.push(arb2*Math.pow(1+so.rentUp,yr-1)*(1-so.vacancy)-annI2-ht2ok);
       }else if(yr<=so.holdYrs+constY){
-        cfs.push(-annI2-pfI2-holdTaxOk.totalTax*0.5-(cc2-pfL2)/constY);
+        cfs.push(-annI2-pfI2-ht2ok*0.5-(cc2-pfL2)/constY);
       }else{
         const yac=yr-so.holdYrs-constY;
         const nr2=newRentAok*12*Math.pow(1+so.rentUp,yac-1)*(1-so.newVacancy);
-        cfs.push(nr2-annI2-pfI2-newHoldTaxOk.totalTax);
+        cfs.push(nr2-annI2-pfI2-nht2ok);
       }
       if(yr===so.totalYrs){
         const sp2=buyOk*so.valueMult*Math.pow(1+so.priceUp,so.totalYrs);
         const g2=sp2-buyOk-cc2-buyOk*so.acqTaxRate;
-        const la2=Math.max(0,g2)*0.15;
+        const la2=Math.max(0,g2)*lthdAvg;  // 메인 계산의 lthdAvg 재사용
         const tg2=Math.max(0,g2-la2);
         const cgt2=progressiveTaxCalc(Math.max(0,tg2-0.025))*1.1;
         const ns2=sp2-loanOk-pfL2-cgt2+depOk;
-        cfs[cfs.length-1]+= ns2;
+        cfs[cfs.length-1]+=ns2;
       }
     }
     try{const r2=irrNR(cfs);return(!isNaN(r2)&&isFinite(r2))?r2:null;}catch(e){return null;}
