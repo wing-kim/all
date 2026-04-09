@@ -2182,7 +2182,8 @@ function irrCalcRun(){
     `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">` +
     iRow('신축 공사비', fBig(constCostOk)+'억', 'red')+
     iRow('├ PF 대출 ('+(S.pfRatio*100).toFixed(0)+'%)', fBig(constLoan)+'억', '')+
-    iRow('└ 신축 자기자본', fBig(constEquity)+'억', 'red')+
+    iRow('├ 신축 자기자본', fBig(constEquity)+'억', 'red')+
+    iRow('└ 연 이자 (PF)', fBig(constLoanInt)+'억/년', 'red')+
     iRow('🔴 총 자기자본', fBig(equity+constEquity)+'억', 'red')+
     `</div>`;
 
@@ -2197,6 +2198,7 @@ function irrCalcRun(){
       529 (${lastR.holdYrs529}년) ${((lastR.lthd529||0)*100).toFixed(0)}% &nbsp;/&nbsp;
       529-8 (${lastR.holdYrs5298}년) ${((lastR.lthd5298||0)*100).toFixed(0)}% &nbsp;·&nbsp; 가중평균 ${((lastR.lthdAvg||0)*100).toFixed(1)}%
     </div>`+
+    iRow('├ 과세표준', fBig(lastR.taxableGain||0)+'억', '')+
     iRow('├ 양도세 (누진+지방)', '-'+fBig(lastR.cgt||0)+'억', 'red')+
     iRow('├ 기존 대출 상환', '-'+fBig(loanOk)+'억', 'red')+
     iRow('├ PF 대출 상환', '-'+fBig(constLoan)+'억', 'red')+
