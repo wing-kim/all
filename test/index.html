@@ -702,6 +702,87 @@ td:first-child{color:var(--t1);font-weight:500}
   .page{padding:0 14px 60px}.kpi-row{grid-template-columns:1fr 1fr}
   .brand-name{font-size:22px}.irr-metrics{grid-template-columns:1fr}
 }
+
+/* ═══════════════════════════════════════════════════
+   시장 리포트 탭
+═══════════════════════════════════════════════════ */
+.rpt-toolbar{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.rpt-toolbar-l{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rpt-count{font-family:var(--mono);font-size:11px;color:var(--t3);
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:20px;padding:3px 12px}
+.rpt-search{background:var(--s2);border:1px solid var(--border2);
+  color:var(--t1);font-family:var(--sans);font-size:12px;
+  padding:7px 12px;border-radius:var(--r2);outline:none;width:200px;transition:border-color .15s}
+.rpt-search:focus{border-color:var(--blue)}
+.rpt-search::placeholder{color:var(--t4)}
+.rpt-btn{display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:var(--r2);border:1px solid var(--border2);
+  background:var(--s2);color:var(--t2);font-family:var(--sans);
+  font-size:12px;cursor:pointer;transition:all .15s}
+.rpt-btn:hover{background:var(--s3);color:var(--t1);border-color:var(--blue)}
+.rpt-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.rpt-empty{text-align:center;padding:80px 20px;color:var(--t3)}
+.rpt-empty-i{font-size:48px;margin-bottom:16px}
+.rpt-empty h3{font-size:15px;font-weight:500;color:var(--t2);margin-bottom:8px}
+.rpt-empty p{font-size:12px;line-height:1.7}
+.rpt-list{display:flex;flex-direction:column;gap:12px}
+.rpt-card{background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;transition:border-color .18s}
+.rpt-card:hover{border-color:var(--border2)}
+.rpt-card-head{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;cursor:pointer;user-select:none}
+.rpt-card-head:hover{background:rgba(59,127,255,.03)}
+.rpt-card-meta{display:flex;align-items:center;gap:10px}
+.rpt-date{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue)}
+.rpt-title{font-size:13px;font-weight:500;color:var(--t1)}
+.rpt-card-actions{display:flex;align-items:center;gap:8px}
+.rpt-toggle{font-size:11px;color:var(--t3);padding:3px 8px;
+  background:var(--s2);border:1px solid var(--border);border-radius:4px;
+  cursor:pointer;transition:all .15s;white-space:nowrap}
+.rpt-toggle:hover{color:var(--t1);border-color:var(--border2)}
+.rpt-del{font-size:11px;color:var(--t3);padding:3px 8px;
+  background:transparent;border:1px solid transparent;border-radius:4px;
+  cursor:pointer;transition:all .15s;white-space:nowrap}
+.rpt-del:hover{color:var(--red);border-color:rgba(240,56,96,.3)}
+.rpt-card-body{display:none;padding:0 18px 18px;border-top:1px solid var(--border)}
+.rpt-card-body.open{display:block}
+.rpt-content{padding-top:16px;font-size:13px;line-height:1.85;color:var(--t2);
+  white-space:pre-wrap;font-family:var(--sans)}
+.rpt-content strong{color:var(--t1)}
+.rpt-content a{color:var(--blue);text-decoration:none}
+.rpt-content a:hover{text-decoration:underline}
+/* 섹션 이모지 헤더 강조 */
+.rpt-content .rpt-section-head{
+  display:block;margin-top:18px;margin-bottom:4px;
+  font-weight:700;font-size:13px;color:var(--t1);
+  border-bottom:1px solid var(--border);padding-bottom:6px}
+.rpt-content .rpt-section-head:first-child{margin-top:0}
+.rpt-cape-horn{background:rgba(245,188,48,.04);
+  border:1px solid rgba(245,188,48,.15);border-radius:var(--r2);
+  padding:10px 14px;margin-top:12px;font-size:12px}
+.rpt-cape-horn-title{font-size:10px;color:var(--yellow);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
+
+/* 저장 플로팅 배너 */
+.rpt-save-banner{
+  position:fixed;bottom:28px;right:28px;z-index:9000;
+  display:none;align-items:center;gap:10px;
+  background:var(--s2);border:1px solid rgba(34,209,134,.3);
+  border-radius:var(--r);padding:12px 18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  font-size:13px;color:var(--t2)}
+.rpt-save-banner.show{display:flex}
+.rpt-save-banner strong{color:var(--green)}
+.rpt-save-btn{padding:7px 16px;border-radius:var(--r2);border:none;
+  background:var(--green);color:#000;font-family:var(--sans);
+  font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.rpt-save-btn:hover{opacity:.85}
+.rpt-save-dismiss{background:transparent;border:1px solid var(--border2);
+  color:var(--t3);padding:7px 12px;border-radius:var(--r2);
+  font-size:12px;cursor:pointer;font-family:var(--sans)}
+.rpt-save-dismiss:hover{color:var(--t2)}
 </style>
 </head>
 <body>
@@ -725,6 +806,7 @@ td:first-child{color:var(--t1);font-weight:500}
   <button class="tab"     onclick="go('lease',this)">   <span class="pip" style="background:#f5bc30"></span>임대차계약현황</button>
   <button class="tab"     onclick="go('personal',this)"><span class="pip" style="background:#9060f0"></span>개인비용</button>
   <button class="tab"     onclick="go('corp',this)">    <span class="pip" style="background:#f03860"></span>법인비용</button>
+  <button class="tab"     onclick="go('report',this)"> <span class="pip" style="background:#22d1c8"></span>시장 리포트</button>
 </div>
 
 <div id="sec-timeline" class="sec on"></div>
@@ -732,6 +814,7 @@ td:first-child{color:var(--t1);font-weight:500}
 <div id="sec-lease"    class="sec"></div>
 <div id="sec-personal" class="sec"></div>
 <div id="sec-corp"     class="sec"></div>
+<div id="sec-report"   class="sec"></div>
 
 </div>
 
@@ -2363,9 +2446,9 @@ function irrCalcRun(){
     const curRow=S[rowKey], curCol=S[colKey];
     const nRow=rowSteps.reduce((bi,v,i)=>Math.abs(v-curRow)<Math.abs(rowSteps[bi]-curRow)?i:bi,0);
     const nCol=colSteps.reduce((bi,v,i)=>Math.abs(v-curCol)<Math.abs(colSteps[bi]-curCol)?i:bi,0);
-    let t=`<table style="width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed">
+    let t=`<table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead><tr style="background:var(--s3)">
-        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#8890aa;border:1px solid var(--border2);font-weight:600;white-space:nowrap;width:110px;min-width:110px">　</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#8890aa;border:1px solid var(--border2);font-weight:600;white-space:nowrap">　</th>
         ${colSteps.map((c,ci)=>`<th style="padding:8px 10px;text-align:center;font-size:10px;
           color:${ci===nCol?'var(--t1)':'#8890aa'};
           background:${ci===nCol?'rgba(59,127,255,.12)':'var(--s3)'};
@@ -2376,7 +2459,7 @@ function irrCalcRun(){
       const isNR=ri===nRow;
       t+=`<tr>
         <td style="padding:8px 12px;font-family:var(--mono);font-size:10.5px;font-weight:600;
-          white-space:nowrap;width:110px;min-width:110px;
+          white-space:nowrap;
           color:${isNR?'var(--t1)':'#8890aa'};
           background:${isNR?'rgba(59,127,255,.08)':'var(--s2)'};
           border:1px solid ${isNR?'rgba(59,127,255,.25)':'var(--border2)'}">
@@ -4549,6 +4632,216 @@ LOADED.add('timeline');
 load('timeline');
 /* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
 setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
+
+/* ══════════════════════════════════════════════════════════
+   시장 리포트 탭 — localStorage 기반 브리핑 이력 관리
+══════════════════════════════════════════════════════════ */
+const RPT_KEY = 'bluepika_reports_v1';
+
+/* 저장소 읽기 */
+function rptLoad() {
+  try { return JSON.parse(localStorage.getItem(RPT_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+/* 저장소 쓰기 */
+function rptSave(list) {
+  localStorage.setItem(RPT_KEY, JSON.stringify(list));
+}
+
+/* 브리핑 텍스트를 HTML로 변환 (이모지 섹션 헤더 강조) */
+function rptToHTML(text) {
+  const lines = text.split('\n');
+  let html = '';
+  const sectionRx = /^(⚖️|🏗️|📍|🏢|⭐|🛍️|🔑|🔺|💡)/;
+  for (const line of lines) {
+    if (sectionRx.test(line.trim())) {
+      html += `<span class="rpt-section-head">${escH(line)}</span>`;
+    } else {
+      // URL 링크화
+      const linked = escH(line).replace(
+        /https?:\/\/[^\s<>"]+/g,
+        u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`
+      );
+      html += linked + '\n';
+    }
+  }
+  return html;
+}
+
+function escH(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* 리포트 탭 렌더 */
+function renderReport() {
+  const sec = document.getElementById('sec-report');
+  const list = rptLoad();
+  let searchVal = '';
+
+  function getFiltered() {
+    if (!searchVal.trim()) return list;
+    const q = searchVal.trim().toLowerCase();
+    return list.filter(r =>
+      r.date.includes(q) || r.title.toLowerCase().includes(q) || r.content.toLowerCase().includes(q)
+    );
+  }
+
+  function render() {
+    const filtered = getFiltered();
+    const countEl = sec.querySelector('#rptCount');
+    if (countEl) countEl.textContent = `총 ${list.length}건 · 표시 ${filtered.length}건`;
+
+    const listEl = sec.querySelector('#rptList');
+    if (!listEl) return;
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="rpt-empty">
+          <div class="rpt-empty-i">📋</div>
+          <h3>${list.length === 0 ? '저장된 브리핑이 없습니다' : '검색 결과가 없습니다'}</h3>
+          <p>${list.length === 0
+            ? 'Claude에서 "오늘 브리핑" 요청 후<br>화면 우하단 저장 버튼을 클릭하면<br>여기에 이력이 누적됩니다.'
+            : '다른 키워드로 검색해보세요.'}</p>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map((r, i) => {
+      const realIdx = list.indexOf(r);
+      return `
+      <div class="rpt-card" id="rpt-card-${realIdx}">
+        <div class="rpt-card-head" onclick="rptToggle(${realIdx})">
+          <div class="rpt-card-meta">
+            <span class="rpt-date">${r.date}</span>
+            <span class="rpt-title">${escH(r.title)}</span>
+          </div>
+          <div class="rpt-card-actions">
+            <span class="rpt-toggle" id="rpt-tog-${realIdx}">펼치기 ▾</span>
+            <span class="rpt-del" onclick="event.stopPropagation();rptDelete(${realIdx})">🗑</span>
+          </div>
+        </div>
+        <div class="rpt-card-body" id="rpt-body-${realIdx}">
+          <div class="rpt-content">${rptToHTML(r.content)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  sec.innerHTML = `
+    <div class="notice">📋 시장 리포트 이력 · 브리핑 저장 시 자동 누적 · localStorage 저장</div>
+    <div class="rpt-toolbar">
+      <div class="rpt-toolbar-l">
+        <span class="rpt-count" id="rptCount">총 0건</span>
+        <input class="rpt-search" id="rptSearch" type="text" placeholder="날짜·키워드 검색…"
+          oninput="rptSearchInput(this.value)">
+      </div>
+      <div class="rpt-toolbar-l">
+        <button class="rpt-btn" onclick="rptExport()">⬇ 전체 내보내기</button>
+        <button class="rpt-btn danger" onclick="rptClearAll()">전체 삭제</button>
+      </div>
+    </div>
+    <div id="rptList" class="rpt-list"></div>`;
+
+  render();
+
+  /* 검색 입력 핸들러 등록 */
+  window.rptSearchInput = function(val) {
+    searchVal = val;
+    render();
+  };
+}
+
+/* 카드 열기/닫기 */
+window.rptToggle = function(idx) {
+  const body = document.getElementById(`rpt-body-${idx}`);
+  const tog  = document.getElementById(`rpt-tog-${idx}`);
+  if (!body) return;
+  const isOpen = body.classList.toggle('open');
+  tog.textContent = isOpen ? '접기 ▴' : '펼치기 ▾';
+};
+
+/* 개별 삭제 */
+window.rptDelete = function(idx) {
+  if (!confirm('이 브리핑을 삭제할까요?')) return;
+  const list = rptLoad();
+  list.splice(idx, 1);
+  rptSave(list);
+  renderReport();
+};
+
+/* 전체 삭제 */
+window.rptClearAll = function() {
+  if (!confirm(`저장된 브리핑 ${rptLoad().length}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  rptSave([]);
+  renderReport();
+};
+
+/* JSON 내보내기 */
+window.rptExport = function() {
+  const list = rptLoad();
+  if (!list.length) { alert('저장된 브리핑이 없습니다.'); return; }
+  const blob = new Blob([JSON.stringify(list, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bluepika_reports_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+};
+
+/* ── 브리핑 저장 배너 (외부에서 호출) ─────────────────── */
+/* 사용법: rptShowSaveBanner('📅 블루피카 부동산 종합 리포트 2026-05-20', '전체 브리핑 텍스트...') */
+window.rptShowSaveBanner = function(title, content) {
+  let banner = document.getElementById('rptSaveBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'rptSaveBanner';
+    banner.className = 'rpt-save-banner';
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML = `
+    <span>📰 <strong>새 브리핑</strong>을 리포트 탭에 저장할까요?</span>
+    <button class="rpt-save-btn" onclick="rptDoSave()">저장하기</button>
+    <button class="rpt-save-dismiss" onclick="rptDismissBanner()">닫기</button>`;
+  banner.classList.add('show');
+  banner._pending = { title, content };
+};
+
+window.rptDoSave = function() {
+  const banner = document.getElementById('rptSaveBanner');
+  if (!banner || !banner._pending) return;
+  const { title, content } = banner._pending;
+  const list = rptLoad();
+  const now = new Date();
+  const date = now.toLocaleDateString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit'})
+    .replace(/\. /g,'-').replace('.','');
+  list.unshift({ id: Date.now(), date, title, content, savedAt: now.toISOString() });
+  rptSave(list);
+  banner.classList.remove('show');
+  banner._pending = null;
+  /* 리포트 탭이 열려있으면 즉시 갱신 */
+  if (CUR === 'report') renderReport();
+  alert('✅ 브리핑이 시장 리포트 탭에 저장되었습니다!');
+};
+
+window.rptDismissBanner = function() {
+  const banner = document.getElementById('rptSaveBanner');
+  if (banner) { banner.classList.remove('show'); banner._pending = null; }
+};
+
+/* ── go() 함수 확장 — report 탭 처리 추가 ─────────────── */
+const _goOrig = go;
+window.go = function(k, btn) {
+  if (k === 'report') {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+    document.getElementById('sec-report').classList.add('on');
+    CUR = 'report';
+    renderReport();
+    return;
+  }
+  _goOrig(k, btn);
+};
 </script>
 </body>
 </html>
