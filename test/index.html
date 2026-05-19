@@ -765,24 +765,42 @@ td:first-child{color:var(--t1);font-weight:500}
 .rpt-cape-horn-title{font-size:10px;color:var(--yellow);
   text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700}
 
-/* 저장 플로팅 배너 */
-.rpt-save-banner{
-  position:fixed;bottom:28px;right:28px;z-index:9000;
-  display:none;align-items:center;gap:10px;
-  background:var(--s2);border:1px solid rgba(34,209,134,.3);
-  border-radius:var(--r);padding:12px 18px;
-  box-shadow:0 8px 32px rgba(0,0,0,.5);
-  font-size:13px;color:var(--t2)}
-.rpt-save-banner.show{display:flex}
-.rpt-save-banner strong{color:var(--green)}
-.rpt-save-btn{padding:7px 16px;border-radius:var(--r2);border:none;
-  background:var(--green);color:#000;font-family:var(--sans);
-  font-size:12px;font-weight:700;cursor:pointer;transition:opacity .15s}
-.rpt-save-btn:hover{opacity:.85}
-.rpt-save-dismiss{background:transparent;border:1px solid var(--border2);
-  color:var(--t3);padding:7px 12px;border-radius:var(--r2);
-  font-size:12px;cursor:pointer;font-family:var(--sans)}
-.rpt-save-dismiss:hover{color:var(--t2)}
+/* 저장 버튼 (강조) */
+.rpt-btn-add{display:inline-flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:var(--r2);border:none;
+  background:var(--blue);color:#fff;font-family:var(--sans);
+  font-size:12px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.rpt-btn-add:hover{opacity:.85}
+
+/* 입력 모달 */
+.rpt-modal{display:none;position:fixed;inset:0;z-index:9000;
+  background:rgba(0,0,0,.65);align-items:center;justify-content:center;padding:20px}
+.rpt-modal.show{display:flex}
+.rpt-modal-box{background:var(--s2);border:1px solid var(--border2);
+  border-radius:var(--r);width:100%;max-width:620px;
+  box-shadow:0 16px 64px rgba(0,0,0,.6);overflow:hidden}
+.rpt-modal-head{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--border)}
+.rpt-modal-title{font-size:14px;font-weight:600;color:var(--t1)}
+.rpt-modal-close{background:transparent;border:none;color:var(--t3);
+  font-size:16px;cursor:pointer;padding:4px 8px;border-radius:4px;transition:color .15s}
+.rpt-modal-close:hover{color:var(--t1)}
+.rpt-modal-body{padding:20px;display:flex;flex-direction:column;gap:6px}
+.rpt-modal-foot{display:flex;align-items:center;justify-content:flex-end;
+  gap:8px;padding:14px 20px;border-top:1px solid var(--border)}
+.rpt-label{font-size:11px;color:var(--t3);font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px}
+.rpt-input{background:var(--s3);border:1px solid var(--border2);
+  color:var(--t1);font-family:var(--sans);font-size:13px;
+  padding:9px 12px;border-radius:var(--r2);outline:none;
+  transition:border-color .15s;width:180px}
+.rpt-input:focus{border-color:var(--blue)}
+.rpt-textarea{background:var(--s3);border:1px solid var(--border2);
+  color:var(--t2);font-family:var(--sans);font-size:12px;line-height:1.7;
+  padding:12px;border-radius:var(--r2);outline:none;resize:vertical;
+  min-height:320px;transition:border-color .15s;width:100%}
+.rpt-textarea:focus{border-color:var(--blue);color:var(--t1)}
+.rpt-textarea::placeholder{color:var(--t4)}
 </style>
 </head>
 <body>
@@ -4635,30 +4653,28 @@ setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
 
 /* ══════════════════════════════════════════════════════════
    시장 리포트 탭 — localStorage 기반 브리핑 이력 관리
+   (모달 직접 입력 방식 — 콘솔/F12 불필요, 모바일 지원)
 ══════════════════════════════════════════════════════════ */
 const RPT_KEY = 'bluepika_reports_v1';
 
-/* 저장소 읽기 */
 function rptLoad() {
   try { return JSON.parse(localStorage.getItem(RPT_KEY) || '[]'); }
   catch(e) { return []; }
 }
-
-/* 저장소 쓰기 */
 function rptSave(list) {
   localStorage.setItem(RPT_KEY, JSON.stringify(list));
 }
-
-/* 브리핑 텍스트를 HTML로 변환 (이모지 섹션 헤더 강조) */
+function escH(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 function rptToHTML(text) {
   const lines = text.split('\n');
   let html = '';
-  const sectionRx = /^(⚖️|🏗️|📍|🏢|⭐|🛍️|🔑|🔺|💡)/;
+  const sectionRx = /^(⚖️|🏗️|📍|🏢|⭐|🛍️|🔑|🔺|💡)/u;
   for (const line of lines) {
     if (sectionRx.test(line.trim())) {
       html += `<span class="rpt-section-head">${escH(line)}</span>`;
     } else {
-      // URL 링크화
       const linked = escH(line).replace(
         /https?:\/\/[^\s<>"]+/g,
         u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`
@@ -4669,90 +4685,49 @@ function rptToHTML(text) {
   return html;
 }
 
-function escH(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+/* ── 모달 열기 ───────────────────────────────────────────── */
+window.rptOpenModal = function() {
+  document.getElementById('rptModal').classList.add('show');
+  /* 날짜 기본값: 오늘 */
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('rptInputDate').value = today;
+  document.getElementById('rptInputText').value = '';
+  document.getElementById('rptInputText').focus();
+};
+window.rptCloseModal = function() {
+  document.getElementById('rptModal').classList.remove('show');
+};
 
-/* 리포트 탭 렌더 */
-function renderReport() {
-  const sec = document.getElementById('sec-report');
+/* 모달 배경 클릭 시 닫기 */
+window.rptModalBgClick = function(e) {
+  if (e.target === document.getElementById('rptModal')) rptCloseModal();
+};
+
+/* ── 저장 처리 ───────────────────────────────────────────── */
+window.rptDoSave = function() {
+  const dateVal   = document.getElementById('rptInputDate').value.trim();
+  const contentVal= document.getElementById('rptInputText').value.trim();
+  if (!dateVal)    { alert('날짜를 입력해주세요.'); return; }
+  if (!contentVal) { alert('브리핑 내용을 붙여넣어 주세요.'); return; }
+
   const list = rptLoad();
-  let searchVal = '';
+  /* 첫 줄을 제목으로 사용, 없으면 날짜로 대체 */
+  const firstLine = contentVal.split('\n').find(l => l.trim()) || dateVal;
+  const title = firstLine.trim().slice(0, 60);
 
-  function getFiltered() {
-    if (!searchVal.trim()) return list;
-    const q = searchVal.trim().toLowerCase();
-    return list.filter(r =>
-      r.date.includes(q) || r.title.toLowerCase().includes(q) || r.content.toLowerCase().includes(q)
-    );
-  }
+  list.unshift({
+    id: Date.now(),
+    date: dateVal,
+    title,
+    content: contentVal,
+    savedAt: new Date().toISOString()
+  });
+  rptSave(list);
+  rptCloseModal();
+  renderReport();
+};
 
-  function render() {
-    const filtered = getFiltered();
-    const countEl = sec.querySelector('#rptCount');
-    if (countEl) countEl.textContent = `총 ${list.length}건 · 표시 ${filtered.length}건`;
-
-    const listEl = sec.querySelector('#rptList');
-    if (!listEl) return;
-
-    if (filtered.length === 0) {
-      listEl.innerHTML = `
-        <div class="rpt-empty">
-          <div class="rpt-empty-i">📋</div>
-          <h3>${list.length === 0 ? '저장된 브리핑이 없습니다' : '검색 결과가 없습니다'}</h3>
-          <p>${list.length === 0
-            ? 'Claude에서 "오늘 브리핑" 요청 후<br>화면 우하단 저장 버튼을 클릭하면<br>여기에 이력이 누적됩니다.'
-            : '다른 키워드로 검색해보세요.'}</p>
-        </div>`;
-      return;
-    }
-
-    listEl.innerHTML = filtered.map((r, i) => {
-      const realIdx = list.indexOf(r);
-      return `
-      <div class="rpt-card" id="rpt-card-${realIdx}">
-        <div class="rpt-card-head" onclick="rptToggle(${realIdx})">
-          <div class="rpt-card-meta">
-            <span class="rpt-date">${r.date}</span>
-            <span class="rpt-title">${escH(r.title)}</span>
-          </div>
-          <div class="rpt-card-actions">
-            <span class="rpt-toggle" id="rpt-tog-${realIdx}">펼치기 ▾</span>
-            <span class="rpt-del" onclick="event.stopPropagation();rptDelete(${realIdx})">🗑</span>
-          </div>
-        </div>
-        <div class="rpt-card-body" id="rpt-body-${realIdx}">
-          <div class="rpt-content">${rptToHTML(r.content)}</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  sec.innerHTML = `
-    <div class="notice">📋 시장 리포트 이력 · 브리핑 저장 시 자동 누적 · localStorage 저장</div>
-    <div class="rpt-toolbar">
-      <div class="rpt-toolbar-l">
-        <span class="rpt-count" id="rptCount">총 0건</span>
-        <input class="rpt-search" id="rptSearch" type="text" placeholder="날짜·키워드 검색…"
-          oninput="rptSearchInput(this.value)">
-      </div>
-      <div class="rpt-toolbar-l">
-        <button class="rpt-btn" onclick="rptExport()">⬇ 전체 내보내기</button>
-        <button class="rpt-btn danger" onclick="rptClearAll()">전체 삭제</button>
-      </div>
-    </div>
-    <div id="rptList" class="rpt-list"></div>`;
-
-  render();
-
-  /* 검색 입력 핸들러 등록 */
-  window.rptSearchInput = function(val) {
-    searchVal = val;
-    render();
-  };
-}
-
-/* 카드 열기/닫기 */
+/* ── 카드 열기/닫기 ──────────────────────────────────────── */
 window.rptToggle = function(idx) {
   const body = document.getElementById(`rpt-body-${idx}`);
   const tog  = document.getElementById(`rpt-tog-${idx}`);
@@ -4761,7 +4736,7 @@ window.rptToggle = function(idx) {
   tog.textContent = isOpen ? '접기 ▴' : '펼치기 ▾';
 };
 
-/* 개별 삭제 */
+/* ── 개별 삭제 ───────────────────────────────────────────── */
 window.rptDelete = function(idx) {
   if (!confirm('이 브리핑을 삭제할까요?')) return;
   const list = rptLoad();
@@ -4770,14 +4745,16 @@ window.rptDelete = function(idx) {
   renderReport();
 };
 
-/* 전체 삭제 */
+/* ── 전체 삭제 ───────────────────────────────────────────── */
 window.rptClearAll = function() {
-  if (!confirm(`저장된 브리핑 ${rptLoad().length}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
+  const list = rptLoad();
+  if (!list.length) { alert('삭제할 브리핑이 없습니다.'); return; }
+  if (!confirm(`저장된 브리핑 ${list.length}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없습니다.`)) return;
   rptSave([]);
   renderReport();
 };
 
-/* JSON 내보내기 */
+/* ── JSON 내보내기 ───────────────────────────────────────── */
 window.rptExport = function() {
   const list = rptLoad();
   if (!list.length) { alert('저장된 브리핑이 없습니다.'); return; }
@@ -4788,47 +4765,109 @@ window.rptExport = function() {
   a.click();
 };
 
-/* ── 브리핑 저장 배너 (외부에서 호출) ─────────────────── */
-/* 사용법: rptShowSaveBanner('📅 블루피카 부동산 종합 리포트 2026-05-20', '전체 브리핑 텍스트...') */
-window.rptShowSaveBanner = function(title, content) {
-  let banner = document.getElementById('rptSaveBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'rptSaveBanner';
-    banner.className = 'rpt-save-banner';
-    document.body.appendChild(banner);
+/* ── 검색 ────────────────────────────────────────────────── */
+window.rptSearchInput = function(val) {
+  window._rptSearch = val;
+  rptRenderList();
+};
+
+/* ── 리스트 렌더 (검색 포함) ─────────────────────────────── */
+function rptRenderList() {
+  const list     = rptLoad();
+  const q        = (window._rptSearch || '').trim().toLowerCase();
+  const filtered = q
+    ? list.filter(r => r.date.includes(q) || r.title.toLowerCase().includes(q) || r.content.toLowerCase().includes(q))
+    : list;
+
+  const countEl = document.getElementById('rptCount');
+  if (countEl) countEl.textContent = `총 ${list.length}건 · 표시 ${filtered.length}건`;
+
+  const listEl = document.getElementById('rptList');
+  if (!listEl) return;
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `
+      <div class="rpt-empty">
+        <div class="rpt-empty-i">📋</div>
+        <h3>${list.length === 0 ? '저장된 브리핑이 없습니다' : '검색 결과가 없습니다'}</h3>
+        <p>${list.length === 0
+          ? '우상단 <strong>+ 새 브리핑</strong> 버튼을 눌러<br>Claude 브리핑을 붙여넣으세요.'
+          : '다른 키워드로 검색해보세요.'}</p>
+      </div>`;
+    return;
   }
-  banner.innerHTML = `
-    <span>📰 <strong>새 브리핑</strong>을 리포트 탭에 저장할까요?</span>
-    <button class="rpt-save-btn" onclick="rptDoSave()">저장하기</button>
-    <button class="rpt-save-dismiss" onclick="rptDismissBanner()">닫기</button>`;
-  banner.classList.add('show');
-  banner._pending = { title, content };
-};
 
-window.rptDoSave = function() {
-  const banner = document.getElementById('rptSaveBanner');
-  if (!banner || !banner._pending) return;
-  const { title, content } = banner._pending;
-  const list = rptLoad();
-  const now = new Date();
-  const date = now.toLocaleDateString('ko-KR', {year:'numeric',month:'2-digit',day:'2-digit'})
-    .replace(/\. /g,'-').replace('.','');
-  list.unshift({ id: Date.now(), date, title, content, savedAt: now.toISOString() });
-  rptSave(list);
-  banner.classList.remove('show');
-  banner._pending = null;
-  /* 리포트 탭이 열려있으면 즉시 갱신 */
-  if (CUR === 'report') renderReport();
-  alert('✅ 브리핑이 시장 리포트 탭에 저장되었습니다!');
-};
+  listEl.innerHTML = filtered.map(r => {
+    const realIdx = list.indexOf(r);
+    return `
+    <div class="rpt-card" id="rpt-card-${realIdx}">
+      <div class="rpt-card-head" onclick="rptToggle(${realIdx})">
+        <div class="rpt-card-meta">
+          <span class="rpt-date">${escH(r.date)}</span>
+          <span class="rpt-title">${escH(r.title)}</span>
+        </div>
+        <div class="rpt-card-actions">
+          <span class="rpt-toggle" id="rpt-tog-${realIdx}">펼치기 ▾</span>
+          <span class="rpt-del" onclick="event.stopPropagation();rptDelete(${realIdx})">🗑</span>
+        </div>
+      </div>
+      <div class="rpt-card-body" id="rpt-body-${realIdx}">
+        <div class="rpt-content">${rptToHTML(r.content)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-window.rptDismissBanner = function() {
-  const banner = document.getElementById('rptSaveBanner');
-  if (banner) { banner.classList.remove('show'); banner._pending = null; }
-};
+/* ── 탭 전체 렌더 ────────────────────────────────────────── */
+function renderReport() {
+  window._rptSearch = '';
+  const sec = document.getElementById('sec-report');
 
-/* ── go() 함수 확장 — report 탭 처리 추가 ─────────────── */
+  sec.innerHTML = `
+    <div class="notice">📋 시장 리포트 이력 · 브리핑을 직접 붙여넣어 저장 · 모바일 지원</div>
+
+    <div class="rpt-toolbar">
+      <div class="rpt-toolbar-l">
+        <span class="rpt-count" id="rptCount">불러오는 중…</span>
+        <input class="rpt-search" type="text" placeholder="날짜·키워드 검색…"
+          oninput="rptSearchInput(this.value)">
+      </div>
+      <div class="rpt-toolbar-l">
+        <button class="rpt-btn" onclick="rptExport()">⬇ 내보내기</button>
+        <button class="rpt-btn danger" onclick="rptClearAll()">전체 삭제</button>
+        <button class="rpt-btn-add" onclick="rptOpenModal()">＋ 새 브리핑</button>
+      </div>
+    </div>
+
+    <div id="rptList" class="rpt-list"></div>
+
+    <!-- 입력 모달 -->
+    <div id="rptModal" class="rpt-modal" onclick="rptModalBgClick(event)">
+      <div class="rpt-modal-box">
+        <div class="rpt-modal-head">
+          <span class="rpt-modal-title">📰 새 브리핑 저장</span>
+          <button class="rpt-modal-close" onclick="rptCloseModal()">✕</button>
+        </div>
+        <div class="rpt-modal-body">
+          <label class="rpt-label">날짜</label>
+          <input id="rptInputDate" class="rpt-input" type="date">
+          <label class="rpt-label" style="margin-top:14px">브리핑 내용
+            <span style="font-weight:400;color:var(--t4)">— Claude 브리핑 전체 복사 후 붙여넣기</span>
+          </label>
+          <textarea id="rptInputText" class="rpt-textarea"
+            placeholder="여기에 브리핑 내용을 붙여넣으세요…"></textarea>
+        </div>
+        <div class="rpt-modal-foot">
+          <button class="rpt-btn" onclick="rptCloseModal()">취소</button>
+          <button class="rpt-btn-add" onclick="rptDoSave()">저장하기</button>
+        </div>
+      </div>
+    </div>`;
+
+  rptRenderList();
+}
+
+/* ── go() 확장 — report 탭 처리 추가 ────────────────────── */
 const _goOrig = go;
 window.go = function(k, btn) {
   if (k === 'report') {
