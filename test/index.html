@@ -4499,13 +4499,18 @@ function stamp(){document.getElementById('syncTime').textContent=new Date().toLo
 async function load(k){
   showLoader(`sec-${k}`);
   try{
-    const rows=await fetchSheet(k);  /* ← 매번 구글 시트에서 새로 fetch */
-    CACHE[k]=rows;
-    if(k==='timeline')renderTimeline(rows);
-    else if(k==='irr')renderIRR(rows);
-    else if(k==='lease')renderLease(rows);
-    else if(k==='market')renderMarket(rows);
-    else renderCost(k,rows);
+    if(k==='market'){
+      const reports=await fetchMarketReports();
+      CACHE[k]=reports;
+      renderMarket(reports);
+    } else {
+      const rows=await fetchSheet(k);  /* ← 매번 구글 시트에서 새로 fetch */
+      CACHE[k]=rows;
+      if(k==='timeline')renderTimeline(rows);
+      else if(k==='irr')renderIRR(rows);
+      else if(k==='lease')renderLease(rows);
+      else renderCost(k,rows);
+    }
     stamp();
   }catch(e){document.getElementById(`sec-${k}`).innerHTML=errHTML(e.message);}
 }
@@ -4561,36 +4566,55 @@ async function goHome(){
   await reloadAll();
 }
 
-/* ══ MARKET REPORT ════════════════════════════════════════ */
-const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbyd7YlChpvkGwaWTuwwL5Rbl3gxFcNR4W93Zi0wsBQddySFn_VqxB_no747MXTFofln2A/exec';
+/* ══ MARKET REPORT — Google Drive 폴더 연동 ══════════════ */
+const DRIVE_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3JustB0mGiGcovXDsM_1wxJyx8uaUHv_3ckN-b_NC1Hr0m2nIAim_6DELxAkQZo3r/exec';
 
-function renderMarket(rows){
+async function fetchMarketReports(){
+  const res=await fetch(DRIVE_SCRIPT_URL,{redirect:'follow',credentials:'omit'});
+  if(!res.ok) throw new Error(`HTTP ${res.status} — Apps Script 응답 오류`);
+  const txt=await res.text();
+  let json;
+  try{ json=JSON.parse(txt); }
+  catch(e){ throw new Error('응답 파싱 실패 — Apps Script 배포 상태를 확인하세요'); }
+  if(!json.ok) throw new Error(json.error||'Apps Script 오류');
+  return json.reports||[];
+}
+
+function renderMarket(reports){
   const sec=document.getElementById('sec-market');
-  /* 헤더행 제거 — A열:날짜, B열:제목, C열:본문 */
-  const data=rows.slice(1).filter(r=>r.some(c=>c)).reverse(); /* 최신순 */
-  if(!data.length){
-    sec.innerHTML=`<div class="notice">📭 저장된 브리핑이 없습니다.<br>브리핑 생성 후 "구글시트에 저장" 버튼을 누르면 여기에 이력이 쌓입니다.</div>`;
+  if(!reports.length){
+    sec.innerHTML=`<div class="notice">📭 저장된 브리핑이 없습니다. Claude에게 "오늘 브리핑 해줘"라고 입력하면 자동으로 저장됩니다.</div>`;
     return;
   }
-  /* 목록 렌더 */
+
+  /* 날짜 최신순 정렬 */
+  const data=[...reports].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  window._mrData=data;
+
   const listHTML=data.map((r,i)=>{
-    const date=r[0]||'', title=r[1]||'', body=r[2]||'';
-    return `<div class="mr-item" onclick="mrShow(${i},window._mrData)" id="mri-${i}">
-      <div class="mr-date">${date}</div>
-      <div class="mr-title">${title}</div>
-      <div class="mr-preview">${body.substring(0,80).replace(/\n/g,' ')}…</div>
+    const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
+    const preview=(r.body||'').substring(0,80).replace(/\n/g,' ');
+    return `<div class="mr-item" onclick="mrShow(${i})" id="mri-${i}">
+      <div class="mr-date">${dateStr}</div>
+      <div class="mr-title">${r.title||'제목 없음'}</div>
+      <div class="mr-preview">${preview}…</div>
     </div>`;
   }).join('');
 
   sec.innerHTML=`
-    <div class="notice">📡 구글 시트 실시간 연동 · 시장 리포트 이력</div>
+    <div class="notice">📡 Google Drive 폴더 실시간 연동 · 시장 리포트 이력 <span class="chip">${data.length}건</span></div>
     <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
       <div class="card" style="overflow:hidden">
-        <div class="card-head"><span class="card-title">📋 브리핑 목록 <span class="chip">${data.length}건</span></span></div>
+        <div class="card-head"><span class="card-title">📋 브리핑 목록</span></div>
         <div id="mr-list" style="max-height:70vh;overflow-y:auto">${listHTML}</div>
       </div>
       <div class="card" id="mr-detail" style="min-height:400px">
-        <div class="card-head"><span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span></div>
+        <div class="card-head">
+          <span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span>
+          <a id="mr-drive-link" href="#" target="_blank" style="display:none;font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto">
+            📄 Drive에서 열기
+          </a>
+        </div>
         <div id="mr-detail-body" style="padding:20px 24px;font-size:13px;line-height:2;color:var(--t2);white-space:pre-wrap;max-height:70vh;overflow-y:auto">
           왼쪽 목록에서 날짜를 클릭하면 전체 내용이 표시됩니다.
         </div>
@@ -4598,18 +4622,25 @@ function renderMarket(rows){
     </div>`;
 
   /* 첫 번째 자동 선택 */
-  if(data.length>0) mrShow(0, data);
-  window._mrData=data;
+  mrShow(0);
 }
 
-function mrShow(i, data){
-  const d=data||window._mrData;
-  const r=d[i];
+function mrShow(i){
+  const data=window._mrData;
+  if(!data||!data[i]) return;
+  const r=data[i];
   document.querySelectorAll('.mr-item').forEach((el,idx)=>{
     el.classList.toggle('mr-item-on', idx===i);
   });
-  document.getElementById('mr-detail-title').textContent=`${r[0]} · ${r[1]}`;
-  document.getElementById('mr-detail-body').textContent=r[2]||'';
+  const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
+  document.getElementById('mr-detail-title').textContent=`${dateStr} · ${r.title||''}`;
+  document.getElementById('mr-detail-body').textContent=r.body||'본문 없음';
+  /* Drive 원문 링크 */
+  const linkEl=document.getElementById('mr-drive-link');
+  if(linkEl && r.url){
+    linkEl.href=r.url;
+    linkEl.style.display='inline';
+  }
 }
 
 /* ══ INIT ══════════════════════════════════════════════════ */
