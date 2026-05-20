@@ -4512,7 +4512,22 @@ async function load(k){
       else renderCost(k,rows);
     }
     stamp();
-  }catch(e){document.getElementById(`sec-${k}`).innerHTML=errHTML(e.message);}
+  }catch(e){
+    if(k==='market'){
+      document.getElementById('sec-market').innerHTML=`<div class="err">
+        ⚠️ 시장 리포트를 불러오지 못했습니다.
+        <small style="display:block;margin-top:8px;line-height:1.6">
+          <strong>오류:</strong> ${e.message}<br>
+          체크리스트:<br>
+          1. Apps Script 배포 상태 확인 (배포 → 배포 관리)<br>
+          2. 액세스 권한: "모든 사용자" 설정 여부 확인<br>
+          3. F12 콘솔에서 실제 오류 메시지 확인
+        </small>
+      </div>`;
+    } else {
+      document.getElementById(`sec-${k}`).innerHTML=errHTML(e.message);
+    }
+  }
 }
 
 function go(k,btn){
@@ -4570,12 +4585,19 @@ async function goHome(){
 const DRIVE_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3JustB0mGiGcovXDsM_1wxJyx8uaUHv_3ckN-b_NC1Hr0m2nIAim_6DELxAkQZo3r/exec';
 
 async function fetchMarketReports(){
-  const res=await fetch(DRIVE_SCRIPT_URL,{redirect:'follow',credentials:'omit'});
-  if(!res.ok) throw new Error(`HTTP ${res.status} — Apps Script 응답 오류`);
+  let res;
+  try{
+    res=await fetch(DRIVE_SCRIPT_URL,{redirect:'follow',credentials:'omit'});
+  }catch(e){
+    throw new Error('네트워크 오류 — Apps Script URL을 확인하세요');
+  }
   const txt=await res.text();
+  if(!txt||txt.trim().startsWith('<')){
+    throw new Error('Apps Script 응답 오류 — 배포 상태 및 액세스 권한을 확인하세요');
+  }
   let json;
   try{ json=JSON.parse(txt); }
-  catch(e){ throw new Error('응답 파싱 실패 — Apps Script 배포 상태를 확인하세요'); }
+  catch(e){ throw new Error('JSON 파싱 실패 — Apps Script 응답을 확인하세요'); }
   if(!json.ok) throw new Error(json.error||'Apps Script 오류');
   return json.reports||[];
 }
