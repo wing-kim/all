@@ -4584,22 +4584,35 @@ async function goHome(){
 /* ══ MARKET REPORT — Google Drive 폴더 연동 ══════════════ */
 const DRIVE_SCRIPT_URL='https://script.google.com/macros/s/AKfycbx3JustB0mGiGcovXDsM_1wxJyx8uaUHv_3ckN-b_NC1Hr0m2nIAim_6DELxAkQZo3r/exec';
 
-async function fetchMarketReports(){
-  let res;
-  try{
-    res=await fetch(DRIVE_SCRIPT_URL,{redirect:'follow',credentials:'omit'});
-  }catch(e){
-    throw new Error('네트워크 오류 — Apps Script URL을 확인하세요');
-  }
-  const txt=await res.text();
-  if(!txt||txt.trim().startsWith('<')){
-    throw new Error('Apps Script 응답 오류 — 배포 상태 및 액세스 권한을 확인하세요');
-  }
-  let json;
-  try{ json=JSON.parse(txt); }
-  catch(e){ throw new Error('JSON 파싱 실패 — Apps Script 응답을 확인하세요'); }
-  if(!json.ok) throw new Error(json.error||'Apps Script 오류');
-  return json.reports||[];
+function fetchMarketReports(){
+  return new Promise((resolve, reject)=>{
+    const cbName='marketCallback_'+Date.now();
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup();
+      reject(new Error('요청 시간 초과 — Apps Script 응답이 없습니다'));
+    }, 10000);
+
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName]=function(json){
+      cleanup();
+      if(!json.ok){ reject(new Error(json.error||'Apps Script 오류')); return; }
+      resolve(json.reports||[]);
+    };
+
+    script.onerror=function(){
+      cleanup();
+      reject(new Error('Apps Script 로드 실패 — URL 또는 배포 상태를 확인하세요'));
+    };
+
+    script.src=DRIVE_SCRIPT_URL+'?callback='+cbName+'&t='+Date.now();
+    document.head.appendChild(script);
+  });
 }
 
 function renderMarket(reports){
