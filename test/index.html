@@ -4670,7 +4670,7 @@ function escH(s) {
 function rptToHTML(text) {
   const lines = text.split('\n');
   let html = '';
-  const sectionRx = /^(⚖️|🏗️|📍|🏢|⭐|🛍️|🔑|🔺|💡)/u;
+  const sectionRx = /^(⚖️|🏗️|📍|🏢|⭐|🛍️|🔑|🌏|🔺|💡)/u;
   for (const line of lines) {
     if (sectionRx.test(line.trim())) {
       html += `<span class="rpt-section-head">${escH(line)}</span>`;
