@@ -4795,7 +4795,9 @@ function mrShow(i){
   const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
   document.getElementById('mr-detail-title').textContent=`${dateStr} · ${r.title||''}`;
   /* innerHTML로 교체 — 리치 렌더링 */
-  document.getElementById('mr-detail-body').innerHTML=formatMarketBody(r.body||'');
+  const detailBody=document.getElementById('mr-detail-body');
+  detailBody.innerHTML=formatMarketBody(r.body||'');
+  detailBody.scrollTop=0;
   /* Drive 원문 링크 */
   const linkEl=document.getElementById('mr-drive-link');
   if(linkEl && r.url){
