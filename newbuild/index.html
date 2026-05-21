@@ -723,11 +723,30 @@ td:first-child{color:var(--t1);font-weight:500}
 #mr-detail-body::-webkit-scrollbar-thumb{background:#2a3050;border-radius:10px;border:2px solid #0f1118}
 #mr-detail-body::-webkit-scrollbar-thumb:hover{background:#3b7fff}
 #mr-detail-body{scrollbar-width:thin;scrollbar-color:#2a3050 #0f1118}
-@media(max-width:768px){
-  #sec-market .card:first-child{display:none}
-  #sec-market>div>div:last-child{grid-column:1}
+/* 시장 리포트 모바일 뒤로가기 버튼 — 기본 숨김 */
+.mr-mobile-back{display:none}
+/* 시장 리포트 모바일 세로 (Portrait) — 목록/상세 화면 전환 */
+@media(max-width:768px) and (orientation:portrait){
   #sec-market>div{grid-template-columns:1fr!important}
+  /* 기본: 목록만 표시, 상세 숨김 */
+  #sec-market .card:first-child{display:block!important;max-height:none;overflow-y:auto}
+  #sec-market .card:last-child{display:none!important}
+  /* 상세 화면 열릴 때: 목록 숨기고 상세 표시 */
+  #sec-market.market-detail-open .card:first-child{display:none!important}
+  #sec-market.market-detail-open .card:last-child{display:block!important;min-height:520px}
+  /* 뒤로가기 버튼 표시 */
+  .mr-mobile-back{display:block;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border2);border-radius:8px;background:var(--s2);color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
+  #mr-detail-body{max-height:70vh;overflow-y:auto}
 }
+/* 시장 리포트 모바일 가로 (Landscape) — 2열 복원 */
+@media(max-width:1024px) and (orientation:landscape){
+  #sec-market>div{grid-template-columns:320px 1fr!important}
+  #sec-market .card:first-child{display:block!important;max-height:none}
+  #mr-detail-body{max-height:78vh;overflow-y:auto}
+}
+/* 탭 모바일 가로 스크롤 */
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -4689,6 +4708,7 @@ function renderMarket(reports){
         <div id="mr-list" style="max-height:70vh;overflow-y:auto">${listHTML}</div>
       </div>
       <div class="card" id="mr-detail" style="min-height:400px">
+        <div class="mr-mobile-back" onclick="backToMarketList()">← 브리핑 목록으로 돌아가기</div>
         <div class="card-head">
           <span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span>
           <a id="mr-drive-link" href="#" target="_blank" style="display:none;font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto">
@@ -4701,8 +4721,22 @@ function renderMarket(reports){
       </div>
     </div>`;
 
-  /* 첫 번째 자동 선택 */
-  mrShow(0);
+  /* 첫 번째 자동 선택 — 모바일 세로에서는 목록만 표시 */
+  const _isMobilePortrait=window.matchMedia('(max-width:768px) and (orientation:portrait)').matches;
+  if(_isMobilePortrait){
+    /* 모바일 세로: 상세 초기화 + market-detail-open 강제 제거 → 목록만 표시 */
+    const _sec=document.getElementById('sec-market');
+    if(_sec) _sec.classList.remove('market-detail-open');
+    const _db=document.getElementById('mr-detail-body');
+    if(_db){ _db.innerHTML=''; _db.scrollTop=0; }
+    const _dt=document.getElementById('mr-detail-title');
+    if(_dt) _dt.textContent='브리핑을 선택하세요';
+    const _dl=document.getElementById('mr-drive-link');
+    if(_dl) _dl.style.display='none';
+  } else {
+    /* PC / 모바일 가로: 기존대로 첫 번째 자동 선택 */
+    mrShow(0);
+  }
 }
 
 /* ── 시장 리포트 본문 렌더러 ───────────────────────────── */
@@ -4825,6 +4859,17 @@ function escHtml(s){
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+function openMarketDetailOnMobile(){
+  if(!window.matchMedia('(max-width:768px) and (orientation:portrait)').matches) return;
+  const sec=document.getElementById('sec-market');
+  if(sec) sec.classList.add('market-detail-open');
+}
+
+function backToMarketList(){
+  const sec=document.getElementById('sec-market');
+  if(sec) sec.classList.remove('market-detail-open');
+}
+
 function mrShow(i){
   const data=window._mrData;
   if(!data||!data[i]) return;
@@ -4844,6 +4889,8 @@ function mrShow(i){
     linkEl.href=r.url;
     linkEl.style.display='inline';
   }
+  /* 모바일 세로: 상세 화면으로 전환 */
+  openMarketDetailOnMobile();
 }
 
 /* ══ INIT ══════════════════════════════════════════════════ */
