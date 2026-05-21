@@ -4721,8 +4721,22 @@ function renderMarket(reports){
       </div>
     </div>`;
 
-  /* 첫 번째 자동 선택 */
-  mrShow(0);
+  /* 첫 번째 자동 선택 — 모바일 세로에서는 목록만 표시 */
+  const _isMobilePortrait=window.matchMedia('(max-width:768px) and (orientation:portrait)').matches;
+  if(_isMobilePortrait){
+    /* 모바일 세로: 상세 초기화 + market-detail-open 강제 제거 → 목록만 표시 */
+    const _sec=document.getElementById('sec-market');
+    if(_sec) _sec.classList.remove('market-detail-open');
+    const _db=document.getElementById('mr-detail-body');
+    if(_db){ _db.innerHTML=''; _db.scrollTop=0; }
+    const _dt=document.getElementById('mr-detail-title');
+    if(_dt) _dt.textContent='브리핑을 선택하세요';
+    const _dl=document.getElementById('mr-drive-link');
+    if(_dl) _dl.style.display='none';
+  } else {
+    /* PC / 모바일 가로: 기존대로 첫 번째 자동 선택 */
+    mrShow(0);
+  }
 }
 
 /* ── 시장 리포트 본문 렌더러 ───────────────────────────── */
