@@ -709,7 +709,7 @@ td:first-child{color:var(--t1);font-weight:500}
 .mr-item-on{background:var(--s3)!important;border-left:2px solid #00d4aa}
 .mr-date{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:3px}
 .mr-title{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:4px}
-.mr-preview{font-size:11px;color:var(--t3);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mr-preview{font-size:11px;color:var(--t3);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 /* 시장 리포트 본문 렌더링 */
 .mr-heading{font-size:14px;font-weight:700;color:#e2e8f0;margin:18px 0 6px;letter-spacing:.01em}
 .mr-line{font-size:13px;color:var(--t2);line-height:1.9;margin:2px 0}
@@ -4630,13 +4630,25 @@ function renderMarket(reports){
     return;
   }
 
-  /* 날짜 최신순 정렬 */
-  const data=[...reports].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  /* updatedAt 기준 내림차순 정렬 (최신 상단) */
+  const data=[...reports].sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));
   window._mrData=data;
 
   const listHTML=data.map((r,i)=>{
-    const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
-    const preview=(r.body||'').substring(0,80).replace(/\n/g,' ');
+    const dateStr=r.updatedAt
+      ? new Date(r.updatedAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'})
+      : (r.createdAt ? new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}) : r.title);
+    /* preview: divider 제거 → 개행 제거 → 첫 의미있는 줄 1줄만 */
+    const preview = (function(){
+      const lines = (r.body||'').split('\n');
+      for(var li=0; li<lines.length; li++){
+        const t = lines[li].trim();
+        if(!t) continue;
+        if(/^[=\-_─]{5,}$/.test(t)) continue;
+        return t.substring(0,60);
+      }
+      return '';
+    })();
     return `<div class="mr-item" onclick="mrShow(${i})" id="mri-${i}">
       <div class="mr-date">${dateStr}</div>
       <div class="mr-title">${r.title||'제목 없음'}</div>
@@ -4681,14 +4693,15 @@ function formatMarketBody(text){
   }
 
   function isHeading(s){
-    /* 이모지로 시작 (기상·건물·지도 등 각종 이모지) */
-    if(/^\p{Emoji}/u.test(s)) return true;
-    /* 원문자 ①~⑩ */
-    if(/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
-    /* 숫자. 로 시작 */
+    /* 조건1: 숫자+점+공백 "1. " "2. " */
     if(/^\d+\.\s/.test(s)) return true;
-    /* 특수 기호 */
-    if(/^[■▶●◆▪]/.test(s)) return true;
+    /* 조건2: 원문자 ①~⑩ */
+    if(/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
+    /* 조건3: 이모지 + 숫자+점 조합 "🏗️ 1." "📊 2." */
+    if(/^.{1,3}\s*\d+\.\s/.test(s)) return true;
+    /* 조건4: ■ ▶ 기호 */
+    if(/^[■▶]/.test(s)) return true;
+    /* 그 외 이모지만 있거나 일반 문장 → 제목 아님 */
     return false;
   }
 
