@@ -4710,11 +4710,51 @@ function formatMarketBody(text){
   if(!text) return '<span style="color:var(--t3)">본문 없음</span>';
 
   var urlRe = /(https?:\/\/[^\s\)"'<>\]]+)/g;
+
+  /* URL에서 기사 게시일 추출
+     1순위: YYYYMMDD 연속 패턴 (20260512)
+     2순위: /YYYY/MM/DD/ 슬래시 구분 패턴 (2026/02/25)
+  */
+  function extractArticleDate(url){
+    /* 1) YYYYMMDD 연속: 20260512 */
+    var m = url.match(/(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/);
+    if(m) return m[1] + '-' + m[2] + '-' + m[3];
+    /* 2) /YYYY/MM/DD/ 슬래시 구분 */
+    m = url.match(/\/(20\d{2})\/(\d{1,2})\/(\d{1,2})(\/|$)/);
+    if(m){
+      var mm = m[2].padStart(2,'0');
+      var dd = m[3].padStart(2,'0');
+      return m[1] + '-' + mm + '-' + dd;
+    }
+    return '';
+  }
+
+  /* 일반 본문 URL linkify — 날짜 표기 없음 */
   function linkify(str){
     return str.replace(urlRe, function(url){
       var display = url.length > 60 ? url.substring(0,57)+'...' : url;
       return '<a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>';
     });
+  }
+
+  /* 출처 라인 전용 렌더러 — URL + 날짜 표기 */
+  function renderSource(line){
+    /* "출처:" 뒤 텍스트 분리 */
+    var prefix = line.match(/^출처\s*[:：]\s*/);
+    var rest = prefix ? line.slice(prefix[0].length) : line;
+    /* URL 추출 */
+    var urlMatch = rest.match(urlRe);
+    if(!urlMatch){
+      /* URL 없으면 그냥 escape 후 출력 */
+      return '<div class="mr-source">출처: ' + rest.replace(/&/g,'&amp;') + '</div>';
+    }
+    var url = urlMatch[0];
+    var articleDate = extractArticleDate(url);
+    var dateText = articleDate
+      ? ' <span style="color:var(--t3);font-size:11px;">(' + articleDate + ' 기사)</span>'
+      : '';
+    var display = url.length > 70 ? url.substring(0,67)+'...' : url;
+    return '<div class="mr-source">출처: <a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>' + dateText + '</div>';
   }
 
   function isHeading(s){
@@ -4770,7 +4810,7 @@ function formatMarketBody(text){
     }
 
     if(/^출처\s*[:：]/.test(t)){
-      parts.push('<div class="mr-source">' + linkify(escaped) + '</div>');
+      parts.push(renderSource(t));
       return;
     }
 
