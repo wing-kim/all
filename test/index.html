@@ -709,12 +709,36 @@ td:first-child{color:var(--t1);font-weight:500}
 .mr-item-on{background:var(--s3)!important;border-left:2px solid #00d4aa}
 .mr-date{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:3px}
 .mr-title{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:4px}
-.mr-preview{font-size:11px;color:var(--t3);line-height:1.5;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-@media(max-width:768px){
-  #sec-market .card:first-child{display:none}
-  #sec-market>div>div:last-child{grid-column:1}
+.mr-preview{font-size:11px;color:var(--t3);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+/* 시장 리포트 본문 렌더링 */
+.mr-heading{font-size:14px;font-weight:700;color:#e2e8f0;margin:18px 0 6px;letter-spacing:.01em}
+.mr-line{font-size:13px;color:var(--t2);line-height:1.9;margin:2px 0}
+.mr-source{font-size:12px;color:var(--t3);margin:4px 0 10px;padding-left:4px}
+.mr-divider{border:none;border-top:1px solid var(--border);margin:14px 0;width:100%}
+.mr-link{color:#60a5fa;text-decoration:none;word-break:break-all}
+.mr-link:hover{color:#93c5fd;text-decoration:underline}
+#mr-detail-body{white-space:normal!important}
+#mr-detail-body::-webkit-scrollbar{width:10px}
+#mr-detail-body::-webkit-scrollbar-track{background:#0f1118;border-radius:10px}
+#mr-detail-body::-webkit-scrollbar-thumb{background:#2a3050;border-radius:10px;border:2px solid #0f1118}
+#mr-detail-body::-webkit-scrollbar-thumb:hover{background:#3b7fff}
+#mr-detail-body{scrollbar-width:thin;scrollbar-color:#2a3050 #0f1118}
+/* 시장 리포트 모바일 세로 (Portrait) */
+@media(max-width:768px) and (orientation:portrait){
   #sec-market>div{grid-template-columns:1fr!important}
+  #sec-market .card:first-child{display:block!important;max-height:260px;overflow-y:auto}
+  #sec-market .card:last-child{min-height:520px}
+  #mr-detail-body{max-height:65vh;overflow-y:auto}
 }
+/* 시장 리포트 모바일 가로 (Landscape) — 2열 복원 */
+@media(max-width:1024px) and (orientation:landscape){
+  #sec-market>div{grid-template-columns:320px 1fr!important}
+  #sec-market .card:first-child{display:block!important;max-height:none}
+  #mr-detail-body{max-height:78vh;overflow-y:auto}
+}
+/* 탭 모바일 가로 스크롤 */
+.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{flex-shrink:0}
 </style>
 </head>
 <body>
@@ -4622,13 +4646,45 @@ function renderMarket(reports){
     return;
   }
 
-  /* 날짜 최신순 정렬 */
-  const data=[...reports].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  /* 정렬 기준: 1순위 제목/본문에서 추출한 날짜, 2순위 updatedAt, 3순위 createdAt */
+  function extractReportDate(r){
+    /* 제목에서 YYYY-MM-DD 추출: "블루피카 리포트 2026-05-21" */
+    var m = (r.title||'').match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
+    if(m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+    /* 본문 첫 200자에서 날짜 추출 */
+    var bodySnip = (r.body||'').substring(0,200);
+    var m2 = bodySnip.match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
+    if(m2) return new Date(parseInt(m2[1]), parseInt(m2[2])-1, parseInt(m2[3]));
+    /* fallback: updatedAt → createdAt */
+    if(r.updatedAt) return new Date(r.updatedAt);
+    if(r.createdAt) return new Date(r.createdAt);
+    return new Date(0);
+  }
+  const data=[...reports].sort(function(a,b){
+    var da=extractReportDate(a), db=extractReportDate(b);
+    if(db-da !== 0) return db-da;
+    /* 같은 날짜면 updatedAt 최신순 */
+    return new Date(b.updatedAt||b.createdAt||0)-new Date(a.updatedAt||a.createdAt||0);
+  });
   window._mrData=data;
 
   const listHTML=data.map((r,i)=>{
-    const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
-    const preview=(r.body||'').substring(0,80).replace(/\n/g,' ');
+    /* 표시 날짜: 제목에서 추출한 날짜 우선 */
+    var _rd = extractReportDate(r);
+    const dateStr = (_rd && _rd.getFullYear()>2000)
+      ? _rd.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'})
+      : (r.title||'날짜 없음');
+    /* preview: divider 제거 → 개행 제거 → 첫 의미있는 줄 1줄만 */
+    const preview = (function(){
+      const lines = (r.body||'').split('\n');
+      for(var li=0; li<lines.length; li++){
+        const t = lines[li].trim();
+        if(!t) continue;
+        if(/^[=\-_─]{5,}$/.test(t)) continue;
+        return t.substring(0,60);
+      }
+      return '';
+    })();
     return `<div class="mr-item" onclick="mrShow(${i})" id="mri-${i}">
       <div class="mr-date">${dateStr}</div>
       <div class="mr-title">${r.title||'제목 없음'}</div>
@@ -4660,6 +4716,126 @@ function renderMarket(reports){
   mrShow(0);
 }
 
+/* ── 시장 리포트 본문 렌더러 ───────────────────────────── */
+function formatMarketBody(text){
+  if(!text) return '<span style="color:var(--t3)">본문 없음</span>';
+
+  var urlRe = /(https?:\/\/[^\s\)"'<>\]]+)/g;
+
+  /* URL에서 기사 게시일 추출
+     1순위: YYYYMMDD 연속 패턴 (20260512)
+     2순위: /YYYY/MM/DD/ 슬래시 구분 패턴 (2026/02/25)
+  */
+  function extractArticleDate(url){
+    /* 1) YYYYMMDD 연속: 20260512 */
+    var m = url.match(/(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/);
+    if(m) return m[1] + '-' + m[2] + '-' + m[3];
+    /* 2) /YYYY/MM/DD/ 슬래시 구분 */
+    m = url.match(/\/(20\d{2})\/(\d{1,2})\/(\d{1,2})(\/|$)/);
+    if(m){
+      var mm = m[2].padStart(2,'0');
+      var dd = m[3].padStart(2,'0');
+      return m[1] + '-' + mm + '-' + dd;
+    }
+    return '';
+  }
+
+  /* 일반 본문 URL linkify — 날짜 표기 없음 */
+  function linkify(str){
+    return str.replace(urlRe, function(url){
+      var display = url.length > 60 ? url.substring(0,57)+'...' : url;
+      return '<a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>';
+    });
+  }
+
+  /* 출처 라인 전용 렌더러 — URL + 날짜 표기 */
+  function renderSource(line){
+    /* "출처:" 뒤 텍스트 분리 */
+    var prefix = line.match(/^출처\s*[:：]\s*/);
+    var rest = prefix ? line.slice(prefix[0].length) : line;
+    /* URL 추출 */
+    var urlMatch = rest.match(urlRe);
+    if(!urlMatch){
+      /* URL 없으면 그냥 escape 후 출력 */
+      return '<div class="mr-source">출처: ' + rest.replace(/&/g,'&amp;') + '</div>';
+    }
+    var url = urlMatch[0];
+    var articleDate = extractArticleDate(url);
+    var dateText = articleDate
+      ? ' <span style="color:var(--t3);font-size:11px;">(' + articleDate + ' 기사)</span>'
+      : '';
+    var display = url.length > 70 ? url.substring(0,67)+'...' : url;
+    return '<div class="mr-source">출처: <a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>' + dateText + '</div>';
+  }
+
+  function isHeading(s){
+    /* 조건1: 숫자+점+공백 "1. " "9. " 등 모든 숫자 범위 */
+    if(/^\d+\.\s/.test(s)) return true;
+    /* 조건2: 원문자 ①~⑩ */
+    if(/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
+    /* 조건3: 이모지 + 숫자+점 조합 "🏗️ 1." "📊 2." (이모지 뒤에 숫자+점 필수) */
+    if(/^.{1,3}\s*\d+\.\s/.test(s)) return true;
+    /* 조건4: ■ ▶ 기호 */
+    if(/^[■▶]/.test(s)) return true;
+    /* 조건5: 💡 액션 포인트 */
+    if(/^💡/.test(s)) return true;
+    /* 조건6: 출처 라인 제외 후, [참고] [주의] [위험] [확인] 포함 줄
+       - "[참고] 내용"
+       - "🟢 [참고] 내용"
+       - "🟡 [주의] 내용"
+       - "🔴 [위험] 내용"
+       이모지 유무 무관, 앞에 공백/이모지만 있어도 인식 */
+    if(!/^출처/.test(s) && /^[\s\S]{0,5}\[(참고|주의|위험|확인)\]/u.test(s)) return true;
+    /* 그 외 이모지만 있거나 일반 문장 → 제목 아님 */
+    return false;
+  }
+
+  function isDivider(s){
+    return /^[=\-_─]{5,}$/.test(s);
+  }
+
+  var lines = text.split('\n');
+  var parts = [];
+
+  lines.forEach(function(line){
+    var t = line.trim();
+
+    if(!t){
+      parts.push('<div style="height:6px"></div>');
+      return;
+    }
+
+    if(isDivider(t)){
+      parts.push('<hr class="mr-divider">');
+      return;
+    }
+
+    var escaped = t
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+
+    if(isHeading(t)){
+      parts.push('<div class="mr-heading">' + linkify(escaped) + '</div>');
+      return;
+    }
+
+    if(/^출처\s*[:：]/.test(t)){
+      parts.push(renderSource(t));
+      return;
+    }
+
+    parts.push('<div class="mr-line">' + linkify(escaped) + '</div>');
+  });
+
+  return parts.join('');
+}
+
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function mrShow(i){
   const data=window._mrData;
   if(!data||!data[i]) return;
@@ -4669,7 +4845,10 @@ function mrShow(i){
   });
   const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
   document.getElementById('mr-detail-title').textContent=`${dateStr} · ${r.title||''}`;
-  document.getElementById('mr-detail-body').textContent=r.body||'본문 없음';
+  /* innerHTML로 교체 — 리치 렌더링 */
+  const detailBody=document.getElementById('mr-detail-body');
+  detailBody.innerHTML=formatMarketBody(r.body||'');
+  detailBody.scrollTop=0;
   /* Drive 원문 링크 */
   const linkEl=document.getElementById('mr-drive-link');
   if(linkEl && r.url){
