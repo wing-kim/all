@@ -750,21 +750,19 @@ td:first-child{color:var(--t1);font-weight:500}
 .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tab{flex-shrink:0}
 
-
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; height: 100vh; overflow: hidden; }
+/* global reset handled by parent CSS */
+/* map body style removed */
 
 /* ══════════════════════════════════
    LAYOUT — Desktop: side by side
               Mobile: map top, panel bottom
    ══════════════════════════════════ */
-.map-app { display: flex; height: 100vh; flex-direction: row; }
-#map { flex: 1; min-width: 0; min-height: 0; }
+.map-app { display: flex; height: 100%; flex-direction: row; }
+#map { flex: 1; min-width: 0; min-height: 0; height: 100%; }
 
 /* ── Sidebar ── */
 .map-sidebar {
-  width: 400px; background: #fff; display: flex; flex-direction: column;
+  width: 380px; max-width: 40%; background: #fff; display: flex; flex-direction: column;
   overflow: hidden; border-left: 1px solid #e2e8f0;
   box-shadow: -4px 0 20px rgba(0,0,0,0.08);
   flex-shrink: 0;
@@ -1126,7 +1124,7 @@ body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-seri
   margin-left: auto; font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 20px; color: #fff;
 }
-.rp-strategy-body { padding: 10px 12px; font-size: 11px; color: #475569; line-height: 1.8; }
+.rp-strategy-
 .rp-strategy-body b { font-weight: 700; color: #1e293b; }
 
 /* 지역 필터 업로드 안내 */
@@ -1198,8 +1196,6 @@ body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-seri
 .mobile-toggle:hover { background: #334155; }
 
 @media (max-width: 768px) {
-  body { overflow: hidden; }
-  
   .map-app {
     flex-direction: column;
   }
@@ -1355,6 +1351,7 @@ body { font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-seri
 </div>
 
 <script>
+
 // ══════════════════════════════════════════════
 // 업종 타입 정의
 // ══════════════════════════════════════════════
@@ -2232,13 +2229,8 @@ function showTab(name) {
   if (name !== 'chart' && selectedType) resetTypeFilter();
 }
 
-// ══════════════════════════════════════════════
-// 초기화
-// ══════════════════════════════════════════════
-renderBuildingList();
-renderChart();
-renderReport();
-renderLegend();
+// 초기화는 _initMapView에서 loadMapData 후 호출됨
+
 </script>
   </div>
 </div>
@@ -2253,7 +2245,7 @@ const TABS={
 };
 const PG=50;
 const CACHE={},LOADED=new Set(),TS={};
-let CUR='timeline';
+let CUR='market';
 
 /* ══ CSV ══════════════════════════════════════════════════ */
 async function fetchSheet(k){
