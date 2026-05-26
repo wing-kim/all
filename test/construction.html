@@ -758,9 +758,7 @@ td:first-child{color:var(--t1);font-weight:500}
 <header>
   <div style="display:flex;align-items:center">
     <a class="back-btn" href="index.html">← 메인</a>
-    <div class="brand" style="cursor:default">
-      <span class="brand-name">신축관리</span>
-    </div>
+    <div class="brand" style="cursor:default"><span class="brand-name">신축관리</span></div>
   </div>
   <div class="header-r">
     <div class="sync-badge"><div class="dot"></div><span id="syncTime">—</span></div>
@@ -914,7 +912,6 @@ function tPage(k,cid,p){initTS(k);TS[k].page=p;drawTable(k,CACHE[k],cid,CACHE[k+
    1. TIMELINE — 컴팩트 + 현재시점 마커
    ★ 구글 시트 데이터 100% 실시간 반영
 ════════════════════════════════════════════════════════════ */
-
 function renderTimeline(rows){
   const sec=document.getElementById('sec-timeline');
   const hi=findHdrRow(rows);
@@ -4529,11 +4526,7 @@ function stamp(){document.getElementById('syncTime').textContent=new Date().toLo
 async function load(k){
   showLoader(`sec-${k}`);
   try{
-    if(k==='market'){
-      const reports=await fetchMarketReports();
-      CACHE[k]=reports;
-      renderMarket(reports);
-    } else {
+    {
       const rows=await fetchSheet(k);  /* ← 매번 구글 시트에서 새로 fetch */
       CACHE[k]=rows;
       if(k==='timeline')renderTimeline(rows);
@@ -4644,6 +4637,9 @@ function fetchMarketReports(){
     document.head.appendChild(script);
   });
 }
+
+// ── 초기 로딩 ──
+go('timeline', document.querySelector('.tab.on'));
 </script>
 </body>
 </html>
