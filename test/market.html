@@ -750,19 +750,20 @@ td:first-child{color:var(--t1);font-weight:500}
 .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tab{flex-shrink:0}
 
-/* global reset handled by parent CSS */
-/* map body style removed */
+
+/* reset handled by parent */
+/* removed */
 
 /* ══════════════════════════════════
    LAYOUT — Desktop: side by side
               Mobile: map top, panel bottom
    ══════════════════════════════════ */
 .map-app { display: flex; height: 100%; flex-direction: row; }
-#map { flex: 1; min-width: 0; min-height: 0; height: 100%; }
+#map { flex: 1; min-width: 0; min-height: 0; }
 
 /* ── Sidebar ── */
 .map-sidebar {
-  width: 380px; max-width: 40%; background: #fff; display: flex; flex-direction: column;
+  width: 400px; background: #fff; display: flex; flex-direction: column;
   overflow: hidden; border-left: 1px solid #e2e8f0;
   box-shadow: -4px 0 20px rgba(0,0,0,0.08);
   flex-shrink: 0;
@@ -1196,6 +1197,8 @@ td:first-child{color:var(--t1);font-weight:500}
 .mobile-toggle:hover { background: #334155; }
 
 @media (max-width: 768px) {
+  .map-app { overflow: hidden; }
+  
   .map-app {
     flex-direction: column;
   }
@@ -1261,12 +1264,24 @@ td:first-child{color:var(--t1);font-weight:500}
   .bldg-name { font-size: 11px; }
 }
 
-
 .back-btn{display:inline-flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border2);color:var(--t3);padding:7px 14px;border-radius:var(--r2);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .18s;text-decoration:none;margin-right:12px;}
 .back-btn:hover{background:var(--s3);color:var(--t1);border-color:var(--blue)}
 #sec-mapview{height:calc(100vh - 160px);min-height:520px;}
-#sec-mapview>div{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;}
+#sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;}
 @keyframes mapSpin{to{transform:rotate(360deg)}}
+#map-loader{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(8,9,13,.92);border-radius:12px;padding:20px 28px;text-align:center;border:1px solid var(--border);}
+
+/* ── 브리핑 목록 스크롤 ── */
+#mr-list {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3050 #0f1118;
+}
+#mr-list::-webkit-scrollbar { width: 4px; }
+#mr-list::-webkit-scrollbar-track { background: #0f1118; }
+#mr-list::-webkit-scrollbar-thumb { background: #2a3050; border-radius: 2px; }
+#mr-list::-webkit-scrollbar-thumb:hover { background: #3b7fff; }
+
 </style>
 </head>
 <body>
@@ -1285,12 +1300,12 @@ td:first-child{color:var(--t1);font-weight:500}
   <button class="tab on"  onclick="go('market',this)"> <span class="pip" style="background:#00d4aa"></span>시장 리포트</button>
   <button class="tab"     onclick="go('mapview',this)"><span class="pip" style="background:#f97316"></span>임대 상권지도</button>
 </div>
-<div id="sec-market"  class="sec on"></div>
+<div id="sec-market" class="sec on"></div>
 <div id="sec-mapview" class="sec">
-  <div>
-    <div id="map-loader" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(8,9,13,.9);border-radius:12px;padding:20px 28px;text-align:center;border:1px solid #222636;">
-      <div style="width:28px;height:28px;border:3px solid #222636;border-top-color:#3b7fff;border-radius:50%;animation:mapSpin .8s linear infinite;margin:0 auto 10px"></div>
-      <div style="font-size:12px;color:#8890aa;">상권 데이터 로딩 중…</div>
+  <div class="map-wrap">
+    <div id="map-loader">
+      <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:mapSpin .8s linear infinite;margin:0 auto 10px"></div>
+      <div style="font-size:12px;color:var(--t2);">상권 데이터 로딩 중…</div>
     </div>
     <div class="map-app">
   <!-- ══ MAP ══ -->
@@ -1349,894 +1364,10 @@ td:first-child{color:var(--t1);font-weight:500}
     </div><!-- /tab-content -->
   </div><!-- /sidebar -->
 </div>
-
-<script>
-
-// ══════════════════════════════════════════════
-// 업종 타입 정의
-// ══════════════════════════════════════════════
-const TYPES = {
-  'F&B/음식점':    '#ef4444',
-  '병원/의료':     '#06b6d4',
-  '뷰티/미용':     '#ec4899',
-  '사무실/기업':   '#3b82f6',
-  '학원/교육':     '#f59e0b',
-  '패션/잡화':     '#8b5cf6',
-  '스포츠/레저':   '#10b981',
-  '약국':          '#f97316',
-  '편의점':        '#6b7280',
-  '공유오피스':    '#0ea5e9',
-  '스튜디오/공간': '#a855f7',
-};
-
-// ══════════════════════════════════════════════
-// 건물 데이터
-// ══════════════════════════════════════════════
-const buildings = [
-  {
-    id: 'ours', isOurs: true,
-    name: '케이프혼타워 (신축예정)',
-    short: '우리건물',
-    address: '신사동 529 외 2필지',
-    lat: 37.5232, lng: 127.0212,
-    price: null, distance: 'core', dong: '신사동', tenants: []
-  },
-  {
-    id: 'hwain',
-    name: '화인빌딩',
-    short: '화인빌딩',
-    address: '신사동 528-4 · 압구정로 110',
-    lat: 37.5229975, lng: 127.0209030,
-    price: '1,050억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B1', name:'레인지엑스 가로수 (실내골프)', type:'스포츠/레저' },
-      { floor:'1F', name:'커스텀잇 레스토랑', type:'F&B/음식점' },
-      { floor:'1F', name:'신사설렁탕', type:'F&B/음식점' },
-      { floor:'1F', name:'CU 편의점', type:'편의점' },
-      { floor:'2F', name:'원조마포소금구이', type:'F&B/음식점' },
-      { floor:'2F', name:'파리클라라 (네일아트)', type:'뷰티/미용' },
-      { floor:'2F', name:'사나르필라테스', type:'스포츠/레저' },
-      { floor:'2F', name:'가꿈스튜디오 (홈패션)', type:'패션/잡화' },
-      { floor:'2F', name:'터치유 (속눈썹)', type:'뷰티/미용' },
-      { floor:'2F', name:'나라인터내셔널', type:'사무실/기업' },
-      { floor:'3F', name:'해동개발', type:'사무실/기업' },
-      { floor:'3F', name:'씨에스학원 (입시교육)', type:'학원/교육' },
-      { floor:'3F', name:'유지니어스스튜디오', type:'스튜디오/공간' },
-      { floor:'4F', name:'카메오', type:'사무실/기업' },
-      { floor:'4F', name:'여덟끼니', type:'사무실/기업' },
-      { floor:'4F', name:'베블렌교육', type:'학원/교육' },
-      { floor:'4F', name:'위드제니 면접&영어', type:'학원/교육' },
-      { floor:'4F', name:'에그음악교습소', type:'학원/교육' },
-      { floor:'4F', name:'소유뷰티 (메이크업)', type:'뷰티/미용' },
-    ]
-  },
-  {
-    id: 'boam',
-    name: '보암빌딩',
-    short: '보암빌딩',
-    address: '신사동 528 · 압구정로 104',
-    lat: 37.5225841, lng: 127.0200395,
-    price: '1,400억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B1', name:'와이키키신사점 (수영장·아이스링크)', type:'스포츠/레저' },
-      { floor:'1F', name:'주식회사 더캐리 (패션)', type:'패션/잡화' },
-      { floor:'2F', name:'주식회사 더캐리 (패션)', type:'패션/잡화' },
-      { floor:'3F', name:'헤메코 (전세 사옥)', type:'사무실/기업' },
-      { floor:'4F', name:'멜로우빈', type:'사무실/기업' },
-      { floor:'4F', name:'(주)네추럴웨이', type:'사무실/기업' },
-      { floor:'4F', name:'투텀바이오', type:'병원/의료' },
-      { floor:'5F', name:'신풍 (종이 도매)', type:'사무실/기업' },
-      { floor:'5F', name:'씨즈마켓코리아 (에이전시)', type:'사무실/기업' },
-      { floor:'5F', name:'루템바이오', type:'병원/의료' },
-      { floor:'5F', name:'커피창고 (식품가공)', type:'F&B/음식점' },
-      { floor:'5F', name:'스칼렛여성 (의류)', type:'패션/잡화' },
-      { floor:'6F', name:'신동 (광산투자)', type:'사무실/기업' },
-      { floor:'6F', name:'모바일무브 (광고)', type:'사무실/기업' },
-      { floor:'6F', name:'모모랩스 (모발이식·헬스케어)', type:'병원/의료' },
-      { floor:'7F', name:'제이에스메디칼 (의료기기)', type:'병원/의료' },
-      { floor:'7F', name:'신진건설', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'ariji',
-    name: '아리지빌딩',
-    short: '아리지빌딩',
-    address: '신사동 529-4 · 압구정로 118',
-    lat: 37.5234709, lng: 127.0215683,
-    price: '530억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'전층', name:'티몬 (이전 임차인, 퇴거) — 전층 임대 협의중', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'uuyuni',
-    name: '우유니신사',
-    short: '우유니신사',
-    address: '신사동 529-6 · 압구정로8길 5',
-    lat: 37.5229768, lng: 127.0213841,
-    price: '170억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B2', name:'카페 풍 (직영)', type:'F&B/음식점' },
-      { floor:'B1', name:'카페 풍 (직영)', type:'F&B/음식점' },
-      { floor:'1F', name:'우유니 카페', type:'F&B/음식점' },
-      { floor:'2F', name:'양식당 더램키친', type:'F&B/음식점' },
-      { floor:'3F', name:'살롱드 코코안나 (네일아트)', type:'뷰티/미용' },
-      { floor:'4~5F', name:'단독주택 (사무실 사용)', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'archive',
-    name: '아카이브25',
-    short: '아카이브25',
-    address: '신사동 529-8',
-    lat: 37.5230, lng: 127.0215,
-    price: '150억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B1', name:'도심창고 곳간 가로수길점', type:'사무실/기업' },
-      { floor:'1~5F', name:'원스피리츠 사옥 (주류) ← 25.09 퇴거 예정', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'sinjabldg',
-    name: '신사빌딩',
-    short: '신사빌딩',
-    address: '신사동 529-2 · 압구정로',
-    lat: 37.5232, lng: 127.0210,
-    price: '240억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B1', name:'복싱스페이스', type:'스포츠/레저' },
-      { floor:'1F', name:'도미노피자', type:'F&B/음식점' },
-      { floor:'2F', name:'세종스튜디오', type:'스튜디오/공간' },
-      { floor:'3F', name:'(공실)', type:'사무실/기업' },
-      { floor:'4F', name:'직영 사무실', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'annabldg',
-    name: '안나빌딩',
-    short: '안나빌딩',
-    address: '신사동 530-1 · 압구정로',
-    lat: 37.5238, lng: 127.0209,
-    price: '205억', distance: 'core', dong: '신사동',
-    tenants: [
-      { floor:'B1', name:'우성학원', type:'학원/교육' },
-      { floor:'1F', name:'안나키친', type:'F&B/음식점' },
-      { floor:'2F', name:'이비학원', type:'학원/교육' },
-      { floor:'3F', name:'더엠영어', type:'학원/교육' },
-      { floor:'4F', name:'V 스튜디오', type:'스튜디오/공간' },
-    ]
-  },
-  {
-    id: 'seroa',
-    name: '세로수길로아',
-    short: '세로수길로아',
-    address: '신사동 525-21',
-    lat: 37.5220, lng: 127.0228,
-    price: '180억', distance: 'mid', dong: '신사동',
-    tenants: [
-      { floor:'전층', name:'전층 명도 완료 (공실)', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'garosu',
-    name: '가로수길빌딩',
-    short: '가로수길빌딩',
-    address: '신사동 532-11 · 가로수길 77',
-    lat: 37.5230231, lng: 127.0223319,
-    price: '520억', distance: 'mid', dong: '신사동',
-    tenants: [
-      { floor:'B2~B1', name:'SK D&D 공유오피스', type:'공유오피스' },
-      { floor:'1~2F', name:'캔버스랩 & 밤부베이커리', type:'F&B/음식점' },
-      { floor:'3~6F', name:'SK D&D 직영 오피스', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'apgujeong',
-    name: '압구정현대빌딩',
-    short: '압구정현대빌딩',
-    address: '신사동 548-5',
-    lat: 37.5239, lng: 127.0231,
-    price: '320억', distance: 'mid', dong: '신사동',
-    tenants: [
-      { floor:'B1~5F', name:'에이랜드 가로수길점 (전층 패션잡화) ← 퇴거 확정', type:'패션/잡화' },
-    ]
-  },
-  {
-    id: 'heongi',
-    name: '헌기빌딩',
-    short: '헌기빌딩',
-    address: '신사동 548-4 · 압구정로14길 6',
-    lat: 37.5238426, lng: 127.0229379,
-    price: '355억', distance: 'mid', dong: '신사동',
-    tenants: [
-      { floor:'1F', name:'메가커피', type:'F&B/음식점' },
-      { floor:'1F', name:'가로수길천사약국', type:'약국' },
-      { floor:'1F', name:'CU 신사에비뉴점', type:'편의점' },
-      { floor:'2F', name:'문찬수 압구정성모내과의원', type:'병원/의료' },
-      { floor:'3F', name:'스킨포에버 (피부관리)', type:'뷰티/미용' },
-      { floor:'3F', name:'김상호EMK스터디 (독서실)', type:'학원/교육' },
-      { floor:'3F', name:'세르주드 (공간대여)', type:'스튜디오/공간' },
-      { floor:'4F', name:'플럼디자인 (시각디자인)', type:'사무실/기업' },
-      { floor:'4F', name:'모모성형외과의원', type:'병원/의료' },
-      { floor:'4F', name:'수학학원', type:'학원/교육' },
-      { floor:'5~6F', name:'사무실 3개사', type:'사무실/기업' },
-    ]
-  },
-  {
-    id: 'minish',
-    name: '도산미니쉬 (논현동)',
-    short: '미니쉬빌딩',
-    address: '논현동 98-2 · 언주로 728',
-    lat: 37.5198606, lng: 127.0349148,
-    price: '360억', distance: 'far', dong: '논현동',
-    tenants: [
-      { floor:'B1~14F', name:'미니쉬치과병원 (전층 통임대)', type:'병원/의료' },
-    ]
-  },
-  {
-    id: 'medical',
-    name: '강남구청메디컬빌딩 (논현동)',
-    short: '메디컬빌딩',
-    address: '논현동 118-6 · 학동로',
-    lat: 37.5185, lng: 127.0340,
-    price: '450억', distance: 'far', dong: '논현동',
-    tenants: [
-      { floor:'1F', name:'프리레인강남 (카페)', type:'F&B/음식점' },
-      { floor:'1F', name:'청담희망약국', type:'약국' },
-      { floor:'2F', name:'청성모이비인후과', type:'병원/의료' },
-      { floor:'3~5F', name:'청담베스트내과', type:'병원/의료' },
-      { floor:'6F', name:'청헤라산부인과', type:'병원/의료' },
-      { floor:'7F', name:'튼튼하지의원', type:'병원/의료' },
-      { floor:'8F', name:'닥터주비뇨기과', type:'병원/의료' },
-      { floor:'9F', name:'청담안즈피부과', type:'병원/의료' },
-    ]
-  },
-  {
-    id: 'harrison',
-    name: '청담해리슨빌딩 (삼성동)',
-    short: '해리슨빌딩',
-    address: '삼성동 52-17 · 삼성로 646',
-    lat: 37.5176901, lng: 127.0511821,
-    price: '480억', distance: 'far', dong: '삼성동',
-    tenants: [
-      { floor:'B3~9F', name:'청담해리슨병원 (신경외과 전층)', type:'병원/의료' },
-      { floor:'1F', name:'바디프랜드 청담라운지', type:'스포츠/레저' },
-    ]
-  },
-];
-
-// ══════════════════════════════════════════════
-// 지도 — CartoDB Positron (깔끔한 라이트 타일)
-// ══════════════════════════════════════════════
-const map = L.map('map', {
-  center: [37.5228, 127.0220],
-  zoom: 16,
-  zoomControl: true
-});
-
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: 'abcd', maxZoom: 19
-}).addTo(map);
-
-// ══════════════════════════════════════════════
-// 마커 생성
-// ══════════════════════════════════════════════
-const markersMap = {};
-let selectedId = null;
-let selectedType = null;
-
-function getDominantColor(b) {
-  if (b.isOurs) return '#f59e0b';
-  const cnt = {};
-  b.tenants.forEach(t => { cnt[t.type] = (cnt[t.type]||0)+1; });
-  const top = Object.keys(cnt).sort((a,b2)=>cnt[b2]-cnt[a])[0];
-  return top ? TYPES[top] : '#6b7280';
-}
-
-function getMarkerSize(b) {
-  if (b.isOurs) return 34;
-  return b.distance === 'core' ? 30 : b.distance === 'mid' ? 26 : 22;
-}
-
-buildings.forEach((b, idx) => {
-  const color = getDominantColor(b);
-  const size  = getMarkerSize(b);
-  const num   = b.isOurs ? '⭐' : idx; // idx: ours=0 so non-ours start at 1
-
-  const html = `
-    <div class="mk-wrap${b.isOurs?' ours-wrap':''}" id="mkw-${b.id}">
-      <div class="mk-circle" style="width:${size}px;height:${size}px;background:${b.isOurs?'#f59e0b':color};">
-        ${b.isOurs ? '⭐' : `<span style="font-size:${size<28?10:12}px">${idx}</span>`}
-      </div>
-      <div class="mk-label">${b.short}</div>
-    </div>`;
-
-  const icon = L.divIcon({
-    className: '',
-    html,
-    iconSize: [size + 30, size + 22],
-    iconAnchor: [(size+30)/2, size/2 + 3],
-    popupAnchor: [0, -(size/2+4)]
-  });
-
-  const marker = L.marker([b.lat, b.lng], { icon }).addTo(map);
-  marker.on('click', () => selectBuilding(b.id));
-  markersMap[b.id] = marker;
-});
-
-// ══════════════════════════════════════════════
-// 건물 선택 (지도↔목록 연동)
-// ══════════════════════════════════════════════
-function selectBuilding(id) {
-  // 이전 선택 해제
-  if (selectedId) {
-    document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
-    const prev = document.getElementById('card-'+selectedId);
-    if (prev) prev.classList.remove('active');
-  }
-
-  if (selectedId === id) { selectedId = null; return; }
-  selectedId = id;
-
-  // 마커 하이라이트
-  const mkw = document.getElementById('mkw-'+id);
-  if (mkw) mkw.classList.add('selected');
-
-  // 카드 열기 및 스크롤
-  const card = document.getElementById('card-'+id);
-  if (card) {
-    card.classList.add('active');
-    card.scrollIntoView({ behavior:'smooth', block:'nearest' });
-  }
-
-  // 업종 필터 초기화
-  if (selectedType) resetTypeFilter();
-
-  // 탭이 건물목록이 아니면 전환
-  const buildingsPane = document.getElementById('tab-buildings');
-  if (!buildingsPane.classList.contains('active')) showTab('buildings');
-
-  // 지도 이동
-  const b = buildings.find(x=>x.id===id);
-  if (b) map.flyTo([b.lat, b.lng], Math.max(map.getZoom(), 16), { duration:0.8 });
-}
-
-function toggleCard(id) {
-  const card = document.getElementById('card-'+id);
-  const isActive = card.classList.contains('active');
-
-  // 모든 카드 닫기
-  document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
-  selectedId = null;
-
-  if (!isActive) selectBuilding(id);
-}
-
-// ══════════════════════════════════════════════
-// 건물 목록 렌더링 (아코디언)
-// ══════════════════════════════════════════════
-function renderBuildingList() {
-  const list = document.getElementById('building-list');
-  list.innerHTML = buildings.map((b, idx) => {
-    if (b.isOurs) {
-      return `
-        <div class="bldg-card ours-card" id="card-${b.id}">
-          <div class="bldg-header" onclick="toggleCard('${b.id}')">
-            <div class="bldg-num ours">⭐</div>
-            <div class="bldg-info">
-              <div class="bldg-name ours-name">🏗️ ${b.name}</div>
-              <div class="bldg-meta">${b.address}</div>
-            </div>
-            <div class="bldg-right">
-              <span class="bldg-tenant-cnt">신축 예정</span>
-              <span class="chevron">▼</span>
-            </div>
-          </div>
-          <div class="bldg-detail">
-            <div class="ours-placeholder" style="font-size:12px;color:#92400e;line-height:1.7;">
-              현재 공사 준비 중인 부지입니다.<br>
-              지번: 신사동 529 외 2필지<br>건축주: 블루피카
-            </div>
-          </div>
-        </div>`;
-    }
-
-    const tenantCount = b.tenants.length;
-    const dominantColor = getDominantColor(b);
-    const distLabel = { core:'🔴 인접', mid:'🟡 근거리', far:'⚪ 참고' }[b.distance];
-
-    const rows = b.tenants.map(t => `
-      <tr>
-        <td class="floor-cell">${t.floor}</td>
-        <td class="name-cell">${t.name}</td>
-        <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
-      </tr>`).join('');
-
-    return `
-      <div class="bldg-card" id="card-${b.id}">
-        <div class="bldg-header" onclick="toggleCard('${b.id}')">
-          <div class="bldg-num" style="background:${dominantColor}">${idx}</div>
-          <div class="bldg-info">
-            <div class="bldg-name">${b.name}</div>
-            <div class="bldg-meta">${b.address} &nbsp;${distLabel}</div>
-          </div>
-          <div class="bldg-right">
-            ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
-            <span class="bldg-tenant-cnt">${tenantCount}건</span>
-            <span class="chevron">▼</span>
-          </div>
-        </div>
-        <div class="bldg-detail">
-          <div class="detail-inner">
-            <table class="floor-table">
-              <thead>
-                <tr><th>층</th><th>임차인</th><th>업종</th></tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════════
-// 업종 차트 렌더링 (클릭 필터 포함)
-// ══════════════════════════════════════════════
-function renderChart() {
-  // 업종별 건물 목록 사전 계산
-  const typeBuildings = {}; // type -> [{building, tenants:[]}]
-  buildings.forEach(b => {
-    if (b.isOurs) return;
-    const seen = {};
-    b.tenants.forEach(t => {
-      if (!typeBuildings[t.type]) typeBuildings[t.type] = [];
-      if (!seen[b.id]) {
-        seen[b.id] = { b, floors: [] };
-        typeBuildings[t.type].push(seen[b.id]);
-      }
-      seen[b.id].floors.push(t.floor);
-    });
-  });
-
-  const cnt = {};
-  Object.entries(typeBuildings).forEach(([type, list]) => {
-    cnt[type] = list.reduce((s, x) => s + x.floors.length, 0);
-  });
-
-  const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-  const maxVal = sorted[0]?.[1]||1;
-
-  const rows = sorted.map(([type, n]) => {
-    const color = TYPES[type]||'#888';
-    const pct   = Math.round(n / maxVal * 100);
-    const numInside = pct >= 22; // 막대가 충분히 넓으면 안에, 좁으면 바깥
-
-    const bldgList = (typeBuildings[type]||[]).map(({b, floors}) => `
-      <div class="type-bldg-item" style="border-color:${color}40"
-           onmouseover="this.style.background='${color}';this.style.borderColor='${color}';this.style.color='#fff'"
-           onmouseout="this.style.background='';this.style.borderColor='${color}40';this.style.color=''"
-           onclick="event.stopPropagation(); flyToBuilding('${b.id}')">
-        ${b.name} <span class="bldg-arrow">→</span>
-      </div>`).join('');
-
-    return `
-      <div class="type-row" id="tyrow-${type.replace(/\//g,'_')}" onclick="selectType('${type}')">
-        <div class="type-bar-row">
-          <div class="type-lbl">${type}</div>
-          <div class="type-track" style="position:relative;">
-            <div class="type-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}bb,${color});">
-              ${numInside ? `<span class="type-cnt">${n}</span>` : ''}
-            </div>
-            ${!numInside ? `<span style="position:absolute;left:calc(${pct}% + 8px);top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:${color};">${n}</span>` : ''}
-          </div>
-        </div>
-        <div class="type-bldg-list" id="tblist-${type.replace(/\//g,'_')}" style="display:none">
-          ${bldgList}
-        </div>
-      </div>`;
-  }).join('');
-
-  document.getElementById('type-chart').innerHTML =
-    `<div class="type-hint">👆 업종 클릭 → 해당 건물을 지도에서 확인</div>` + rows;
-
-  document.getElementById('insight-box').innerHTML = `
-    <div class="insight-title">💡 주목할 인사이트</div>
-    <ul>
-      <li><b style="color:#3b82f6">사무실/기업</b> 임차인이 가장 많아 오피스 수요가 탄탄한 상권</li>
-      <li><b style="color:#06b6d4">병원/의료</b> 클러스터 형성 — 메디컬 빌딩 전층 임대 사례 다수</li>
-      <li><b style="color:#ef4444">F&B/음식점</b> 저층 집중, 가로수길 상권 특성상 외식 수요 안정적</li>
-      <li><b style="color:#ec4899">뷰티/미용</b> (네일·피부·속눈썹) 2~3층 다수 — 젊은 여성 유동인구</li>
-      <li><b style="color:#f59e0b">학원/교육</b> 중층에서 장기 임차 — 안정적 수익원 역할</li>
-    </ul>`;
-}
-
-// ══════════════════════════════════════════════
-// 업종 필터 선택 / 해제
-// ══════════════════════════════════════════════
-function typeKey(type) { return type.replace(/\//g,'_'); }
-
-function resetTypeFilter() {
-  selectedType = null;
-  document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
-  document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('dimmed','type-match'));
-  const rb = document.getElementById('reset-btn-el');
-  if (rb) rb.remove();
-}
-
-function selectType(type) {
-  if (selectedType === type) { resetTypeFilter(); return; }
-  selectedType = type;
-
-  // 차트 바 스타일 갱신
-  document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
-  document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display='none');
-  const row = document.getElementById('tyrow-'+typeKey(type));
-  if (row) row.classList.add('t-selected');
-  const list = document.getElementById('tblist-'+typeKey(type));
-  if (list) list.style.display = 'block';
-
-  // 초기화 버튼 삽입 (한 번만)
-  const existing = document.getElementById('reset-btn-el');
-  if (existing) existing.remove();
-  const btn = document.createElement('div');
-  btn.id = 'reset-btn-el';
-  btn.className = 'reset-filter';
-  btn.textContent = '✕ 필터 해제';
-  btn.onclick = () => resetTypeFilter();
-  document.getElementById('type-chart').prepend(btn);
-
-  // 해당 업종이 있는 건물 ID 목록
-  const matchIds = new Set(
-    buildings.filter(b => !b.isOurs && b.tenants.some(t => t.type === type)).map(b=>b.id)
-  );
-
-  // 마커 dim / highlight
-  buildings.forEach(b => {
-    if (b.isOurs) return;
-    const mkw = document.getElementById('mkw-'+b.id);
-    if (!mkw) return;
-    if (matchIds.has(b.id)) {
-      mkw.classList.remove('dimmed');
-      mkw.classList.add('type-match');
-    } else {
-      mkw.classList.add('dimmed');
-      mkw.classList.remove('type-match');
-    }
-  });
-
-  // 지도 범위를 해당 건물들로 맞춤
-  const matched = buildings.filter(b => matchIds.has(b.id));
-  if (matched.length > 0) {
-    const bounds = L.latLngBounds(matched.map(b=>[b.lat,b.lng]));
-    map.fitBounds(bounds, { padding:[60,60], maxZoom:17, animate:true });
-  }
-}
-
-// 업종 필터에서 건물 클릭 → 지도 이동만 (탭 전환/아코디언 없음)
-function flyToBuilding(id) {
-  const b = buildings.find(x => x.id === id);
-  if (!b) return;
-
-  // 기존 선택 마커 효과 초기화 후 해당 마커만 강조
-  document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
-  const mkw = document.getElementById('mkw-' + id);
-  if (mkw) mkw.classList.add('selected');
-
-  // 지도 이동
-  map.flyTo([b.lat, b.lng], 17, { duration: 0.8 });
-}
-
-function selectBuildingFromType(id) {
-  resetTypeFilter();
-  selectBuilding(id);
-}
-
-// ══════════════════════════════════════════════
-// 범례 렌더링
-// ══════════════════════════════════════════════
-function renderLegend() {
-  document.getElementById('legend-grid').innerHTML =
-    Object.entries(TYPES).map(([type,color])=>`
-      <div class="legend-item">
-        <div class="legend-dot" style="background:${color}"></div>
-        <span>${type}</span>
-      </div>`).join('');
-}
-
-// ══════════════════════════════════════════════
-// 임대 리포트 렌더링 — 동(洞) 기준
-// ══════════════════════════════════════════════
-function renderReport() {
-  // ── 전체 통계 ──
-  const allTenants = buildings.filter(b=>!b.isOurs).flatMap(b=>b.tenants);
-  const totalTenants = allTenants.length;
-  const totalBuildings = buildings.filter(b=>!b.isOurs).length;
-
-  const typeCnt = {};
-  allTenants.forEach(t => { typeCnt[t.type] = (typeCnt[t.type]||0)+1; });
-  const typeSorted = Object.entries(typeCnt).sort((a,b)=>b[1]-a[1]);
-  const top1 = typeSorted[0] || ['—', 0];
-  const top2 = typeSorted[1] || ['—', 0];
-
-  const vacantCnt = allTenants.filter(t =>
-    t.name.includes('공실')||t.name.includes('명도')||t.name.includes('퇴거')
-  ).length;
-
-  // ── 스택바 생성 헬퍼 ──
-  function makeStackBar(tenants, height='20px') {
-    const cnt = {};
-    tenants.forEach(t => { cnt[t.type] = (cnt[t.type]||0)+1; });
-    const total = tenants.length || 1;
-    const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
-    const segs = sorted.map(([type,n])=>`
-      <div class="rp-stack-seg" style="flex:${n};background:${TYPES[type]||'#888'}" title="${type} ${n}건"></div>`
-    ).join('');
-    const legend = sorted.map(([type,n])=>`
-      <div class="rp-stack-item">
-        <div class="rp-stack-dot" style="background:${TYPES[type]||'#888'}"></div>
-        ${type} <b style="margin-left:2px;font-weight:700;color:#1e293b">${n}</b>
-      </div>`
-    ).join('');
-    return { segs, legend };
-  }
-
-  // ── 종합 스택바 ──
-  const { segs: allSegs, legend: allLegend } = makeStackBar(allTenants);
-
-  // ── 동(洞) 정의 — 추후 데이터 추가 시 여기에 항목 추가 ──
-  const dongDefs = [
-    {
-      key: '신사동',
-      label: '신사동',
-      color: '#1e40af',
-      colorLight: '#eff6ff',
-      icon: '📍',
-      desc: '강남구 신사동 · 가로수길 · 압구정로 일대',
-      note: '케이프혼타워 사업지가 위치한 핵심 상권. 업종 다양성이 가장 높고 임대 데이터 밀도가 높음.',
-      strategy: '압구정로 접면부 F&B(저층)·오피스(중고층) 조합이 검증된 패턴. 뷰티·학원 중층 유치로 공실 리스크 분산 권장.',
-    },
-    {
-      key: '논현동',
-      label: '논현동',
-      color: '#065f46',
-      colorLight: '#f0fdf4',
-      icon: '🏥',
-      desc: '강남구 논현동 · 언주로·학동로 일대',
-      note: '메디컬 특화 상권. 병원·의원의 전층 통임대 사례가 두드러짐. 안정적 장기 임차 수요 확인.',
-      strategy: '전층 메디컬 통임대 시 임대수익 안정성 최고. 단, 업종 다양성 포기 & 계약 종료 후 공실 리스크 주의.',
-    },
-    {
-      key: '삼성동',
-      label: '삼성동',
-      color: '#7c3aed',
-      colorLight: '#faf5ff',
-      icon: '🏛️',
-      desc: '강남구 삼성동 · 삼성로 일대',
-      note: '청담 인접 메디컬·스포츠 복합 사례. 전층 병원 통임대 구조로 임대인 개입 최소화.',
-      strategy: '대형 병원 단독 통임대 시 관리 부담 최소. 고가 의료장비 입주 특성상 장기 계약 유리.',
-    },
-  ];
-
-  // ── 동별 섹션 HTML ──
-  // 실제 데이터가 있는 동만 렌더링 + 데이터 없는 동은 "업로드 대기" 표시
-  const allDongs = [...new Set(buildings.filter(b=>!b.isOurs).map(b=>b.dong))];
-  
-  // dongDefs 순서대로 + 데이터가 있지만 정의 없는 동은 뒤에 자동 추가
-  const dongsToRender = [
-    ...dongDefs,
-    ...allDongs
-      .filter(d => !dongDefs.find(dd=>dd.key===d))
-      .map(d => ({
-        key: d, label: d, color: '#64748b', colorLight: '#f8fafc',
-        icon: '📌', desc: `강남구 ${d} 일대`,
-        note: `${d} 데이터가 추가되었습니다.`,
-        strategy: '추가 분석 예정',
-      }))
-  ];
-
-  const areaSections = dongsToRender.map(def => {
-    const bldgs = buildings.filter(b => !b.isOurs && b.dong === def.key);
-    
-    // 데이터 없는 동 → 업로드 대기 UI
-    if (bldgs.length === 0) {
-      return `
-        <div class="rp-area" id="rp-area-${def.key}">
-          <div class="rp-area-header rp-area-empty">
-            <span class="rp-area-badge" style="background:#cbd5e1;color:#64748b">${def.label}</span>
-            <div>
-              <div class="rp-area-title" style="color:#94a3b8">데이터 업로드 예정</div>
-              <div class="rp-area-sub">${def.desc}</div>
-            </div>
-            <span style="font-size:10px;color:#cbd5e1;margin-left:auto">준비중</span>
-          </div>
-        </div>`;
-    }
-
-    const tenants = bldgs.flatMap(b=>b.tenants);
-    const { segs, legend } = makeStackBar(tenants);
-    const bCnt = bldgs.length;
-    const tCnt = tenants.length;
-    const vacCnt = tenants.filter(t=>
-      t.name.includes('공실')||t.name.includes('퇴거')||t.name.includes('명도')
-    ).length;
-    const prices = bldgs.filter(b=>b.price).map(b=>parseInt(b.price.replace(/[^0-9]/g,'')));
-    const totalPrice = prices.reduce((a,b)=>a+b,0);
-
-    // 건물별 상세 테이블
-    const bldgRows = bldgs.map(b => {
-      const tRows = b.tenants.map(t => {
-        const isVacant = t.name.includes('공실');
-        const isLeaving = t.name.includes('퇴거')||t.name.includes('명도');
-        return `<tr>
-          <td class="fl">${t.floor}</td>
-          <td class="${isVacant?'rp-vacant':isLeaving?'rp-leaving':''}">${t.name}${isLeaving?' ⚠️':''}</td>
-          <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'};font-size:9px;padding:2px 5px">${t.type}</span></td>
-        </tr>`;
-      }).join('');
-      return `
-        <div class="rp-table-title" style="cursor:pointer" onclick="flyToBuilding('${b.id}');showTab('buildings')">
-          <span class="rp-bldg-dot" style="background:${def.color}"></span>
-          ${b.name}
-          <span class="rp-bldg-meta">${b.price ? b.price+' ·' : ''} 지도에서 보기 →</span>
-        </div>
-        <table class="rp-table">
-          <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
-          <tbody>${tRows}</tbody>
-        </table>`;
-    }).join('');
-
-    return `
-      <div class="rp-area" id="rp-area-${def.key}">
-        <div class="rp-area-header" onclick="toggleArea('${def.key}')">
-          <div class="rp-dong-badge-wrap">
-            <span class="rp-area-badge" style="background:${def.color}">${def.icon} ${def.label}</span>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div class="rp-area-title">건물 ${bCnt}개 · 임차인 ${tCnt}건${vacCnt>0?` · <span style="color:#ef4444">공실·퇴거 ${vacCnt}건</span>`:''}</div>
-            <div class="rp-area-sub">${def.desc}</div>
-          </div>
-          <span class="rp-area-chevron">▼</span>
-        </div>
-        <div class="rp-area-body">
-          <div class="rp-area-inner">
-
-            <div class="rp-kpi-row">
-              <div class="rp-kpi">
-                <div class="rp-kpi-val" style="color:${def.color}">${bCnt}</div>
-                <div class="rp-kpi-unit">분석 건물</div>
-              </div>
-              <div class="rp-kpi">
-                <div class="rp-kpi-val">${tCnt}</div>
-                <div class="rp-kpi-unit">임차인 수</div>
-              </div>
-              <div class="rp-kpi">
-                <div class="rp-kpi-val" style="color:${vacCnt>0?'#ef4444':'#10b981'}">${vacCnt}</div>
-                <div class="rp-kpi-unit">공실·퇴거</div>
-              </div>
-            </div>
-
-            <div class="rp-stack-wrap">
-              <div class="rp-stack-label">업종 구성 비율</div>
-              <div class="rp-stack-bar">${segs}</div>
-              <div class="rp-stack-legend">${legend}</div>
-            </div>
-
-            <div style="height:1px;background:#f1f5f9;margin:12px 0"></div>
-
-            <div class="rp-table-section-title">건물별 임차인 상세</div>
-            ${bldgRows}
-
-            <div class="rp-memo" style="border-left-color:${def.color}">
-              <div class="rp-memo-title">📋 ${def.label} 분석 메모</div>
-              ${def.note}<br>
-              <b>전략 포인트:</b> ${def.strategy}
-            </div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
-
-  // ── 층별 전략 제안 ──
-  const strategies = [
-    { icon:'🏪', name:'저층 (B1~1F)', tag:'F&B · 편의점 · 약국', tagColor:'#ef4444',
-      body:'<b>F&B·편의점·약국</b>이 압도적. 압구정로 유동인구 흡입력 활용. 보증금 높고 단기 위험 낮음. 메가커피·도미노피자 등 프랜차이즈 유치 시 공실 리스크 최소화.' },
-    { icon:'💆', name:'2~3층', tag:'뷰티 · 학원 · 스튜디오', tagColor:'#ec4899',
-      body:'<b>뷰티(네일·피부·속눈썹)</b>와 <b>학원·교육</b>이 가장 많이 분포. 젊은 여성 유동인구 기반. 장기 임차 경향 강해 안정적. 층당 1~2개 소규모 업종 믹스 권장.' },
-    { icon:'🏢', name:'4층 이상', tag:'사무실 · 의료', tagColor:'#3b82f6',
-      body:'<b>사무실/기업</b>(스타트업·에이전시 多)이 중심. <b>병원·의료</b> 고층 진출 사례 증가 추세. 논현·삼성동 전층 병원 통임대 시 월세 수익 극대화 가능하나 유연성 감소.' },
-  ];
-  const strategyHtml = strategies.map(s=>`
-    <div class="rp-strategy-card">
-      <div class="rp-strategy-head">
-        <span class="rp-strategy-icon">${s.icon}</span>
-        <span class="rp-strategy-name">${s.name}</span>
-        <span class="rp-strategy-tag" style="background:${s.tagColor}">${s.tag}</span>
-      </div>
-      <div class="rp-strategy-body">${s.body}</div>
-    </div>`).join('');
-
-  // ── 최종 리포트 HTML ──
-  document.getElementById('report-wrap').innerHTML = `
-    <div class="rp-summary-header">
-      <div class="rp-summary-title">📊 케이프혼타워 상권 임대 리포트</div>
-      <div class="rp-summary-sub">강남구 신사동·논현동·삼성동 · 분석 기준: 2025.08 · ${totalBuildings}개 건물</div>
-    </div>
-
-    <div class="rp-total-kpi">
-      <div class="rp-total-card accent">
-        <div class="rp-total-card-label">전체 임차인</div>
-        <div class="rp-total-card-val">${totalTenants}건</div>
-        <div class="rp-total-card-sub">${totalBuildings}개 건물 합산</div>
-      </div>
-      <div class="rp-total-card accent">
-        <div class="rp-total-card-label">공실·퇴거 예정</div>
-        <div class="rp-total-card-val">${vacantCnt}건</div>
-        <div class="rp-total-card-sub">임박한 임차 기회</div>
-      </div>
-      <div class="rp-total-card">
-        <div class="rp-total-card-label">1위 업종</div>
-        <div class="rp-total-card-val" style="font-size:13px;color:${TYPES[top1[0]]||'#1e293b'}">${top1[0]}</div>
-        <div class="rp-total-card-sub">${top1[1]}건 (${Math.round(top1[1]/totalTenants*100)}%)</div>
-      </div>
-      <div class="rp-total-card">
-        <div class="rp-total-card-label">2위 업종</div>
-        <div class="rp-total-card-val" style="font-size:13px;color:${TYPES[top2[0]]||'#1e293b'}">${top2[0]}</div>
-        <div class="rp-total-card-sub">${top2[1]}건 (${Math.round(top2[1]/totalTenants*100)}%)</div>
-      </div>
-    </div>
-
-    <div class="rp-dist-wrap">
-      <div class="rp-stack-label" style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">전체 업종 분포 (3개 동 합산)</div>
-      <div class="rp-stack-bar" style="height:24px">${allSegs}</div>
-      <div class="rp-stack-legend" style="margin-top:8px">${allLegend}</div>
-    </div>
-
-    <div class="rp-strategy-wrap">
-      <div class="rp-stack-label" style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">🏗️ 층별 임대 전략 제안</div>
-      ${strategyHtml}
-    </div>
-
-    <div class="rp-upload-notice">
-      <b>📂 지역별 임대자료 추가 업로드 예정</b>
-      새 지역 자료가 업로드되면 동별 섹션에 자동으로 추가됩니다.<br>
-      현재 <b>신사동 11개 · 논현동 2개 · 삼성동 1개</b> 건물 데이터 적용 중
-    </div>
-
-    <div class="rp-dong-section-header">
-      <div class="rp-dong-section-title">동별 상세 데이터</div>
-      <div class="rp-dong-section-sub">각 동 탭을 클릭하면 건물별 임차인 내역을 확인할 수 있습니다</div>
-    </div>
-
-    ${areaSections}`;
-}
-
-// ── 권역 아코디언 토글 ──
-function toggleArea(key) {
-  const el = document.getElementById('rp-area-' + key);
-  if (el) el.classList.toggle('open');
-}
-
-
-
-function showTab(name) {
-  const names = ['buildings','chart','report','legend'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active', names[i]===name));
-  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
-  if (name !== 'chart' && selectedType) resetTypeFilter();
-}
-
-// 초기화는 _initMapView에서 loadMapData 후 호출됨
-
-</script>
   </div>
 </div>
 </div>
 
-<!-- Script 1: 시장리포트 유틸 + renderMarket -->
 <script>
 /* ══ CONFIG ═══════════════════════════════════════════════ */
 const SID='17lL6O55R56PGODOu-iM5EBH4a6ZbWEJfkypcdWzlGHA';
@@ -2367,6 +1498,7 @@ function tPage(k,cid,p){initTS(k);TS[k].page=p;drawTable(k,CACHE[k],cid,CACHE[k+
    1. TIMELINE — 컴팩트 + 현재시점 마커
    ★ 구글 시트 데이터 100% 실시간 반영
 ════════════════════════════════════════════════════════════ */
+function showLoader(id){document.getElementById(id).innerHTML=`<div class="loader"><div class="ring"></div><p>데이터 불러오는 중…</p></div>`;}
 function stamp(){document.getElementById('syncTime').textContent=new Date().toLocaleTimeString('ko-KR');}
 
 async function load(k){
@@ -2376,13 +1508,6 @@ async function load(k){
       const reports=await fetchMarketReports();
       CACHE[k]=reports;
       renderMarket(reports);
-    } else {
-      const rows=await fetchSheet(k);  /* ← 매번 구글 시트에서 새로 fetch */
-      CACHE[k]=rows;
-      if(k==='timeline')renderTimeline(rows);
-      else if(k==='irr')renderIRR(rows);
-      else if(k==='lease')renderLease(rows);
-      else renderCost(k,rows);
     }
     stamp();
   }catch(e){
@@ -2412,12 +1537,11 @@ function go(k,btn){
   if(k==='mapview'){
     if(typeof window._initMapView==='function'){
       window._initMapView();
-      setTimeout(()=>{ if(typeof map!=='undefined') map.invalidateSize(); },150);
+      setTimeout(()=>{ if(typeof map!=='undefined') map.invalidateSize(); },300);
     }
     return;
   }
   if(!LOADED.has(k)){LOADED.add(k);load(k);}
-}
 }
 
 async function refreshCurrent(){
@@ -2435,14 +1559,8 @@ async function refreshCurrent(){
 async function reloadAll(){
   const btn=document.getElementById('btnRef');
   btn.classList.add('spin');
-  /* 모든 탭 LOADED 캐시 초기화 */
-  Object.keys(TABS).forEach(k=>LOADED.delete(k));
-  /* 전체 탭 병렬 fetch */
-  const keys=Object.keys(TABS);
-  await Promise.allSettled(keys.map(k=>load(k)));
-  /* 현재 탭 다시 render (load에서 이미 처리되지만 CUR이 확실히 on 상태인지 보장) */
-  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
-  document.getElementById(`sec-${CUR}`).classList.add('on');
+  LOADED.clear(); CACHE['market']=null;
+  await load('market');
   btn.classList.remove('spin');
 }
 
@@ -2746,20 +1864,14 @@ LOADED.add('timeline');
 load('timeline');
 /* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
 setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
-
-// ── 초기 로딩 ──
-window.addEventListener('DOMContentLoaded', function(){
-  load('market');
-});
+window.addEventListener('DOMContentLoaded',function(){ load('market'); });
 </script>
 
-<!-- Leaflet -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
-<!-- Script 2: 지도 시트연동 + lazy init -->
 <script>
 
-/* ══ 지도 데이터 — 구글 시트 연동 ══ */
+// ══ 지도 시트 연동 ══
 const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1OWnkwwtMv38I8gnTLfguwkRSLEO6eUsgk0kCs1IJTCk/gviz/tq?tqx=out:csv&sheet=' + encodeURIComponent('임대상권데이터');
 
 const OUR_BUILDING = {
@@ -2796,28 +1908,21 @@ function rowsToBuildings(rows){
     if(!bmap[key]){
       bmap[key]={
         id:key.replace(/[^\w가-힣]/g,'_'),
-        name:row['건물명'],
-        short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
-        address:row['주소']||'',
-        lat:parseFloat(row['위도'])||0,
-        lng:parseFloat(row['경도'])||0,
-        price:row['매매가']||null,
-        dong:row['동']||'기타',
-        distance:'mid',
-        source:row['파일명']||'',
-        tenants:[]
+        name:row['건물명'], short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
+        address:row['주소']||'', lat:parseFloat(row['위도'])||0, lng:parseFloat(row['경도'])||0,
+        price:row['매매가']||null, dong:row['동']||'기타', distance:'mid',
+        source:row['파일명']||'', tenants:[]
       };
     }
-    if(row['임차인']&&row['임차인'].trim()){
+    if(row['임차인']&&row['임차인'].trim())
       bmap[key].tenants.push({floor:row['층']||'',name:row['임차인'].trim(),type:row['업종']||'기타'});
-    }
   });
   return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
 }
 
 async function loadMapData(){
   const el=document.getElementById('map-loader');
-  if(el)el.style.display='flex';
+  if(el) el.style.display='flex';
   try{
     const res=await fetch(MAP_SHEET_URL);
     if(!res.ok) throw new Error('시트 로딩 실패');
@@ -2827,7 +1932,7 @@ async function loadMapData(){
     console.warn('지도 데이터 로딩 실패:',e.message);
     buildings=[OUR_BUILDING];
   }finally{
-    if(el)el.style.display='none';
+    if(el) el.style.display='none';
   }
 }
 
@@ -3478,21 +2583,24 @@ function toggleArea(key) {
 function mapShowTab(name) {
   const names = ['buildings','chart','report','legend'];
   document.querySelectorAll('#sec-mapview .map-tab').forEach((t,i)=>t.classList.toggle('active', names[i]===name));
-  document.querySelectorAll('#sec-mapview .map-tab-pane').forEach(p=>p.classList.toggle('active', p.id==='tab-'+name));
+  document.querySelectorAll('#sec-mapview .map-tab-pane').forEach(p=>p.classList.toggle('active', p.id==='map-tab-'+name));
   if (name !== 'chart' && selectedType) resetTypeFilter();
 }
 
 // ══════════════════════════════════════════════
 // 초기화
 // ══════════════════════════════════════════════
-loadMapData().then(()=>{
-  renderBuildingList();
-  renderChart();
-  renderReport();
-  renderLegend();
-});
+// 초기화: _initMapView 내 loadMapData().then() 에서 호출
+    loadMapData().then(()=>{
+      renderBuildingList();
+      renderChart();
+      renderReport();
+      renderLegend();
+    });
   };
 })();
+
 </script>
+
 </body>
 </html>
