@@ -1566,13 +1566,9 @@ window.addEventListener('DOMContentLoaded',function(){ load('market'); });
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
+
 // ══ 지도 시트 연동 ══
-// URL 방식 1: 웹에 게시 (pub) - PC에서 "파일→공유→웹에 게시" 후 활성화
-// URL 방식 2: gviz/tq - 뷰어 공유 시 동작
-const MAP_SHEET_URLS = [
-  // 웹에 게시 URL (최우선)
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J98AN_VrhIpdXr8pUYfcgEH_2Fvxfgq_g0z3sCR49t0heYBC0k4Za3hxQiAr9bwVNRtWGxe/pub?gid=1985638477&single=true&output=csv',
-];
+const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J98AN_VrhIpdXr8pUYfcgEH_2Fvxfgq_g0z3sCR49t0heYBC0k4Za3hxQiAr9bwVNRtWGxe/pub?gid=1985638477&single=true&output=csv';
 
 const OUR_BUILDING = {
   id:'ours', isOurs:true,
@@ -1624,15 +1620,15 @@ async function loadMapData(){
   const el=document.getElementById('map-loader');
   if(el) el.style.display='flex';
   try{
-    const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J98AN_VrhIpdXr8pUYfcgEH_2Fvxfgq_g0z3sCR49t0heYBC0k4Za3hxQiAr9bwVNRtWGxe/pub?gid=1985638477&single=true&output=csv');
+    const res=await fetch(MAP_SHEET_URL);
     if(!res.ok) throw new Error('HTTP '+res.status);
-    const text = await res.text();
-    const rows = parseMapCSV(text);
-    buildings = rows.length > 0 ? [OUR_BUILDING, ...rowsToBuildings(rows)] : [OUR_BUILDING];
-    console.log('✅ 지도 데이터 로딩 성공, 건물 수:', buildings.length-1);
+    const text=await res.text();
+    const rows=parseMapCSV(text);
+    buildings=rows.length>0?[OUR_BUILDING,...rowsToBuildings(rows)]:[OUR_BUILDING];
+    console.log('✅ 지도데이터 로딩 완료, 건물수:', buildings.length-1);
   }catch(e){
-    console.warn('지도 데이터 로딩 실패:', e.message);
-    buildings = [OUR_BUILDING];
+    console.warn('⚠️ 지도데이터 로딩 실패:', e.message, '→ 기본 마커만 표시');
+    buildings=[OUR_BUILDING];
   }finally{
     if(el) el.style.display='none';
   }
@@ -1640,18 +1636,14 @@ async function loadMapData(){
 
 (function(){
   let _ready=false;
+
   window._initMapView=function(){
     if(_ready)return;
     _ready=true;
     window._mapReady=true;
 
-    if(_ready)return;
-    _ready=true;
-    window._mapReady=true;
-    // ══════════════════════════════════════════════
-// 업종 타입 정의
-// ══════════════════════════════════════════════
-const TYPES = {
+    // ── 모든 렌더함수 및 지도 코드 정의 ──
+    const TYPES = {
   'F&B/음식점':    '#ef4444',
   '병원/의료':     '#06b6d4',
   '뷰티/미용':     '#ec4899',
@@ -2299,61 +2291,58 @@ function mapShowTab(name) {
   if (name !== 'chart' && selectedType) resetTypeFilter();
 }
 
-// ══════════════════════════════════════════════
-// 초기화
-// ══════════════════════════════════════════════
-// 초기화: _initMapView 내 loadMapData().then() 에서 호출
-    loadMapData().then(()=>{
-      renderBuildingList();
-      renderChart();
-      renderReport();
-      renderLegend();
-    });
-
     // ── loadMapData 완료 후 지도 생성 → 렌더링 ──
     loadMapData().then(function(){
-      // 중복 초기화 방지
+      // 이미 초기화된 경우
       if(window.mapInstance){
         window.mapInstance.invalidateSize();
-        renderBuildingList();
-        renderChart();
-        renderReport();
-        renderLegend();
+        renderBuildingList(); renderChart(); renderReport(); renderLegend();
         return;
       }
+      // 지도 생성
+      window.mapInstance = L.map('map', {center:[37.5228,127.0220],zoom:16,zoomControl:true});
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+        attribution:'&copy; OSM &copy; CARTO', subdomains:'abcd', maxZoom:19
+      }).addTo(window.mapInstance);
 
-      
+      // 마커 생성
+      const markersMap={};
+      let selectedId=null;
+      let selectedType=null;
+
+      buildings.forEach(function(b,idx){
+        const color=getDominantColor(b);
+        const size=getMarkerSize(b);
+        const html=`<div class="mk-wrap${b.isOurs?' ours-wrap':''}" id="mkw-${b.id}"><div class="mk-circle" style="width:${size}px;height:${size}px;background:${b.isOurs?'#f59e0b':color};">${b.isOurs?'⭐':`<span style="font-size:${size<28?10:12}px">${idx}</span>`}</div><div class="mk-label">${b.short}</div></div>`;
+        const icon=L.divIcon({className:'',html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+        const marker=L.marker([b.lat,b.lng],{icon}).addTo(window.mapInstance);
+        marker.on('click',function(){selectBuilding(b.id);});
+        markersMap[b.id]=marker;
+      });
 
       // 렌더링
       renderBuildingList();
       renderChart();
       renderReport();
       renderLegend();
+
+      // 크기 재계산
+      setTimeout(function(){window.mapInstance.invalidateSize();},200);
     });
   };
 })();
 
-
-// ══ 전역 탭 브릿지 ══
-window.mapShowTab = function(name) {
-  if (!window._mapReady && typeof window._initMapView === 'function') {
+// ── 전역 탭 브릿지 ──
+window.mapShowTab=function(name){
+  if(!window._mapReady && typeof window._initMapView==='function'){
     window._initMapView();
-    return; // initMapView가 async이므로 탭전환은 renderBuildingList 완료 후
+    return;
   }
-  const names = ['buildings','chart','report','legend'];
+  const names=['buildings','chart','report','legend'];
   document.querySelectorAll('#sec-mapview .map-tab')
-    .forEach(function(t,i){ t.classList.toggle('active', names[i]===name); });
+    .forEach(function(t,i){t.classList.toggle('active',names[i]===name);});
   document.querySelectorAll('#sec-mapview .map-tab-pane')
-    .forEach(function(p){ p.classList.toggle('active', p.id==='map-tab-'+name); });
-  if(name!=='chart' && typeof resetTypeFilter==='function' && typeof selectedType!=='undefined' && selectedType){
-    resetTypeFilter();
-  }
-};
-
-window._mapInvalidate = function(){
-  setTimeout(function(){
-    if(window.mapInstance) window.mapInstance.invalidateSize();
-  }, 100);
+    .forEach(function(p){p.classList.toggle('active',p.id==='map-tab-'+name);});
 };
 
 </script>
