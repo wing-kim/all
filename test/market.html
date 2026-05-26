@@ -1266,19 +1266,49 @@ function go(k,btn){
   if(sec) sec.classList.add('on');
   CUR=k;
   if(k==='mapview'){
-    // sec-mapview가 보인 다음에 지도 초기화
     requestAnimationFrame(function(){
       if(typeof window._initMapView==='function'){
         window._initMapView();
       }
       setTimeout(function(){
-        if(typeof map!=='undefined' && map) map.invalidateSize();
-      }, 200);
+        if(window.mapInstance) window.mapInstance.invalidateSize();
+      }, 300);
     });
     return;
   }
   if(!LOADED.has(k)){LOADED.add(k);load(k);}
 }
+
+/* ══ MARKET REPORT — Google Drive 폴더 연동 ══════════════ */
+const DRIVE_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwCDgPxJkNiRh5exOP2ApcJdBSXWCXFcmLmcUFobTRZ0abgqTCyAFzxN5HTWJ-xI57x/exec';
+
+function fetchMarketReports(){
+  return new Promise((resolve,reject)=>{
+    const cbName='marketCb_'+Date.now();
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup();
+      reject(new Error('요청 시간 초과'));
+    },10000);
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+    window[cbName]=function(json){
+      cleanup();
+      if(!json.ok){ reject(new Error(json.error||'Apps Script 오류')); return; }
+      resolve(json.reports||[]);
+    };
+    script.onerror=function(){
+      cleanup();
+      reject(new Error('Apps Script 로드 실패'));
+    };
+    script.src=DRIVE_SCRIPT_URL+'?callback='+cbName+'&t='+Date.now();
+    document.head.appendChild(script);
+  });
+}
+
 function renderMarket(reports){
   const sec=document.getElementById('sec-market');
   if(!reports.length){
@@ -1536,7 +1566,6 @@ window.addEventListener('DOMContentLoaded',function(){ load('market'); });
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
-
 // ══ 지도 시트 연동 ══
 // URL 방식 1: 웹에 게시 (pub) - PC에서 "파일→공유→웹에 게시" 후 활성화
 // URL 방식 2: gviz/tq - 뷰어 공유 시 동작
@@ -1609,10 +1638,13 @@ async function loadMapData(){
   }
 }
 
-
 (function(){
   let _ready=false;
   window._initMapView=function(){
+    if(_ready)return;
+    _ready=true;
+    window._mapReady=true;
+
     if(_ready)return;
     _ready=true;
     window._mapReady=true;
@@ -1640,16 +1672,22 @@ const TYPES = {
 // ══════════════════════════════════════════════
 // 지도 — CartoDB Positron (깔끔한 라이트 타일)
 // ══════════════════════════════════════════════
-const map = L.map('map', {
-  center: [37.5228, 127.0220],
-  zoom: 16,
-  zoomControl: true
-});
+// 중복 초기화 방지
+      if(window.mapInstance){
+        window.mapInstance.invalidateSize();
+        renderBuildingList(); renderChart(); renderReport(); renderLegend();
+        return;
+      }
+      window.mapInstance = L.map('map', {
+        center: [37.5228, 127.0220],
+        zoom: 16,
+        zoomControl: true
+      });
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   subdomains: 'abcd', maxZoom: 19
-}).addTo(map);
+}).addTo(window.mapInstance);
 
 // ══════════════════════════════════════════════
 // 마커 생성
@@ -1692,7 +1730,7 @@ buildings.forEach((b, idx) => {
     popupAnchor: [0, -(size/2+4)]
   });
 
-  const marker = L.marker([b.lat, b.lng], { icon }).addTo(map);
+  const marker = L.marker([b.lat, b.lng], { icon }).addTo(window.mapInstance);
   marker.on('click', () => selectBuilding(b.id));
   markersMap[b.id] = marker;
 });
@@ -1731,7 +1769,7 @@ function selectBuilding(id) {
 
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
-  if (b) map.flyTo([b.lat, b.lng], Math.max(map.getZoom(), 16), { duration:0.8 });
+  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.8 });
 }
 
 function toggleCard(id) {
@@ -1944,7 +1982,7 @@ function selectType(type) {
   const matched = buildings.filter(b => matchIds.has(b.id));
   if (matched.length > 0) {
     const bounds = L.latLngBounds(matched.map(b=>[b.lat,b.lng]));
-    map.fitBounds(bounds, { padding:[60,60], maxZoom:17, animate:true });
+    window.mapInstance.fitBounds(bounds, { padding:[60,60], maxZoom:17, animate:true });
   }
 }
 
@@ -1959,7 +1997,7 @@ function flyToBuilding(id) {
   if (mkw) mkw.classList.add('selected');
 
   // 지도 이동
-  map.flyTo([b.lat, b.lng], 17, { duration: 0.8 });
+  window.mapInstance.flyTo([b.lat, b.lng], 17, { duration: 0.8 });
 }
 
 function selectBuildingFromType(id) {
@@ -2271,36 +2309,53 @@ function mapShowTab(name) {
       renderReport();
       renderLegend();
     });
+
+    // ── loadMapData 완료 후 지도 생성 → 렌더링 ──
+    loadMapData().then(function(){
+      // 중복 초기화 방지
+      if(window.mapInstance){
+        window.mapInstance.invalidateSize();
+        renderBuildingList();
+        renderChart();
+        renderReport();
+        renderLegend();
+        return;
+      }
+
+      
+
+      // 렌더링
+      renderBuildingList();
+      renderChart();
+      renderReport();
+      renderLegend();
+    });
   };
 })();
 
 
 // ══ 전역 탭 브릿지 ══
-// HTML onclick="mapShowTab(...)" 에서 호출됨
 window.mapShowTab = function(name) {
-  // 초기화 안됐으면 먼저 실행
   if (!window._mapReady && typeof window._initMapView === 'function') {
     window._initMapView();
+    return; // initMapView가 async이므로 탭전환은 renderBuildingList 완료 후
   }
-  // 탭 버튼 활성화
   const names = ['buildings','chart','report','legend'];
   document.querySelectorAll('#sec-mapview .map-tab')
     .forEach(function(t,i){ t.classList.toggle('active', names[i]===name); });
-  // 탭 패널 전환
   document.querySelectorAll('#sec-mapview .map-tab-pane')
     .forEach(function(p){ p.classList.toggle('active', p.id==='map-tab-'+name); });
-  // 차트 탭이 아닐 때 필터 초기화
-  if (name !== 'chart' && typeof resetTypeFilter === 'function' && typeof selectedType !== 'undefined' && selectedType) {
+  if(name!=='chart' && typeof resetTypeFilter==='function' && typeof selectedType!=='undefined' && selectedType){
     resetTypeFilter();
   }
 };
 
-// 지도 크기 재계산 (화면 전환 후)
-window._mapInvalidate = function() {
+window._mapInvalidate = function(){
   setTimeout(function(){
-    if(typeof map !== 'undefined' && map) map.invalidateSize();
+    if(window.mapInstance) window.mapInstance.invalidateSize();
   }, 100);
 };
+
 </script>
 
 </body>
