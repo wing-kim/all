@@ -1012,6 +1012,31 @@ td:first-child{color:var(--t1);font-weight:500}
 #mr-list::-webkit-scrollbar-track { background: #0f1118; }
 #mr-list::-webkit-scrollbar-thumb { background: #2a3050; border-radius: 2px; }
 #mr-list::-webkit-scrollbar-thumb:hover { background: #3b7fff; }
+/* ── 뒤로가기 버튼 ── */
+.back-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:10px 18px;
+  margin-right:18px;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  background:var(--s2);
+  color:var(--t2);
+  font-size:14px;
+  font-weight:500;
+  text-decoration:none;
+  cursor:pointer;
+  transition:all .18s;
+  letter-spacing:-.2px;
+  flex-shrink:0;
+}
+.back-btn:hover{
+  background:var(--s3);
+  color:var(--t1);
+  border-color:var(--blue);
+}
 #sec-mapview{height:calc(100vh - 160px);min-height:720px;}
 #sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:row;}
 .map-app{width:100%;height:100%;display:flex;flex-direction:row;}
@@ -2265,66 +2290,99 @@ function mapShowTab(name) {
 (function(){
   let _ready = false;
 
-  window._initMapView = function(){
-    if(_ready) return;
+  function doRender() {
+    // ── 이미 지도 있으면 갱신만 ──
+    if (window.mapInstance) {
+      renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+      return;
+    }
+    // ── 지도 생성 ──
+    window.mapInstance = L.map('map', {
+      center: [37.5228, 127.0220], zoom: 16, zoomControl: true
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OSM &copy; CARTO',
+      subdomains: 'abcd', maxZoom: 19
+    }).addTo(window.mapInstance);
+    // ── 마커 생성 ──
+    buildings.forEach(function(b, idx) {
+      var color = getDominantColor(b);
+      var size  = getMarkerSize(b);
+      var inner = b.isOurs
+        ? '⭐'
+        : '<span style="font-size:' + (size<28?10:12) + 'px">' + idx + '</span>';
+      var html =
+        '<div class="mk-wrap' + (b.isOurs?' ours-wrap':'') + '" id="mkw-' + b.id + '">' +
+        '<div class="mk-circle" style="width:' + size + 'px;height:' + size + 'px;background:' + (b.isOurs?'#f59e0b':color) + ';">' +
+        inner + '</div>' +
+        '<div class="mk-label">' + b.short + '</div></div>';
+      var icon = L.divIcon({
+        className: '', html: html,
+        iconSize:   [size+30, size+22],
+        iconAnchor: [(size+30)/2, size/2+3],
+        popupAnchor:[0, -(size/2+4)]
+      });
+      var marker = L.marker([b.lat, b.lng], {icon: icon}).addTo(window.mapInstance);
+      marker.on('click', (function(bid){ return function(){ window.selectBuilding(bid); }; })(b.id));
+      markersMap[b.id] = marker;
+    });
+    // ── 렌더링 ──
+    renderBuildingList(); renderChart(); renderReport(); renderLegend();
+    // ── 크기 재계산 ──
+    setTimeout(function(){ window.mapInstance.invalidateSize(); }, 300);
+  }
+
+  window._initMapView = function() {
+    if (_ready) {
+      // 이미 초기화됨 → invalidateSize만
+      if (window.mapInstance) window.mapInstance.invalidateSize();
+      return;
+    }
     _ready = true;
     window._mapReady = true;
 
-    // 1) 데이터 로딩
-    loadMapData().then(function(){
+    // ── 1) 로더 표시 ──
+    var loader = document.getElementById('map-loader');
+    if (loader) loader.style.display = 'flex';
 
-      // 2) 이미 초기화된 경우 → 렌더만 갱신
-      if(window.mapInstance){
-        window.mapInstance.invalidateSize();
-        renderBuildingList(); renderChart(); renderReport(); renderLegend();
-        return;
-      }
-
-      // 3) Leaflet 지도 생성
-      window.mapInstance = L.map('map', {
-        center: [37.5228, 127.0220],
-        zoom: 16,
-        zoomControl: true
-      });
-
-      // 4) 타일 레이어
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OSM</a> &copy; CARTO',
-        subdomains: 'abcd', maxZoom: 19
-      }).addTo(window.mapInstance);
-
-      // 5) 마커 생성
-      buildings.forEach(function(b, idx){
-        const color = getDominantColor(b);
-        const size  = getMarkerSize(b);
-        const html  = `<div class="mk-wrap${b.isOurs?' ours-wrap':''}" id="mkw-${b.id}">` +
-          `<div class="mk-circle" style="width:${size}px;height:${size}px;background:${b.isOurs?'#f59e0b':color};">` +
-          `${b.isOurs?'⭐':`<span style="font-size:${size<28?10:12}px">${idx}</span>`}</div>` +
-          `<div class="mk-label">${b.short}</div></div>`;
-        const icon = L.divIcon({
-          className: '',
-          html: html,
-          iconSize:   [size+30, size+22],
-          iconAnchor: [(size+30)/2, size/2+3],
-          popupAnchor:[0, -(size/2+4)]
-        });
-        const marker = L.marker([b.lat, b.lng], {icon: icon}).addTo(window.mapInstance);
-        marker.on('click', (function(bid){
-          return function(){ window.selectBuilding(bid); };
-        })(b.id));
-        markersMap[b.id] = marker;
-      });
-
-      // 6) 렌더링
-      renderBuildingList();
-      renderChart();
-      renderReport();
-      renderLegend();
-
-      // 7) 크기 재계산
-      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 300);
-
+    // ── 2) 8초 타임아웃 fetch ──
+    var fetchPromise = fetch(MAP_SHEET_URL);
+    var timeoutPromise = new Promise(function(_, reject) {
+      setTimeout(function(){ reject(new Error('fetch timeout')); }, 8000);
     });
+
+    Promise.race([fetchPromise, timeoutPromise])
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text) {
+        var rows = parseMapCSV(text);
+        buildings = rows.length > 0 ? [OUR_BUILDING].concat(rowsToBuildings(rows)) : [OUR_BUILDING];
+        console.log('✅ 지도데이터 로딩 완료, 건물:', buildings.length - 1);
+      })
+      .catch(function(e) {
+        console.warn('⚠️ 지도데이터 실패:', e.message);
+        buildings = [OUR_BUILDING];
+        // 에러 안내 (3초 후 자동 제거)
+        var errEl = document.getElementById('map-fetch-err');
+        if (!errEl) {
+          errEl = document.createElement('div');
+          errEl.id = 'map-fetch-err';
+          errEl.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:9000;background:rgba(239,68,68,.9);color:#fff;padding:8px 18px;border-radius:8px;font-size:12px;font-family:var(--sans);white-space:nowrap;';
+          errEl.textContent = '상권 데이터 연동 실패 · 기본 건물만 표시합니다';
+          var mapEl = document.getElementById('map');
+          if (mapEl) mapEl.parentNode.insertBefore(errEl, mapEl);
+        }
+        setTimeout(function(){ if(errEl.parentNode) errEl.parentNode.removeChild(errEl); }, 3000);
+      })
+      .finally(function() {
+        // ── 3) 로더 숨김 ──
+        if (loader) loader.style.display = 'none';
+        // ── 4) 렌더링 실행 (성공/실패 무관) ──
+        doRender();
+      });
   };
 })();
 
