@@ -1305,281 +1305,274 @@ function go(k,btn){
   if(!LOADED.has(k)){LOADED.add(k);load(k);}
 }
 
-/* ══ MARKET REPORT — Google Drive 폴더 연동 ══════════════ */
-const DRIVE_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwCDgPxJkNiRh5exOP2ApcJdBSXWCXFcmLmcUFobTRZ0abgqTCyAFzxN5HTWJ-xI57x/exec';
 
-function fetchMarketReports(){
-  return new Promise((resolve,reject)=>{
-    const cbName='marketCb_'+Date.now();
-    const script=document.createElement('script');
-    const timer=setTimeout(()=>{
+
+/* ================================
+   MARKET REPORT - DO NOT TOUCH
+   시장 리포트 구글 연동 전용 구간
+   임대 상권지도 수정 시 이 구간 수정 금지
+================================ */
+
+/* ── Apps Script 웹앱 URL ─────────────────────────────── */
+const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCDgPxJkNiRh5exOP2ApcJdBSXWCXFcmLmcUFobTRZ0abgqTCyAFzxN5HTWJ-xI57x/exec';
+
+/* ── fetchMarketReports
+   JSONP 방식으로 Apps Script 호출.
+   응답 형식 1: { ok: true, reports: [...] }
+   응답 형식 2: { ok: false, error: '...' }
+   응답 형식 3: [...] (배열 단독 — ok 필드 없는 경우도 처리)
+─────────────────────────────────────────────────────── */
+function fetchMarketReports() {
+  return new Promise(function(resolve, reject) {
+    var cbName = 'marketCb_' + Date.now();
+    var script  = document.createElement('script');
+    var timer   = setTimeout(function() {
       cleanup();
-      reject(new Error('요청 시간 초과'));
-    },10000);
-    function cleanup(){
+      reject(new Error('요청 시간 초과 (10초)'));
+    }, 10000);
+
+    function cleanup() {
       clearTimeout(timer);
       delete window[cbName];
-      if(script.parentNode) script.parentNode.removeChild(script);
+      if (script.parentNode) script.parentNode.removeChild(script);
     }
-    window[cbName]=function(json){
+
+    window[cbName] = function(json) {
       cleanup();
-      if(!json.ok){ reject(new Error(json.error||'Apps Script 오류')); return; }
-      resolve(json.reports||[]);
+      /* 배열 단독 응답 */
+      if (Array.isArray(json)) {
+        resolve(json);
+        return;
+      }
+      /* { ok: false } 오류 응답 */
+      if (json && json.ok === false) {
+        reject(new Error(json.error || 'Apps Script 오류'));
+        return;
+      }
+      /* { ok: true, reports: [...] } 또는 reports 필드만 있는 경우 */
+      if (json && json.reports) {
+        resolve(json.reports);
+        return;
+      }
+      /* ok 필드가 없지만 객체인 경우 — reports 키 탐색 */
+      var keys = Object.keys(json || {});
+      for (var i = 0; i < keys.length; i++) {
+        if (Array.isArray(json[keys[i]])) {
+          resolve(json[keys[i]]);
+          return;
+        }
+      }
+      /* 빈 응답 처리 */
+      resolve([]);
     };
-    script.onerror=function(){
+
+    script.onerror = function() {
       cleanup();
-      reject(new Error('Apps Script 로드 실패'));
+      reject(new Error('Apps Script 로드 실패 — 배포 URL 및 권한 확인 필요'));
     };
-    script.src=DRIVE_SCRIPT_URL+'?callback='+cbName+'&t='+Date.now();
+
+    script.src = DRIVE_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
     document.head.appendChild(script);
   });
 }
 
-function renderMarket(reports){
-  const sec=document.getElementById('sec-market');
-  if(!reports.length){
-    sec.innerHTML=`<div class="notice">📭 저장된 브리핑이 없습니다. Claude에게 "오늘 브리핑 해줘"라고 입력하면 자동으로 저장됩니다.</div>`;
+/* ── renderMarket — 리포트 목록 + 상세 UI 구성 ─────────── */
+function renderMarket(reports) {
+  var sec = document.getElementById('sec-market');
+  if (!reports || !reports.length) {
+    sec.innerHTML = '<div class="notice">📭 저장된 브리핑이 없습니다. Claude에게 "오늘 브리핑 해줘"라고 입력하면 자동으로 저장됩니다.</div>';
     return;
   }
 
-  /* 정렬 기준: 1순위 제목/본문에서 추출한 날짜, 2순위 updatedAt, 3순위 createdAt */
-  function extractReportDate(r){
-    /* 제목에서 YYYY-MM-DD 추출: "블루피카 리포트 2026-05-21" */
+  /* 정렬: 1순위 제목/본문 날짜, 2순위 updatedAt, 3순위 createdAt */
+  function extractReportDate(r) {
     var m = (r.title||'').match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
-    if(m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
-    /* 본문 첫 200자에서 날짜 추출 */
-    var bodySnip = (r.body||'').substring(0,200);
+    if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+    var bodySnip = (r.body||'').substring(0, 200);
     var m2 = bodySnip.match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
-    if(m2) return new Date(parseInt(m2[1]), parseInt(m2[2])-1, parseInt(m2[3]));
-    /* fallback: updatedAt → createdAt */
-    if(r.updatedAt) return new Date(r.updatedAt);
-    if(r.createdAt) return new Date(r.createdAt);
+    if (m2) return new Date(parseInt(m2[1]), parseInt(m2[2])-1, parseInt(m2[3]));
+    if (r.updatedAt) return new Date(r.updatedAt);
+    if (r.createdAt) return new Date(r.createdAt);
     return new Date(0);
   }
-  const data=[...reports].sort(function(a,b){
-    var da=extractReportDate(a), db=extractReportDate(b);
-    if(db-da !== 0) return db-da;
-    /* 같은 날짜면 updatedAt 최신순 */
-    return new Date(b.updatedAt||b.createdAt||0)-new Date(a.updatedAt||a.createdAt||0);
-  });
-  window._mrData=data;
 
-  const listHTML=data.map((r,i)=>{
-    /* 표시 날짜: 제목에서 추출한 날짜 우선 */
+  var data = reports.slice().sort(function(a, b) {
+    var da = extractReportDate(a), db = extractReportDate(b);
+    if (db - da !== 0) return db - da;
+    return new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0);
+  });
+  window._mrData = data;
+
+  var listHTML = data.map(function(r, i) {
     var _rd = extractReportDate(r);
-    const dateStr = (_rd && _rd.getFullYear()>2000)
-      ? _rd.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'})
-      : (r.title||'날짜 없음');
-    /* preview: divider 제거 → 개행 제거 → 첫 의미있는 줄 1줄만 */
-    const preview = (function(){
-      const lines = (r.body||'').split('\n');
-      for(var li=0; li<lines.length; li++){
-        const t = lines[li].trim();
-        if(!t) continue;
-        if(/^[=\-_─]{5,}$/.test(t)) continue;
-        return t.substring(0,60);
+    var dateStr = (_rd && _rd.getFullYear() > 2000)
+      ? _rd.toLocaleDateString('ko-KR', {year:'numeric', month:'2-digit', day:'2-digit'})
+      : (r.title || '날짜 없음');
+    var preview = (function() {
+      var lines = (r.body||'').split('\n');
+      for (var li = 0; li < lines.length; li++) {
+        var t = lines[li].trim();
+        if (!t) continue;
+        if (/^[=\-_─]{5,}$/.test(t)) continue;
+        return t.substring(0, 60);
       }
       return '';
     })();
-    return `<div class="mr-item" onclick="mrShow(${i})" id="mri-${i}">
-      <div class="mr-date">${dateStr}</div>
-      <div class="mr-title">${r.title||'제목 없음'}</div>
-      <div class="mr-preview">${preview}…</div>
-    </div>`;
+    return '<div class="mr-item" onclick="selectMarketReport(' + i + ')" id="mri-' + i + '">' +
+      '<div class="mr-date">' + dateStr + '</div>' +
+      '<div class="mr-title">' + (r.title||'제목 없음') + '</div>' +
+      '<div class="mr-preview">' + preview + '…</div>' +
+      '</div>';
   }).join('');
 
-  sec.innerHTML=`
-    <div class="notice">📡 Google Drive 폴더 실시간 연동 · 시장 리포트 이력 <span class="chip">${data.length}건</span></div>
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
-      <div class="card" style="overflow:hidden">
-        <div class="card-head"><span class="card-title">📋 브리핑 목록</span></div>
-        <div id="mr-list" style="max-height:70vh;overflow-y:auto">${listHTML}</div>
-      </div>
-      <div class="card" id="mr-detail" style="min-height:400px">
-        <div class="mr-mobile-back" onclick="backToMarketList()">← 브리핑 목록으로 돌아가기</div>
-        <div class="card-head">
-          <span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span>
-          <a id="mr-drive-link" href="#" target="_blank" style="display:none;font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto">
-            📄 Drive에서 열기
-          </a>
-        </div>
-        <div id="mr-detail-body" style="padding:20px 24px;font-size:13px;line-height:2;color:var(--t2);white-space:pre-wrap;max-height:70vh;overflow-y:auto">
-          왼쪽 목록에서 날짜를 클릭하면 전체 내용이 표시됩니다.
-        </div>
-      </div>
-    </div>`;
+  sec.innerHTML =
+    '<div class="notice">📡 Google Drive 폴더 실시간 연동 · 시장 리포트 이력 <span class="chip">' + data.length + '건</span></div>' +
+    '<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">' +
+      '<div class="card" style="overflow:hidden">' +
+        '<div class="card-head"><span class="card-title">📋 브리핑 목록</span></div>' +
+        '<div id="mr-list" style="max-height:70vh;overflow-y:auto">' + listHTML + '</div>' +
+      '</div>' +
+      '<div class="card" id="mr-detail" style="min-height:400px">' +
+        '<div class="mr-mobile-back" onclick="closeMarketDetail()">← 브리핑 목록으로 돌아가기</div>' +
+        '<div class="card-head">' +
+          '<span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span>' +
+          '<a id="mr-drive-link" href="#" target="_blank" style="display:none;font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto">📄 Drive에서 열기</a>' +
+        '</div>' +
+        '<div id="mr-detail-body" style="padding:20px 24px;font-size:13px;line-height:2;color:var(--t2);white-space:pre-wrap;max-height:70vh;overflow-y:auto">' +
+          '왼쪽 목록에서 날짜를 클릭하면 전체 내용이 표시됩니다.' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 
-  /* 첫 번째 자동 선택 — 모바일 세로에서는 목록만 표시 */
-  const _isMobilePortrait=window.matchMedia('(max-width:768px) and (orientation:portrait)').matches;
-  if(_isMobilePortrait){
-    /* 모바일 세로: 상세 초기화 + market-detail-open 강제 제거 → 목록만 표시 */
-    const _sec=document.getElementById('sec-market');
-    if(_sec) _sec.classList.remove('market-detail-open');
-    const _db=document.getElementById('mr-detail-body');
-    if(_db){ _db.innerHTML=''; _db.scrollTop=0; }
-    const _dt=document.getElementById('mr-detail-title');
-    if(_dt) _dt.textContent='브리핑을 선택하세요';
-    const _dl=document.getElementById('mr-drive-link');
-    if(_dl) _dl.style.display='none';
+  /* 첫 번째 자동 선택 — 모바일 세로는 목록만 표시 */
+  var isMobilePortrait = window.matchMedia('(max-width:768px) and (orientation:portrait)').matches;
+  if (isMobilePortrait) {
+    var _sec = document.getElementById('sec-market');
+    if (_sec) _sec.classList.remove('market-detail-open');
   } else {
-    /* PC / 모바일 가로: 기존대로 첫 번째 자동 선택 */
-    mrShow(0);
+    selectMarketReport(0);
   }
 }
 
-/* ── 시장 리포트 본문 렌더러 ───────────────────────────── */
-function formatMarketBody(text){
-  if(!text) return '<span style="color:var(--t3)">본문 없음</span>';
+/* ── selectMarketReport — 리포트 클릭 시 상세 표시 ───────── */
+function selectMarketReport(i) {
+  var data = window._mrData;
+  if (!data || !data[i]) return;
+  var r = data[i];
+
+  /* 목록 하이라이트 */
+  document.querySelectorAll('.mr-item').forEach(function(el, idx) {
+    el.classList.toggle('mr-item-on', idx === i);
+  });
+
+  /* 제목 날짜: updatedAt → createdAt → title 순 */
+  var dateRaw = r.updatedAt || r.createdAt;
+  var dateStr = dateRaw
+    ? new Date(dateRaw).toLocaleDateString('ko-KR', {year:'numeric', month:'2-digit', day:'2-digit'})
+    : (r.title || '');
+  var titleEl = document.getElementById('mr-detail-title');
+  if (titleEl) titleEl.textContent = dateStr + ' · ' + (r.title||'');
+
+  /* 본문 렌더링 */
+  var detailBody = document.getElementById('mr-detail-body');
+  if (detailBody) {
+    detailBody.innerHTML = formatMarketBody(r.body||'');
+    detailBody.scrollTop = 0;
+  }
+
+  /* Drive 원문 링크 */
+  var linkEl = document.getElementById('mr-drive-link');
+  if (linkEl) {
+    if (r.url) {
+      linkEl.href = r.url;
+      linkEl.style.display = 'inline';
+    } else {
+      linkEl.style.display = 'none';
+    }
+  }
+
+  /* 모바일 세로: 상세 화면으로 전환 */
+  openMarketDetailOnMobile();
+}
+
+/* ── formatMarketBody — 본문 리치 렌더러 ─────────────────── */
+function formatMarketBody(text) {
+  if (!text) return '<span style="color:var(--t3)">본문 없음</span>';
 
   var urlRe = /(https?:\/\/[^\s\)"'<>\]]+)/g;
 
-  /* URL에서 기사 게시일 추출
-     1순위: YYYYMMDD 연속 패턴 (20260512)
-     2순위: /YYYY/MM/DD/ 슬래시 구분 패턴 (2026/02/25)
-  */
-  function extractArticleDate(url){
-    /* 1) YYYYMMDD 연속: 20260512 */
+  function extractArticleDate(url) {
     var m = url.match(/(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/);
-    if(m) return m[1] + '-' + m[2] + '-' + m[3];
-    /* 2) /YYYY/MM/DD/ 슬래시 구분 */
+    if (m) return m[1] + '-' + m[2] + '-' + m[3];
     m = url.match(/\/(20\d{2})\/(\d{1,2})\/(\d{1,2})(\/|$)/);
-    if(m){
-      var mm = m[2].padStart(2,'0');
-      var dd = m[3].padStart(2,'0');
-      return m[1] + '-' + mm + '-' + dd;
-    }
+    if (m) return m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
     return '';
   }
 
-  /* 일반 본문 URL linkify — 날짜 표기 없음 */
-  function linkify(str){
-    return str.replace(urlRe, function(url){
+  function linkify(str) {
+    return str.replace(urlRe, function(url) {
       var display = url.length > 60 ? url.substring(0,57)+'...' : url;
       return '<a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>';
     });
   }
 
-  /* 출처 라인 전용 렌더러 — URL + 날짜 표기 */
-  function renderSource(line){
-    /* "출처:" 뒤 텍스트 분리 */
+  function renderSource(line) {
     var prefix = line.match(/^출처\s*[:：]\s*/);
     var rest = prefix ? line.slice(prefix[0].length) : line;
-    /* URL 추출 */
     var urlMatch = rest.match(urlRe);
-    if(!urlMatch){
-      /* URL 없으면 그냥 escape 후 출력 */
-      return '<div class="mr-source">출처: ' + rest.replace(/&/g,'&amp;') + '</div>';
-    }
+    if (!urlMatch) return '<div class="mr-source">출처: ' + rest.replace(/&/g,'&amp;') + '</div>';
     var url = urlMatch[0];
     var articleDate = extractArticleDate(url);
-    var dateText = articleDate
-      ? ' <span style="color:var(--t3);font-size:11px;">(' + articleDate + ' 기사)</span>'
-      : '';
+    var dateText = articleDate ? ' <span style="color:var(--t3);font-size:11px;">(' + articleDate + ' 기사)</span>' : '';
     var display = url.length > 70 ? url.substring(0,67)+'...' : url;
     return '<div class="mr-source">출처: <a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>' + dateText + '</div>';
   }
 
-  function isHeading(s){
-    /* 조건1: 숫자+점+공백 "1. " "9. " 등 모든 숫자 범위 */
-    if(/^\d+\.\s/.test(s)) return true;
-    /* 조건2: 원문자 ①~⑩ */
-    if(/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
-    /* 조건3: 이모지 + 숫자+점 조합 "🏗️ 1." "📊 2." (이모지 뒤에 숫자+점 필수) */
-    if(/^.{1,3}\s*\d+\.\s/.test(s)) return true;
-    /* 조건4: ■ ▶ 기호 */
-    if(/^[■▶]/.test(s)) return true;
-    /* 조건5: 💡 액션 포인트 */
-    if(/^💡/.test(s)) return true;
-    /* 조건6: 출처 라인 제외 후, [참고] [주의] [위험] [확인] 포함 줄
-       - "[참고] 내용"
-       - "🟢 [참고] 내용"
-       - "🟡 [주의] 내용"
-       - "🔴 [위험] 내용"
-       이모지 유무 무관, 앞에 공백/이모지만 있어도 인식 */
-    if(!/^출처/.test(s) && /^[\s\S]{0,5}\[(참고|주의|위험|확인)\]/u.test(s)) return true;
-    /* 그 외 이모지만 있거나 일반 문장 → 제목 아님 */
+  function isHeading(s) {
+    if (/^\d+\.\s/.test(s)) return true;
+    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
+    if (/^.{1,3}\s*\d+\.\s/.test(s)) return true;
+    if (/^[■▶]/.test(s)) return true;
+    if (/^💡/.test(s)) return true;
+    if (!/^출처/.test(s) && /^[\s\S]{0,5}\[(참고|주의|위험|확인)\]/u.test(s)) return true;
     return false;
   }
 
-  function isDivider(s){
-    return /^[=\-_─]{5,}$/.test(s);
-  }
+  function isDivider(s) { return /^[=\-_─]{5,}$/.test(s); }
 
   var lines = text.split('\n');
   var parts = [];
-
-  lines.forEach(function(line){
+  lines.forEach(function(line) {
     var t = line.trim();
-
-    if(!t){
-      parts.push('<div style="height:6px"></div>');
-      return;
-    }
-
-    if(isDivider(t)){
-      parts.push('<hr class="mr-divider">');
-      return;
-    }
-
-    var escaped = t
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;');
-
-    if(isHeading(t)){
-      parts.push('<div class="mr-heading">' + linkify(escaped) + '</div>');
-      return;
-    }
-
-    if(/^출처\s*[:：]/.test(t)){
-      parts.push(renderSource(t));
-      return;
-    }
-
+    if (!t) { parts.push('<div style="height:6px"></div>'); return; }
+    if (isDivider(t)) { parts.push('<hr class="mr-divider">'); return; }
+    var escaped = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    if (isHeading(t))          { parts.push('<div class="mr-heading">'  + linkify(escaped) + '</div>'); return; }
+    if (/^출처\s*[:：]/.test(t)) { parts.push(renderSource(t)); return; }
     parts.push('<div class="mr-line">' + linkify(escaped) + '</div>');
   });
-
   return parts.join('');
 }
 
-
-function escHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* ── openMarketDetailOnMobile / closeMarketDetail ─────── */
+function openMarketDetailOnMobile() {
+  if (!window.matchMedia('(max-width:768px) and (orientation:portrait)').matches) return;
+  var sec = document.getElementById('sec-market');
+  if (sec) sec.classList.add('market-detail-open');
 }
 
-function openMarketDetailOnMobile(){
-  if(!window.matchMedia('(max-width:768px) and (orientation:portrait)').matches) return;
-  const sec=document.getElementById('sec-market');
-  if(sec) sec.classList.add('market-detail-open');
+function closeMarketDetail() {
+  var sec = document.getElementById('sec-market');
+  if (sec) sec.classList.remove('market-detail-open');
 }
 
-function backToMarketList(){
-  const sec=document.getElementById('sec-market');
-  if(sec) sec.classList.remove('market-detail-open');
-}
+/* ── 하위 호환: mrShow → selectMarketReport 위임 ─────────── */
+function mrShow(i) { selectMarketReport(i); }
+function backToMarketList() { closeMarketDetail(); }
 
-function mrShow(i){
-  const data=window._mrData;
-  if(!data||!data[i]) return;
-  const r=data[i];
-  document.querySelectorAll('.mr-item').forEach((el,idx)=>{
-    el.classList.toggle('mr-item-on', idx===i);
-  });
-  const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}):r.title;
-  document.getElementById('mr-detail-title').textContent=`${dateStr} · ${r.title||''}`;
-  /* innerHTML로 교체 — 리치 렌더링 */
-  const detailBody=document.getElementById('mr-detail-body');
-  detailBody.innerHTML=formatMarketBody(r.body||'');
-  detailBody.scrollTop=0;
-  /* Drive 원문 링크 */
-  const linkEl=document.getElementById('mr-drive-link');
-  if(linkEl && r.url){
-    linkEl.href=r.url;
-    linkEl.style.display='inline';
-  }
-  /* 모바일 세로: 상세 화면으로 전환 */
-  openMarketDetailOnMobile();
-}
+/* ================================
+   END: MARKET REPORT - DO NOT TOUCH
+================================ */
 
 /* ══ INIT ══════════════════════════════════════════════════ */
 LOADED.add('market');
@@ -2371,6 +2364,9 @@ window.backToMarketList = function(){
 };
 window.mrShow           = function(i){
   if(typeof mrShow === 'function') mrShow(i);
+};
+window.selectMarketReport = function(i){
+  if(typeof selectMarketReport === 'function') selectMarketReport(i);
 };
 
 </script>
