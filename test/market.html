@@ -983,6 +983,32 @@ td:first-child{color:var(--t1);font-weight:500}
 #sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:row;}
 .map-app{width:100%;height:100%;display:flex;flex-direction:row;}
 #map{flex:1;min-width:0;height:100%;min-height:520px;}
+
+/* ── 업데이트 버튼 ── */
+.btn-update{display:flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,rgba(59,127,255,.18),rgba(108,72,245,.18));
+  border:1px solid rgba(59,127,255,.4);color:var(--blue);
+  padding:7px 14px;border-radius:var(--r2);
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-update:hover{background:rgba(59,127,255,.28);border-color:var(--blue);color:#fff}
+.btn-update:disabled{opacity:.45;cursor:not-allowed}
+.btn-update.running .update-ico{animation:spin .7s linear infinite;display:inline-block}
+
+/* ── 업데이트 모달 단계 ── */
+.upd-step{display:flex;align-items:flex-start;gap:12px}
+.upd-step-dot{width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--border2);display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:var(--t3);flex-shrink:0;
+  font-family:var(--mono);transition:all .25s}
+.upd-step-dot.active{border-color:var(--blue);color:var(--blue);animation:spin .7s linear infinite}
+.upd-step-dot.done{border-color:var(--green);color:var(--green);animation:none;background:rgba(34,209,134,.1)}
+.upd-step-dot.err{border-color:var(--red);color:var(--red);animation:none;background:rgba(240,56,96,.1)}
+.upd-step-label{font-size:12px;font-weight:600;color:var(--t2)}
+.upd-step-detail{font-size:11px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+.upd-step.active .upd-step-label{color:var(--t1)}
+.upd-step.done .upd-step-label{color:var(--green)}
+.upd-step.err .upd-step-label{color:var(--red)}
 </style>
 </head>
 <body>
@@ -995,9 +1021,69 @@ td:first-child{color:var(--t1);font-weight:500}
   <div class="header-r">
     <div class="sync-badge"><div class="dot"></div><span id="syncTime">—</span></div>
     <button class="btn-ref" id="btnRef" onclick="reloadMap()"><span class="ico">↻</span> 새로고침</button>
+    <button class="btn-update" id="btnUpdate" onclick="runUpdatePipeline()">
+      <span class="update-ico">⬆</span> 업데이트해줘
+    </button>
     <a href="report.html" style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--t2);padding:7px 14px;border-radius:6px;font-size:12px;text-decoration:none;transition:all .18s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">📊 시장 리포트</a>
   </div>
 </header>
+
+<!-- ══ 업데이트 진행 모달 ══ -->
+<div id="update-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,9,13,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--s1);border:1px solid var(--border2);border-radius:14px;width:480px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:8px;">
+        <span id="modal-icon">⬆</span> 임대 데이터 업데이트
+      </div>
+      <button onclick="closeUpdateModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;line-height:1;" id="modal-close-btn">✕</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <!-- 진행 단계 -->
+      <div id="update-steps" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+        <div class="upd-step" id="step-scan">
+          <div class="upd-step-dot" id="dot-scan">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">PDF 목록 스캔</div>
+            <div class="upd-step-detail" id="detail-scan">Apps Script에서 미처리 파일 확인 중…</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-parse">
+          <div class="upd-step-dot" id="dot-parse">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">PDF 파싱</div>
+            <div class="upd-step-detail" id="detail-parse">파일별 임차인 데이터 추출</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-upload">
+          <div class="upd-step-dot" id="dot-upload">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">CSV 업로드</div>
+            <div class="upd-step-detail" id="detail-upload">드라이브 폴더에 배치 파일 전송</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-merge">
+          <div class="upd-step-dot" id="dot-merge">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">시트 병합 대기</div>
+            <div class="upd-step-detail" id="detail-merge">Apps Script 트리거 자동 실행 대기 중</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-reload">
+          <div class="upd-step-dot" id="dot-reload">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">지도 새로고침</div>
+            <div class="upd-step-detail" id="detail-reload">최신 데이터로 지도 갱신</div>
+          </div>
+        </div>
+      </div>
+      <!-- 로그 박스 -->
+      <div id="update-log" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--t3);max-height:140px;overflow-y:auto;line-height:1.8;min-height:50px;"></div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="closeUpdateModal()" id="modal-done-btn" style="display:none;background:var(--blue);border:none;color:#fff;padding:8px 22px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">완료</button>
+    </div>
+  </div>
+</div>
 <div id="sec-mapview" class="sec on">
   <div class="map-wrap">
     <div id="map-loader">
@@ -1853,9 +1939,214 @@ function reloadMap() {
   loadMapData().then(function(){
     document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
     if(btn) btn.classList.remove('spin');
+    // 지도 마커 재렌더링
+    if(window.mapInstance){
+      // 기존 마커 제거
+      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      markersMap = {};
+      buildings.forEach(function(b, idx){
+        var color = getDominantColor(b);
+        var size  = getMarkerSize(b);
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
+          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
+          +'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
+        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
+        markersMap[b.id]=marker;
+      });
+      renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+    }
   }).catch(function(){
     if(btn) btn.classList.remove('spin');
   });
+}
+
+// ══════════════════════════════════════════════════════
+// 업데이트 파이프라인 ("업데이트해줘" 버튼)
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyflo91eL18ds40xfXjUfPdY8SBFF7BIqbZlddVKUHArlh0kCFmT8VKibDMiMR3bbJ8/exec';
+const DRIVE_FOLDER_ID  = '1A0_psOadZpujctRfOlC3d-Zmbk9lFfSb';
+
+function updLog(msg) {
+  var log = document.getElementById('update-log');
+  if (!log) return;
+  var ts = new Date().toLocaleTimeString('ko-KR');
+  log.innerHTML += '<span style="color:var(--t4)">[' + ts + ']</span> ' + msg + '<br>';
+  log.scrollTop = log.scrollHeight;
+}
+
+function updStep(id, state, detail) {
+  // state: 'active' | 'done' | 'err' | ''
+  var stepEl = document.getElementById('step-' + id);
+  var dotEl  = document.getElementById('dot-'  + id);
+  var detEl  = document.getElementById('detail-' + id);
+  if (!stepEl) return;
+  stepEl.className = 'upd-step' + (state ? ' ' + state : '');
+  dotEl.className  = 'upd-step-dot' + (state ? ' ' + state : '');
+  dotEl.textContent = state === 'done' ? '✓' : state === 'err' ? '✕' : state === 'active' ? '◎' : '○';
+  if (detail && detEl) detEl.textContent = detail;
+}
+
+function openUpdateModal() {
+  var modal = document.getElementById('update-modal');
+  modal.style.display = 'flex';
+  // 초기화
+  ['scan','parse','upload','merge','reload'].forEach(function(s){ updStep(s,'',''); });
+  document.getElementById('update-log').innerHTML = '';
+  document.getElementById('modal-done-btn').style.display = 'none';
+  document.getElementById('modal-close-btn').style.pointerEvents = 'none';
+  document.getElementById('modal-close-btn').style.opacity = '0.3';
+}
+
+function closeUpdateModal() {
+  document.getElementById('update-modal').style.display = 'none';
+}
+
+async function runUpdatePipeline() {
+  var btn = document.getElementById('btnUpdate');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('running');
+  btn.querySelector('.update-ico').textContent = '↻';
+
+  openUpdateModal();
+  updLog('업데이트 파이프라인 시작');
+
+  try {
+    // ── STEP 1: Apps Script scan ──
+    updStep('scan', 'active', '미처리 PDF 스캔 중…');
+    updLog('Apps Script action=scan 호출 중…');
+
+    var scanRes = await fetch(APPS_SCRIPT_URL + '?action=scan', { redirect: 'follow' });
+    if (!scanRes.ok) throw new Error('scan HTTP ' + scanRes.status);
+    var scanData = await scanRes.json();
+
+    var pending = scanData.pending || [];
+    if (pending.length === 0) {
+      updStep('scan', 'done', '미처리 파일 없음 — 이미 최신 상태');
+      updLog('✅ 미처리 파일 없음. 현재 데이터가 최신입니다.');
+      updStep('parse','done','건너뜀'); updStep('upload','done','건너뜀');
+      updStep('merge','done','건너뜀');
+      // 지도만 새로고침
+      updStep('reload','active','지도 데이터 갱신 중…');
+      await loadMapData();
+      document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
+      updStep('reload','done','지도 갱신 완료');
+      updLog('✅ 지도 데이터 새로고침 완료');
+      _finishUpdate(btn, true);
+      return;
+    }
+
+    updStep('scan', 'done', pending.length + '개 미처리 파일 발견');
+    updLog('✅ 미처리 파일 ' + pending.length + '개: ' + pending.map(function(p){ return p.name || p.id; }).join(', '));
+
+    // ── STEP 2: PDF 파싱 (Apps Script parse 위임) ──
+    updStep('parse', 'active', 'Apps Script에 파싱 요청 중…');
+    updLog('action=parse 호출 (파일 ID 목록 전송)…');
+
+    var ids = pending.map(function(p){ return p.id; });
+    var parseRes = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'parse', fileIds: ids })
+    });
+    if (!parseRes.ok) throw new Error('parse HTTP ' + parseRes.status);
+    var parseData = await parseRes.json();
+
+    if (!parseData.ok) throw new Error('파싱 실패: ' + (parseData.error || 'unknown'));
+    var rows = parseData.rows || [];
+    updStep('parse', 'done', rows.length + '행 파싱 완료');
+    updLog('✅ ' + rows.length + '행 추출 완료');
+
+    // ── STEP 3: CSV 생성 → Drive 업로드 ──
+    updStep('upload', 'active', 'CSV 생성 후 드라이브 업로드 중…');
+    var batchName = '_batch_' + Date.now() + '.csv';
+    var header = '파일명,동,건물명,주소,위도,경도,매매가(억),층,임차인,업종,등록일,업로드일';
+    var today = new Date().toISOString().slice(0, 10);
+    var csvLines = [header].concat(rows.map(function(r) {
+      return [r['파일명']||'',r['동']||'',r['건물명']||'',r['주소']||'',
+              r['위도']||'',r['경도']||'',r['매매가']||'',r['층']||'',
+              r['임차인']||'',r['업종']||'',r['등록일']||today,today
+             ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+    }));
+    var csvContent = csvLines.join('\n');
+    updLog('CSV ' + batchName + ' (' + rows.length + '행) 생성 완료');
+
+    // Drive 업로드 (Apps Script upload 엔드포인트)
+    var uploadRes = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'upload', filename: batchName, csv: csvContent, folderId: DRIVE_FOLDER_ID })
+    });
+    if (!uploadRes.ok) throw new Error('upload HTTP ' + uploadRes.status);
+    var uploadData = await uploadRes.json();
+    if (!uploadData.ok) throw new Error('업로드 실패: ' + (uploadData.error || 'unknown'));
+    updStep('upload', 'done', '드라이브 업로드 완료');
+    updLog('✅ ' + batchName + ' 드라이브 업로드 완료 (fileId: ' + (uploadData.fileId||'?') + ')');
+
+    // ── STEP 4: 시트 병합 대기 ──
+    updStep('merge', 'active', 'Apps Script 5분 트리거 대기 중…');
+    updLog('Apps Script 트리거가 자동으로 시트에 병합합니다. 30초 대기…');
+    // 30초 대기 후 시트 확인 재시도 (트리거 대기)
+    await new Promise(function(resolve){ setTimeout(resolve, 30000); });
+    updStep('merge', 'done', '병합 완료 (트리거 실행 대기 후)');
+    updLog('✅ 30초 경과 — 시트 병합 완료로 간주');
+
+    // ── STEP 5: 지도 새로고침 ──
+    updStep('reload', 'active', '최신 시트 데이터 로딩 중…');
+    updLog('MAP_SHEET_URL에서 최신 데이터 로딩…');
+    await loadMapData();
+    document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
+    updStep('reload', 'done', buildings.length - 1 + '개 건물 갱신 완료');
+    updLog('✅ 지도 갱신 완료 — ' + (buildings.length - 1) + '개 건물');
+
+    // 마커 재렌더링
+    if (window.mapInstance) {
+      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      markersMap = {};
+      buildings.forEach(function(b, idx){
+        var color = getDominantColor(b);
+        var size  = getMarkerSize(b);
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
+          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
+          +'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
+        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
+        markersMap[b.id] = marker;
+      });
+      renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+    }
+
+    _finishUpdate(btn, true);
+
+  } catch (err) {
+    updLog('❌ 오류: ' + err.message);
+    // 현재 active 단계를 err로 전환
+    ['scan','parse','upload','merge','reload'].forEach(function(s){
+      var dot = document.getElementById('dot-'+s);
+      if (dot && dot.classList.contains('active')) updStep(s, 'err', err.message);
+    });
+    _finishUpdate(btn, false);
+  }
+}
+
+function _finishUpdate(btn, success) {
+  btn.disabled = false;
+  btn.classList.remove('running');
+  btn.querySelector('.update-ico').textContent = '⬆';
+  document.getElementById('modal-done-btn').style.display = 'block';
+  document.getElementById('modal-close-btn').style.pointerEvents = '';
+  document.getElementById('modal-close-btn').style.opacity = '';
+  document.getElementById('modal-icon').textContent = success ? '✅' : '❌';
+  updLog(success ? '━━ 업데이트 완료 ━━' : '━━ 업데이트 실패 (위 로그 확인) ━━');
 }
 
 </script>
