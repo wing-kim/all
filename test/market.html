@@ -1279,7 +1279,7 @@ async function load(k){
             3. 새 배포가 필요하면 URL이 바뀌므로 market.html의 DRIVE_SCRIPT_URL 업데이트 필요<br>
             4. F12 콘솔 → Network 탭에서 script.google.com 요청 응답 확인
           </div>
-          <button onclick="LOADED.delete('market');load('market')" style="margin-top:14px;padding:8px 20px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-family:var(--sans);font-size:12px;cursor:pointer">↺ 다시 시도</button>
+          <button onclick="_marketFetching=false;LOADED.delete('market');load('market')" style="margin-top:14px;padding:8px 20px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-family:var(--sans);font-size:12px;cursor:pointer">↺ 다시 시도</button>
         </div>`;
     } else {
       document.getElementById(`sec-${k}`).innerHTML=errHTML(e.message);
@@ -1334,62 +1334,67 @@ function parseAppsScriptResponse(json) {
 }
 
 /* ── fetchMarketReports
-   1차: fetch + CORS (Access-Control-Allow-Origin: * 이면 성공)
-   2차: JSONP fallback (callback 파라미터 지원 시)
-   둘 다 실패하면 상세 에러 메시지 표시
+   순수 JSONP 방식 — Google Apps Script는 CORS를 지원하지 않으므로
+   fetch 시도 없이 JSONP만 사용합니다.
+   Apps Script doGet(e)에서 반드시 ContentService로 응답해야 합니다.
 ─────────────────────────────────────────────────────── */
+var _marketFetching = false; /* 중복 호출 방지 플래그 */
+
 function fetchMarketReports() {
-  /* ── 1차: fetch 시도 ── */
-  function tryFetch() {
-    return fetch(DRIVE_SCRIPT_URL + '?t=' + Date.now(), {
-      redirect: 'follow',
-      credentials: 'omit'
-    })
-    .then(function(res) {
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return res.json();
-    })
-    .then(function(json) {
-      return parseAppsScriptResponse(json);
-    });
+  if (_marketFetching) {
+    return Promise.reject(new Error('이미 로딩 중입니다. 잠시 후 다시 시도해주세요.'));
   }
+  _marketFetching = true;
 
-  /* ── 2차: JSONP fallback ── */
-  function tryJsonp() {
-    return new Promise(function(resolve, reject) {
-      var cbName = 'marketCb_' + Date.now();
-      var script  = document.createElement('script');
-      var timer   = setTimeout(function() {
-        cleanup();
-        reject(new Error('JSONP 시간 초과 (12초) — Apps Script 배포 URL·권한 확인 필요'));
-      }, 12000);
+  return new Promise(function(resolve, reject) {
+    var cbName = 'marketCb_' + Date.now();
+    var script  = document.createElement('script');
+    var done    = false;
 
-      function cleanup() {
-        clearTimeout(timer);
-        delete window[cbName];
-        if (script.parentNode) script.parentNode.removeChild(script);
+    var timer = setTimeout(function() {
+      if (done) return;
+      done = true;
+      _marketFetching = false;
+      cleanup();
+      reject(new Error(
+        'Apps Script 응답 없음 (12초 초과)\n' +
+        '→ script.google.com/home 에서 배포 상태 확인\n' +
+        '→ 배포 설정: 액세스 권한 = "모든 사람" 확인'
+      ));
+    }, 12000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+
+    window[cbName] = function(json) {
+      if (done) return;
+      done = true;
+      _marketFetching = false;
+      cleanup();
+      try {
+        resolve(parseAppsScriptResponse(json));
+      } catch(e) {
+        reject(e);
       }
+    };
 
-      window[cbName] = function(json) {
-        cleanup();
-        try { resolve(parseAppsScriptResponse(json)); }
-        catch(e) { reject(e); }
-      };
+    script.onerror = function() {
+      if (done) return;
+      done = true;
+      _marketFetching = false;
+      cleanup();
+      reject(new Error(
+        'Apps Script URL 로드 실패\n' +
+        '→ URL이 만료됐거나 배포가 해제된 경우입니다\n' +
+        '→ Apps Script에서 새 버전으로 재배포하고 URL을 업데이트하세요'
+      ));
+    };
 
-      script.onerror = function() {
-        cleanup();
-        reject(new Error('Script 로드 실패 — Apps Script URL이 만료됐거나 배포가 해제됐을 수 있습니다'));
-      };
-
-      script.src = DRIVE_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
-      document.head.appendChild(script);
-    });
-  }
-
-  /* fetch 먼저, 실패하면 JSONP */
-  return tryFetch().catch(function(fetchErr) {
-    console.warn('[market] fetch 실패(' + fetchErr.message + ') → JSONP 시도');
-    return tryJsonp();
+    script.src = DRIVE_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
+    document.head.appendChild(script);
   });
 }
 
@@ -2376,15 +2381,9 @@ window.resetTypeFilter  = resetTypeFilter;
 window.toggleArea       = toggleArea;
 window.flyToBuilding    = flyToBuilding;
 window.selectType       = selectType;
-window.backToMarketList = function(){
-  if(typeof backToMarketList === 'function') backToMarketList();
-};
-window.mrShow           = function(i){
-  if(typeof mrShow === 'function') mrShow(i);
-};
-window.selectMarketReport = function(i){
-  if(typeof selectMarketReport === 'function') selectMarketReport(i);
-};
+/* mrShow / selectMarketReport / backToMarketList / closeMarketDetail 는
+   첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
+   여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
 
 </script>
 
