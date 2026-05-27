@@ -759,9 +759,9 @@ td:first-child{color:var(--t1);font-weight:500}
    ══════════════════════════════════ */
 
 /* ════════════════════════════════════════════════════
-/* report.html 전용 — sec-market을 전체 너비로 */
-#sec-market { display: block !important; }
-.sec { display: block !important; }
+   임대 상권지도 — 다크 테마 컴포넌트 CSS
+   ════════════════════════════════════════════════════ */
+
 </style>
 </head>
 <body>
@@ -769,10 +769,7 @@ td:first-child{color:var(--t1);font-weight:500}
 <header>
   <div style="display:flex;align-items:center;gap:12px">
     <a href="index.html" style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--t2);padding:7px 14px;border-radius:6px;font-size:12px;text-decoration:none;transition:all .18s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">← 메인</a>
-    <div class="brand" style="cursor:default">
-      <span class="brand-name">시장 리포트</span>
-      <span class="brand-sub">케이프혼타워</span>
-    </div>
+    <div class="brand" style="cursor:default"><span class="brand-name">시장 리포트</span><span class="brand-sub">케이프혼타워</span></div>
   </div>
   <div class="header-r">
     <div class="sync-badge"><div class="dot"></div><span id="syncTime">—</span></div>
@@ -975,7 +972,7 @@ function go(k,btn){
 ================================ */
 
 /* ── Apps Script 웹앱 URL ─────────────────────────────── */
-const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbywHQeukwU8e-wXz7OOJP40hPM75-8CqemtdY11uSG7u3K07JdBWiPZpx2U9HeKZtsL/exec';
+const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyflo91eL18ds40xfXjUfPdY8SBFF7BIqbZlddVKUHArlh0kCFmT8VKibDMiMR3bbJ8/exec';
 
 /* ── parseAppsScriptResponse — 모든 응답 형식 파싱 ───────── */
 function parseAppsScriptResponse(json) {
@@ -1259,6 +1256,11 @@ LOADED.add('market');
 load('market');
 /* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
 setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
+
+/* ══ INIT ══════════════════════════════════════════════════ */
+LOADED.add('market');
+load('market');
+setInterval(()=>{LOADED.delete('market');load('market');},15*60*1000);
 </script>
 
 </body>
