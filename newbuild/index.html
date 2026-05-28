@@ -45,7 +45,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
 .strip-val.accent{color:var(--yellow);}
 
 /* ── 카드 그리드 ── */
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
 .card{
   background:var(--s1);border:1px solid var(--border);border-radius:12px;
   padding:24px;text-decoration:none;display:flex;flex-direction:column;
@@ -57,6 +57,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
   box-shadow:0 12px 40px rgba(0,0,0,.4);}
 .card-blue{--card-c:#3b7fff;}
 .card-teal{--card-c:#00d4aa;}
+.card-orange{--card-c:#f97316;}
 
 .card-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
 .card-icon{font-size:22px;line-height:1;}
@@ -88,6 +89,9 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
   .strip-item:nth-child(3){border-top:1px solid var(--border);}
   .strip-item:nth-child(4){border-top:1px solid var(--border);}
   .grid{grid-template-columns:1fr;}
+}
+@media(max-width:900px) and (min-width:601px){
+  .grid{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
@@ -147,20 +151,37 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
         <span class="card-arr">→</span>
       </div>
     </a>
-    <a class="card card-teal" href="market.html">
+    <a class="card card-teal" href="report.html">
       <div class="card-top">
         <span class="card-icon">📊</span>
-        <span class="card-name">시장분석</span>
+        <span class="card-name">시장리포트</span>
       </div>
-      <div class="card-desc">건축 관련 시장 리포트와 임대 상권지도로 업종 현황 분석</div>
+      <div class="card-desc">건축 관련 시장 동향, 금리·공급·임대료 흐름 리포트</div>
       <div class="card-tags">
         <span class="tag">시장리포트</span>
+        <span class="tag">금리동향</span>
+        <span class="tag">임대료</span>
+        <span class="tag">공급현황</span>
+      </div>
+      <div class="card-foot">
+        <span class="card-meta">Google Drive 연동</span>
+        <span class="card-arr">→</span>
+      </div>
+    </a>
+    <a class="card card-orange" href="market.html">
+      <div class="card-top">
+        <span class="card-icon">🗺️</span>
+        <span class="card-name">상권지도</span>
+      </div>
+      <div class="card-desc">신사동 주변 건물 임차인 현황, 업종 분석, 동별 임대 리포트</div>
+      <div class="card-tags">
         <span class="tag">상권지도</span>
         <span class="tag">업종분석</span>
+        <span class="tag">임차인현황</span>
         <span class="tag">동별리포트</span>
       </div>
       <div class="card-foot">
-        <span class="card-meta">2탭 · 시트 + PDF 연동</span>
+        <span class="card-meta">시트 + PDF 연동</span>
         <span class="card-arr">→</span>
       </div>
     </a>
@@ -171,7 +192,8 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
     <span>© 2025–2031 블루피카 · 케이프혼타워 신축 프로젝트</span>
     <div class="foot-links">
       <a href="construction.html">신축관리</a>
-      <a href="market.html">시장분석</a>
+      <a href="report.html">시장리포트</a>
+      <a href="market.html">상권지도</a>
     </div>
   </div>
 
