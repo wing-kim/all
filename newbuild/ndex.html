@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>케이프혼타워 · Project Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090d;--s1:#0f1118;--s2:#151821;--border:#222636;--border2:#2a3050;
+  --blue:#3b7fff;--green:#22d186;--yellow:#f5bc30;--teal:#00d4aa;--red:#f03860;
+  --t1:#eef0f8;--t2:#8890aa;--t3:#4a5270;
+  --mono:'DM Mono',monospace;--sans:'Noto Sans KR',sans-serif;--disp:'Bebas Neue',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100vh;
+  background-image:linear-gradient(rgba(59,127,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,127,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;}
+
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 60px;}
+
+/* ── 헤더 ── */
+.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:16px;flex-wrap:wrap;}
+.hd-left{}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.title{font-family:var(--disp);font-size:42px;letter-spacing:3px;line-height:1;
+  background:linear-gradient(135deg,#3b7fff 0%,#00d4aa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{font-size:12px;color:var(--t3);margin-top:8px;letter-spacing:.3px;}
+.hd-right{text-align:right;padding-top:4px;}
+.time{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--t1);letter-spacing:1px;}
+.date{font-family:var(--mono);font-size:11px;color:var(--t3);margin-top:4px;}
+
+/* ── D-Day 스트립 ── */
+.strip{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;margin-bottom:24px;
+}
+.strip-item{padding:12px 16px;background:var(--s1);border-right:1px solid var(--border);}
+.strip-item:last-child{border-right:none;}
+.strip-label{font-size:10px;color:var(--t3);margin-bottom:5px;letter-spacing:.3px;}
+.strip-val{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--t1);}
+.strip-val.accent{color:var(--yellow);}
+
+/* ── 카드 그리드 ── */
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+.card{
+  background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:24px;text-decoration:none;display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+  transition:transform .2s,border-color .2s,box-shadow .2s;
+}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-c);}
+.card:hover{transform:translateY(-3px);border-color:var(--card-c);
+  box-shadow:0 12px 40px rgba(0,0,0,.4);}
+.card-blue{--card-c:#3b7fff;}
+.card-teal{--card-c:#00d4aa;}
+.card-orange{--card-c:#f97316;}
+
+.card-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.card-icon{font-size:22px;line-height:1;}
+.card-name{font-family:var(--disp);font-size:22px;letter-spacing:1px;color:var(--t1);}
+.card-desc{font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:16px;flex:1;}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;}
+.tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:var(--t2);}
+.card-foot{display:flex;align-items:center;justify-content:space-between;
+  padding-top:14px;border-top:1px solid var(--border);}
+.card-meta{font-family:var(--mono);font-size:10px;color:var(--t3);}
+.card-arr{font-size:14px;color:var(--card-c);opacity:0;transform:translateX(-6px);transition:.2s;}
+.card:hover .card-arr{opacity:1;transform:translateX(0);}
+
+/* ── 하단 ── */
+.foot{display:flex;justify-content:space-between;align-items:center;
+  padding-top:20px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--t3);flex-wrap:wrap;gap:8px;}
+.foot-links{display:flex;gap:14px;}
+.foot-links a{color:var(--t3);text-decoration:none;transition:color .15s;}
+.foot-links a:hover{color:var(--t2);}
+
+@media(max-width:600px){
+  .wrap{padding:24px 16px 48px;}
+  .title{font-size:32px;}
+  .time{font-size:16px;}
+  .strip{grid-template-columns:1fr 1fr;}
+  .strip-item:nth-child(2){border-right:none;}
+  .strip-item:nth-child(3){border-top:1px solid var(--border);}
+  .strip-item:nth-child(4){border-top:1px solid var(--border);}
+  .grid{grid-template-columns:1fr;}
+}
+@media(max-width:900px) and (min-width:601px){
+  .grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 헤더 -->
+  <div class="hd">
+    <div class="hd-left">
+      <div class="eyebrow">Project Hub · Bluepica</div>
+      <div class="title">케이프혼타워</div>
+      <div class="subtitle">서울 강남구 신사동 529 외 2필지 · 근린생활시설 신축</div>
+    </div>
+    <div class="hd-right">
+      <div class="time" id="clock">—</div>
+      <div class="date" id="today">—</div>
+    </div>
+  </div>
+
+  <!-- D-Day 스트립 -->
+  <div class="strip">
+    <div class="strip-item">
+      <div class="strip-label">건축허가 기한</div>
+      <div class="strip-val accent" id="dday">—</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-label">용적률 완화</div>
+      <div class="strip-val">300% 한시적</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-label">사업지 면적</div>
+      <div class="strip-val">749㎡ (226평)</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-label">규모</div>
+      <div class="strip-val">B3 · 지상6층</div>
+    </div>
+  </div>
+
+  <!-- 카드 그리드 -->
+  <div class="grid">
+    <a class="card card-blue" href="construction.html">
+      <div class="card-top">
+        <span class="card-icon">🏗️</span>
+        <span class="card-name">신축관리</span>
+      </div>
+      <div class="card-desc">프로젝트 타임라인, IRR 계산기, 임대차 현황, 개인·법인 비용</div>
+      <div class="card-tags">
+        <span class="tag">타임라인</span>
+        <span class="tag">IRR</span>
+        <span class="tag">임대차</span>
+        <span class="tag">개인비용</span>
+        <span class="tag">법인비용</span>
+      </div>
+      <div class="card-foot">
+        <span class="card-meta">5탭 · 구글 시트 연동</span>
+        <span class="card-arr">→</span>
+      </div>
+    </a>
+    <a class="card card-teal" href="report.html">
+      <div class="card-top">
+        <span class="card-icon">📊</span>
+        <span class="card-name">시장리포트</span>
+      </div>
+      <div class="card-desc">건축 관련 시장 동향, 금리·공급·임대료 흐름 리포트</div>
+      <div class="card-tags">
+        <span class="tag">시장리포트</span>
+        <span class="tag">금리동향</span>
+        <span class="tag">임대료</span>
+        <span class="tag">공급현황</span>
+      </div>
+      <div class="card-foot">
+        <span class="card-meta">Google Drive 연동</span>
+        <span class="card-arr">→</span>
+      </div>
+    </a>
+    <a class="card card-orange" href="market.html">
+      <div class="card-top">
+        <span class="card-icon">🗺️</span>
+        <span class="card-name">상권지도</span>
+      </div>
+      <div class="card-desc">신사동 주변 건물 임차인 현황, 업종 분석, 동별 임대 리포트</div>
+      <div class="card-tags">
+        <span class="tag">상권지도</span>
+        <span class="tag">업종분석</span>
+        <span class="tag">임차인현황</span>
+        <span class="tag">동별리포트</span>
+      </div>
+      <div class="card-foot">
+        <span class="card-meta">시트 + PDF 연동</span>
+        <span class="card-arr">→</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 하단 -->
+  <div class="foot">
+    <span>© 2025–2031 블루피카 · 케이프혼타워 신축 프로젝트</span>
+    <div class="foot-links">
+      <a href="construction.html">신축관리</a>
+      <a href="report.html">시장리포트</a>
+      <a href="market.html">상권지도</a>
+    </div>
+  </div>
+
+</div>
+<script>
+function tick(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('today').textContent=n.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+}
+tick(); setInterval(tick,1000);
+
+(function(){
+  const d=new Date('2028-05-18'),t=new Date();t.setHours(0,0,0,0);
+  const diff=Math.ceil((d-t)/864e5);
+  const el=document.getElementById('dday');
+  if(diff>0){el.textContent=`D-${diff.toLocaleString()}`;el.style.color=diff<180?'#f03860':diff<365?'#f5bc30':'#22d186';}
+  else if(diff===0){el.textContent='D-Day';el.style.color='#f03860';}
+  else{el.textContent=`+${Math.abs(diff)}일`;el.style.color='#f03860';}
+})();
+</script>
+</body>
+</html>

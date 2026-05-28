@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>시장분석 · 케이프혼타워</title>
+<title>임대 상권지도 · 케이프혼타워</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
@@ -705,61 +705,6 @@ td:first-child{color:var(--t1);font-weight:500}
   .brand-name{font-size:22px}.irr-metrics{grid-template-columns:1fr}
 }
 
-/* ══ 시장 리포트 탭 ══════════════════════════════════════ */
-.mr-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
-.mr-item:hover{background:var(--s2)}
-.mr-item-on{background:var(--s3)!important;border-left:2px solid #00d4aa}
-.mr-date{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:3px}
-.mr-title{font-size:12px;font-weight:600;color:var(--t1);margin-bottom:4px}
-.mr-preview{font-size:11px;color:var(--t3);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-/* 시장 리포트 본문 렌더링 */
-.mr-heading{font-size:14px;font-weight:700;color:#e2e8f0;margin:18px 0 6px;letter-spacing:.01em}
-.mr-line{font-size:13px;color:var(--t2);line-height:1.9;margin:2px 0}
-.mr-source{font-size:12px;color:var(--t3);margin:4px 0 10px;padding-left:4px}
-.mr-divider{border:none;border-top:1px solid var(--border);margin:14px 0;width:100%}
-.mr-link{color:#60a5fa;text-decoration:none;word-break:break-all}
-.mr-link:hover{color:#93c5fd;text-decoration:underline}
-#mr-detail-body{white-space:normal!important}
-#mr-detail-body::-webkit-scrollbar{width:10px}
-#mr-detail-body::-webkit-scrollbar-track{background:#0f1118;border-radius:10px}
-#mr-detail-body::-webkit-scrollbar-thumb{background:#2a3050;border-radius:10px;border:2px solid #0f1118}
-#mr-detail-body::-webkit-scrollbar-thumb:hover{background:#3b7fff}
-#mr-detail-body{scrollbar-width:thin;scrollbar-color:#2a3050 #0f1118}
-/* 시장 리포트 모바일 뒤로가기 버튼 — 기본 숨김 */
-.mr-mobile-back{display:none}
-/* 시장 리포트 모바일 세로 (Portrait) — 목록/상세 화면 전환 */
-@media(max-width:768px) and (orientation:portrait){
-  #sec-market>div{grid-template-columns:1fr!important}
-  /* 기본: 목록만 표시, 상세 숨김 */
-  #sec-market .card:first-child{display:block!important;max-height:none;overflow-y:auto}
-  #sec-market .card:last-child{display:none!important}
-  /* 상세 화면 열릴 때: 목록 숨기고 상세 표시 */
-  #sec-market.market-detail-open .card:first-child{display:none!important}
-  #sec-market.market-detail-open .card:last-child{display:block!important;min-height:520px}
-  /* 뒤로가기 버튼 표시 */
-  .mr-mobile-back{display:block;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border2);border-radius:8px;background:var(--s2);color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
-  #mr-detail-body{max-height:70vh;overflow-y:auto}
-}
-/* 시장 리포트 모바일 가로 (Landscape) — 2열 복원 */
-@media(max-width:1024px) and (orientation:landscape){
-  #sec-market>div{grid-template-columns:320px 1fr!important}
-  #sec-market .card:first-child{display:block!important;max-height:none}
-  #mr-detail-body{max-height:78vh;overflow-y:auto}
-}
-/* 탭 모바일 가로 스크롤 */
-.tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab{flex-shrink:0}
-
-
-/* reset handled by parent */
-/* removed */
-
-/* ══════════════════════════════════
-   LAYOUT — Desktop: side by side
-              Mobile: map top, panel bottom
-   ══════════════════════════════════ */
-
-/* ════════════════════════════════════════════════════
    임대 상권지도 — 다크 테마 컴포넌트 CSS
    ════════════════════════════════════════════════════ */
 
@@ -1038,26 +983,108 @@ td:first-child{color:var(--t1);font-weight:500}
 #sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:row;}
 .map-app{width:100%;height:100%;display:flex;flex-direction:row;}
 #map{flex:1;min-width:0;height:100%;min-height:520px;}
+
+/* ── 업데이트 버튼 ── */
+.btn-update{display:flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,rgba(59,127,255,.18),rgba(108,72,245,.18));
+  border:1px solid rgba(59,127,255,.4);color:var(--blue);
+  padding:7px 14px;border-radius:var(--r2);
+  font-family:var(--sans);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-update:hover{background:rgba(59,127,255,.28);border-color:var(--blue);color:#fff}
+.btn-update:disabled{opacity:.45;cursor:not-allowed}
+.btn-update.running .update-ico{animation:spin .7s linear infinite;display:inline-block}
+
+/* ── 업데이트 모달 단계 ── */
+.upd-step{display:flex;align-items:flex-start;gap:12px}
+.upd-step-dot{width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--border2);display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:var(--t3);flex-shrink:0;
+  font-family:var(--mono);transition:all .25s}
+.upd-step-dot.active{border-color:var(--blue);color:var(--blue);animation:spin .7s linear infinite}
+.upd-step-dot.done{border-color:var(--green);color:var(--green);animation:none;background:rgba(34,209,134,.1)}
+.upd-step-dot.err{border-color:var(--red);color:var(--red);animation:none;background:rgba(240,56,96,.1)}
+.upd-step-label{font-size:12px;font-weight:600;color:var(--t2)}
+.upd-step-detail{font-size:11px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+.upd-step.active .upd-step-label{color:var(--t1)}
+.upd-step.done .upd-step-label{color:var(--green)}
+.upd-step.err .upd-step-label{color:var(--red)}
 </style>
 </head>
 <body>
 <div class="page">
 <header>
-  <div style="display:flex;align-items:center">
-    <a class="back-btn" href="index.html">← 메인</a>
-    <div class="brand" style="cursor:default"><span class="brand-name">시장분석</span></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <a href="index.html" style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--t2);padding:7px 14px;border-radius:6px;font-size:12px;text-decoration:none;transition:all .18s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">← 메인</a>
+    <div class="brand" style="cursor:default"><span class="brand-name">임대 상권지도</span><span class="brand-sub">케이프혼타워</span></div>
   </div>
   <div class="header-r">
     <div class="sync-badge"><div class="dot"></div><span id="syncTime">—</span></div>
-    <button class="btn-ref" id="btnRef" onclick="reloadAll()"><span class="ico">↻</span> 새로고침</button>
+    <button class="btn-ref" id="btnRef" onclick="reloadMap()"><span class="ico">↻</span> 새로고침</button>
+    <button class="btn-update" id="btnUpdate" onclick="runUpdatePipeline()">
+      <span class="update-ico">⬆</span> 업데이트해줘
+    </button>
+    <a href="report.html" style="display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);color:var(--t2);padding:7px 14px;border-radius:6px;font-size:12px;text-decoration:none;transition:all .18s" onmouseover="this.style.color='var(--t1)'" onmouseout="this.style.color='var(--t2)'">📊 시장 리포트</a>
   </div>
 </header>
-<div class="tabs">
-  <button class="tab on"  onclick="go('market',this)"> <span class="pip" style="background:#00d4aa"></span>시장 리포트</button>
-  <button class="tab"     onclick="go('mapview',this)"><span class="pip" style="background:#f97316"></span>임대 상권지도</button>
+
+<!-- ══ 업데이트 진행 모달 ══ -->
+<div id="update-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,9,13,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--s1);border:1px solid var(--border2);border-radius:14px;width:480px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:700;color:var(--t1);display:flex;align-items:center;gap:8px;">
+        <span id="modal-icon">⬆</span> 임대 데이터 업데이트
+      </div>
+      <button onclick="closeUpdateModal()" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:18px;line-height:1;" id="modal-close-btn">✕</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <!-- 진행 단계 -->
+      <div id="update-steps" style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px;">
+        <div class="upd-step" id="step-scan">
+          <div class="upd-step-dot" id="dot-scan">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">PDF 목록 스캔</div>
+            <div class="upd-step-detail" id="detail-scan">Apps Script에서 미처리 파일 확인 중…</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-parse">
+          <div class="upd-step-dot" id="dot-parse">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">PDF 파싱</div>
+            <div class="upd-step-detail" id="detail-parse">파일별 임차인 데이터 추출</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-upload">
+          <div class="upd-step-dot" id="dot-upload">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">CSV 업로드</div>
+            <div class="upd-step-detail" id="detail-upload">드라이브 폴더에 배치 파일 전송</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-merge">
+          <div class="upd-step-dot" id="dot-merge">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">시트 병합 대기</div>
+            <div class="upd-step-detail" id="detail-merge">Apps Script 트리거 자동 실행 대기 중</div>
+          </div>
+        </div>
+        <div class="upd-step" id="step-reload">
+          <div class="upd-step-dot" id="dot-reload">○</div>
+          <div class="upd-step-txt">
+            <div class="upd-step-label">지도 새로고침</div>
+            <div class="upd-step-detail" id="detail-reload">최신 데이터로 지도 갱신</div>
+          </div>
+        </div>
+      </div>
+      <!-- 로그 박스 -->
+      <div id="update-log" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--t3);max-height:140px;overflow-y:auto;line-height:1.8;min-height:50px;"></div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="closeUpdateModal()" id="modal-done-btn" style="display:none;background:var(--blue);border:none;color:#fff;padding:8px 22px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;">완료</button>
+    </div>
+  </div>
 </div>
-<div id="sec-market" class="sec on"></div>
-<div id="sec-mapview" class="sec">
+<div id="sec-mapview" class="sec on">
   <div class="map-wrap">
     <div id="map-loader">
       <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:mapSpin .8s linear infinite;margin:0 auto 10px"></div>
@@ -1123,486 +1150,7 @@ td:first-child{color:var(--t1);font-weight:500}
   </div>
 </div>
 </div>
-
-<script>
-/* ══ CONFIG ═══════════════════════════════════════════════ */
-const SID='17lL6O55R56PGODOu-iM5EBH4a6ZbWEJfkypcdWzlGHA';
-const TABS={
-  market:{gid:'320531561',label:'시장 리포트'},
-};
-const PG=50;
-const CACHE={},LOADED=new Set(),TS={};
-let CUR='market';
-
-/* ══ CSV ══════════════════════════════════════════════════ */
-async function fetchSheet(k){
-  /* ── Google Sheets CSV export
-     구글 시트는 export 요청 시 리디렉션이 발생합니다.
-     redirect:'follow' + credentials:'omit' 으로 CORS 우회
-     시트가 "링크 있는 모든 사용자 · 뷰어" 공유 상태여야 합니다. */
-  const url=`https://docs.google.com/spreadsheets/d/${SID}/export?format=csv&gid=${TABS[k].gid}`;
-  let r;
-  try{
-    r=await fetch(url,{redirect:'follow',credentials:'omit'});
-  }catch(e){
-    /* CORS 차단 시 JSONP-style 우회: exportLinks 엔드포인트 시도 */
-    throw new Error(`fetch 실패: ${e.message} — 시트 공유 설정을 확인하세요 (링크 있는 모든 사용자·뷰어)`);
-  }
-  if(!r.ok) throw new Error(`HTTP ${r.status} — 시트 공유 설정 확인 필요`);
-  const txt=await r.text();
-  if(!txt||txt.trim().startsWith('<')){
-    /* HTML 응답 = 로그인 페이지 → 공유 설정 문제 */
-    throw new Error('시트 응답이 HTML입니다 — "링크 있는 모든 사용자" 공유로 설정해주세요');
-  }
-  return parseCSV(txt);
-}
-function parseCSV(txt){
-  const rows=[];let inQ=false,row=[],cell='';
-  for(let i=0;i<txt.length;i++){
-    const c=txt[i];
-    if(c==='"'){inQ=!inQ;continue;}
-    if(!inQ&&c===','){row.push(cell.trim());cell='';continue;}
-    if(!inQ&&(c==='\n'||(c==='\r'&&txt[i+1]==='\n'))){
-      if(c==='\r')i++;
-      row.push(cell.trim());cell='';
-      if(row.some(x=>x))rows.push(row);
-      row=[];continue;
-    }
-    cell+=c;
-  }
-  if(cell||row.length){row.push(cell.trim());if(row.some(x=>x))rows.push(row);}
-  return rows;
-}
-
-/* ══ FORMAT / UTILS ═══════════════════════════════════════ */
-function fc(v){
-  if(v===null||v===undefined||v==='') return '<span class="ndash">—</span>';
-  const s=String(v).trim();
-  if(!s) return '<span class="ndash">—</span>';
-  if(s.endsWith('%')){const n=parseFloat(s);if(!isNaN(n)) return `<span class="${n<0?'nneg':'npct'}">${s}</span>`;}
-  const clean=s.replace(/[,\s₩원]/g,'');
-  if(!isNaN(Number(clean))&&clean!==''&&/^[\d,.\-\+]+$/.test(clean)){
-    const n=Number(clean);return `<span class="${n<0?'nneg':n>0?'npos':'nnum'}">${s}</span>`;
-  }
-  return s;
-}
-function fmtBig(n){
-  if(isNaN(n))return '—';
-  if(Math.abs(n)>=1e8)return (n/1e8).toFixed(1)+'억';
-  if(Math.abs(n)>=1e4)return Math.round(n/1e4).toLocaleString()+'만';
-  if(Math.abs(n)>=1000)return n.toLocaleString();
-  return Number(n.toFixed(1)).toString();
-}
-function findHdrRow(rows){
-  for(let i=0;i<Math.min(rows.length,6);i++){if(rows[i].filter(c=>c).length>=2)return i;}
-  return 0;
-}
-function numCols(hdr,data){
-  return hdr.map((h,i)=>({h,i})).filter(({h,i})=>{
-    if(!h)return false;
-    return data.map(r=>parseFloat((r[i]||'').replace(/[,\s₩원%]/g,''))).filter(x=>!isNaN(x)).length>0;
-  });
-}
-function errHTML(msg){return `<div class="err">
-  ⚠️ ${msg}
-  <small style="display:block;margin-top:8px;line-height:1.6">
-    <strong>체크리스트:</strong><br>
-    1. 구글 시트 → 공유 → "링크 있는 모든 사용자" → 뷰어 설정<br>
-    2. F12 콘솔에서 실제 오류 메시지 확인<br>
-    3. CORS 오류라면: 시트를 "파일 → 공유 → 웹에 게시"도 추가로 설정
-  </small>
-</div>`;}
-function parseAmt(v){return parseFloat(String(v||'').replace(/[,\s₩원]/g,''))||0;}
-
-/* ══ TABLE ════════════════════════════════════════════════ */
-function initTS(k){if(!TS[k])TS[k]={search:'',sortCol:-1,sortAsc:true,page:1};}
-function drawTable(k,rows,cid,customCell){
-  const el=document.getElementById(cid);if(!el)return;
-  if(!rows||rows.length<2){el.innerHTML=`<div class="empty"><div class="empty-i">📭</div>데이터 없음</div>`;return;}
-  initTS(k);
-  const hdr=rows[0];let data=rows.slice(1).filter(r=>r.some(c=>c));
-  const q=(TS[k].search||'').toLowerCase();
-  if(q)data=data.filter(r=>r.some(c=>(c||'').toLowerCase().includes(q)));
-  const{sortCol:sc,sortAsc:sa}=TS[k];
-  if(sc>=0){data=[...data].sort((a,b)=>{
-    const av=(a[sc]||'').replace(/__SB_\w+__/g,''),bv=(b[sc]||'').replace(/__SB_\w+__/g,'');
-    const an=parseFloat(av.replace(/[,%\s₩원]/g,'')),bn=parseFloat(bv.replace(/[,%\s₩원]/g,''));
-    if(!isNaN(an)&&!isNaN(bn))return sa?an-bn:bn-an;
-    return sa?av.localeCompare(bv,'ko'):bv.localeCompare(av,'ko');
-  });}
-  const total=data.length,p=Math.max(1,Math.min(TS[k].page,Math.ceil(total/PG)||1));
-  TS[k].page=p;const totalP=Math.max(1,Math.ceil(total/PG));
-  const slice=data.slice((p-1)*PG,p*PG);
-  const cfn=customCell||fc;
-  const ths=hdr.map((h,i)=>`<th onclick="tSort('${k}','${cid}',${i})" ${sc===i?'class="sorted"':''}>${h||'—'}${sc===i?(sa?' ↑':' ↓'):''}</th>`).join('');
-  const tbs=slice.map(r=>`<tr>${hdr.map((_,i)=>`<td>${cfn(r[i])}</td>`).join('')}</tr>`).join('');
-  let pgH='';
-  if(totalP>1){
-    const s=Math.max(1,Math.min(p-2,totalP-4)),e=Math.min(totalP,s+4);
-    let btns='';for(let i=s;i<=e;i++)btns+=`<button class="pg${i===p?' on':''}" onclick="tPage('${k}','${cid}',${i})">${i}</button>`;
-    pgH=`<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:10px 18px;border-top:1px solid var(--border);font-size:12px;color:var(--t3)">
-      <span>${total}건</span><button class="pg" onclick="tPage('${k}','${cid}',${p-1})" ${p<=1?'disabled':''}>‹</button>${btns}
-      <button class="pg" onclick="tPage('${k}','${cid}',${p+1})" ${p>=totalP?'disabled':''}>›</button></div>`;
-  }else pgH=`<div style="padding:8px 18px;border-top:1px solid var(--border);font-size:11px;color:var(--t3)">${total}건</div>`;
-  el.innerHTML=`<div class="card"><div class="tscroll"><table><thead><tr>${ths}</tr></thead><tbody>${tbs}</tbody></table></div>${pgH}</div>`;
-}
-function tSort(k,cid,col){initTS(k);if(TS[k].sortCol===col)TS[k].sortAsc=!TS[k].sortAsc;else{TS[k].sortCol=col;TS[k].sortAsc=true;}TS[k].page=1;drawTable(k,CACHE[k],cid,CACHE[k+'_cfn']);}
-function tSearch(k,cid,val){initTS(k);TS[k].search=val;TS[k].page=1;drawTable(k,CACHE[k],cid,CACHE[k+'_cfn']);}
-function tPage(k,cid,p){initTS(k);TS[k].page=p;drawTable(k,CACHE[k],cid,CACHE[k+'_cfn']);}
-
-/* ════════════════════════════════════════════════════════════
-   1. TIMELINE — 컴팩트 + 현재시점 마커
-   ★ 구글 시트 데이터 100% 실시간 반영
-════════════════════════════════════════════════════════════ */
-function showLoader(id){document.getElementById(id).innerHTML=`<div class="loader"><div class="ring"></div><p>데이터 불러오는 중…</p></div>`;}
-function stamp(){document.getElementById('syncTime').textContent=new Date().toLocaleTimeString('ko-KR');}
-
-async function load(k){
-  showLoader(`sec-${k}`);
-  try{
-    if(k==='market'){
-      const reports=await fetchMarketReports();
-      CACHE[k]=reports;
-      renderMarket(reports);
-    }
-    stamp();
-  }catch(e){
-    if(k==='market'){
-      document.getElementById('sec-market').innerHTML=`
-        <div class="err" style="max-width:680px">
-          <div style="font-size:14px;font-weight:700;margin-bottom:10px">⚠️ 시장 리포트 연동 실패</div>
-          <div style="background:rgba(0,0,0,.3);border-radius:6px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:#fca5a5;margin-bottom:14px;word-break:break-all">${e.message}</div>
-          <div style="font-size:12px;color:var(--t3);line-height:2">
-            <b style="color:var(--t2)">체크리스트</b><br>
-            1. <a href="https://script.google.com/home" target="_blank" style="color:var(--blue)">Apps Script 콘솔</a>에서 배포 상태 확인 (배포 → 배포 관리 → 활성 상태)<br>
-            2. 배포 설정: 액세스 권한 → <b style="color:var(--yellow)">"모든 사람"</b> (로그인 불필요) 확인<br>
-            3. 새 배포가 필요하면 URL이 바뀌므로 market.html의 DRIVE_SCRIPT_URL 업데이트 필요<br>
-            4. F12 콘솔 → Network 탭에서 script.google.com 요청 응답 확인
-          </div>
-          <button onclick="_marketFetching=false;LOADED.delete('market');load('market')" style="margin-top:14px;padding:8px 20px;background:var(--blue);border:none;border-radius:6px;color:#fff;font-family:var(--sans);font-size:12px;cursor:pointer">↺ 다시 시도</button>
-        </div>`;
-    } else {
-      document.getElementById(`sec-${k}`).innerHTML=errHTML(e.message);
-    }
-  }
-}
-
-function go(k,btn){
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
-  const sec = document.getElementById('sec-'+k);
-  if(sec) sec.classList.add('on');
-  CUR=k;
-  if(k==='mapview'){
-    requestAnimationFrame(function(){
-      if(typeof window._initMapView==='function'){
-        window._initMapView();
-      }
-      setTimeout(function(){
-        if(window.mapInstance) window.mapInstance.invalidateSize();
-      }, 300);
-    });
-    return;
-  }
-  if(!LOADED.has(k)){LOADED.add(k);load(k);}
-}
-
-
-
-/* ================================
-   MARKET REPORT - DO NOT TOUCH
-   시장 리포트 구글 연동 전용 구간
-   임대 상권지도 수정 시 이 구간 수정 금지
-================================ */
-
-/* ── Apps Script 웹앱 URL ─────────────────────────────── */
-const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwpOCana9sqVnLnmXbx8Z2Lh7QTgKtmP6YQdf2QEs4-CSw84Ai8qdgzk4JA_jyEuqDYgQ/exec';
-
-/* ── parseAppsScriptResponse — 모든 응답 형식 파싱 ───────── */
-function parseAppsScriptResponse(json) {
-  if (Array.isArray(json))           return json;           // 배열 단독
-  if (json && Array.isArray(json.reports)) return json.reports; // {ok,reports:[]}
-  if (json && json.ok === false)     throw new Error(json.error || 'Apps Script 오류');
-  if (json && typeof json === 'object') {                   // 다른 키 탐색
-    var keys = Object.keys(json);
-    for (var i = 0; i < keys.length; i++) {
-      if (Array.isArray(json[keys[i]])) return json[keys[i]];
-    }
-  }
-  return [];
-}
-
-/* ── fetchMarketReports
-   순수 JSONP 방식 — Google Apps Script는 CORS를 지원하지 않으므로
-   fetch 시도 없이 JSONP만 사용합니다.
-   Apps Script doGet(e)에서 반드시 ContentService로 응답해야 합니다.
-─────────────────────────────────────────────────────── */
-var _marketFetching = false; /* 중복 호출 방지 플래그 */
-
-function fetchMarketReports() {
-  if (_marketFetching) {
-    return Promise.reject(new Error('이미 로딩 중입니다. 잠시 후 다시 시도해주세요.'));
-  }
-  _marketFetching = true;
-
-  return new Promise(function(resolve, reject) {
-    var cbName = 'marketCb_' + Date.now();
-    var script  = document.createElement('script');
-    var done    = false;
-
-    var timer = setTimeout(function() {
-      if (done) return;
-      done = true;
-      _marketFetching = false;
-      cleanup();
-      reject(new Error(
-        'Apps Script 응답 없음 (12초 초과)\n' +
-        '→ script.google.com/home 에서 배포 상태 확인\n' +
-        '→ 배포 설정: 액세스 권한 = "모든 사람" 확인'
-      ));
-    }, 12000);
-
-    function cleanup() {
-      clearTimeout(timer);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    }
-
-    window[cbName] = function(json) {
-      if (done) return;
-      done = true;
-      _marketFetching = false;
-      cleanup();
-      try {
-        resolve(parseAppsScriptResponse(json));
-      } catch(e) {
-        reject(e);
-      }
-    };
-
-    script.onerror = function() {
-      if (done) return;
-      done = true;
-      _marketFetching = false;
-      cleanup();
-      reject(new Error(
-        'Apps Script URL 로드 실패\n' +
-        '→ URL이 만료됐거나 배포가 해제된 경우입니다\n' +
-        '→ Apps Script에서 새 버전으로 재배포하고 URL을 업데이트하세요'
-      ));
-    };
-
-    script.src = DRIVE_SCRIPT_URL + '?callback=' + cbName + '&t=' + Date.now();
-    document.head.appendChild(script);
-  });
-}
-
-/* ── renderMarket — 리포트 목록 + 상세 UI 구성 ─────────── */
-function renderMarket(reports) {
-  var sec = document.getElementById('sec-market');
-  if (!reports || !reports.length) {
-    sec.innerHTML = '<div class="notice">📭 저장된 브리핑이 없습니다. Claude에게 "오늘 브리핑 해줘"라고 입력하면 자동으로 저장됩니다.</div>';
-    return;
-  }
-
-  /* 정렬: 1순위 제목/본문 날짜, 2순위 updatedAt, 3순위 createdAt */
-  function extractReportDate(r) {
-    var m = (r.title||'').match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
-    if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
-    var bodySnip = (r.body||'').substring(0, 200);
-    var m2 = bodySnip.match(/(\d{4})[\-\.년\s](\d{1,2})[\-\.월\s](\d{1,2})/);
-    if (m2) return new Date(parseInt(m2[1]), parseInt(m2[2])-1, parseInt(m2[3]));
-    if (r.updatedAt) return new Date(r.updatedAt);
-    if (r.createdAt) return new Date(r.createdAt);
-    return new Date(0);
-  }
-
-  var data = reports.slice().sort(function(a, b) {
-    var da = extractReportDate(a), db = extractReportDate(b);
-    if (db - da !== 0) return db - da;
-    return new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0);
-  });
-  window._mrData = data;
-
-  var listHTML = data.map(function(r, i) {
-    var _rd = extractReportDate(r);
-    var dateStr = (_rd && _rd.getFullYear() > 2000)
-      ? _rd.toLocaleDateString('ko-KR', {year:'numeric', month:'2-digit', day:'2-digit'})
-      : (r.title || '날짜 없음');
-    var preview = (function() {
-      var lines = (r.body||'').split('\n');
-      for (var li = 0; li < lines.length; li++) {
-        var t = lines[li].trim();
-        if (!t) continue;
-        if (/^[=\-_─]{5,}$/.test(t)) continue;
-        return t.substring(0, 60);
-      }
-      return '';
-    })();
-    return '<div class="mr-item" onclick="selectMarketReport(' + i + ')" id="mri-' + i + '">' +
-      '<div class="mr-date">' + dateStr + '</div>' +
-      '<div class="mr-title">' + (r.title||'제목 없음') + '</div>' +
-      '<div class="mr-preview">' + preview + '…</div>' +
-      '</div>';
-  }).join('');
-
-  sec.innerHTML =
-    '<div class="notice">📡 Google Drive 폴더 실시간 연동 · 시장 리포트 이력 <span class="chip">' + data.length + '건</span></div>' +
-    '<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">' +
-      '<div class="card" style="overflow:hidden">' +
-        '<div class="card-head"><span class="card-title">📋 브리핑 목록</span></div>' +
-        '<div id="mr-list" style="max-height:70vh;overflow-y:auto">' + listHTML + '</div>' +
-      '</div>' +
-      '<div class="card" id="mr-detail" style="min-height:400px">' +
-        '<div class="mr-mobile-back" onclick="closeMarketDetail()">← 브리핑 목록으로 돌아가기</div>' +
-        '<div class="card-head">' +
-          '<span class="card-title" id="mr-detail-title">브리핑을 선택하세요</span>' +
-          '<a id="mr-drive-link" href="#" target="_blank" style="display:none;font-size:11px;color:var(--blue);text-decoration:none;margin-left:auto">📄 Drive에서 열기</a>' +
-        '</div>' +
-        '<div id="mr-detail-body" style="padding:20px 24px;font-size:13px;line-height:2;color:var(--t2);white-space:pre-wrap;max-height:70vh;overflow-y:auto">' +
-          '왼쪽 목록에서 날짜를 클릭하면 전체 내용이 표시됩니다.' +
-        '</div>' +
-      '</div>' +
-    '</div>';
-
-  /* 첫 번째 자동 선택 — 모바일 세로는 목록만 표시 */
-  var isMobilePortrait = window.matchMedia('(max-width:768px) and (orientation:portrait)').matches;
-  if (isMobilePortrait) {
-    var _sec = document.getElementById('sec-market');
-    if (_sec) _sec.classList.remove('market-detail-open');
-  } else {
-    selectMarketReport(0);
-  }
-}
-
-/* ── selectMarketReport — 리포트 클릭 시 상세 표시 ───────── */
-function selectMarketReport(i) {
-  var data = window._mrData;
-  if (!data || !data[i]) return;
-  var r = data[i];
-
-  /* 목록 하이라이트 */
-  document.querySelectorAll('.mr-item').forEach(function(el, idx) {
-    el.classList.toggle('mr-item-on', idx === i);
-  });
-
-  /* 제목 날짜: updatedAt → createdAt → title 순 */
-  var dateRaw = r.updatedAt || r.createdAt;
-  var dateStr = dateRaw
-    ? new Date(dateRaw).toLocaleDateString('ko-KR', {year:'numeric', month:'2-digit', day:'2-digit'})
-    : (r.title || '');
-  var titleEl = document.getElementById('mr-detail-title');
-  if (titleEl) titleEl.textContent = dateStr + ' · ' + (r.title||'');
-
-  /* 본문 렌더링 */
-  var detailBody = document.getElementById('mr-detail-body');
-  if (detailBody) {
-    detailBody.innerHTML = formatMarketBody(r.body||'');
-    detailBody.scrollTop = 0;
-  }
-
-  /* Drive 원문 링크 */
-  var linkEl = document.getElementById('mr-drive-link');
-  if (linkEl) {
-    if (r.url) {
-      linkEl.href = r.url;
-      linkEl.style.display = 'inline';
-    } else {
-      linkEl.style.display = 'none';
-    }
-  }
-
-  /* 모바일 세로: 상세 화면으로 전환 */
-  openMarketDetailOnMobile();
-}
-
-/* ── formatMarketBody — 본문 리치 렌더러 ─────────────────── */
-function formatMarketBody(text) {
-  if (!text) return '<span style="color:var(--t3)">본문 없음</span>';
-
-  var urlRe = /(https?:\/\/[^\s\)"'<>\]]+)/g;
-
-  function extractArticleDate(url) {
-    var m = url.match(/(20\d{2})(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])/);
-    if (m) return m[1] + '-' + m[2] + '-' + m[3];
-    m = url.match(/\/(20\d{2})\/(\d{1,2})\/(\d{1,2})(\/|$)/);
-    if (m) return m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
-    return '';
-  }
-
-  function linkify(str) {
-    return str.replace(urlRe, function(url) {
-      var display = url.length > 60 ? url.substring(0,57)+'...' : url;
-      return '<a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>';
-    });
-  }
-
-  function renderSource(line) {
-    var prefix = line.match(/^출처\s*[:：]\s*/);
-    var rest = prefix ? line.slice(prefix[0].length) : line;
-    var urlMatch = rest.match(urlRe);
-    if (!urlMatch) return '<div class="mr-source">출처: ' + rest.replace(/&/g,'&amp;') + '</div>';
-    var url = urlMatch[0];
-    var articleDate = extractArticleDate(url);
-    var dateText = articleDate ? ' <span style="color:var(--t3);font-size:11px;">(' + articleDate + ' 기사)</span>' : '';
-    var display = url.length > 70 ? url.substring(0,67)+'...' : url;
-    return '<div class="mr-source">출처: <a href="' + url + '" target="_blank" rel="noopener" class="mr-link">' + display + '</a>' + dateText + '</div>';
-  }
-
-  function isHeading(s) {
-    if (/^\d+\.\s/.test(s)) return true;
-    if (/^[①②③④⑤⑥⑦⑧⑨⑩]/.test(s)) return true;
-    if (/^.{1,3}\s*\d+\.\s/.test(s)) return true;
-    if (/^[■▶]/.test(s)) return true;
-    if (/^💡/.test(s)) return true;
-    if (!/^출처/.test(s) && /^[\s\S]{0,5}\[(참고|주의|위험|확인)\]/u.test(s)) return true;
-    return false;
-  }
-
-  function isDivider(s) { return /^[=\-_─]{5,}$/.test(s); }
-
-  var lines = text.split('\n');
-  var parts = [];
-  lines.forEach(function(line) {
-    var t = line.trim();
-    if (!t) { parts.push('<div style="height:6px"></div>'); return; }
-    if (isDivider(t)) { parts.push('<hr class="mr-divider">'); return; }
-    var escaped = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    if (isHeading(t))          { parts.push('<div class="mr-heading">'  + linkify(escaped) + '</div>'); return; }
-    if (/^출처\s*[:：]/.test(t)) { parts.push(renderSource(t)); return; }
-    parts.push('<div class="mr-line">' + linkify(escaped) + '</div>');
-  });
-  return parts.join('');
-}
-
-/* ── openMarketDetailOnMobile / closeMarketDetail ─────── */
-function openMarketDetailOnMobile() {
-  if (!window.matchMedia('(max-width:768px) and (orientation:portrait)').matches) return;
-  var sec = document.getElementById('sec-market');
-  if (sec) sec.classList.add('market-detail-open');
-}
-
-function closeMarketDetail() {
-  var sec = document.getElementById('sec-market');
-  if (sec) sec.classList.remove('market-detail-open');
-}
-
-/* ── 하위 호환: mrShow → selectMarketReport 위임 ─────────── */
-function mrShow(i) { selectMarketReport(i); }
-function backToMarketList() { closeMarketDetail(); }
-
-/* ================================
-   END: MARKET REPORT - DO NOT TOUCH
-================================ */
-
-/* ══ INIT ══════════════════════════════════════════════════ */
-LOADED.add('market');
-load('market');
-/* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
-setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
-</script>
-
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
@@ -2385,6 +1933,232 @@ window.selectType       = selectType;
    첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
    여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
 
+function reloadMap() {
+  var btn = document.getElementById('btnRef');
+  if(btn) { btn.classList.add('spin'); }
+  loadMapData().then(function(){
+    document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
+    if(btn) btn.classList.remove('spin');
+    // 지도 마커 재렌더링
+    if(window.mapInstance){
+      // 기존 마커 제거
+      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      markersMap = {};
+      buildings.forEach(function(b, idx){
+        var color = getDominantColor(b);
+        var size  = getMarkerSize(b);
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
+          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
+          +'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
+        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
+        markersMap[b.id]=marker;
+      });
+      renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+    }
+  }).catch(function(){
+    if(btn) btn.classList.remove('spin');
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// 업데이트 파이프라인 ("업데이트해줘" 버튼)
+// ══════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyflo91eL18ds40xfXjUfPdY8SBFF7BIqbZlddVKUHArlh0kCFmT8VKibDMiMR3bbJ8/exec';
+const DRIVE_FOLDER_ID  = '1A0_psOadZpujctRfOlC3d-Zmbk9lFfSb';
+
+function updLog(msg) {
+  var log = document.getElementById('update-log');
+  if (!log) return;
+  var ts = new Date().toLocaleTimeString('ko-KR');
+  log.innerHTML += '<span style="color:var(--t4)">[' + ts + ']</span> ' + msg + '<br>';
+  log.scrollTop = log.scrollHeight;
+}
+
+function updStep(id, state, detail) {
+  // state: 'active' | 'done' | 'err' | ''
+  var stepEl = document.getElementById('step-' + id);
+  var dotEl  = document.getElementById('dot-'  + id);
+  var detEl  = document.getElementById('detail-' + id);
+  if (!stepEl) return;
+  stepEl.className = 'upd-step' + (state ? ' ' + state : '');
+  dotEl.className  = 'upd-step-dot' + (state ? ' ' + state : '');
+  dotEl.textContent = state === 'done' ? '✓' : state === 'err' ? '✕' : state === 'active' ? '◎' : '○';
+  if (detail && detEl) detEl.textContent = detail;
+}
+
+function openUpdateModal() {
+  var modal = document.getElementById('update-modal');
+  modal.style.display = 'flex';
+  // 초기화
+  ['scan','parse','upload','merge','reload'].forEach(function(s){ updStep(s,'',''); });
+  document.getElementById('update-log').innerHTML = '';
+  document.getElementById('modal-done-btn').style.display = 'none';
+  document.getElementById('modal-close-btn').style.pointerEvents = 'none';
+  document.getElementById('modal-close-btn').style.opacity = '0.3';
+}
+
+function closeUpdateModal() {
+  document.getElementById('update-modal').style.display = 'none';
+}
+
+async function runUpdatePipeline() {
+  var btn = document.getElementById('btnUpdate');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('running');
+  btn.querySelector('.update-ico').textContent = '↻';
+
+  openUpdateModal();
+  updLog('업데이트 파이프라인 시작');
+
+  try {
+    // ── STEP 1: Apps Script scan ──
+    updStep('scan', 'active', '미처리 PDF 스캔 중…');
+    updLog('Apps Script action=scan 호출 중…');
+
+    var scanRes = await fetch(APPS_SCRIPT_URL + '?action=scan', { redirect: 'follow' });
+    if (!scanRes.ok) throw new Error('scan HTTP ' + scanRes.status);
+    var scanData = await scanRes.json();
+
+    var pending = scanData.pending || [];
+    if (pending.length === 0) {
+      updStep('scan', 'done', '미처리 파일 없음 — 이미 최신 상태');
+      updLog('✅ 미처리 파일 없음. 현재 데이터가 최신입니다.');
+      updStep('parse','done','건너뜀'); updStep('upload','done','건너뜀');
+      updStep('merge','done','건너뜀');
+      // 지도만 새로고침
+      updStep('reload','active','지도 데이터 갱신 중…');
+      await loadMapData();
+      document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
+      updStep('reload','done','지도 갱신 완료');
+      updLog('✅ 지도 데이터 새로고침 완료');
+      _finishUpdate(btn, true);
+      return;
+    }
+
+    updStep('scan', 'done', pending.length + '개 미처리 파일 발견');
+    updLog('✅ 미처리 파일 ' + pending.length + '개: ' + pending.map(function(p){ return p.name || p.id; }).join(', '));
+
+    // ── STEP 2: PDF 파싱 (Apps Script parse 위임) ──
+    updStep('parse', 'active', 'Apps Script에 파싱 요청 중…');
+    updLog('action=parse 호출 (파일 ID 목록 전송)…');
+
+    var ids = pending.map(function(p){ return p.id; });
+    var parseRes = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'parse', fileIds: ids })
+    });
+    if (!parseRes.ok) throw new Error('parse HTTP ' + parseRes.status);
+    var parseData = await parseRes.json();
+
+    if (!parseData.ok) throw new Error('파싱 실패: ' + (parseData.error || 'unknown'));
+    var rows = parseData.rows || [];
+    updStep('parse', 'done', rows.length + '행 파싱 완료');
+    updLog('✅ ' + rows.length + '행 추출 완료');
+
+    // ── STEP 3: CSV 생성 → Drive 업로드 ──
+    updStep('upload', 'active', 'CSV 생성 후 드라이브 업로드 중…');
+    var batchName = '_batch_' + Date.now() + '.csv';
+    var header = '파일명,동,건물명,주소,위도,경도,매매가(억),층,임차인,업종,등록일,업로드일';
+    var today = new Date().toISOString().slice(0, 10);
+    var csvLines = [header].concat(rows.map(function(r) {
+      return [r['파일명']||'',r['동']||'',r['건물명']||'',r['주소']||'',
+              r['위도']||'',r['경도']||'',r['매매가']||'',r['층']||'',
+              r['임차인']||'',r['업종']||'',r['등록일']||today,today
+             ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+    }));
+    var csvContent = csvLines.join('\n');
+    updLog('CSV ' + batchName + ' (' + rows.length + '행) 생성 완료');
+
+    // Drive 업로드 (Apps Script upload 엔드포인트)
+    var uploadRes = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'upload', filename: batchName, csv: csvContent, folderId: DRIVE_FOLDER_ID })
+    });
+    if (!uploadRes.ok) throw new Error('upload HTTP ' + uploadRes.status);
+    var uploadData = await uploadRes.json();
+    if (!uploadData.ok) throw new Error('업로드 실패: ' + (uploadData.error || 'unknown'));
+    updStep('upload', 'done', '드라이브 업로드 완료');
+    updLog('✅ ' + batchName + ' 드라이브 업로드 완료 (fileId: ' + (uploadData.fileId||'?') + ')');
+
+    // ── STEP 4: 시트 병합 대기 ──
+    updStep('merge', 'active', 'Apps Script 5분 트리거 대기 중…');
+    updLog('Apps Script 트리거가 자동으로 시트에 병합합니다. 30초 대기…');
+    // 30초 대기 후 시트 확인 재시도 (트리거 대기)
+    await new Promise(function(resolve){ setTimeout(resolve, 30000); });
+    updStep('merge', 'done', '병합 완료 (트리거 실행 대기 후)');
+    updLog('✅ 30초 경과 — 시트 병합 완료로 간주');
+
+    // ── STEP 5: 지도 새로고침 ──
+    updStep('reload', 'active', '최신 시트 데이터 로딩 중…');
+    updLog('MAP_SHEET_URL에서 최신 데이터 로딩…');
+    await loadMapData();
+    document.getElementById('syncTime').textContent = new Date().toLocaleTimeString('ko-KR');
+    updStep('reload', 'done', buildings.length - 1 + '개 건물 갱신 완료');
+    updLog('✅ 지도 갱신 완료 — ' + (buildings.length - 1) + '개 건물');
+
+    // 마커 재렌더링
+    if (window.mapInstance) {
+      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      markersMap = {};
+      buildings.forEach(function(b, idx){
+        var color = getDominantColor(b);
+        var size  = getMarkerSize(b);
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
+          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
+          +'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
+        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
+        markersMap[b.id] = marker;
+      });
+      renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+    }
+
+    _finishUpdate(btn, true);
+
+  } catch (err) {
+    updLog('❌ 오류: ' + err.message);
+    // 현재 active 단계를 err로 전환
+    ['scan','parse','upload','merge','reload'].forEach(function(s){
+      var dot = document.getElementById('dot-'+s);
+      if (dot && dot.classList.contains('active')) updStep(s, 'err', err.message);
+    });
+    _finishUpdate(btn, false);
+  }
+}
+
+function _finishUpdate(btn, success) {
+  btn.disabled = false;
+  btn.classList.remove('running');
+  btn.querySelector('.update-ico').textContent = '⬆';
+  document.getElementById('modal-done-btn').style.display = 'block';
+  document.getElementById('modal-close-btn').style.pointerEvents = '';
+  document.getElementById('modal-close-btn').style.opacity = '';
+  document.getElementById('modal-icon').textContent = success ? '✅' : '❌';
+  updLog(success ? '━━ 업데이트 완료 ━━' : '━━ 업데이트 실패 (위 로그 확인) ━━');
+}
+
+</script>
+<script>
+// Leaflet 로드 완료 후 바로 실행
+(function waitForLeaflet(){
+  if(typeof L !== 'undefined' && typeof window._initMapView === 'function'){
+    window._initMapView();
+  } else {
+    setTimeout(waitForLeaflet, 50);
+  }
+})();
 </script>
 
 </body>
