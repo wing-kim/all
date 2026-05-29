@@ -1099,13 +1099,13 @@ td:first-child{color:var(--t1);font-weight:500}
   font-size: 15px;
 }
 .mk-label {
-  margin-top: 4px;
-  background: rgba(8,9,13,.92);
-  border: 1px solid rgba(255,255,255,.06);
-  padding: 2px 6px; border-radius: 3px;
-  font-size: 9.5px; font-weight: 700; color: #c0c4d8;
-  box-shadow: 0 1px 4px rgba(0,0,0,.4);
-  white-space: nowrap; max-width: 80px; text-align: center;
+  margin-top: 3px;
+  background: rgba(8,9,13,.96);
+  border: 1px solid rgba(255,255,255,.1);
+  padding: 2px 7px; border-radius: 4px;
+  font-size: 9.5px; font-weight: 700; color: #d8dce8;
+  box-shadow: 0 2px 6px rgba(0,0,0,.7);
+  white-space: nowrap; max-width: 88px; text-align: center;
   overflow: hidden; text-overflow: ellipsis;
   letter-spacing: .01em;
 }
@@ -1523,6 +1523,145 @@ td:first-child{color:var(--t1);font-weight:500}
 .upd-step.active .upd-step-label{color:var(--t1)}
 .upd-step.done .upd-step-label{color:var(--green)}
 .upd-step.err .upd-step-label{color:var(--red)}
+
+/* ═══════════════════════════════════════════════
+   AI 상권분석 탭
+═══════════════════════════════════════════════ */
+.ai-wrap { padding-bottom: 32px; }
+
+/* 헤더 */
+.ai-header {
+  background: linear-gradient(135deg, #0c0f1a 0%, #0f1520 100%);
+  border-bottom: 1px solid #1a1f32;
+  padding: 14px 16px 12px;
+  position: relative; overflow: hidden;
+}
+.ai-header::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #3b7fff, #22d186, #8b5cf6);
+}
+.ai-header-title {
+  font-size: 12.5px; font-weight: 700; color: #eef0f8;
+  display: flex; align-items: center; gap: 7px;
+}
+.ai-header-sub { font-size: 10.5px; color: #3a4060; margin-top: 4px; }
+
+/* 스코어 박스 */
+.ai-score-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 6px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #151821;
+}
+.ai-score-item {
+  background: #0f1118; border: 1px solid #222636;
+  border-radius: 8px; padding: 9px 10px; text-align: center;
+}
+.ai-score-num {
+  font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 700; line-height: 1;
+}
+.ai-score-lbl { font-size: 9px; color: #4a5270; margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+
+/* 섹션 */
+.ai-section {
+  border-bottom: 1px solid #0f1118;
+}
+.ai-section-head {
+  display: flex; align-items: center; gap: 9px;
+  padding: 11px 14px 10px; cursor: pointer; user-select: none;
+  transition: background .15s;
+}
+.ai-section-head:hover { background: rgba(255,255,255,.02); }
+.ai-section-ic {
+  width: 24px; height: 24px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+}
+.ai-section-title { font-size: 12px; font-weight: 700; color: #c0c4d8; flex: 1; }
+.ai-section-badge {
+  font-size: 10px; font-weight: 700; padding: 2px 8px;
+  border-radius: 20px; flex-shrink: 0;
+}
+.ai-chevron { font-size: 9px; color: #2a3050; transition: transform .2s; }
+.ai-section.open .ai-chevron { transform: rotate(180deg); }
+.ai-section-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+.ai-section.open .ai-section-body { max-height: 2000px; }
+.ai-section-inner { padding: 0 14px 14px; }
+
+/* 존 카드 (반경별) */
+.ai-zone-card {
+  background: #0f1118; border: 1px solid #1e2438;
+  border-radius: 8px; margin-bottom: 8px; overflow: hidden;
+}
+.ai-zone-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: rgba(255,255,255,.02);
+  border-bottom: 1px solid #1a1f32;
+}
+.ai-zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ai-zone-name { font-size: 11.5px; font-weight: 700; color: #c0c4d8; flex: 1; }
+.ai-zone-cnt  { font-size: 10px; color: #4a5270; font-family: 'DM Mono', monospace; }
+.ai-zone-body { padding: 8px 12px 10px; }
+.ai-zone-types { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+.ai-type-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 4px; font-size: 10.5px; font-weight: 600;
+}
+.ai-zone-memo { font-size: 10.5px; color: #4a5270; line-height: 1.7; }
+
+/* 층별 추천 */
+.ai-floor-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ai-floor-row:last-child { border-bottom: none; }
+.ai-floor-label {
+  width: 44px; flex-shrink: 0;
+  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700;
+}
+.ai-floor-type {
+  flex: 1; font-size: 11.5px; font-weight: 700; color: #c0c4d8;
+  display: flex; align-items: center; gap: 6px;
+}
+.ai-floor-bar-wrap {
+  width: 64px; flex-shrink: 0;
+  height: 5px; background: rgba(255,255,255,.05); border-radius: 3px; overflow: hidden;
+}
+.ai-floor-bar { height: 100%; border-radius: 3px; transition: width .7s; }
+.ai-floor-pct { font-family: 'DM Mono', monospace; font-size: 9.5px; color: #4a5270; width: 26px; text-align: right; }
+
+/* 기회/포화 매트릭스 */
+.ai-matrix-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ai-matrix-row:last-child { border-bottom: none; }
+.ai-matrix-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+.ai-matrix-type { font-size: 11px; font-weight: 600; color: #8890aa; width: 80px; flex-shrink: 0; }
+.ai-bar-group { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.ai-mini-bar { height: 4px; border-radius: 2px; transition: width .6s; }
+.ai-bar-labels { display: flex; justify-content: space-between; font-size: 8.5px; color: #3a4060; }
+.ai-opp-badge {
+  font-size: 9px; font-weight: 700; padding: 1.5px 6px; border-radius: 3px;
+  flex-shrink: 0; border: 1px solid;
+}
+
+/* 한줄 요약 박스 */
+.ai-summary-box {
+  background: rgba(59,127,255,.05);
+  border: 1px solid rgba(59,127,255,.12);
+  border-left: 3px solid #3b7fff;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 12px;
+  font-size: 11px; color: #6b7899; line-height: 1.8;
+  margin-top: 10px;
+}
+.ai-summary-box b { color: #c0c4d8; }
+
+/* 빈 상태 */
+.ai-empty {
+  padding: 40px 20px; text-align: center;
+  font-size: 12px; color: #2e3550; line-height: 1.9;
+}
 </style>
 </head>
 <body>
@@ -1627,6 +1766,7 @@ td:first-child{color:var(--t1);font-weight:500}
       <p>
         <span class="sidebar-stat" id="bldg-count-stat">— 개 건물</span>
         <span class="sidebar-stat" id="tenant-count-stat">— 건 임차</span>
+        <span class="sidebar-stat" id="prox-count-stat" style="background:rgba(240,56,96,.08);border-color:rgba(240,56,96,.2);color:#f03860;">—</span>
         <span style="margin-left:auto;font-size:10px;color:#2e3550;">강남구 신사동</span>
       </p>
     </div>
@@ -1635,6 +1775,7 @@ td:first-child{color:var(--t1);font-weight:500}
       <div class="map-tab active" onclick="mapShowTab('buildings')">건물 목록</div>
       <div class="map-tab" onclick="mapShowTab('chart')">업종 분포</div>
       <div class="map-tab" onclick="mapShowTab('strategy')">임대 전략</div>
+      <div class="map-tab" onclick="mapShowTab('ai')">AI 분석</div>
     </div>
 
     <div class="map-tab-content">
@@ -1656,6 +1797,11 @@ td:first-child{color:var(--t1);font-weight:500}
       <!-- ══ 임대 전략 TAB ══ -->
       <div class="map-tab-pane" id="map-tab-strategy">
         <div id="strategy-wrap"></div>
+      </div>
+
+      <!-- ══ AI 분석 TAB ══ -->
+      <div class="map-tab-pane" id="map-tab-ai">
+        <div id="ai-analysis-wrap"></div>
       </div>
 
     </div><!-- /tab-content -->
@@ -1698,16 +1844,29 @@ function parseMapCSV(text){
   }).filter(r=>r['건물명']&&r['건물명'].trim());
 }
 
+// ══ 두 좌표 간 거리(m) 계산 (Haversine) ══
+function calcDistM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
 function rowsToBuildings(rows){
   const bmap={};
   rows.forEach(row=>{
     const key=row['건물명'].trim();
     if(!bmap[key]){
+      const lat=parseFloat(row['위도'])||0;
+      const lng=parseFloat(row['경도'])||0;
+      const distM = (lat&&lng) ? calcDistM(OUR_BUILDING.lat, OUR_BUILDING.lng, lat, lng) : 9999;
+      const distance = distM < 150 ? 'core' : distM < 400 ? 'mid' : 'far';
       bmap[key]={
         id:key.replace(/[^\w가-힣]/g,'_'),
         name:row['건물명'], short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
-        address:row['주소']||'', lat:parseFloat(row['위도'])||0, lng:parseFloat(row['경도'])||0,
-        price:row['매매가']||null, dong:row['동']||'기타', distance:'mid',
+        address:row['주소']||'', lat, lng,
+        price:row['매매가']||null, dong:row['동']||'기타', distance, distM,
         source:row['파일명']||'', tenants:[]
       };
     }
@@ -1830,8 +1989,11 @@ function renderBuildingList() {
   const totalTenants = nonOurs.flatMap(b=>b.tenants).length;
   const bldgStat = document.getElementById('bldg-count-stat');
   const tenantStat = document.getElementById('tenant-count-stat');
+  const coreCntStat = nonOurs.filter(b=>b.distance==='core').length;
   if (bldgStat) bldgStat.textContent = nonOurs.length + '개 건물';
   if (tenantStat) tenantStat.textContent = totalTenants + '건 임차';
+  const proxEl = document.getElementById('prox-count-stat');
+  if (proxEl) proxEl.textContent = coreCntStat + '개 인접(150m)';
 
   list.innerHTML = buildings.map((b, idx) => {
     if (b.isOurs) {
@@ -1877,6 +2039,7 @@ function renderBuildingList() {
             <div class="bldg-meta">
               ${b.address ? `<span>${b.address}</span>` : ''}
               <span class="dist-tag ${distClass}">${distLabel}</span>
+              ${b.distM ? `<span style="font-size:9px;color:var(--t4);font-family:var(--mono);">${b.distM}m</span>` : ''}
             </div>
           </div>
           <div class="bldg-right">
@@ -1959,15 +2122,26 @@ function renderChart() {
   document.getElementById('type-chart').innerHTML =
     `<div class="type-hint">👆 업종 클릭 → 해당 건물을 지도에서 확인</div>` + rows;
 
-  document.getElementById('insight-box').innerHTML = `
-    <div class="insight-title">💡 주목할 인사이트</div>
-    <ul>
-      <li><b style="color:#3b82f6">사무실/기업</b> 임차인이 가장 많아 오피스 수요가 탄탄한 상권</li>
-      <li><b style="color:#06b6d4">병원/의료</b> 클러스터 형성 — 메디컬 빌딩 전층 임대 사례 다수</li>
-      <li><b style="color:#ef4444">F&B/음식점</b> 저층 집중, 가로수길 상권 특성상 외식 수요 안정적</li>
-      <li><b style="color:#ec4899">뷰티/미용</b> (네일·피부·속눈썹) 2~3층 다수 — 젊은 여성 유동인구</li>
-      <li><b style="color:#f59e0b">학원/교육</b> 중층에서 장기 임차 — 안정적 수익원 역할</li>
-    </ul>`;
+  // 데이터 기반 인사이트
+  (function(){
+    const nb = buildings.filter(b=>!b.isOurs);
+    const at = nb.flatMap(b=>b.tenants);
+    const tC = {}; at.forEach(t=>{tC[t.type]=(tC[t.type]||0)+1;});
+    const ts = Object.entries(tC).sort((a,b)=>b[1]-a[1]);
+    const tO = {}; nb.forEach(b=>{new Set(b.tenants.map(t=>t.type)).forEach(tp=>{tO[tp]=(tO[tp]||0)+1;});});
+    const nn = nb.length||1;
+    const coreCt = nb.filter(b=>b.distance==='core').length;
+    const opps = ts.filter(([tp,c])=>{
+      const sat=Math.round((tO[tp]||0)/nn*100), dem=Math.round(c/(at.length||1)*100);
+      return sat<50&&dem>=8;
+    }).slice(0,2);
+    const lines=[];
+    if(ts[0]) lines.push('<li><b style="color:'+( TYPES[ts[0][0]]||'#888')+'">'+ts[0][0]+'</b> '+ts[0][1]+'건 — 상권 내 최다 업종</li>');
+    if(ts[1]&&ts[2]) lines.push('<li><b style="color:'+(TYPES[ts[1][0]]||'#888')+'">'+ts[1][0]+'</b> '+ts[1][1]+'건 · <b style="color:'+(TYPES[ts[2][0]]||'#888')+'">'+ts[2][0]+'</b> '+ts[2][1]+'건 순</li>');
+    if(coreCt>0) lines.push('<li>반경 <b style="color:#3b7fff">150m 이내</b> 직접 경쟁 건물 '+coreCt+'개</li>');
+    if(opps.length>0) lines.push('<li><span style="color:var(--green);font-weight:700">기회 업종</span>: '+opps.map(([tp])=>'<b style="color:'+(TYPES[tp]||'#888')+'">'+tp+'</b>').join(', ')+' — 수요↑ 포화↓</li>');
+    document.getElementById('insight-box').innerHTML='<div class="insight-title">💡 데이터 기반 인사이트</div><ul>'+lines.join('')+'</ul>';
+  })();
 }
 
 // ══════════════════════════════════════════════
@@ -2282,12 +2456,246 @@ function renderStrategy() {
 }
 
 
+// ══════════════════════════════════════════════
+// AI 상권분석 탭 렌더링
+// ══════════════════════════════════════════════
+function renderAnalysis() {
+  const wrap = document.getElementById('ai-analysis-wrap');
+  const nonOurs = buildings.filter(b => !b.isOurs);
+
+  if (nonOurs.length === 0) {
+    wrap.innerHTML = '<div class="ai-empty">📡 데이터 로딩 후<br>분석이 표시됩니다</div>';
+    return;
+  }
+
+  const allT    = nonOurs.flatMap(b => b.tenants);
+  const coreBs  = nonOurs.filter(b => b.distance === 'core');
+  const midBs   = nonOurs.filter(b => b.distance === 'mid');
+  const farBs   = nonOurs.filter(b => b.distance === 'far');
+  const coreT   = coreBs.flatMap(b => b.tenants);
+  const midT    = midBs.flatMap(b => b.tenants);
+  const total   = allT.length || 1;
+
+  // 업종 집계
+  function typeCounts(tenants) {
+    const cnt = {};
+    tenants.forEach(t => { cnt[t.type] = (cnt[t.type]||0)+1; });
+    return Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+  }
+  const allTypeSorted  = typeCounts(allT);
+  const coreTypeSorted = typeCounts(coreT);
+
+  // 건물 수 대비 포화도
+  const typeOcc = {};
+  nonOurs.forEach(b => {
+    const seen = new Set(b.tenants.map(t=>t.type));
+    seen.forEach(tp => { typeOcc[tp] = (typeOcc[tp]||0)+1; });
+  });
+  const n = nonOurs.length;
+
+  // 기회/포화 분류
+  const opps = [], sats = [], neutrals = [];
+  allTypeSorted.forEach(([tp, cnt]) => {
+    const satPct  = Math.round((typeOcc[tp]||0)/n*100);
+    const demand  = Math.round(cnt/total*100);
+    if (satPct < 50 && demand >= 8)     opps.push({tp, satPct, demand, color: TYPES[tp]||'#6b7280'});
+    else if (satPct >= 65)              sats.push({tp, satPct, demand, color: TYPES[tp]||'#6b7280'});
+    else                                neutrals.push({tp, satPct, demand, color: TYPES[tp]||'#6b7280'});
+  });
+
+  // 층별 추천 (인접 건물 기준, 없으면 전체)
+  function floorGroup(s) {
+    const str = String(s||'').replace(/[^0-9B]/gi,'');
+    if (/^B/i.test(str)) return 'B1';
+    const n = parseInt(str);
+    if (isNaN(n)) return null;
+    if (n<=1) return '1F'; if (n<=3) return '2-3F'; if (n<=6) return '4-6F'; return '7F+';
+  }
+  const FLOOR_ORDER = ['B1','1F','2-3F','4-6F','7F+'];
+  const FLOOR_LBL   = {'B1':'지하','1F':'1층','2-3F':'2~3층','4-6F':'4~6층','7F+':'7층↑'};
+  const srcBldgs = coreBs.length > 0 ? coreBs : nonOurs;
+  const floorData = {};
+  srcBldgs.forEach(b => {
+    b.tenants.forEach(t => {
+      const fg = floorGroup(t.floor);
+      if (!fg) return;
+      if (!floorData[fg]) floorData[fg] = {};
+      floorData[fg][t.type] = (floorData[fg][t.type]||0)+1;
+    });
+  });
+
+  // 스코어 계산 (간단 휴리스틱)
+  const diversityScore = Math.min(100, allTypeSorted.length * 9);
+  const coreScore = Math.min(100, coreBs.length * 20 + midBs.length * 8);
+  const oppScore  = Math.min(100, opps.length * 28 + neutrals.length * 8);
+
+  // ── 존별 HTML ──
+  function zoneHtml(label, dot, bldgs, tenants, note) {
+    if (bldgs.length === 0) return '';
+    const top3 = typeCounts(tenants).slice(0,3);
+    return \`
+      <div class="ai-zone-card">
+        <div class="ai-zone-head">
+          <div class="ai-zone-dot" style="background:\${dot}"></div>
+          <div class="ai-zone-name">\${label}</div>
+          <div class="ai-zone-cnt">\${bldgs.length}개 건물 · \${tenants.length}건</div>
+        </div>
+        <div class="ai-zone-body">
+          <div class="ai-zone-types">
+            \${top3.map(([tp,c])=>\`<div class="ai-type-tag" style="background:\${TYPES[tp]||'#888'}22;border:1px solid \${TYPES[tp]||'#888'}44;color:\${TYPES[tp]||'#888'}">\${tp} <b style="font-family:'DM Mono',monospace;font-size:11px;">\${c}</b></div>\`).join('')}
+          </div>
+          <div class="ai-zone-memo">\${note}</div>
+        </div>
+      </div>\`;
+  }
+
+  // ── 층별 추천 HTML ──
+  const floorRows = FLOOR_ORDER.filter(fg => floorData[fg]).map(fg => {
+    const entries = Object.entries(floorData[fg]).sort((a,b)=>b[1]-a[1]);
+    const total_f  = entries.reduce((s,[,v])=>s+v,0);
+    const [top, topCnt] = entries[0]||['—',0];
+    const pct = Math.round(topCnt/total_f*100);
+    const c = TYPES[top]||'#6b7280';
+    return \`
+      <div class="ai-floor-row">
+        <div class="ai-floor-label" style="color:\${c}">\${FLOOR_LBL[fg]}</div>
+        <div class="ai-floor-type">
+          <div style="width:8px;height:8px;border-radius:2px;background:\${c};flex-shrink:0"></div>
+          \${top}
+        </div>
+        <div class="ai-floor-bar-wrap">
+          <div class="ai-floor-bar" style="width:\${pct}%;background:\${c}"></div>
+        </div>
+        <div class="ai-floor-pct">\${pct}%</div>
+      </div>\`;
+  }).join('');
+
+  // ── 기회/포화 매트릭스 HTML ──
+  function matrixRow(item) {
+    const satW = item.satPct + '%';
+    const demW = item.demand + '%';
+    const isOpp = opps.some(o=>o.tp===item.tp);
+    const isSat = sats.some(s=>s.tp===item.tp);
+    const badge = isOpp
+      ? \`<span class="ai-opp-badge" style="color:#22d186;border-color:rgba(34,209,134,.3);background:rgba(34,209,134,.1)">기회</span>\`
+      : isSat
+      ? \`<span class="ai-opp-badge" style="color:#f03860;border-color:rgba(240,56,96,.25);background:rgba(240,56,96,.08)">포화</span>\`
+      : \`<span class="ai-opp-badge" style="color:#4a5270;border-color:#2a3050;background:transparent">보통</span>\`;
+    return \`
+      <div class="ai-matrix-row">
+        <div class="ai-matrix-dot" style="background:\${item.color}"></div>
+        <div class="ai-matrix-type">\${item.tp}</div>
+        <div class="ai-bar-group">
+          <div class="ai-mini-bar" style="width:\${demW};background:\${item.color}"></div>
+          <div class="ai-mini-bar" style="width:\${satW};background:\${item.color}66"></div>
+          <div class="ai-bar-labels"><span>수요 \${item.demand}%</span><span>포화 \${item.satPct}%</span></div>
+        </div>
+        \${badge}
+      </div>\`;
+  }
+  const matrixAll = [...opps, ...neutrals, ...sats].slice(0,9);
+
+  // ── 최종 렌더 ──
+  wrap.innerHTML = \`
+    <div class="ai-wrap">
+      <!-- 헤더 -->
+      <div class="ai-header">
+        <div class="ai-header-title">🤖 AI 상권 분석</div>
+        <div class="ai-header-sub">케이프혼타워 입지 기반 데이터 분석</div>
+      </div>
+
+      <!-- 스코어 -->
+      <div class="ai-score-row">
+        <div class="ai-score-item">
+          <div class="ai-score-num" style="color:#3b7fff">\${diversityScore}</div>
+          <div class="ai-score-lbl">업종 다양성</div>
+        </div>
+        <div class="ai-score-item">
+          <div class="ai-score-num" style="color:#22d186">\${oppScore}</div>
+          <div class="ai-score-lbl">기회 지수</div>
+        </div>
+        <div class="ai-score-item">
+          <div class="ai-score-num" style="color:#f59e0b">\${coreScore}</div>
+          <div class="ai-score-lbl">경쟁 밀도</div>
+        </div>
+      </div>
+
+      <!-- 섹션 1: 반경별 분석 -->
+      <div class="ai-section open">
+        <div class="ai-section-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="ai-section-ic" style="background:rgba(59,127,255,.1)">📍</div>
+          <div class="ai-section-title">반경별 경쟁 분석</div>
+          <span class="ai-section-badge" style="background:rgba(59,127,255,.1);color:#3b7fff">\${nonOurs.length}개</span>
+          <div class="ai-chevron">▼</div>
+        </div>
+        <div class="ai-section-body">
+          <div class="ai-section-inner">
+            \${zoneHtml('인접권 · 150m 이내', '#f03860', coreBs, coreT,
+              coreBs.length>0
+                ? \`직접 경쟁 건물 <b>\${coreBs.length}개</b>. 동일 업종 입점 시 즉각적 영향.\`
+                : '150m 이내 분석된 건물이 없습니다.')}
+            \${zoneHtml('중간권 · 150~400m', '#f59e0b', midBs, midT,
+              midBs.length>0
+                ? \`간접 경쟁 <b>\${midBs.length}개</b> 건물. 업종 트렌드 파악에 활용.\`
+                : '데이터 없음')}
+            \${zoneHtml('원거리 · 400m+', '#4a5270', farBs, farBs.flatMap(b=>b.tenants),
+              farBs.length>0 ? \`광역 상권 참고용 <b>\${farBs.length}개</b> 건물.\` : '데이터 없음')}
+          </div>
+        </div>
+      </div>
+
+      <!-- 섹션 2: 층별 추천 -->
+      <div class="ai-section open">
+        <div class="ai-section-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="ai-section-ic" style="background:rgba(34,209,134,.1)">🏢</div>
+          <div class="ai-section-title">층별 유리 업종</div>
+          <span class="ai-section-badge" style="background:rgba(34,209,134,.08);color:#22d186">인접 기준</span>
+          <div class="ai-chevron">▼</div>
+        </div>
+        <div class="ai-section-body">
+          <div class="ai-section-inner">
+            \${floorRows || '<div style="padding:12px 0;color:#2e3550;font-size:11px;">층별 데이터 수집 중</div>'}
+            <div class="ai-summary-box">
+              <b>분석 방식:</b> \${coreBs.length>0?'인접 150m 건물':'전체 건물'} 기준 각 층에서 가장 많이 입점한 업종을 표시합니다.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 섹션 3: 기회/포화 매트릭스 -->
+      <div class="ai-section open">
+        <div class="ai-section-head" onclick="this.parentElement.classList.toggle('open')">
+          <div class="ai-section-ic" style="background:rgba(139,92,246,.1)">📊</div>
+          <div class="ai-section-title">업종 기회·포화 매트릭스</div>
+          <div class="ai-chevron">▼</div>
+        </div>
+        <div class="ai-section-body">
+          <div class="ai-section-inner">
+            <div style="display:flex;gap:16px;margin-bottom:10px;font-size:9.5px;color:#4a5270;">
+              <span>■ 위 막대: 수요비율</span><span>■ 아래 막대: 포화도</span>
+            </div>
+            \${matrixAll.map(item=>matrixRow(item)).join('')}
+            <div class="ai-summary-box" style="margin-top:12px;">
+              <b style="color:#22d186">기회 업종</b> \${opps.length>0?opps.map(o=>\`<b style="color:\${o.color}">\${o.tp}</b>\`).join(', '):'없음'} — 수요↑ 포화↓<br>
+              <b style="color:#f03860">주의 업종</b> \${sats.length>0?sats.map(s=>\`<b style="color:\${s.color}">\${s.tp}</b>\`).join(', '):'없음'} — 이미 포화 상태
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  \`;
+}
+
+window.renderAnalysis = renderAnalysis;
+
 function mapShowTab(name) {
-  const names = ['buildings','chart','strategy'];
+  const names = ['buildings','chart','strategy','ai'];
   document.querySelectorAll('#sec-mapview .map-tab').forEach((t,i)=>t.classList.toggle('active', names[i]===name));
   document.querySelectorAll('#sec-mapview .map-tab-pane').forEach(p=>p.classList.toggle('active', p.id==='map-tab-'+name));
   if (name !== 'chart' && selectedType) resetTypeFilter();
   if (name === 'strategy') renderStrategy();
+  if (name === 'ai') renderAnalysis();
 }
 
 // ══ 지도 초기화 (lazy) ══
@@ -2364,10 +2772,10 @@ function mapShowTab(name) {
     DONG_ZONES.forEach(function(zone) {
       var poly = L.polygon(zone.coords, {
         color: zone.color,
-        weight: 1.5,
-        opacity: 0.55,
+        weight: 0,
+        opacity: 0,
         fillColor: zone.color,
-        fillOpacity: 0.07,
+        fillOpacity: 0,
         interactive: true
       }).addTo(window.mapInstance);
 
@@ -2380,14 +2788,14 @@ function mapShowTab(name) {
       // 동 이름 레이블 (항상 표시)
       var label = L.divIcon({
         className: '',
-        html: '<div class="dong-label" style="color:'+zone.color+'">'+zone.name+'</div>',
-        iconSize: [60,20], iconAnchor:[30,10]
+        html: '<div class="dong-label" style="color:'+zone.color+';font-size:12px;font-weight:900;background:rgba(8,9,13,.7);padding:2px 7px;border-radius:20px;border:1px solid '+zone.color+'33;">'+zone.name+'</div>',
+        iconSize: [80,22], iconAnchor:[40,11]
       });
       L.marker([cLat, cLng], {icon:label, interactive:false, zIndexOffset:-1000}).addTo(window.mapInstance);
 
       // hover 이벤트
       poly.on('mouseover', function(e) {
-        poly.setStyle({fillOpacity:0.18, weight:2, opacity:0.85});
+        poly.setStyle({fillOpacity:0.08, weight:1, opacity:0.45});
         var tooltip = L.tooltip({
           permanent:false, direction:'top', className:'dong-tooltip',
           offset:[0,-8]
@@ -2401,7 +2809,7 @@ function mapShowTab(name) {
         if (dongTooltips[zone.name]) dongTooltips[zone.name].setLatLng(e.latlng);
       });
       poly.on('mouseout', function() {
-        poly.setStyle({fillOpacity:0.07, weight:1.5, opacity:0.55});
+        poly.setStyle({fillOpacity:0, weight:0, opacity:0});
         if (dongTooltips[zone.name]) {
           window.mapInstance.removeLayer(dongTooltips[zone.name]);
           delete dongTooltips[zone.name];
@@ -2442,13 +2850,13 @@ function mapShowTab(name) {
 
     ROAD_LINES.forEach(function(road) {
       var line = L.polyline(road.coords, {
-        color: road.color, weight: 3.5, opacity: 0.55,
-        dashArray: null, lineCap: 'round', lineJoin: 'round'
+        color: road.color, weight: 1.5, opacity: 0.22,
+        dashArray: '4,5', lineCap: 'round', lineJoin: 'round'
       }).addTo(window.mapInstance);
 
       var roadTooltip = null;
       line.on('mouseover', function(e) {
-        line.setStyle({weight:5.5, opacity:0.9});
+        line.setStyle({weight:2.5, opacity:0.7});
         roadTooltip = L.tooltip({
           permanent:false, direction:'top', className:'road-tooltip',
           offset:[0,-6]
@@ -2461,7 +2869,7 @@ function mapShowTab(name) {
         if (roadTooltip) roadTooltip.setLatLng(e.latlng);
       });
       line.on('mouseout', function() {
-        line.setStyle({weight:3.5, opacity:0.55});
+        line.setStyle({weight:1.5, opacity:0.22});
         if (roadTooltip) { window.mapInstance.removeLayer(roadTooltip); roadTooltip=null; }
       });
       line.on('click', function() {
