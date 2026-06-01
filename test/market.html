@@ -2659,9 +2659,9 @@ function renderFilterChips() {
     .map(function(e){return {key:e[0],label:e[0],count:e[1],color:getFilterColor(e[0],'dong')};});
   var el=document.getElementById('filter-chips');
   el.innerHTML=
-    '<div class="filter-chip all-chip '+(activeFilter==='all'?'active':'')+'" onclick="applyChipFilter('all')">전체 <span class="chip-count">'+nonOurs.length+'</span></div>'+
+    '<div class="filter-chip all-chip '+(activeFilter==='all'?'active':'')+'" data-key="all" onclick="applyChipFilter(this.dataset.key)">전체 <span class="chip-count">'+nonOurs.length+'</span></div>'+
     chips.map(function(ch){
-      return '<div class="filter-chip '+(activeFilter===ch.key?'active':'')+'" onclick="applyChipFilter(''+ch.key+'')" data-key="'+ch.key+'">'+'<span class="chip-dot" style="background:'+ch.color+'"></span>'+ch.label+' <span class="chip-count">'+ch.count+'</span></div>';
+      return '<div class="filter-chip '+(activeFilter===ch.key?'active':'')+'" data-key="'+ch.key+'" onclick="applyChipFilter(this.dataset.key)">'+'<span class="chip-dot" style="background:'+ch.color+'"></span>'+ch.label+' <span class="chip-count">'+ch.count+'</span></div>';
     }).join('');
 }
 
