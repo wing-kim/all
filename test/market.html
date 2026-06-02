@@ -701,60 +701,173 @@ td:first-child{color:var(--t1);font-weight:500}
    임대 상권지도 — 다크 테마 컴포넌트 CSS
    ════════════════════════════════════════════════════ */
 
-/* ── 키워드 필터 바 — 지도 상단 고정 1줄 가로 바 ── */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ── 키워드 필터 바 ── */
+#map-filter-bar,
 .map-filter-bar {
-  position: relative;
-  z-index: 800;
-  display: flex; align-items: center; gap: 4px;
-  flex-wrap: nowrap;
-  overflow-x: auto; overflow-y: hidden;
-  height: 46px; min-height: 46px; max-height: 46px;
-  padding: 0 10px;
-  background: #08090d;
-  border-bottom: 1px solid rgba(59,127,255,.12);
-  flex-shrink: 0;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 8px !important;
+  gap: 4px !important;
+  background: #09090f !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  flex-shrink: 0 !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  z-index: 800 !important;
 }
-.map-filter-bar::-webkit-scrollbar { display: none; }
+#map-filter-bar::-webkit-scrollbar,
+.map-filter-bar::-webkit-scrollbar { display: none !important; }
+#map-filter-bar > *,
+.map-filter-bar > * {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
 
 .map-filter-chip {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 12px;
-  background: rgba(21,24,33,.0);
-  border: 1.5px solid rgba(255,255,255,.08);
-  border-radius: 20px;
-  font-size: 12px; font-weight: 600; color: #4a5270;
-  cursor: pointer; white-space: nowrap;
-  transition: all .16s;
-  flex-shrink: 0;
-  line-height: 1;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 0 10px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #4a5270 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  height: 24px !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+  transition: background .13s, color .13s, border-color .13s !important;
 }
 .map-filter-chip:hover {
-  background: rgba(40,45,65,.6);
-  color: #8890aa;
-  border-color: rgba(59,127,255,.3);
+  background: rgba(40,45,65,.7) !important;
+  color: #8890aa !important;
+  border-color: rgba(59,127,255,.35) !important;
 }
 .map-filter-chip.active {
-  background: #3b7fff;
-  border-color: #3b7fff;
-  color: #fff;
-  box-shadow: 0 2px 10px rgba(59,127,255,.45);
-  font-weight: 700;
+  background: #3b7fff !important;
+  border-color: #3b7fff !important;
+  color: #fff !important;
+  box-shadow: 0 1px 8px rgba(59,127,255,.4) !important;
+  font-weight: 700 !important;
 }
-.map-filter-chip .chip-ico { font-size: 13px; line-height: 1; }
+.map-filter-chip .chip-ico { font-size: 11px; line-height: 1; }
 .map-filter-chip .chip-cnt {
-  background: rgba(0,0,0,.25);
-  border-radius: 10px;
-  padding: 1px 6px; font-size: 10px; font-weight: 700;
-  min-width: 18px; text-align: center;
+  background: rgba(0,0,0,.3);
+  border-radius: 9px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  text-align: center;
   font-family: 'DM Mono', monospace;
+  line-height: 14px;
+  height: 14px;
 }
 .map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.25); }
 .filter-divider {
-  width: 1px; height: 16px;
-  background: rgba(255,255,255,.08);
-  flex-shrink: 0; margin: 0 2px;
+  display: block !important;
+  width: 1px !important;
+  height: 14px !important;
+  min-width: 1px !important;
+  background: rgba(255,255,255,.08) !important;
+  flex-shrink: 0 !important;
+  margin: 0 2px !important;
 }
 
 /* ── 지하철역 마커 ── */
@@ -1031,63 +1144,108 @@ td:first-child{color:var(--t1);font-weight:500}
 .leaflet-popup-content-wrapper { border-radius: 10px !important; padding: 0 !important; }
 
 /* ── 동별 그룹 아코디언 ── */
-.dong-group { margin-bottom: 1px; }
-.dong-group-header {
-  display: flex; align-items: center;
-  padding: 0; cursor: pointer; user-select: none;
-  background: #0c0e16;
-  transition: background .15s;
-  position: sticky; top: 0; z-index: 10;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+.dong-group {
+  margin-bottom: 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: border-color .2s, margin .2s;
 }
-.dong-group-header:hover { background: #111520; }
-.dong-group-header.open { background: #111422; }
+.dong-group.dong-open {
+  border-bottom: 2px solid rgba(59,91,219,.22);
+  margin-bottom: 4px;
+}
 
-/* 좌측 컬러 바 */
+.dong-group-header {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  background: #0f1120;
+  transition: background .15s;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  width: 100%;
+  box-sizing: border-box;
+}
+.dong-group-header:hover { background: #12152a; }
+.dong-group-header.open { background: #13172e; }
+
+/* 좌측 컬러 바 — CSS로 단일 색상 고정 (JS style 덮어쓰기 제거) */
 .dong-color-bar {
-  width: 4px; min-height: 100%;
+  width: 3px;
   align-self: stretch;
   flex-shrink: 0;
+  background: #3b5bdb;
+  /* style 속성 무시하고 항상 단일색 */
 }
 
 .dong-left {
-  display: flex; align-items: center; gap: 9px;
-  flex: 1; min-width: 0; padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
 }
 .dong-badge {
-  font-size: 11px; font-weight: 800; color: #fff;
-  padding: 3px 10px; border-radius: 6px; flex-shrink: 0;
-  letter-spacing: -.2px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #c7cfe8;
+  padding: 3px 9px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  letter-spacing: -.3px;
+  background: #1a1f3a;
+  border: 1px solid rgba(59,91,219,.3);
+  /* JS style 배경색 덮어쓰기 방지 */
 }
 .dong-stats {
-  display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
 }
-.dong-stat-item { font-size: 11px; color: #4a5270; }
-.dong-stat-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; color: #6878a0; }
-.dong-stat-sep { color: #2a3050; margin: 0 2px; }
+.dong-stat-item { font-size: 11px; color: #384060; }
+.dong-stat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5060a0;
+}
+.dong-stat-sep { color: #222840; margin: 0 1px; }
 
 .dong-chevron {
-  font-size: 9px; color: #2a3050;
-  transition: transform .22s, color .15s; flex-shrink: 0;
+  font-size: 9px;
+  color: #222840;
+  transition: transform .22s, color .15s;
+  flex-shrink: 0;
   padding: 10px 14px 10px 6px;
+  align-self: center;
 }
 .dong-group-header:hover .dong-chevron { color: #4a5270; }
-.dong-group-header.open .dong-chevron { color: #6878a0; transform: rotate(180deg); }
+.dong-group-header.open .dong-chevron { color: #5a6a9a; transform: rotate(180deg); }
 
-.dong-group-body { 
+/* 펼쳐진 동 본문 ─ 하나의 영역처럼 */
+.dong-group-body {
   display: none;
-  border-left: 4px solid rgba(255,255,255,.04);
-  background: rgba(0,0,0,.15);
-  padding-bottom: 4px;
+  border-left: 3px solid rgba(59,91,219,.22);
+  background: rgba(10,12,26,.65);
+  padding-bottom: 6px;
 }
 .dong-group-body.open { display: block; }
 
-/* 열린 동 그룹 하단 강조 구분선 */
-.dong-group:has(.dong-group-body.open) {
-  border-bottom: 2px solid rgba(59,127,255,.18);
-  margin-bottom: 3px;
+/* 빈 결과 메시지 */
+.no-result-msg {
+  padding: 18px 14px;
+  font-size: 12px;
+  color: #4a5270;
+  text-align: center;
+  line-height: 1.7;
 }
-/* :has() 미지원 폴백은 JS로 처리 */
+.no-result-msg span { display: block; font-size: 20px; margin-bottom: 6px; }
 
 /* 모바일 */
 @media(max-width:768px){
@@ -1243,34 +1401,34 @@ td:first-child{color:var(--t1);font-weight:500}
     </div>
 
     <!-- ══ 키워드 필터 바 (가로 고정 바) ══ -->
-    <div class="map-filter-bar" id="map-filter-bar">
-      <div class="map-filter-chip active" data-filter="all" onclick="applyMapFilter('all',this)">
+    <div class="map-filter-bar" id="map-filter-bar" style="display:flex!important;flex-wrap:nowrap!important;flex-direction:row!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;height:36px!important;min-height:36px!important;max-height:36px!important;white-space:nowrap!important;flex-shrink:0!important;gap:4px;padding:0 8px;background:#09090f;border-bottom:1px solid rgba(255,255,255,.07);scrollbar-width:none;box-sizing:border-box;">
+      <div class="map-filter-chip active" data-filter="all" onclick="applyMapFilter('all',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">🗺️</span> 전체 <span class="chip-cnt" id="fc-all">0</span>
       </div>
-      <div class="filter-divider"></div>
-      <div class="map-filter-chip" data-filter="core" onclick="applyMapFilter('core',this)">
+      <div class="filter-divider" style="flex-shrink:0!important;"></div>
+      <div class="map-filter-chip" data-filter="core" onclick="applyMapFilter('core',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">📍</span> 인접 300m <span class="chip-cnt" id="fc-core">0</span>
       </div>
-      <div class="filter-divider"></div>
-      <div class="map-filter-chip" data-filter="F&B/음식점" onclick="applyMapFilter('F&B/음식점',this)">
+      <div class="filter-divider" style="flex-shrink:0!important;"></div>
+      <div class="map-filter-chip" data-filter="F&B/음식점" onclick="applyMapFilter('F&B/음식점',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">🍽️</span> 음식점 <span class="chip-cnt" id="fc-food">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="카페" onclick="applyMapFilter('카페',this)">
+      <div class="map-filter-chip" data-filter="카페" onclick="applyMapFilter('카페',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">☕</span> 카페 <span class="chip-cnt" id="fc-cafe">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="병원/의료" onclick="applyMapFilter('병원/의료',this)">
+      <div class="map-filter-chip" data-filter="병원/의료" onclick="applyMapFilter('병원/의료',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">🏥</span> 의료 <span class="chip-cnt" id="fc-med">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="사무실/기업" onclick="applyMapFilter('사무실/기업',this)">
+      <div class="map-filter-chip" data-filter="사무실/기업" onclick="applyMapFilter('사무실/기업',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">🏢</span> 사무실 <span class="chip-cnt" id="fc-office">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="뷰티/미용" onclick="applyMapFilter('뷰티/미용',this)">
+      <div class="map-filter-chip" data-filter="뷰티/미용" onclick="applyMapFilter('뷰티/미용',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">💅</span> 뷰티 <span class="chip-cnt" id="fc-beauty">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="학원/교육" onclick="applyMapFilter('학원/교육',this)">
+      <div class="map-filter-chip" data-filter="학원/교육" onclick="applyMapFilter('학원/교육',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">📚</span> 학원 <span class="chip-cnt" id="fc-edu">0</span>
       </div>
-      <div class="map-filter-chip" data-filter="공실" onclick="applyMapFilter('공실',this)">
+      <div class="map-filter-chip" data-filter="공실" onclick="applyMapFilter('공실',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
         <span class="chip-ico">🔓</span> 공실 <span class="chip-cnt" id="fc-vacant">0</span>
       </div>
     </div>
@@ -1531,62 +1689,96 @@ function updateFilterCounts() {
   document.getElementById('fc-vacant').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.name.includes('공실')||t.rawType==='공실')).length;
 }
 
+// ── 필터 매칭 헬퍼 ──
+function buildingMatchesFilter(b, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'core') return b.distance === 'core';
+  if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
+  return b.tenants.some(t => t.type === filter);
+}
+
 function applyMapFilter(filter, chipEl) {
+  // 토글: 같은 탭 재클릭 → 전체로
+  if (activeMapFilter === filter && filter !== 'all') {
+    filter = 'all';
+  }
   activeMapFilter = filter;
-  // 칩 스타일 갱신
-  document.querySelectorAll('.map-filter-chip').forEach(c => c.classList.remove('active'));
-  if (chipEl) chipEl.classList.add('active');
+
+  // 상단 칩 active 갱신
+  document.querySelectorAll('.map-filter-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === filter);
+  });
+
+  // 업종 분석 탭 차트 바도 동기화 (selectType 이 아닌 경로에서 호출될 때)
+  // 업종 필터가 아니면 차트 바 선택 해제
+  const typeFilters = Object.keys(TYPES || {}).concat(['F&B/음식점','카페','병원/의료','사무실/기업','뷰티/미용','학원/교육','공실']);
+  if (!typeFilters.includes(filter)) {
+    document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
+    document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display = 'none');
+    const rb = document.getElementById('reset-btn-el');
+    if (rb) rb.remove();
+    if (filter === 'all') selectedType = null;
+  }
 
   const nonOurs = buildings.filter(b => !b.isOurs);
 
   nonOurs.forEach(b => {
-    let show = false;
-    if (filter === 'all') {
-      show = true;
-    } else if (filter === 'core') {
-      show = b.distance === 'core';
-    } else if (filter === '공실') {
-      show = b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
-    } else {
-      show = b.tenants.some(t => t.type === filter);
-    }
+    const show = buildingMatchesFilter(b, filter);
 
-    // 마커 숨김/표시 (지도에서 완전히 제거/추가)
+    // 지도 마커 - 숨김/표시
     const marker = markersMap[b.id];
     if (marker && window.mapInstance) {
       if (show) {
         if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
         const mkw = document.getElementById('mkw-' + b.id);
-        if (mkw) { mkw.classList.remove('dimmed', 'type-match'); }
+        if (mkw) mkw.classList.remove('dimmed', 'type-match');
       } else {
         if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
       }
     }
 
-    // 사이드바 건물 카드 표시/숨김
+    // 사이드바 카드 표시/숨김
     const card = document.getElementById('card-' + b.id);
     if (card) card.style.display = show ? '' : 'none';
   });
 
-  // 동 그룹 헤더 - 표시할 건물이 없으면 흐리게
+  // 필터로 숨겨진 건물이 선택 중이면 선택 해제
+  if (selectedId && selectedId !== 'ours') {
+    const selB = buildings.find(b => b.id === selectedId);
+    if (selB && !buildingMatchesFilter(selB, filter)) {
+      document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active', 'selected'));
+      document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
+      selectedId = null;
+    }
+  }
+
+  // 동 그룹 opacity 처리
+  let totalVisible = 0;
   document.querySelectorAll('.dong-group').forEach(dg => {
     const dongName = dg.id.replace('dg-', '');
-    const visibleInDong = nonOurs.filter(b => b.dong === dongName).some(b => {
-      if (filter === 'all') return true;
-      if (filter === 'core') return b.distance === 'core';
-      if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
-      return b.tenants.some(t => t.type === filter);
-    });
-    dg.style.opacity = visibleInDong ? '1' : '0.3';
+    const visibleInDong = nonOurs.filter(b => b.dong === dongName && buildingMatchesFilter(b, filter)).length;
+    dg.style.opacity = visibleInDong > 0 ? '1' : '0.28';
+    totalVisible += visibleInDong;
   });
+
+  // 빈 결과 메시지
+  const listEl = document.getElementById('building-list');
+  const noRes = document.getElementById('filter-no-result');
+  if (totalVisible === 0 && filter !== 'all') {
+    if (!noRes && listEl) {
+      const msg = document.createElement('div');
+      msg.id = 'filter-no-result';
+      msg.className = 'no-result-msg';
+      msg.innerHTML = '<span>🔍</span>해당 조건의 건물이 없습니다';
+      listEl.prepend(msg);
+    }
+  } else {
+    if (noRes) noRes.remove();
+  }
 
   // 지도 범위 조정
   if (filter !== 'all') {
-    const matched = nonOurs.filter(b => {
-      if (filter === 'core') return b.distance === 'core';
-      if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
-      return b.tenants.some(t => t.type === filter);
-    });
+    const matched = nonOurs.filter(b => buildingMatchesFilter(b, filter));
     if (matched.length > 0 && window.mapInstance) {
       const bounds = L.latLngBounds(matched.map(b => [b.lat, b.lng]));
       window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
@@ -1814,17 +2006,8 @@ function renderBuildingList() {
     return a.localeCompare(b, 'ko');
   });
 
-  const dongColors = {
-    '신사동':'#2563eb','논현동':'#059669','삼성동':'#7c3aed','청담동':'#b45309',
-    '역삼동':'#0e7490','대치동':'#2563eb','방배동':'#7c3aed','반포동':'#0369a1',
-    '서초동':'#065f46','삼전동':'#9f1239','한남동':'#b91c1c','성수동1가':'#166534',
-    '신공덕동':'#155e75','당주동':'#1e3a8a','낙원동':'#78350f','수하동':'#292524',
-    '충무로1가':'#991b1b','양재동':'#581c87',
-  };
-
   const dongGroups = dongKeys.map(dong => {
     const items = dongMap[dong];
-    const color = dongColors[dong] || '#374151';
     const totalBldg = items.length;
     const totalTenant = items.reduce((s, {b}) => s + b.tenants.length, 0);
 
@@ -1865,9 +2048,9 @@ function renderBuildingList() {
     return `
       <div class="dong-group" id="dg-${dong}">
         <div class="dong-group-header" id="dgh-${dong}" onclick="toggleDongGroup('${dong}')">
-          <div class="dong-color-bar" style="background:${color}"></div>
+          <div class="dong-color-bar"></div>
           <div class="dong-left">
-            <span class="dong-badge" style="background:${color}">${dong}</span>
+            <span class="dong-badge">${dong}</span>
             <div class="dong-stats">
               <span class="dong-stat-item">건물 <span class="dong-stat-num">${totalBldg}</span></span>
               <span class="dong-stat-sep">·</span>
@@ -1891,38 +2074,24 @@ function toggleDongGroup(dong) {
   const dg = document.getElementById('dg-' + dong);
   const isOpen = body.classList.contains('open');
 
-  // 토글
+  // 열기/닫기
   body.classList.toggle('open', !isOpen);
   header.classList.toggle('open', !isOpen);
+  if (dg) dg.classList.toggle('dong-open', !isOpen);
 
-  // 열림/닫힘 시 구분선 처리
-  if (!isOpen) {
-    // 열릴 때: 헤더 컬러 바 색상으로 하단 강조 + 동 바디 좌측 라인 색상 동기화
-    const colorBar = header.querySelector('.dong-color-bar');
-    const color = colorBar ? colorBar.style.background : '#3b7fff';
-    if (dg) dg.style.borderBottom = `2px solid ${color}55`;
-    if (body) body.style.borderLeftColor = `${color}40`;
-  } else {
-    if (dg) dg.style.borderBottom = '';
-    if (body) body.style.borderLeftColor = '';
-  }
-
-  // 열릴 때 해당 동 건물들로 지도 줌인
+  // 열릴 때: 현재 필터에서 보이는 건물로 지도 줌인
   if (!isOpen && window.mapInstance) {
     const dongBuildings = buildings.filter(b => !b.isOurs && b.dong === dong);
-    // 현재 필터에서 보이는 건물만
     const visible = dongBuildings.filter(b => {
       const marker = markersMap[b.id];
       return marker && window.mapInstance.hasLayer(marker);
     });
     const targets = visible.length > 0 ? visible : dongBuildings;
-    if (targets.length > 0) {
-      if (targets.length === 1) {
-        window.mapInstance.flyTo([targets[0].lat, targets[0].lng], 17, { duration: 0.7 });
-      } else {
-        const bounds = L.latLngBounds(targets.map(b => [b.lat, b.lng]));
-        window.mapInstance.fitBounds(bounds, { padding: [60, 60], maxZoom: 17, animate: true, duration: 0.7 });
-      }
+    if (targets.length === 1) {
+      window.mapInstance.flyTo([targets[0].lat, targets[0].lng], 17, { duration: 0.7 });
+    } else if (targets.length > 1) {
+      const bounds = L.latLngBounds(targets.map(b => [b.lat, b.lng]));
+      window.mapInstance.fitBounds(bounds, { padding: [60, 60], maxZoom: 17, animate: true });
     }
   }
 }
@@ -2003,62 +2172,53 @@ function renderChart() {
 // ══════════════════════════════════════════════
 function typeKey(type) { return type.replace(/\//g,'_'); }
 
-function resetTypeFilter() {
-  selectedType = null;
+// ── 업종 분석 탭 필터 키 변환 ──
+function typeKey(type) { return type.replace(/\//g,'_'); }
+
+// ── 업종 분석 탭 차트 바 선택 표시만 갱신 (실제 필터는 applyMapFilter 공유) ──
+function _syncChartUI(type) {
   document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
   document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('dimmed','type-match'));
-  const rb = document.getElementById('reset-btn-el');
-  if (rb) rb.remove();
+  if (type) {
+    const row = document.getElementById('tyrow-' + typeKey(type));
+    if (row) row.classList.add('t-selected');
+    const list = document.getElementById('tblist-' + typeKey(type));
+    if (list) list.style.display = 'block';
+  }
+  // 초기화 버튼
+  const existing = document.getElementById('reset-btn-el');
+  if (existing) existing.remove();
+  if (type) {
+    const btn = document.createElement('div');
+    btn.id = 'reset-btn-el';
+    btn.className = 'reset-filter';
+    btn.textContent = '✕ 필터 해제';
+    btn.onclick = () => resetTypeFilter();
+    const chartEl = document.getElementById('type-chart');
+    if (chartEl) chartEl.prepend(btn);
+  }
+}
+
+function resetTypeFilter() {
+  selectedType = null;
+  _syncChartUI(null);
+  // 상단 탭도 전체로 복원
+  applyMapFilter('all', null);
 }
 
 function selectType(type) {
-  if (selectedType === type) { resetTypeFilter(); return; }
+  // 토글: 같은 업종 재클릭 시 필터 해제
+  if (selectedType === type) {
+    resetTypeFilter();
+    return;
+  }
   selectedType = type;
 
-  // 차트 바 스타일 갱신
-  document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
-  document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display='none');
-  const row = document.getElementById('tyrow-'+typeKey(type));
-  if (row) row.classList.add('t-selected');
-  const list = document.getElementById('tblist-'+typeKey(type));
-  if (list) list.style.display = 'block';
+  // 차트 바 UI 갱신
+  _syncChartUI(type);
 
-  // 초기화 버튼 삽입 (한 번만)
-  const existing = document.getElementById('reset-btn-el');
-  if (existing) existing.remove();
-  const btn = document.createElement('div');
-  btn.id = 'reset-btn-el';
-  btn.className = 'reset-filter';
-  btn.textContent = '✕ 필터 해제';
-  btn.onclick = () => resetTypeFilter();
-  document.getElementById('type-chart').prepend(btn);
-
-  // 해당 업종이 있는 건물 ID 목록
-  const matchIds = new Set(
-    buildings.filter(b => !b.isOurs && b.tenants.some(t => t.type === type)).map(b=>b.id)
-  );
-
-  // 마커 dim / highlight
-  buildings.forEach(b => {
-    if (b.isOurs) return;
-    const mkw = document.getElementById('mkw-'+b.id);
-    if (!mkw) return;
-    if (matchIds.has(b.id)) {
-      mkw.classList.remove('dimmed');
-      mkw.classList.add('type-match');
-    } else {
-      mkw.classList.add('dimmed');
-      mkw.classList.remove('type-match');
-    }
-  });
-
-  // 지도 범위를 해당 건물들로 맞춤
-  const matched = buildings.filter(b => matchIds.has(b.id));
-  if (matched.length > 0) {
-    const bounds = L.latLngBounds(matched.map(b=>[b.lat,b.lng]));
-    window.mapInstance.fitBounds(bounds, { padding:[60,60], maxZoom:17, animate:true });
-  }
+  // 상단 탭 + 지도 + 건물목록 동시 필터링 (applyMapFilter 공유)
+  applyMapFilter(type, null);
 }
 
 // 업종 필터에서 건물 클릭 → 지도 이동만 (탭 전환/아코디언 없음)
