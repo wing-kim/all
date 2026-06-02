@@ -701,46 +701,48 @@ td:first-child{color:var(--t1);font-weight:500}
    임대 상권지도 — 다크 테마 컴포넌트 CSS
    ════════════════════════════════════════════════════ */
 
-/* ── 키워드 필터 바 — 지도 상단 고정 가로 바 ── */
+/* ── 키워드 필터 바 — 지도 상단 고정 1줄 가로 바 ── */
 .map-filter-bar {
   position: relative;
   z-index: 800;
   display: flex; align-items: center; gap: 6px;
-  flex-wrap: nowrap; overflow-x: auto;
-  padding: 8px 12px;
-  background: rgba(8,9,13,.96);
+  flex-wrap: nowrap;
+  overflow-x: auto; overflow-y: hidden;
+  height: 44px; min-height: 44px; max-height: 44px;
+  padding: 0 12px;
+  background: rgba(8,9,13,.97);
   border-bottom: 1px solid rgba(59,127,255,.18);
   flex-shrink: 0;
   scrollbar-width: none;
-  backdrop-filter: blur(12px);
+  -webkit-overflow-scrolling: touch;
 }
 .map-filter-bar::-webkit-scrollbar { display: none; }
 .map-filter-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
   background: rgba(21,24,33,.9);
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 20px;
-  font-size: 12px; font-weight: 600; color: #8890aa;
+  font-size: 11.5px; font-weight: 600; color: #8890aa;
   cursor: pointer; white-space: nowrap;
   transition: all .15s;
   flex-shrink: 0;
+  line-height: 1;
 }
 .map-filter-chip:hover { background: rgba(40,45,65,.95); color: #eef0f8; border-color: rgba(59,127,255,.5); }
 .map-filter-chip.active {
   background: #3b7fff; border-color: #3b7fff; color: #fff;
-  box-shadow: 0 2px 10px rgba(59,127,255,.4);
+  box-shadow: 0 2px 8px rgba(59,127,255,.4);
 }
-.map-filter-chip .chip-ico { font-size: 13px; line-height: 1; }
+.map-filter-chip .chip-ico { font-size: 12px; line-height: 1; }
 .map-filter-chip .chip-cnt {
   background: rgba(255,255,255,.18); border-radius: 10px;
-  padding: 1px 7px; font-size: 10px; font-weight: 700;
-  min-width: 20px; text-align: center;
+  padding: 1px 6px; font-size: 10px; font-weight: 700;
+  min-width: 18px; text-align: center;
 }
 .map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.28); }
-/* 구분선 */
 .filter-divider {
-  width: 1px; height: 20px; background: rgba(255,255,255,.12); flex-shrink: 0; margin: 0 2px;
+  width: 1px; height: 16px; background: rgba(255,255,255,.12); flex-shrink: 0; margin: 0 2px;
 }
 
 /* ── 지하철역 마커 ── */
@@ -1006,6 +1008,27 @@ td:first-child{color:var(--t1);font-weight:500}
 .leaflet-popup-content { margin: 2px; }
 .leaflet-popup-content-wrapper { border-radius: 10px !important; padding: 0 !important; }
 
+/* ── 동별 그룹 아코디언 ── */
+.dong-group { border-bottom: 1px solid #1c2030; }
+.dong-group-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; cursor: pointer; user-select: none;
+  background: #0f1118;
+  transition: background .15s;
+  position: sticky; top: 0; z-index: 10;
+}
+.dong-group-header:hover { background: #151821; }
+.dong-badge {
+  font-size: 10px; font-weight: 700; color: #fff;
+  padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+}
+.dong-group-meta { font-size: 11px; color: #4a5270; flex: 1; }
+.dong-chevron {
+  font-size: 10px; color: #4a5270;
+  transition: transform .22s; flex-shrink: 0;
+}
+.dong-group-body { display: block; }
+
 /* 모바일 */
 @media(max-width:768px){
   .map-app { flex-direction: column; }
@@ -1262,8 +1285,8 @@ const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J
 const OUR_BUILDING = {
   id:'ours', isOurs:true,
   name:'케이프혼타워 (신축예정)', short:'우리건물',
-  address:'신사동 529 외 2필지',
-  lat:37.5232, lng:127.0212,
+  address:'서울 강남구 신사동 529 외 2필지',
+  lat:37.5243, lng:127.0213,
   price:null, dong:'신사동', distance:'core', tenants:[]
 };
 
@@ -1334,237 +1357,100 @@ function rowsToBuildings(rows){
   return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
 }
 
-// ══ 지하철역 데이터 — 서울 주요 역 전체 ══
-// 호선 색상: 1호선#0052A4 2호선#00A140 3호선#EF6C00 4호선#00A4E3 5호선#8B4513 6호선#C55C1D 7호선#747F00 8호선#E6186C 9호선#BDB427 신분당#D4003B 수인분당#F5A623 경의중앙#77C4A3 공항#4682B4
+// ══ 지하철역 — 건물 데이터 있는 권역 주변 핵심 역만 ══
+// 강남구·서초구·마포구·용산구·종로구·중구·성동구·송파구 위주
 const SUBWAY_STATIONS = [
-  // ── 1호선 ──
-  { name:'시청',      line:'1', color:'#0052A4', lat:37.5650, lng:126.9750 },
-  { name:'종각',      line:'1', color:'#0052A4', lat:37.5702, lng:126.9827 },
-  { name:'종로3가',   line:'1', color:'#0052A4', lat:37.5710, lng:126.9919 },
-  { name:'동대문',    line:'1', color:'#0052A4', lat:37.5714, lng:127.0097 },
-
-  // ── 2호선 ──
-  { name:'홍대입구',  line:'2', color:'#00A140', lat:37.5573, lng:126.9243 },
-  { name:'합정',      line:'2', color:'#00A140', lat:37.5498, lng:126.9146 },
-  { name:'당산',      line:'2', color:'#00A140', lat:37.5340, lng:126.9005 },
-  { name:'영등포구청',line:'2', color:'#00A140', lat:37.5262, lng:126.8962 },
-  { name:'신도림',    line:'2', color:'#00A140', lat:37.5088, lng:126.8913 },
-  { name:'대림',      line:'2', color:'#00A140', lat:37.4930, lng:126.8952 },
-  { name:'구로디지털단지', line:'2', color:'#00A140', lat:37.4852, lng:126.9012 },
-  { name:'신대방',    line:'2', color:'#00A140', lat:37.4876, lng:126.9133 },
-  { name:'신림',      line:'2', color:'#00A140', lat:37.4845, lng:126.9295 },
-  { name:'봉천',      line:'2', color:'#00A140', lat:37.4812, lng:126.9418 },
-  { name:'서울대입구',line:'2', color:'#00A140', lat:37.4813, lng:126.9528 },
-  { name:'낙성대',    line:'2', color:'#00A140', lat:37.4814, lng:126.9637 },
-  { name:'사당',      line:'2', color:'#00A140', lat:37.4765, lng:126.9814 },
-  { name:'방배',      line:'2', color:'#00A140', lat:37.4814, lng:126.9976 },
-  { name:'서초',      line:'2', color:'#00A140', lat:37.4837, lng:127.0118 },
-  { name:'교대',      line:'2', color:'#00A140', lat:37.4935, lng:127.0139 },
-  { name:'강남',      line:'2', color:'#00A140', lat:37.4979, lng:127.0276 },
-  { name:'역삼',      line:'2', color:'#00A140', lat:37.5005, lng:127.0364 },
-  { name:'선릉',      line:'2', color:'#00A140', lat:37.5044, lng:127.0490 },
-  { name:'삼성',      line:'2', color:'#00A140', lat:37.5088, lng:127.0632 },
-  { name:'종합운동장',line:'2', color:'#00A140', lat:37.5108, lng:127.0730 },
-  { name:'잠실새내',  line:'2', color:'#00A140', lat:37.5112, lng:127.0855 },
-  { name:'잠실',      line:'2', color:'#00A140', lat:37.5133, lng:127.1001 },
-  { name:'건대입구',  line:'2', color:'#00A140', lat:37.5401, lng:127.0700 },
-  { name:'성수',      line:'2', color:'#00A140', lat:37.5448, lng:127.0566 },
-  { name:'왕십리',    line:'2', color:'#00A140', lat:37.5612, lng:127.0372 },
-  { name:'한양대',    line:'2', color:'#00A140', lat:37.5553, lng:127.0455 },
-  { name:'뚝섬',      line:'2', color:'#00A140', lat:37.5481, lng:127.0438 },
-
-  // ── 3호선 ──
-  { name:'불광',      line:'3', color:'#EF6C00', lat:37.6101, lng:126.9296 },
-  { name:'연신내',    line:'3', color:'#EF6C00', lat:37.6192, lng:126.9199 },
-  { name:'녹번',      line:'3', color:'#EF6C00', lat:37.5991, lng:126.9365 },
-  { name:'홍제',      line:'3', color:'#EF6C00', lat:37.5896, lng:126.9562 },
-  { name:'무악재',    line:'3', color:'#EF6C00', lat:37.5777, lng:126.9557 },
-  { name:'독립문',    line:'3', color:'#EF6C00', lat:37.5714, lng:126.9609 },
-  { name:'경복궁',    line:'3', color:'#EF6C00', lat:37.5759, lng:126.9747 },
-  { name:'안국',      line:'3', color:'#EF6C00', lat:37.5762, lng:126.9853 },
-  { name:'종로3가',   line:'3', color:'#EF6C00', lat:37.5710, lng:126.9919 },
-  { name:'을지로3가', line:'3', color:'#EF6C00', lat:37.5659, lng:126.9929 },
-  { name:'충무로',    line:'3', color:'#EF6C00', lat:37.5619, lng:126.9946 },
-  { name:'동대입구',  line:'3', color:'#EF6C00', lat:37.5579, lng:127.0057 },
-  { name:'약수',      line:'3', color:'#EF6C00', lat:37.5543, lng:127.0137 },
-  { name:'금호',      line:'3', color:'#EF6C00', lat:37.5487, lng:127.0199 },
-  { name:'옥수',      line:'3', color:'#EF6C00', lat:37.5404, lng:127.0178 },
-  { name:'압구정',    line:'3', color:'#EF6C00', lat:37.5272, lng:127.0283 },
-  { name:'신사',      line:'3', color:'#EF6C00', lat:37.5256, lng:127.0205 },
-  { name:'잠원',      line:'3', color:'#EF6C00', lat:37.5157, lng:127.0066 },
-  { name:'고속터미널',line:'3', color:'#EF6C00', lat:37.5048, lng:127.0047 },
-  { name:'교대',      line:'3', color:'#EF6C00', lat:37.4935, lng:127.0139 },
-  { name:'남부터미널',line:'3', color:'#EF6C00', lat:37.4851, lng:127.0140 },
-  { name:'양재',      line:'3', color:'#EF6C00', lat:37.4843, lng:127.0342 },
-
-  // ── 4호선 ──
-  { name:'미아사거리',line:'4', color:'#00A4E3', lat:37.6131, lng:127.0298 },
-  { name:'길음',      line:'4', color:'#00A4E3', lat:37.6030, lng:127.0242 },
-  { name:'성신여대입구',line:'4',color:'#00A4E3',lat:37.5924, lng:127.0167 },
-  { name:'한성대입구',line:'4', color:'#00A4E3', lat:37.5882, lng:127.0064 },
-  { name:'혜화',      line:'4', color:'#00A4E3', lat:37.5825, lng:127.0016 },
-  { name:'동대문역사문화공원',line:'4',color:'#00A4E3',lat:37.5651,lng:127.0097 },
-  { name:'충무로',    line:'4', color:'#00A4E3', lat:37.5619, lng:126.9946 },
-  { name:'명동',      line:'4', color:'#00A4E3', lat:37.5634, lng:126.9853 },
-  { name:'회현',      line:'4', color:'#00A4E3', lat:37.5580, lng:126.9798 },
-  { name:'서울역',    line:'4', color:'#00A4E3', lat:37.5546, lng:126.9707 },
-  { name:'숙대입구',  line:'4', color:'#00A4E3', lat:37.5446, lng:126.9729 },
-  { name:'삼각지',    line:'4', color:'#00A4E3', lat:37.5352, lng:126.9724 },
-  { name:'신용산',    line:'4', color:'#00A4E3', lat:37.5301, lng:126.9645 },
-  { name:'이촌',      line:'4', color:'#00A4E3', lat:37.5239, lng:126.9713 },
-  { name:'동작',      line:'4', color:'#00A4E3', lat:37.5036, lng:126.9793 },
-  { name:'이수',      line:'4', color:'#00A4E3', lat:37.4874, lng:126.9820 },
-  { name:'사당',      line:'4', color:'#00A4E3', lat:37.4765, lng:126.9814 },
-  { name:'남태령',    line:'4', color:'#00A4E3', lat:37.4641, lng:126.9885 },
-
-  // ── 5호선 ──
-  { name:'광화문',    line:'5', color:'#996CAC', lat:37.5716, lng:126.9769 },
-  { name:'종로3가',   line:'5', color:'#996CAC', lat:37.5710, lng:126.9919 },
-  { name:'을지로4가', line:'5', color:'#996CAC', lat:37.5668, lng:127.0005 },
-  { name:'동대문역사문화공원',line:'5',color:'#996CAC',lat:37.5651,lng:127.0097},
-  { name:'청구',      line:'5', color:'#996CAC', lat:37.5588, lng:127.0172 },
-  { name:'왕십리',    line:'5', color:'#996CAC', lat:37.5612, lng:127.0372 },
-  { name:'마포',      line:'5', color:'#996CAC', lat:37.5376, lng:126.9490 },
-  { name:'공덕',      line:'5', color:'#996CAC', lat:37.5447, lng:126.9523 },
-  { name:'애오개',    line:'5', color:'#996CAC', lat:37.5480, lng:126.9597 },
-  { name:'충정로',    line:'5', color:'#996CAC', lat:37.5596, lng:126.9631 },
-  { name:'여의도',    line:'5', color:'#996CAC', lat:37.5218, lng:126.9244 },
-  { name:'영등포시장',line:'5', color:'#996CAC', lat:37.5178, lng:126.9029 },
-  { name:'신정',      line:'5', color:'#996CAC', lat:37.5232, lng:126.8562 },
-  { name:'오금',      line:'5', color:'#996CAC', lat:37.5021, lng:127.1258 },
-
-  // ── 6호선 ──
-  { name:'응암',      line:'6', color:'#C55C1D', lat:37.6010, lng:126.9109 },
-  { name:'새절',      line:'6', color:'#C55C1D', lat:37.5932, lng:126.9162 },
-  { name:'증산',      line:'6', color:'#C55C1D', lat:37.5816, lng:126.9134 },
-  { name:'디지털미디어시티',line:'6',color:'#C55C1D',lat:37.5750,lng:126.8975},
-  { name:'상수',      line:'6', color:'#C55C1D', lat:37.5477, lng:126.9239 },
-  { name:'마포구청',  line:'6', color:'#C55C1D', lat:37.5551, lng:126.9119 },
-  { name:'망원',      line:'6', color:'#C55C1D', lat:37.5557, lng:126.9075 },
-  { name:'이태원',    line:'6', color:'#C55C1D', lat:37.5347, lng:126.9945 },
-  { name:'한강진',    line:'6', color:'#C55C1D', lat:37.5400, lng:127.0047 },
-  { name:'녹사평',    line:'6', color:'#C55C1D', lat:37.5328, lng:126.9887 },
-  { name:'삼각지',    line:'6', color:'#C55C1D', lat:37.5352, lng:126.9724 },
-  { name:'버티고개',  line:'6', color:'#C55C1D', lat:37.5533, lng:127.0128 },
-  { name:'약수',      line:'6', color:'#C55C1D', lat:37.5543, lng:127.0137 },
-
-  // ── 7호선 ──
-  { name:'도봉산',    line:'7', color:'#747F00', lat:37.6890, lng:127.0474 },
-  { name:'수락산',    line:'7', color:'#747F00', lat:37.6677, lng:127.0572 },
-  { name:'마들',      line:'7', color:'#747F00', lat:37.6558, lng:127.0590 },
-  { name:'노원',      line:'7', color:'#747F00', lat:37.6548, lng:127.0564 },
-  { name:'중계',      line:'7', color:'#747F00', lat:37.6377, lng:127.0752 },
-  { name:'하계',      line:'7', color:'#747F00', lat:37.6278, lng:127.0665 },
-  { name:'공릉',      line:'7', color:'#747F00', lat:37.6233, lng:127.0605 },
-  { name:'태릉입구',  line:'7', color:'#747F00', lat:37.6181, lng:127.0733 },
-  { name:'먹골',      line:'7', color:'#747F00', lat:37.6028, lng:127.0865 },
-  { name:'중화',      line:'7', color:'#747F00', lat:37.5958, lng:127.0849 },
-  { name:'상봉',      line:'7', color:'#747F00', lat:37.5893, lng:127.0858 },
-  { name:'면목',      line:'7', color:'#747F00', lat:37.5797, lng:127.0833 },
-  { name:'사가정',    line:'7', color:'#747F00', lat:37.5704, lng:127.0849 },
-  { name:'용마산',    line:'7', color:'#747F00', lat:37.5645, lng:127.0843 },
-  { name:'중곡',      line:'7', color:'#747F00', lat:37.5577, lng:127.0837 },
-  { name:'군자',      line:'7', color:'#747F00', lat:37.5528, lng:127.0797 },
-  { name:'어린이대공원',line:'7',color:'#747F00', lat:37.5484, lng:127.0732 },
-  { name:'건대입구',  line:'7', color:'#747F00', lat:37.5401, lng:127.0700 },
-  { name:'뚝섬유원지',line:'7', color:'#747F00', lat:37.5300, lng:127.0668 },
-  { name:'청담',      line:'7', color:'#747F00', lat:37.5252, lng:127.0499 },
-  { name:'강남구청',  line:'7', color:'#747F00', lat:37.5173, lng:127.0440 },
-  { name:'학동',      line:'7', color:'#747F00', lat:37.5129, lng:127.0325 },
-  { name:'논현',      line:'7', color:'#747F00', lat:37.5115, lng:127.0248 },
-  { name:'반포',      line:'7', color:'#747F00', lat:37.5055, lng:127.0039 },
-  { name:'고속터미널',line:'7', color:'#747F00', lat:37.5048, lng:127.0047 },
-  { name:'내방',      line:'7', color:'#747F00', lat:37.4961, lng:126.9935 },
-  { name:'이수',      line:'7', color:'#747F00', lat:37.4874, lng:126.9820 },
-  { name:'남성',      line:'7', color:'#747F00', lat:37.4800, lng:126.9748 },
-  { name:'숭실대입구',line:'7', color:'#747F00', lat:37.4963, lng:126.9597 },
-  { name:'상도',      line:'7', color:'#747F00', lat:37.5006, lng:126.9518 },
-  { name:'장승배기',  line:'7', color:'#747F00', lat:37.5054, lng:126.9356 },
-  { name:'신대방삼거리',line:'7',color:'#747F00', lat:37.4993, lng:126.9136 },
-  { name:'보라매',    line:'7', color:'#747F00', lat:37.4988, lng:126.9226 },
-
-  // ── 9호선 ──
-  { name:'김포공항',  line:'9', color:'#BDB427', lat:37.5629, lng:126.8013 },
-  { name:'가양',      line:'9', color:'#BDB427', lat:37.5623, lng:126.8538 },
-  { name:'증미',      line:'9', color:'#BDB427', lat:37.5564, lng:126.8672 },
-  { name:'등촌',      line:'9', color:'#BDB427', lat:37.5540, lng:126.8748 },
-  { name:'염창',      line:'9', color:'#BDB427', lat:37.5454, lng:126.8837 },
-  { name:'신방화',    line:'9', color:'#BDB427', lat:37.5599, lng:126.8097 },
-  { name:'당산',      line:'9', color:'#BDB427', lat:37.5340, lng:126.9005 },
-  { name:'국회의사당',line:'9', color:'#BDB427', lat:37.5298, lng:126.9138 },
-  { name:'여의도',    line:'9', color:'#BDB427', lat:37.5218, lng:126.9244 },
-  { name:'샛강',      line:'9', color:'#BDB427', lat:37.5159, lng:126.9356 },
-  { name:'노량진',    line:'9', color:'#BDB427', lat:37.5134, lng:126.9423 },
-  { name:'노들',      line:'9', color:'#BDB427', lat:37.5127, lng:126.9555 },
-  { name:'흑석',      line:'9', color:'#BDB427', lat:37.5098, lng:126.9634 },
-  { name:'동작',      line:'9', color:'#BDB427', lat:37.5036, lng:126.9793 },
-  { name:'구반포',    line:'9', color:'#BDB427', lat:37.5094, lng:126.9946 },
-  { name:'반포',      line:'9', color:'#BDB427', lat:37.5055, lng:127.0039 },
-  { name:'고속터미널',line:'9', color:'#BDB427', lat:37.5048, lng:127.0047 },
-  { name:'사평',      line:'9', color:'#BDB427', lat:37.5130, lng:127.0188 },
-  { name:'신논현',    line:'9', color:'#BDB427', lat:37.5047, lng:127.0252 },
-  { name:'언주',      line:'9', color:'#BDB427', lat:37.5076, lng:127.0388 },
-  { name:'선정릉',    line:'9', color:'#BDB427', lat:37.5099, lng:127.0491 },
-  { name:'삼성중앙',  line:'9', color:'#BDB427', lat:37.5148, lng:127.0631 },
-  { name:'봉은사',    line:'9', color:'#BDB427', lat:37.5148, lng:127.0731 },
-  { name:'종합운동장',line:'9', color:'#BDB427', lat:37.5108, lng:127.0730 },
-  { name:'올림픽공원',line:'9', color:'#BDB427', lat:37.5174, lng:127.1108 },
-
-  // ── 신분당선 ──
-  { name:'강남',      line:'신분당', color:'#D4003B', lat:37.4979, lng:127.0276 },
-  { name:'양재',      line:'신분당', color:'#D4003B', lat:37.4843, lng:127.0342 },
-  { name:'판교',      line:'신분당', color:'#D4003B', lat:37.3948, lng:127.1112 },
-
-  // ── 수인분당선 ──
-  { name:'왕십리',    line:'분당', color:'#F5A623', lat:37.5612, lng:127.0372 },
-  { name:'서울숲',    line:'분당', color:'#F5A623', lat:37.5447, lng:127.0437 },
+  // 2호선
+  { name:'강남',       line:'2', color:'#00A140', lat:37.4979, lng:127.0276 },
+  { name:'역삼',       line:'2', color:'#00A140', lat:37.5005, lng:127.0364 },
+  { name:'선릉',       line:'2', color:'#00A140', lat:37.5044, lng:127.0490 },
+  { name:'삼성',       line:'2', color:'#00A140', lat:37.5088, lng:127.0632 },
+  { name:'잠실',       line:'2', color:'#00A140', lat:37.5133, lng:127.1001 },
+  { name:'교대',       line:'2', color:'#00A140', lat:37.4935, lng:127.0139 },
+  { name:'방배',       line:'2', color:'#00A140', lat:37.4814, lng:126.9976 },
+  { name:'사당',       line:'2', color:'#00A140', lat:37.4765, lng:126.9814 },
+  { name:'서울대입구', line:'2', color:'#00A140', lat:37.4813, lng:126.9528 },
+  { name:'홍대입구',   line:'2', color:'#00A140', lat:37.5573, lng:126.9243 },
+  { name:'왕십리',     line:'2', color:'#00A140', lat:37.5612, lng:127.0372 },
+  { name:'성수',       line:'2', color:'#00A140', lat:37.5448, lng:127.0566 },
+  { name:'건대입구',   line:'2', color:'#00A140', lat:37.5401, lng:127.0700 },
+  // 3호선
+  { name:'신사',       line:'3', color:'#EF6C00', lat:37.5256, lng:127.0205 },
+  { name:'압구정',     line:'3', color:'#EF6C00', lat:37.5272, lng:127.0283 },
+  { name:'옥수',       line:'3', color:'#EF6C00', lat:37.5404, lng:127.0178 },
+  { name:'고속터미널', line:'3', color:'#EF6C00', lat:37.5048, lng:127.0047 },
+  { name:'양재',       line:'3', color:'#EF6C00', lat:37.4843, lng:127.0342 },
+  { name:'남부터미널', line:'3', color:'#EF6C00', lat:37.4851, lng:127.0140 },
+  { name:'충무로',     line:'3', color:'#EF6C00', lat:37.5619, lng:126.9946 },
+  { name:'안국',       line:'3', color:'#EF6C00', lat:37.5762, lng:126.9853 },
+  { name:'경복궁',     line:'3', color:'#EF6C00', lat:37.5759, lng:126.9747 },
+  // 4호선
+  { name:'서울역',     line:'4', color:'#00A4E3', lat:37.5546, lng:126.9707 },
+  { name:'명동',       line:'4', color:'#00A4E3', lat:37.5634, lng:126.9853 },
+  { name:'동작',       line:'4', color:'#00A4E3', lat:37.5036, lng:126.9793 },
+  { name:'이수',       line:'4', color:'#00A4E3', lat:37.4874, lng:126.9820 },
+  // 5호선
+  { name:'광화문',     line:'5', color:'#996CAC', lat:37.5716, lng:126.9769 },
+  { name:'여의도',     line:'5', color:'#996CAC', lat:37.5218, lng:126.9244 },
+  { name:'공덕',       line:'5', color:'#996CAC', lat:37.5447, lng:126.9523 },
+  // 6호선
+  { name:'이태원',     line:'6', color:'#C55C1D', lat:37.5347, lng:126.9945 },
+  { name:'한강진',     line:'6', color:'#C55C1D', lat:37.5400, lng:127.0047 },
+  { name:'약수',       line:'6', color:'#C55C1D', lat:37.5543, lng:127.0137 },
+  // 7호선
+  { name:'청담',       line:'7', color:'#747F00', lat:37.5252, lng:127.0499 },
+  { name:'강남구청',   line:'7', color:'#747F00', lat:37.5173, lng:127.0440 },
+  { name:'학동',       line:'7', color:'#747F00', lat:37.5129, lng:127.0325 },
+  { name:'논현',       line:'7', color:'#747F00', lat:37.5115, lng:127.0248 },
+  { name:'반포',       line:'7', color:'#747F00', lat:37.5055, lng:127.0039 },
+  { name:'이수',       line:'7', color:'#747F00', lat:37.4874, lng:126.9820 },
+  { name:'뚝섬유원지', line:'7', color:'#747F00', lat:37.5300, lng:127.0668 },
+  // 9호선
+  { name:'신논현',     line:'9', color:'#BDB427', lat:37.5047, lng:127.0252 },
+  { name:'언주',       line:'9', color:'#BDB427', lat:37.5076, lng:127.0388 },
+  { name:'선정릉',     line:'9', color:'#BDB427', lat:37.5099, lng:127.0491 },
+  { name:'봉은사',     line:'9', color:'#BDB427', lat:37.5148, lng:127.0731 },
+  { name:'고속터미널', line:'9', color:'#BDB427', lat:37.5048, lng:127.0047 },
+  { name:'흑석',       line:'9', color:'#BDB427', lat:37.5098, lng:126.9634 },
+  // 신분당선
+  { name:'강남',       line:'신분', color:'#D4003B', lat:37.4979, lng:127.0282 },
+  { name:'양재',       line:'신분', color:'#D4003B', lat:37.4843, lng:127.0348 },
+  // 수인분당선
   { name:'압구정로데오',line:'분당',color:'#F5A623', lat:37.5272, lng:127.0397 },
-  { name:'강남구청',  line:'분당', color:'#F5A623', lat:37.5173, lng:127.0440 },
-  { name:'도곡',      line:'분당', color:'#F5A623', lat:37.4928, lng:127.0441 },
-  { name:'대치',      line:'분당', color:'#F5A623', lat:37.4943, lng:127.0551 },
-  { name:'한티',      line:'분당', color:'#F5A623', lat:37.4970, lng:127.0577 },
-  { name:'선릉',      line:'분당', color:'#F5A623', lat:37.5044, lng:127.0490 },
+  { name:'서울숲',     line:'분당', color:'#F5A623', lat:37.5447, lng:127.0437 },
+  { name:'한티',       line:'분당', color:'#F5A623', lat:37.4970, lng:127.0577 },
+  { name:'대치',       line:'분당', color:'#F5A623', lat:37.4943, lng:127.0551 },
+  { name:'도곡',       line:'분당', color:'#F5A623', lat:37.4928, lng:127.0441 },
 ];
-
-// 줌 레벨별 표시 역 필터 (너무 많으면 겹침)
-const SUBWAY_MIN_ZOOM = {
-  '신사':11,'압구정':11,'논현':11,'학동':11,'강남구청':11,'청담':11,
-  '강남':11,'역삼':11,'선릉':11,'압구정로데오':11,'교대':11,'고속터미널':11,
-  '잠실':11,'홍대입구':11,'여의도':11,'서울역':11,'광화문':11,
-  '왕십리':11,'건대입구':11,'성수':11,'이태원':11,'공덕':11,
-};
 
 let subwayMarkers = [];
 
 function addSubwayMarkers(map) {
   subwayMarkers.forEach(m => map.removeLayer(m));
   subwayMarkers = [];
+  // 줌 13 미만이면 주요 거점역만, 13 이상이면 전체 표시
   const zoom = map.getZoom();
+  const CORE = new Set(['강남','역삼','신사','압구정','논현','강남구청','청담','선릉','삼성',
+                        '잠실','홍대입구','여의도','서울역','광화문','고속터미널','왕십리','성수',
+                        '건대입구','교대','공덕','이태원','신논현','언주']);
 
   SUBWAY_STATIONS.forEach(st => {
-    // 줌 13 미만이면 주요 역만, 12 미만이면 핵심역만 표시
-    const minZ = SUBWAY_MIN_ZOOM[st.name];
-    if (zoom < 12 && !minZ) return;
-    if (zoom < 11 && minZ && minZ > 11) return;
-
+    if (zoom < 13 && !CORE.has(st.name)) return;
     const html = `<div class="subway-marker">
       <div class="subway-circle" style="background:${st.color}">${st.line}</div>
       <div class="subway-name">${st.name}</div>
     </div>`;
     const icon = L.divIcon({
       className: '', html,
-      iconSize: [60, 36], iconAnchor: [30, 10],
+      iconSize: [56, 34], iconAnchor: [28, 9],
     });
     const m = L.marker([st.lat, st.lng], { icon, zIndexOffset: -200, interactive: false }).addTo(map);
     subwayMarkers.push(m);
   });
 }
 
-// 줌 변경 시 역 재렌더링
 function setupSubwayZoomListener(map) {
-  map.on('zoomend', function() {
-    addSubwayMarkers(map);
-  });
+  map.on('zoomend', function() { addSubwayMarkers(map); });
 }
 
 // ══ 키워드 필터 ══
@@ -1794,67 +1680,114 @@ function toggleCard(id) {
 // ══════════════════════════════════════════════
 function renderBuildingList() {
   const list = document.getElementById('building-list');
-  list.innerHTML = buildings.map((b, idx) => {
-    if (b.isOurs) {
+
+  // ── 우리 건물 카드 ──
+  const oursCard = `
+    <div class="bldg-card ours-card" id="card-ours">
+      <div class="bldg-header" onclick="toggleCard('ours')">
+        <div class="bldg-num ours">⭐</div>
+        <div class="bldg-info">
+          <div class="bldg-name ours-name">🏗️ 케이프혼타워 (신축예정)</div>
+          <div class="bldg-meta">신사동 529 외 2필지</div>
+        </div>
+        <div class="bldg-right">
+          <span class="bldg-tenant-cnt">신축 예정</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bldg-detail">
+        <div class="ours-placeholder" style="font-size:12px;color:#92400e;line-height:1.7;">
+          현재 공사 준비 중인 부지입니다.<br>
+          지번: 신사동 529 외 2필지<br>건축주: 블루피카
+        </div>
+      </div>
+    </div>`;
+
+  // ── 동별 그룹화 ──
+  const nonOurs = buildings.filter(b => !b.isOurs);
+  const dongMap = {};
+  nonOurs.forEach((b, globalIdx) => {
+    if (!dongMap[b.dong]) dongMap[b.dong] = [];
+    dongMap[b.dong].push({ b, globalIdx: globalIdx + 1 });
+  });
+
+  // 신사동 우선, 나머지 가나다순
+  const dongKeys = Object.keys(dongMap).sort((a, b) => {
+    if (a === '신사동') return -1; if (b === '신사동') return 1;
+    if (a === '논현동') return -1; if (b === '논현동') return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
+  const dongColors = {
+    '신사동':'#1e40af','논현동':'#065f46','삼성동':'#7c3aed','청담동':'#b45309',
+    '역삼동':'#0f766e','대치동':'#1d4ed8','방배동':'#6d28d9','반포동':'#0369a1',
+    '서초동':'#064e3b','삼전동':'#831843','한남동':'#7f1d1d','성수동1가':'#166534',
+    '신공덕동':'#164e63','당주동':'#1e3a5f','낙원동':'#422006','수하동':'#1c1917',
+    '충무로1가':'#7f1d1d','양재동':'#4a1942',
+  };
+
+  const dongGroups = dongKeys.map(dong => {
+    const items = dongMap[dong];
+    const color = dongColors[dong] || '#374151';
+    const totalBldg = items.length;
+    const totalTenant = items.reduce((s, {b}) => s + b.tenants.length, 0);
+
+    const cards = items.map(({b, globalIdx}) => {
+      const dominantColor = getDominantColor(b);
+      const distLabel = { core:'🔴', mid:'🟡', far:'⚪' }[b.distance] || '';
+      const rows = b.tenants.map(t => `
+        <tr>
+          <td class="floor-cell">${t.floor}</td>
+          <td class="name-cell">${t.name}</td>
+          <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
+        </tr>`).join('');
       return `
-        <div class="bldg-card ours-card" id="card-${b.id}">
+        <div class="bldg-card" id="card-${b.id}">
           <div class="bldg-header" onclick="toggleCard('${b.id}')">
-            <div class="bldg-num ours">⭐</div>
+            <div class="bldg-num" style="background:${dominantColor}">${globalIdx}</div>
             <div class="bldg-info">
-              <div class="bldg-name ours-name">🏗️ ${b.name}</div>
-              <div class="bldg-meta">${b.address}</div>
+              <div class="bldg-name">${b.name}</div>
+              <div class="bldg-meta" style="font-size:10px;">${b.address||''} ${distLabel}</div>
             </div>
             <div class="bldg-right">
-              <span class="bldg-tenant-cnt">신축 예정</span>
+              ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
+              <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
               <span class="chevron">▼</span>
             </div>
           </div>
           <div class="bldg-detail">
-            <div class="ours-placeholder" style="font-size:12px;color:#92400e;line-height:1.7;">
-              현재 공사 준비 중인 부지입니다.<br>
-              지번: 신사동 529 외 2필지<br>건축주: 블루피카
+            <div class="detail-inner">
+              <table class="floor-table">
+                <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
             </div>
           </div>
         </div>`;
-    }
-
-    const tenantCount = b.tenants.length;
-    const dominantColor = getDominantColor(b);
-    const distLabel = { core:'🔴 인접', mid:'🟡 근거리', far:'⚪ 참고' }[b.distance];
-
-    const rows = b.tenants.map(t => `
-      <tr>
-        <td class="floor-cell">${t.floor}</td>
-        <td class="name-cell">${t.name}</td>
-        <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
-      </tr>`).join('');
+    }).join('');
 
     return `
-      <div class="bldg-card" id="card-${b.id}">
-        <div class="bldg-header" onclick="toggleCard('${b.id}')">
-          <div class="bldg-num" style="background:${dominantColor}">${idx}</div>
-          <div class="bldg-info">
-            <div class="bldg-name">${b.name}</div>
-            <div class="bldg-meta">${b.address} &nbsp;${distLabel}</div>
-          </div>
-          <div class="bldg-right">
-            ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
-            <span class="bldg-tenant-cnt">${tenantCount}건</span>
-            <span class="chevron">▼</span>
-          </div>
+      <div class="dong-group" id="dg-${dong}">
+        <div class="dong-group-header" onclick="toggleDongGroup('${dong}')">
+          <span class="dong-badge" style="background:${color}">${dong}</span>
+          <span class="dong-group-meta">${totalBldg}개 건물 · ${totalTenant}건 임차인</span>
+          <span class="dong-chevron" id="dgc-${dong}">▼</span>
         </div>
-        <div class="bldg-detail">
-          <div class="detail-inner">
-            <table class="floor-table">
-              <thead>
-                <tr><th>층</th><th>임차인</th><th>업종</th></tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
+        <div class="dong-group-body" id="dgb-${dong}">
+          ${cards}
         </div>
       </div>`;
   }).join('');
+
+  list.innerHTML = oursCard + dongGroups;
+}
+
+function toggleDongGroup(dong) {
+  const body = document.getElementById('dgb-' + dong);
+  const chevron = document.getElementById('dgc-' + dong);
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
 }
 
 // ══════════════════════════════════════════════
@@ -2409,6 +2342,7 @@ window.toggleArea       = toggleArea;
 window.flyToBuilding    = flyToBuilding;
 window.selectType       = selectType;
 window.applyMapFilter   = applyMapFilter;
+window.toggleDongGroup  = toggleDongGroup;
 /* mrShow / selectMarketReport / backToMarketList / closeMarketDetail 는
    첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
    여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
