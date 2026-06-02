@@ -20,17 +20,18 @@
   --r:10px; --r2:6px; --sh:0 4px 32px rgba(0,0,0,.5);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+html, body { height: 100%; overflow: hidden; }
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);}
 body::before{content:'';position:fixed;inset:0;
   background-image:linear-gradient(rgba(59,127,255,.025) 1px,transparent 1px),
     linear-gradient(90deg,rgba(59,127,255,.025) 1px,transparent 1px);
   background-size:48px 48px;pointer-events:none;z-index:0}
-.page{position:relative;z-index:1;max-width:1520px;margin:0 auto;padding:0 28px 80px}
+.page{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:0;}
 
 header{display:flex;align-items:center;justify-content:space-between;
-  padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px}
+  padding:14px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .brand{display:flex;align-items:baseline;gap:10px}
-.brand-name{font-family:var(--display);font-size:28px;letter-spacing:2px;
+.brand-name{font-family:var(--display);font-size:26px;letter-spacing:2px;
   background:var(--blue-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .brand-sub{font-size:11px;color:var(--t3);letter-spacing:3px;text-transform:uppercase}
 .header-r{display:flex;align-items:center;gap:12px}
@@ -46,17 +47,9 @@ header{display:flex;align-items:center;justify-content:space-between;
 .btn-ref.spin .ico{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.tabs{display:flex;gap:2px;margin-bottom:26px;padding:4px;
-  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow-x:auto}
-.tab{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:9px 20px;
-  border-radius:7px;border:none;background:transparent;color:var(--t3);
-  font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;
-  transition:all .18s;white-space:nowrap}
-.tab:hover{color:var(--t2);background:var(--s2)}
-.tab.on{color:var(--t1);background:var(--s3);box-shadow:0 1px 8px rgba(0,0,0,.4)}
-.pip{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-
-.sec{display:none}.sec.on{display:block}
+/* 탭 바는 숨김 (지도 전용 화면이므로) */
+.tabs{display:none}
+.sec{display:none}.sec.on{display:flex;flex-direction:column;flex:1;min-height:0;}
 
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;
   height:300px;gap:14px;color:var(--t3)}
@@ -708,10 +701,75 @@ td:first-child{color:var(--t1);font-weight:500}
    임대 상권지도 — 다크 테마 컴포넌트 CSS
    ════════════════════════════════════════════════════ */
 
+/* ── 키워드 필터 바 — 지도 상단 고정 가로 바 ── */
+.map-filter-bar {
+  position: relative;
+  z-index: 800;
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: nowrap; overflow-x: auto;
+  padding: 8px 12px;
+  background: rgba(8,9,13,.96);
+  border-bottom: 1px solid rgba(59,127,255,.18);
+  flex-shrink: 0;
+  scrollbar-width: none;
+  backdrop-filter: blur(12px);
+}
+.map-filter-bar::-webkit-scrollbar { display: none; }
+.map-filter-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: rgba(21,24,33,.9);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  font-size: 12px; font-weight: 600; color: #8890aa;
+  cursor: pointer; white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.map-filter-chip:hover { background: rgba(40,45,65,.95); color: #eef0f8; border-color: rgba(59,127,255,.5); }
+.map-filter-chip.active {
+  background: #3b7fff; border-color: #3b7fff; color: #fff;
+  box-shadow: 0 2px 10px rgba(59,127,255,.4);
+}
+.map-filter-chip .chip-ico { font-size: 13px; line-height: 1; }
+.map-filter-chip .chip-cnt {
+  background: rgba(255,255,255,.18); border-radius: 10px;
+  padding: 1px 7px; font-size: 10px; font-weight: 700;
+  min-width: 20px; text-align: center;
+}
+.map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.28); }
+/* 구분선 */
+.filter-divider {
+  width: 1px; height: 20px; background: rgba(255,255,255,.12); flex-shrink: 0; margin: 0 2px;
+}
+
+/* ── 지하철역 마커 ── */
+.subway-marker {
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 2px;
+  pointer-events: none;
+}
+.subway-circle {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 900; color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.55);
+}
+.subway-name {
+  font-size: 9px; font-weight: 700; color: #1a1a2e;
+  background: rgba(255,255,255,.88);
+  padding: 1px 4px; border-radius: 3px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  letter-spacing: -.3px;
+}
+
 /* 레이아웃 */
 .map-app {
   display: flex; flex-direction: row;
   width: 100%; height: 100%;
+  flex: 1; min-height: 0;
   background: #08090d;
   font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 }
@@ -720,6 +778,16 @@ td:first-child{color:var(--t1);font-weight:500}
   flex: 1;
   min-width: 0;
   height: 100%;
+  position: relative;
+}
+
+.map-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 사이드바 */
@@ -979,10 +1047,10 @@ td:first-child{color:var(--t1);font-weight:500}
   color:var(--t1);
   border-color:var(--blue);
 }
-#sec-mapview{height:calc(100vh - 160px);min-height:720px;}
-#sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:row;}
-.map-app{width:100%;height:100%;display:flex;flex-direction:row;}
-#map{flex:1;min-width:0;height:100%;min-height:520px;}
+#sec-mapview{flex:1;min-height:0;display:flex;flex-direction:column;}
+#sec-mapview>.map-wrap{flex:1;min-height:0;border-radius:0;overflow:hidden;border:none;position:relative;display:flex;flex-direction:column;}
+.map-app{width:100%;flex:1;min-height:0;display:flex;flex-direction:row;}
+#map{flex:1;min-width:0;height:100%;}
 
 /* ── 업데이트 버튼 ── */
 .btn-update{display:flex;align-items:center;gap:6px;
@@ -1085,12 +1153,46 @@ td:first-child{color:var(--t1);font-weight:500}
   </div>
 </div>
 <div id="sec-mapview" class="sec on">
-  <div class="map-wrap">
-    <div id="map-loader">
-      <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:mapSpin .8s linear infinite;margin:0 auto 10px"></div>
+  <div class="map-wrap" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;">
+    <div id="map-loader" style="position:absolute;inset:0;z-index:900;background:rgba(8,9,13,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px"></div>
       <div style="font-size:12px;color:var(--t2);">상권 데이터 로딩 중…</div>
     </div>
-    <div class="map-app">
+
+    <!-- ══ 키워드 필터 바 (가로 고정 바) ══ -->
+    <div class="map-filter-bar" id="map-filter-bar">
+      <div class="map-filter-chip active" data-filter="all" onclick="applyMapFilter('all',this)">
+        <span class="chip-ico">🗺️</span> 전체 <span class="chip-cnt" id="fc-all">0</span>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="map-filter-chip" data-filter="core" onclick="applyMapFilter('core',this)">
+        <span class="chip-ico">📍</span> 인접 300m <span class="chip-cnt" id="fc-core">0</span>
+      </div>
+      <div class="filter-divider"></div>
+      <div class="map-filter-chip" data-filter="F&B/음식점" onclick="applyMapFilter('F&B/음식점',this)">
+        <span class="chip-ico">🍽️</span> 음식점 <span class="chip-cnt" id="fc-food">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="카페" onclick="applyMapFilter('카페',this)">
+        <span class="chip-ico">☕</span> 카페 <span class="chip-cnt" id="fc-cafe">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="병원/의료" onclick="applyMapFilter('병원/의료',this)">
+        <span class="chip-ico">🏥</span> 의료 <span class="chip-cnt" id="fc-med">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="사무실/기업" onclick="applyMapFilter('사무실/기업',this)">
+        <span class="chip-ico">🏢</span> 사무실 <span class="chip-cnt" id="fc-office">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="뷰티/미용" onclick="applyMapFilter('뷰티/미용',this)">
+        <span class="chip-ico">💅</span> 뷰티 <span class="chip-cnt" id="fc-beauty">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="학원/교육" onclick="applyMapFilter('학원/교육',this)">
+        <span class="chip-ico">📚</span> 학원 <span class="chip-cnt" id="fc-edu">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="공실" onclick="applyMapFilter('공실',this)">
+        <span class="chip-ico">🔓</span> 공실 <span class="chip-cnt" id="fc-vacant">0</span>
+      </div>
+    </div>
+
+    <div class="map-app" style="flex:1;min-height:0;">
   <!-- ══ MAP ══ -->
   <div id="map"></div>
 
@@ -1168,9 +1270,13 @@ const OUR_BUILDING = {
 let buildings = [OUR_BUILDING];
 
 function parseMapCSV(text){
-  const lines=text.trim().split('\n');
-  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
-  return lines.slice(1).map(line=>{
+  // BOM 제거
+  text = text.replace(/^\uFEFF/, '');
+  const lines=text.trim().split(/\r?\n/);
+  // 헤더: 따옴표·공백·BOM 모두 제거
+  const headers=lines[0].split(',').map(h=>h.replace(/^["'\s\uFEFF]+|["'\s]+$/g,'').trim());
+  console.log('[CSV] headers:', headers);
+  const parsed = lines.slice(1).map(line=>{
     const vals=[]; let cur='',inQ=false;
     for(const ch of line){
       if(ch==='"')inQ=!inQ;
@@ -1182,6 +1288,8 @@ function parseMapCSV(text){
     headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'');});
     return obj;
   }).filter(r=>r['건물명']&&r['건물명'].trim());
+  console.log('[CSV] 총 행수:', parsed.length, '/ 첫 행 샘플:', parsed[0]);
+  return parsed;
 }
 
 function calcDistance(lat1, lng1, lat2, lng2) {
@@ -1224,6 +1332,298 @@ function rowsToBuildings(rows){
     }
   });
   return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
+}
+
+// ══ 지하철역 데이터 — 서울 주요 역 전체 ══
+// 호선 색상: 1호선#0052A4 2호선#00A140 3호선#EF6C00 4호선#00A4E3 5호선#8B4513 6호선#C55C1D 7호선#747F00 8호선#E6186C 9호선#BDB427 신분당#D4003B 수인분당#F5A623 경의중앙#77C4A3 공항#4682B4
+const SUBWAY_STATIONS = [
+  // ── 1호선 ──
+  { name:'시청',      line:'1', color:'#0052A4', lat:37.5650, lng:126.9750 },
+  { name:'종각',      line:'1', color:'#0052A4', lat:37.5702, lng:126.9827 },
+  { name:'종로3가',   line:'1', color:'#0052A4', lat:37.5710, lng:126.9919 },
+  { name:'동대문',    line:'1', color:'#0052A4', lat:37.5714, lng:127.0097 },
+
+  // ── 2호선 ──
+  { name:'홍대입구',  line:'2', color:'#00A140', lat:37.5573, lng:126.9243 },
+  { name:'합정',      line:'2', color:'#00A140', lat:37.5498, lng:126.9146 },
+  { name:'당산',      line:'2', color:'#00A140', lat:37.5340, lng:126.9005 },
+  { name:'영등포구청',line:'2', color:'#00A140', lat:37.5262, lng:126.8962 },
+  { name:'신도림',    line:'2', color:'#00A140', lat:37.5088, lng:126.8913 },
+  { name:'대림',      line:'2', color:'#00A140', lat:37.4930, lng:126.8952 },
+  { name:'구로디지털단지', line:'2', color:'#00A140', lat:37.4852, lng:126.9012 },
+  { name:'신대방',    line:'2', color:'#00A140', lat:37.4876, lng:126.9133 },
+  { name:'신림',      line:'2', color:'#00A140', lat:37.4845, lng:126.9295 },
+  { name:'봉천',      line:'2', color:'#00A140', lat:37.4812, lng:126.9418 },
+  { name:'서울대입구',line:'2', color:'#00A140', lat:37.4813, lng:126.9528 },
+  { name:'낙성대',    line:'2', color:'#00A140', lat:37.4814, lng:126.9637 },
+  { name:'사당',      line:'2', color:'#00A140', lat:37.4765, lng:126.9814 },
+  { name:'방배',      line:'2', color:'#00A140', lat:37.4814, lng:126.9976 },
+  { name:'서초',      line:'2', color:'#00A140', lat:37.4837, lng:127.0118 },
+  { name:'교대',      line:'2', color:'#00A140', lat:37.4935, lng:127.0139 },
+  { name:'강남',      line:'2', color:'#00A140', lat:37.4979, lng:127.0276 },
+  { name:'역삼',      line:'2', color:'#00A140', lat:37.5005, lng:127.0364 },
+  { name:'선릉',      line:'2', color:'#00A140', lat:37.5044, lng:127.0490 },
+  { name:'삼성',      line:'2', color:'#00A140', lat:37.5088, lng:127.0632 },
+  { name:'종합운동장',line:'2', color:'#00A140', lat:37.5108, lng:127.0730 },
+  { name:'잠실새내',  line:'2', color:'#00A140', lat:37.5112, lng:127.0855 },
+  { name:'잠실',      line:'2', color:'#00A140', lat:37.5133, lng:127.1001 },
+  { name:'건대입구',  line:'2', color:'#00A140', lat:37.5401, lng:127.0700 },
+  { name:'성수',      line:'2', color:'#00A140', lat:37.5448, lng:127.0566 },
+  { name:'왕십리',    line:'2', color:'#00A140', lat:37.5612, lng:127.0372 },
+  { name:'한양대',    line:'2', color:'#00A140', lat:37.5553, lng:127.0455 },
+  { name:'뚝섬',      line:'2', color:'#00A140', lat:37.5481, lng:127.0438 },
+
+  // ── 3호선 ──
+  { name:'불광',      line:'3', color:'#EF6C00', lat:37.6101, lng:126.9296 },
+  { name:'연신내',    line:'3', color:'#EF6C00', lat:37.6192, lng:126.9199 },
+  { name:'녹번',      line:'3', color:'#EF6C00', lat:37.5991, lng:126.9365 },
+  { name:'홍제',      line:'3', color:'#EF6C00', lat:37.5896, lng:126.9562 },
+  { name:'무악재',    line:'3', color:'#EF6C00', lat:37.5777, lng:126.9557 },
+  { name:'독립문',    line:'3', color:'#EF6C00', lat:37.5714, lng:126.9609 },
+  { name:'경복궁',    line:'3', color:'#EF6C00', lat:37.5759, lng:126.9747 },
+  { name:'안국',      line:'3', color:'#EF6C00', lat:37.5762, lng:126.9853 },
+  { name:'종로3가',   line:'3', color:'#EF6C00', lat:37.5710, lng:126.9919 },
+  { name:'을지로3가', line:'3', color:'#EF6C00', lat:37.5659, lng:126.9929 },
+  { name:'충무로',    line:'3', color:'#EF6C00', lat:37.5619, lng:126.9946 },
+  { name:'동대입구',  line:'3', color:'#EF6C00', lat:37.5579, lng:127.0057 },
+  { name:'약수',      line:'3', color:'#EF6C00', lat:37.5543, lng:127.0137 },
+  { name:'금호',      line:'3', color:'#EF6C00', lat:37.5487, lng:127.0199 },
+  { name:'옥수',      line:'3', color:'#EF6C00', lat:37.5404, lng:127.0178 },
+  { name:'압구정',    line:'3', color:'#EF6C00', lat:37.5272, lng:127.0283 },
+  { name:'신사',      line:'3', color:'#EF6C00', lat:37.5256, lng:127.0205 },
+  { name:'잠원',      line:'3', color:'#EF6C00', lat:37.5157, lng:127.0066 },
+  { name:'고속터미널',line:'3', color:'#EF6C00', lat:37.5048, lng:127.0047 },
+  { name:'교대',      line:'3', color:'#EF6C00', lat:37.4935, lng:127.0139 },
+  { name:'남부터미널',line:'3', color:'#EF6C00', lat:37.4851, lng:127.0140 },
+  { name:'양재',      line:'3', color:'#EF6C00', lat:37.4843, lng:127.0342 },
+
+  // ── 4호선 ──
+  { name:'미아사거리',line:'4', color:'#00A4E3', lat:37.6131, lng:127.0298 },
+  { name:'길음',      line:'4', color:'#00A4E3', lat:37.6030, lng:127.0242 },
+  { name:'성신여대입구',line:'4',color:'#00A4E3',lat:37.5924, lng:127.0167 },
+  { name:'한성대입구',line:'4', color:'#00A4E3', lat:37.5882, lng:127.0064 },
+  { name:'혜화',      line:'4', color:'#00A4E3', lat:37.5825, lng:127.0016 },
+  { name:'동대문역사문화공원',line:'4',color:'#00A4E3',lat:37.5651,lng:127.0097 },
+  { name:'충무로',    line:'4', color:'#00A4E3', lat:37.5619, lng:126.9946 },
+  { name:'명동',      line:'4', color:'#00A4E3', lat:37.5634, lng:126.9853 },
+  { name:'회현',      line:'4', color:'#00A4E3', lat:37.5580, lng:126.9798 },
+  { name:'서울역',    line:'4', color:'#00A4E3', lat:37.5546, lng:126.9707 },
+  { name:'숙대입구',  line:'4', color:'#00A4E3', lat:37.5446, lng:126.9729 },
+  { name:'삼각지',    line:'4', color:'#00A4E3', lat:37.5352, lng:126.9724 },
+  { name:'신용산',    line:'4', color:'#00A4E3', lat:37.5301, lng:126.9645 },
+  { name:'이촌',      line:'4', color:'#00A4E3', lat:37.5239, lng:126.9713 },
+  { name:'동작',      line:'4', color:'#00A4E3', lat:37.5036, lng:126.9793 },
+  { name:'이수',      line:'4', color:'#00A4E3', lat:37.4874, lng:126.9820 },
+  { name:'사당',      line:'4', color:'#00A4E3', lat:37.4765, lng:126.9814 },
+  { name:'남태령',    line:'4', color:'#00A4E3', lat:37.4641, lng:126.9885 },
+
+  // ── 5호선 ──
+  { name:'광화문',    line:'5', color:'#996CAC', lat:37.5716, lng:126.9769 },
+  { name:'종로3가',   line:'5', color:'#996CAC', lat:37.5710, lng:126.9919 },
+  { name:'을지로4가', line:'5', color:'#996CAC', lat:37.5668, lng:127.0005 },
+  { name:'동대문역사문화공원',line:'5',color:'#996CAC',lat:37.5651,lng:127.0097},
+  { name:'청구',      line:'5', color:'#996CAC', lat:37.5588, lng:127.0172 },
+  { name:'왕십리',    line:'5', color:'#996CAC', lat:37.5612, lng:127.0372 },
+  { name:'마포',      line:'5', color:'#996CAC', lat:37.5376, lng:126.9490 },
+  { name:'공덕',      line:'5', color:'#996CAC', lat:37.5447, lng:126.9523 },
+  { name:'애오개',    line:'5', color:'#996CAC', lat:37.5480, lng:126.9597 },
+  { name:'충정로',    line:'5', color:'#996CAC', lat:37.5596, lng:126.9631 },
+  { name:'여의도',    line:'5', color:'#996CAC', lat:37.5218, lng:126.9244 },
+  { name:'영등포시장',line:'5', color:'#996CAC', lat:37.5178, lng:126.9029 },
+  { name:'신정',      line:'5', color:'#996CAC', lat:37.5232, lng:126.8562 },
+  { name:'오금',      line:'5', color:'#996CAC', lat:37.5021, lng:127.1258 },
+
+  // ── 6호선 ──
+  { name:'응암',      line:'6', color:'#C55C1D', lat:37.6010, lng:126.9109 },
+  { name:'새절',      line:'6', color:'#C55C1D', lat:37.5932, lng:126.9162 },
+  { name:'증산',      line:'6', color:'#C55C1D', lat:37.5816, lng:126.9134 },
+  { name:'디지털미디어시티',line:'6',color:'#C55C1D',lat:37.5750,lng:126.8975},
+  { name:'상수',      line:'6', color:'#C55C1D', lat:37.5477, lng:126.9239 },
+  { name:'마포구청',  line:'6', color:'#C55C1D', lat:37.5551, lng:126.9119 },
+  { name:'망원',      line:'6', color:'#C55C1D', lat:37.5557, lng:126.9075 },
+  { name:'이태원',    line:'6', color:'#C55C1D', lat:37.5347, lng:126.9945 },
+  { name:'한강진',    line:'6', color:'#C55C1D', lat:37.5400, lng:127.0047 },
+  { name:'녹사평',    line:'6', color:'#C55C1D', lat:37.5328, lng:126.9887 },
+  { name:'삼각지',    line:'6', color:'#C55C1D', lat:37.5352, lng:126.9724 },
+  { name:'버티고개',  line:'6', color:'#C55C1D', lat:37.5533, lng:127.0128 },
+  { name:'약수',      line:'6', color:'#C55C1D', lat:37.5543, lng:127.0137 },
+
+  // ── 7호선 ──
+  { name:'도봉산',    line:'7', color:'#747F00', lat:37.6890, lng:127.0474 },
+  { name:'수락산',    line:'7', color:'#747F00', lat:37.6677, lng:127.0572 },
+  { name:'마들',      line:'7', color:'#747F00', lat:37.6558, lng:127.0590 },
+  { name:'노원',      line:'7', color:'#747F00', lat:37.6548, lng:127.0564 },
+  { name:'중계',      line:'7', color:'#747F00', lat:37.6377, lng:127.0752 },
+  { name:'하계',      line:'7', color:'#747F00', lat:37.6278, lng:127.0665 },
+  { name:'공릉',      line:'7', color:'#747F00', lat:37.6233, lng:127.0605 },
+  { name:'태릉입구',  line:'7', color:'#747F00', lat:37.6181, lng:127.0733 },
+  { name:'먹골',      line:'7', color:'#747F00', lat:37.6028, lng:127.0865 },
+  { name:'중화',      line:'7', color:'#747F00', lat:37.5958, lng:127.0849 },
+  { name:'상봉',      line:'7', color:'#747F00', lat:37.5893, lng:127.0858 },
+  { name:'면목',      line:'7', color:'#747F00', lat:37.5797, lng:127.0833 },
+  { name:'사가정',    line:'7', color:'#747F00', lat:37.5704, lng:127.0849 },
+  { name:'용마산',    line:'7', color:'#747F00', lat:37.5645, lng:127.0843 },
+  { name:'중곡',      line:'7', color:'#747F00', lat:37.5577, lng:127.0837 },
+  { name:'군자',      line:'7', color:'#747F00', lat:37.5528, lng:127.0797 },
+  { name:'어린이대공원',line:'7',color:'#747F00', lat:37.5484, lng:127.0732 },
+  { name:'건대입구',  line:'7', color:'#747F00', lat:37.5401, lng:127.0700 },
+  { name:'뚝섬유원지',line:'7', color:'#747F00', lat:37.5300, lng:127.0668 },
+  { name:'청담',      line:'7', color:'#747F00', lat:37.5252, lng:127.0499 },
+  { name:'강남구청',  line:'7', color:'#747F00', lat:37.5173, lng:127.0440 },
+  { name:'학동',      line:'7', color:'#747F00', lat:37.5129, lng:127.0325 },
+  { name:'논현',      line:'7', color:'#747F00', lat:37.5115, lng:127.0248 },
+  { name:'반포',      line:'7', color:'#747F00', lat:37.5055, lng:127.0039 },
+  { name:'고속터미널',line:'7', color:'#747F00', lat:37.5048, lng:127.0047 },
+  { name:'내방',      line:'7', color:'#747F00', lat:37.4961, lng:126.9935 },
+  { name:'이수',      line:'7', color:'#747F00', lat:37.4874, lng:126.9820 },
+  { name:'남성',      line:'7', color:'#747F00', lat:37.4800, lng:126.9748 },
+  { name:'숭실대입구',line:'7', color:'#747F00', lat:37.4963, lng:126.9597 },
+  { name:'상도',      line:'7', color:'#747F00', lat:37.5006, lng:126.9518 },
+  { name:'장승배기',  line:'7', color:'#747F00', lat:37.5054, lng:126.9356 },
+  { name:'신대방삼거리',line:'7',color:'#747F00', lat:37.4993, lng:126.9136 },
+  { name:'보라매',    line:'7', color:'#747F00', lat:37.4988, lng:126.9226 },
+
+  // ── 9호선 ──
+  { name:'김포공항',  line:'9', color:'#BDB427', lat:37.5629, lng:126.8013 },
+  { name:'가양',      line:'9', color:'#BDB427', lat:37.5623, lng:126.8538 },
+  { name:'증미',      line:'9', color:'#BDB427', lat:37.5564, lng:126.8672 },
+  { name:'등촌',      line:'9', color:'#BDB427', lat:37.5540, lng:126.8748 },
+  { name:'염창',      line:'9', color:'#BDB427', lat:37.5454, lng:126.8837 },
+  { name:'신방화',    line:'9', color:'#BDB427', lat:37.5599, lng:126.8097 },
+  { name:'당산',      line:'9', color:'#BDB427', lat:37.5340, lng:126.9005 },
+  { name:'국회의사당',line:'9', color:'#BDB427', lat:37.5298, lng:126.9138 },
+  { name:'여의도',    line:'9', color:'#BDB427', lat:37.5218, lng:126.9244 },
+  { name:'샛강',      line:'9', color:'#BDB427', lat:37.5159, lng:126.9356 },
+  { name:'노량진',    line:'9', color:'#BDB427', lat:37.5134, lng:126.9423 },
+  { name:'노들',      line:'9', color:'#BDB427', lat:37.5127, lng:126.9555 },
+  { name:'흑석',      line:'9', color:'#BDB427', lat:37.5098, lng:126.9634 },
+  { name:'동작',      line:'9', color:'#BDB427', lat:37.5036, lng:126.9793 },
+  { name:'구반포',    line:'9', color:'#BDB427', lat:37.5094, lng:126.9946 },
+  { name:'반포',      line:'9', color:'#BDB427', lat:37.5055, lng:127.0039 },
+  { name:'고속터미널',line:'9', color:'#BDB427', lat:37.5048, lng:127.0047 },
+  { name:'사평',      line:'9', color:'#BDB427', lat:37.5130, lng:127.0188 },
+  { name:'신논현',    line:'9', color:'#BDB427', lat:37.5047, lng:127.0252 },
+  { name:'언주',      line:'9', color:'#BDB427', lat:37.5076, lng:127.0388 },
+  { name:'선정릉',    line:'9', color:'#BDB427', lat:37.5099, lng:127.0491 },
+  { name:'삼성중앙',  line:'9', color:'#BDB427', lat:37.5148, lng:127.0631 },
+  { name:'봉은사',    line:'9', color:'#BDB427', lat:37.5148, lng:127.0731 },
+  { name:'종합운동장',line:'9', color:'#BDB427', lat:37.5108, lng:127.0730 },
+  { name:'올림픽공원',line:'9', color:'#BDB427', lat:37.5174, lng:127.1108 },
+
+  // ── 신분당선 ──
+  { name:'강남',      line:'신분당', color:'#D4003B', lat:37.4979, lng:127.0276 },
+  { name:'양재',      line:'신분당', color:'#D4003B', lat:37.4843, lng:127.0342 },
+  { name:'판교',      line:'신분당', color:'#D4003B', lat:37.3948, lng:127.1112 },
+
+  // ── 수인분당선 ──
+  { name:'왕십리',    line:'분당', color:'#F5A623', lat:37.5612, lng:127.0372 },
+  { name:'서울숲',    line:'분당', color:'#F5A623', lat:37.5447, lng:127.0437 },
+  { name:'압구정로데오',line:'분당',color:'#F5A623', lat:37.5272, lng:127.0397 },
+  { name:'강남구청',  line:'분당', color:'#F5A623', lat:37.5173, lng:127.0440 },
+  { name:'도곡',      line:'분당', color:'#F5A623', lat:37.4928, lng:127.0441 },
+  { name:'대치',      line:'분당', color:'#F5A623', lat:37.4943, lng:127.0551 },
+  { name:'한티',      line:'분당', color:'#F5A623', lat:37.4970, lng:127.0577 },
+  { name:'선릉',      line:'분당', color:'#F5A623', lat:37.5044, lng:127.0490 },
+];
+
+// 줌 레벨별 표시 역 필터 (너무 많으면 겹침)
+const SUBWAY_MIN_ZOOM = {
+  '신사':11,'압구정':11,'논현':11,'학동':11,'강남구청':11,'청담':11,
+  '강남':11,'역삼':11,'선릉':11,'압구정로데오':11,'교대':11,'고속터미널':11,
+  '잠실':11,'홍대입구':11,'여의도':11,'서울역':11,'광화문':11,
+  '왕십리':11,'건대입구':11,'성수':11,'이태원':11,'공덕':11,
+};
+
+let subwayMarkers = [];
+
+function addSubwayMarkers(map) {
+  subwayMarkers.forEach(m => map.removeLayer(m));
+  subwayMarkers = [];
+  const zoom = map.getZoom();
+
+  SUBWAY_STATIONS.forEach(st => {
+    // 줌 13 미만이면 주요 역만, 12 미만이면 핵심역만 표시
+    const minZ = SUBWAY_MIN_ZOOM[st.name];
+    if (zoom < 12 && !minZ) return;
+    if (zoom < 11 && minZ && minZ > 11) return;
+
+    const html = `<div class="subway-marker">
+      <div class="subway-circle" style="background:${st.color}">${st.line}</div>
+      <div class="subway-name">${st.name}</div>
+    </div>`;
+    const icon = L.divIcon({
+      className: '', html,
+      iconSize: [60, 36], iconAnchor: [30, 10],
+    });
+    const m = L.marker([st.lat, st.lng], { icon, zIndexOffset: -200, interactive: false }).addTo(map);
+    subwayMarkers.push(m);
+  });
+}
+
+// 줌 변경 시 역 재렌더링
+function setupSubwayZoomListener(map) {
+  map.on('zoomend', function() {
+    addSubwayMarkers(map);
+  });
+}
+
+// ══ 키워드 필터 ══
+let activeMapFilter = 'all';
+
+function updateFilterCounts() {
+  const nonOurs = buildings.filter(b => !b.isOurs);
+  const allTenants = t => nonOurs.some(b => b.tenants.some(t2 => t2.type === t));
+
+  document.getElementById('fc-all').textContent    = nonOurs.length;
+  document.getElementById('fc-core').textContent   = nonOurs.filter(b=>b.distance==='core').length;
+  document.getElementById('fc-food').textContent   = nonOurs.filter(b=>b.tenants.some(t=>t.type==='F&B/음식점')).length;
+  document.getElementById('fc-cafe').textContent   = nonOurs.filter(b=>b.tenants.some(t=>t.type==='카페')).length;
+  document.getElementById('fc-med').textContent    = nonOurs.filter(b=>b.tenants.some(t=>t.type==='병원/의료')).length;
+  document.getElementById('fc-office').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.type==='사무실/기업')).length;
+  document.getElementById('fc-beauty').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.type==='뷰티/미용')).length;
+  document.getElementById('fc-edu').textContent    = nonOurs.filter(b=>b.tenants.some(t=>t.type==='학원/교육')).length;
+  document.getElementById('fc-vacant').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.name.includes('공실')||t.rawType==='공실')).length;
+}
+
+function applyMapFilter(filter, chipEl) {
+  activeMapFilter = filter;
+  // 칩 스타일 갱신
+  document.querySelectorAll('.map-filter-chip').forEach(c => c.classList.remove('active'));
+  if (chipEl) chipEl.classList.add('active');
+
+  const nonOurs = buildings.filter(b => !b.isOurs);
+
+  nonOurs.forEach(b => {
+    const mkw = document.getElementById('mkw-' + b.id);
+    if (!mkw) return;
+    let show = false;
+    if (filter === 'all') {
+      show = true;
+    } else if (filter === 'core') {
+      show = b.distance === 'core';
+    } else if (filter === '공실') {
+      show = b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
+    } else {
+      show = b.tenants.some(t => t.type === filter);
+    }
+    mkw.classList.toggle('dimmed', !show);
+    mkw.classList.toggle('type-match', show && filter !== 'all');
+  });
+
+  // 필터 결과 건물들로 지도 범위 조정 (전체 제외)
+  if (filter !== 'all') {
+    const matched = nonOurs.filter(b => {
+      if (filter === 'core') return b.distance === 'core';
+      if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
+      return b.tenants.some(t => t.type === filter);
+    });
+    if (matched.length > 0 && window.mapInstance) {
+      const bounds = L.latLngBounds(matched.map(b => [b.lat, b.lng]));
+      window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
+    }
+  } else if (window.mapInstance) {
+    window.mapInstance.flyTo([37.5228, 127.0220], 15, { duration: 0.8 });
+  }
 }
 
 async function loadMapData(){
@@ -1900,10 +2300,11 @@ function mapShowTab(name) {
     }
     // ── 지도 생성 ──
     window.mapInstance = L.map('map', {
-      center: [37.5228, 127.0220], zoom: 16, zoomControl: true
+      center: [37.5228, 127.0220], zoom: 14, zoomControl: true
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OSM &copy; CARTO',
+    // 네이버 지도 스타일 — 밝고 선명한 한국 지도
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(window.mapInstance);
     // ── 마커 생성 ──
@@ -1930,6 +2331,11 @@ function mapShowTab(name) {
     });
     // ── 렌더링 ──
     renderBuildingList(); renderChart(); renderReport(); renderLegend();
+    // ── 지하철역 마커 ──
+    addSubwayMarkers(window.mapInstance);
+    setupSubwayZoomListener(window.mapInstance);
+    // ── 필터 카운트 업데이트 ──
+    updateFilterCounts();
     // ── 사이드바 헤더 동적 업데이트 ──
     const bCnt = buildings.filter(b=>!b.isOurs).length;
     const hTitle = document.querySelector('.map-sidebar-header h1');
@@ -2002,6 +2408,7 @@ window.resetTypeFilter  = resetTypeFilter;
 window.toggleArea       = toggleArea;
 window.flyToBuilding    = flyToBuilding;
 window.selectType       = selectType;
+window.applyMapFilter   = applyMapFilter;
 /* mrShow / selectMarketReport / backToMarketList / closeMarketDetail 는
    첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
    여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
@@ -2195,10 +2602,11 @@ async function runUpdatePipeline() {
         markersMap[b.id] = marker;
       });
       renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      addSubwayMarkers(window.mapInstance);
+      updateFilterCounts();
+      applyMapFilter('all', document.querySelector('.map-filter-chip[data-filter="all"]'));
       setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
     }
-
-    _finishUpdate(btn, true);
 
   } catch (err) {
     updLog('❌ 오류: ' + err.message);
