@@ -1549,12 +1549,15 @@ function rowsToBuildings(rows){
     const key=row['건물명'].trim();
     if(!bmap[key]){
       const lat=parseFloat(row['위도'])||0, lng=parseFloat(row['경도'])||0;
-      const dist = (lat && lng) ? calcDistance(ourLat, ourLng, lat, lng) : 9999;
+      // 시트에 유효한 좌표가 있으면 그대로, 없으면 지오코딩 필요 플래그
+      const hasCoord = lat !== 0 && lng !== 0;
+      const dist = hasCoord ? calcDistance(ourLat, ourLng, lat, lng) : 9999;
       const distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
       bmap[key]={
         id:key.replace(/[^\w가-힣]/g,'_'),
         name:row['건물명'], short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
         address:row['주소']||'', lat, lng,
+        _needGeocode: !hasCoord,  // 좌표 없으면 지오코딩 필요
         price: row['매매가(억)'] ? row['매매가(억)']+'억' : row['매매가'] ? row['매매가']+'억' : null,
         dong:row['동']||'기타', distance,
         source:row['파일명']||'', tenants:[]
@@ -1570,7 +1573,8 @@ function rowsToBuildings(rows){
       });
     }
   });
-  return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
+  // 좌표 있는 것 + 주소로 지오코딩 가능한 것 모두 반환
+  return Object.values(bmap).filter(b => (b.lat!==0 && b.lng!==0) || b.address);
 }
 
 // ══ 지하철역 — 건물 데이터 있는 권역 주변 핵심 역만 ══
@@ -1801,8 +1805,10 @@ async function loadMapData(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     const rows=parseMapCSV(text);
-    buildings=rows.length>0?[OUR_BUILDING,...rowsToBuildings(rows)]:[OUR_BUILDING];
-    console.log('✅ 지도데이터:', buildings.length-1, '개 건물');
+    const valid=rowsToBuildings(rows);
+    buildings=rows.length>0?[OUR_BUILDING,...valid]:[OUR_BUILDING];
+    const needGeo=valid.filter(b=>b._needGeocode).length;
+    console.log('✅ 지도데이터:', valid.length, '개 건물 (주소→좌표변환 필요:', needGeo, '개)');
   }catch(e){
     console.warn('⚠️ 지도데이터 실패:', e.message);
     buildings=[OUR_BUILDING];
@@ -2564,36 +2570,72 @@ function mapShowTab(name) {
       subdomains: 'abcd', maxZoom: 19
     }).addTo(window.mapInstance);
 
-    // ── 주소 기반 좌표 보정 (좌표 이상한 건물만 geocoding) ──
+    // ── 주소 기반 좌표 보정 (좌표 없거나 이상한 건물만 geocoding) ──
     var geocodeQueue = buildings.filter(function(b) {
-      return !b.isOurs && b.address && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
+      return !b.isOurs && b.address && (b._needGeocode || b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
     });
     if (geocodeQueue.length > 0) {
-      geocodeBuildings(geocodeQueue, 0, function() { createAllMarkers(); });
+      console.log('[지오코딩] 대상:', geocodeQueue.length, '개 건물 순차 변환 시작');
+      geocodeBuildings(geocodeQueue, 0, function() {
+        createAllMarkers();
+        // 지오코딩 완료 후 목록/차트/리포트도 갱신 (좌표 반영)
+        renderBuildingList(); renderChart(); renderReport(); renderLegend();
+        updateFilterCounts();
+        console.log('[지오코딩] 전체 완료 → 마커/목록 갱신');
+      });
     } else {
       createAllMarkers();
     }
   }
 
-  // 주소 → 좌표 변환 (OSM Nominatim, 순차 처리)
+  // 주소 → 좌표 변환 (카카오 로컬 API — 한국 주소 최적화)
+  var KAKAO_API_KEY = '2a3ec83cc3ca9f434e295d2ded3f0eac';
+
   function geocodeBuildings(queue, idx, callback) {
     if (idx >= queue.length) { callback(); return; }
     var b = queue[idx];
-    var addr = encodeURIComponent(b.address);
-    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + addr + '&limit=1', {
-      headers: { 'Accept-Language': 'ko', 'User-Agent': 'CapeHornTower/1.0' }
-    }).then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data && data.length > 0) {
-          b.lat = parseFloat(data[0].lat);
-          b.lng = parseFloat(data[0].lon);
-          console.log('📍 Geocoded:', b.name, '->', b.lat, b.lng);
-        }
-      })
-      .catch(function() {})
-      .finally(function() {
-        setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 1200); // rate limit 준수
-      });
+    var query = (b.address || b.name || '').trim();
+    console.log('[지오코딩]', (idx+1)+'/'+queue.length, b.name, '→', query);
+
+    fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent(query), {
+      headers: { 'Authorization': 'KakaoAK ' + KAKAO_API_KEY }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var doc = data.documents && data.documents[0];
+      if (doc) {
+        b.lat = parseFloat(doc.y);
+        b.lng = parseFloat(doc.x);
+        b._needGeocode = false;
+        var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, b.lat, b.lng);
+        b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
+        console.log('📍 완료:', b.name, '->', b.lat, b.lng);
+      } else {
+        // 주소 검색 실패 시 키워드 검색으로 재시도
+        return fetch('https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(query), {
+          headers: { 'Authorization': 'KakaoAK ' + KAKAO_API_KEY }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(kdata) {
+          var kdoc = kdata.documents && kdata.documents[0];
+          if (kdoc) {
+            b.lat = parseFloat(kdoc.y);
+            b.lng = parseFloat(kdoc.x);
+            b._needGeocode = false;
+            var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, b.lat, b.lng);
+            b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
+            console.log('📍 키워드 완료:', b.name, '->', b.lat, b.lng);
+          } else {
+            console.warn('📍 결과 없음:', b.name, query);
+          }
+        });
+      }
+    })
+    .catch(function(e) { console.warn('📍 오류:', b.name, e.message); })
+    .finally(function() {
+      // 카카오 API는 빠르므로 딜레이 최소화
+      setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 100);
+    });
   }
 
   function createAllMarkers() {
@@ -2661,8 +2703,9 @@ function mapShowTab(name) {
       })
       .then(function(text) {
         var rows = parseMapCSV(text);
-        buildings = rows.length > 0 ? [OUR_BUILDING].concat(rowsToBuildings(rows)) : [OUR_BUILDING];
-        console.log('✅ 지도데이터 로딩 완료, 건물:', buildings.length - 1);
+        var all = rowsToBuildings(rows);
+        buildings = rows.length > 0 ? [OUR_BUILDING].concat(all) : [OUR_BUILDING];
+        console.log('✅ 지도데이터 로딩 완료, 건물:', all.length, '/ 지오코딩필요:', all.filter(function(b){return b._needGeocode;}).length);
       })
       .catch(function(e) {
         console.warn('⚠️ 지도데이터 실패:', e.message);
