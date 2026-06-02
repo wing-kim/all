@@ -1009,25 +1009,54 @@ td:first-child{color:var(--t1);font-weight:500}
 .leaflet-popup-content-wrapper { border-radius: 10px !important; padding: 0 !important; }
 
 /* ── 동별 그룹 아코디언 ── */
-.dong-group { border-bottom: 1px solid #1c2030; }
+.dong-group { margin-bottom: 1px; }
 .dong-group-header {
-  display: flex; align-items: center; gap: 8px;
-  padding: 9px 14px; cursor: pointer; user-select: none;
-  background: #0f1118;
+  display: flex; align-items: center;
+  padding: 0; cursor: pointer; user-select: none;
+  background: #0c0e16;
   transition: background .15s;
   position: sticky; top: 0; z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,.05);
 }
-.dong-group-header:hover { background: #151821; }
+.dong-group-header:hover { background: #111520; }
+.dong-group-header.open { background: #111422; }
+
+/* 좌측 컬러 바 */
+.dong-color-bar {
+  width: 4px; min-height: 100%;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.dong-left {
+  display: flex; align-items: center; gap: 9px;
+  flex: 1; min-width: 0; padding: 10px 12px;
+}
 .dong-badge {
-  font-size: 10px; font-weight: 700; color: #fff;
-  padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+  font-size: 11px; font-weight: 800; color: #fff;
+  padding: 3px 10px; border-radius: 6px; flex-shrink: 0;
+  letter-spacing: -.2px;
 }
-.dong-group-meta { font-size: 11px; color: #4a5270; flex: 1; }
+.dong-stats {
+  display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+}
+.dong-stat-item { font-size: 11px; color: #4a5270; }
+.dong-stat-num { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 700; color: #6878a0; }
+.dong-stat-sep { color: #2a3050; margin: 0 2px; }
+
 .dong-chevron {
-  font-size: 10px; color: #4a5270;
-  transition: transform .22s; flex-shrink: 0;
+  font-size: 9px; color: #2a3050;
+  transition: transform .22s, color .15s; flex-shrink: 0;
+  padding: 10px 14px 10px 6px;
 }
-.dong-group-body { display: block; }
+.dong-group-header:hover .dong-chevron { color: #4a5270; }
+.dong-group-header.open .dong-chevron { color: #6878a0; transform: rotate(180deg); }
+
+.dong-group-body { 
+  display: none;
+  border-left: 4px solid rgba(255,255,255,.04);
+}
+.dong-group-body.open { display: block; }
 
 /* 모바일 */
 @media(max-width:768px){
@@ -1683,7 +1712,7 @@ function renderBuildingList() {
 
   // ── 우리 건물 카드 ──
   const oursCard = `
-    <div class="bldg-card ours-card" id="card-ours">
+    <div class="bldg-card ours-card" id="card-ours" style="margin-bottom:4px;">
       <div class="bldg-header" onclick="toggleCard('ours')">
         <div class="bldg-num ours">⭐</div>
         <div class="bldg-info">
@@ -1711,7 +1740,6 @@ function renderBuildingList() {
     dongMap[b.dong].push({ b, globalIdx: globalIdx + 1 });
   });
 
-  // 신사동 우선, 나머지 가나다순
   const dongKeys = Object.keys(dongMap).sort((a, b) => {
     if (a === '신사동') return -1; if (b === '신사동') return 1;
     if (a === '논현동') return -1; if (b === '논현동') return 1;
@@ -1719,11 +1747,11 @@ function renderBuildingList() {
   });
 
   const dongColors = {
-    '신사동':'#1e40af','논현동':'#065f46','삼성동':'#7c3aed','청담동':'#b45309',
-    '역삼동':'#0f766e','대치동':'#1d4ed8','방배동':'#6d28d9','반포동':'#0369a1',
-    '서초동':'#064e3b','삼전동':'#831843','한남동':'#7f1d1d','성수동1가':'#166534',
-    '신공덕동':'#164e63','당주동':'#1e3a5f','낙원동':'#422006','수하동':'#1c1917',
-    '충무로1가':'#7f1d1d','양재동':'#4a1942',
+    '신사동':'#2563eb','논현동':'#059669','삼성동':'#7c3aed','청담동':'#b45309',
+    '역삼동':'#0e7490','대치동':'#2563eb','방배동':'#7c3aed','반포동':'#0369a1',
+    '서초동':'#065f46','삼전동':'#9f1239','한남동':'#b91c1c','성수동1가':'#166534',
+    '신공덕동':'#155e75','당주동':'#1e3a8a','낙원동':'#78350f','수하동':'#292524',
+    '충무로1가':'#991b1b','양재동':'#581c87',
   };
 
   const dongGroups = dongKeys.map(dong => {
@@ -1768,9 +1796,16 @@ function renderBuildingList() {
 
     return `
       <div class="dong-group" id="dg-${dong}">
-        <div class="dong-group-header" onclick="toggleDongGroup('${dong}')">
-          <span class="dong-badge" style="background:${color}">${dong}</span>
-          <span class="dong-group-meta">${totalBldg}개 건물 · ${totalTenant}건 임차인</span>
+        <div class="dong-group-header" id="dgh-${dong}" onclick="toggleDongGroup('${dong}')">
+          <div class="dong-color-bar" style="background:${color}"></div>
+          <div class="dong-left">
+            <span class="dong-badge" style="background:${color}">${dong}</span>
+            <div class="dong-stats">
+              <span class="dong-stat-item">건물 <span class="dong-stat-num">${totalBldg}</span></span>
+              <span class="dong-stat-sep">·</span>
+              <span class="dong-stat-item">임차인 <span class="dong-stat-num">${totalTenant}</span></span>
+            </div>
+          </div>
           <span class="dong-chevron" id="dgc-${dong}">▼</span>
         </div>
         <div class="dong-group-body" id="dgb-${dong}">
@@ -1784,10 +1819,25 @@ function renderBuildingList() {
 
 function toggleDongGroup(dong) {
   const body = document.getElementById('dgb-' + dong);
-  const chevron = document.getElementById('dgc-' + dong);
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  const header = document.getElementById('dgh-' + dong);
+  const isOpen = body.classList.contains('open');
+
+  // 토글
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+
+  // 열릴 때 해당 동 건물들로 지도 줌인
+  if (!isOpen && window.mapInstance) {
+    const dongBuildings = buildings.filter(b => !b.isOurs && b.dong === dong);
+    if (dongBuildings.length > 0) {
+      if (dongBuildings.length === 1) {
+        window.mapInstance.flyTo([dongBuildings[0].lat, dongBuildings[0].lng], 17, { duration: 0.7 });
+      } else {
+        const bounds = L.latLngBounds(dongBuildings.map(b => [b.lat, b.lng]));
+        window.mapInstance.fitBounds(bounds, { padding: [60, 60], maxZoom: 17, animate: true, duration: 0.7 });
+      }
+    }
+  }
 }
 
 // ══════════════════════════════════════════════
