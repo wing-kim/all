@@ -20,17 +20,18 @@
   --r:10px; --r2:6px; --sh:0 4px 32px rgba(0,0,0,.5);
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+html, body { height: 100%; overflow: hidden; }
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);}
 body::before{content:'';position:fixed;inset:0;
   background-image:linear-gradient(rgba(59,127,255,.025) 1px,transparent 1px),
     linear-gradient(90deg,rgba(59,127,255,.025) 1px,transparent 1px);
   background-size:48px 48px;pointer-events:none;z-index:0}
-.page{position:relative;z-index:1;max-width:1520px;margin:0 auto;padding:0 28px 80px}
+.page{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;padding:0;}
 
 header{display:flex;align-items:center;justify-content:space-between;
-  padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:28px}
+  padding:14px 24px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .brand{display:flex;align-items:baseline;gap:10px}
-.brand-name{font-family:var(--display);font-size:28px;letter-spacing:2px;
+.brand-name{font-family:var(--display);font-size:26px;letter-spacing:2px;
   background:var(--blue-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .brand-sub{font-size:11px;color:var(--t3);letter-spacing:3px;text-transform:uppercase}
 .header-r{display:flex;align-items:center;gap:12px}
@@ -46,17 +47,9 @@ header{display:flex;align-items:center;justify-content:space-between;
 .btn-ref.spin .ico{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.tabs{display:flex;gap:2px;margin-bottom:26px;padding:4px;
-  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow-x:auto}
-.tab{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:9px 20px;
-  border-radius:7px;border:none;background:transparent;color:var(--t3);
-  font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;
-  transition:all .18s;white-space:nowrap}
-.tab:hover{color:var(--t2);background:var(--s2)}
-.tab.on{color:var(--t1);background:var(--s3);box-shadow:0 1px 8px rgba(0,0,0,.4)}
-.pip{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-
-.sec{display:none}.sec.on{display:block}
+/* 탭 바는 숨김 (지도 전용 화면이므로) */
+.tabs{display:none}
+.sec{display:none}.sec.on{display:flex;flex-direction:column;flex:1;min-height:0;}
 
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;
   height:300px;gap:14px;color:var(--t3)}
@@ -708,10 +701,202 @@ td:first-child{color:var(--t1);font-weight:500}
    임대 상권지도 — 다크 테마 컴포넌트 CSS
    ════════════════════════════════════════════════════ */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ── 키워드 필터 바 ── */
+#map-filter-bar,
+.map-filter-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 8px !important;
+  gap: 4px !important;
+  background: #09090f !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+  flex-shrink: 0 !important;
+  scrollbar-width: none !important;
+  -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  position: relative !important;
+  z-index: 800 !important;
+}
+#map-filter-bar::-webkit-scrollbar,
+.map-filter-bar::-webkit-scrollbar { display: none !important; }
+#map-filter-bar > *,
+.map-filter-bar > * {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+}
+
+.map-filter-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 0 10px !important;
+  background: rgba(15,17,30,.6) !important;
+  border: 1.5px solid rgba(255,255,255,.22) !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #6878a8 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  height: 24px !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+  transition: background .13s, color .13s, border-color .13s !important;
+}
+.map-filter-chip:hover {
+  background: rgba(40,50,90,.7) !important;
+  color: #99aadd !important;
+  border-color: rgba(99,127,255,.6) !important;
+}
+.map-filter-chip.active {
+  background: #3b7fff !important;
+  border-color: #7aaaff !important;
+  color: #fff !important;
+  box-shadow: 0 1px 10px rgba(59,127,255,.5) !important;
+  font-weight: 700 !important;
+}
+.map-filter-chip .chip-ico { font-size: 11px; line-height: 1; }
+.map-filter-chip .chip-cnt {
+  background: rgba(0,0,0,.3);
+  border-radius: 9px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  text-align: center;
+  font-family: 'DM Mono', monospace;
+  line-height: 14px;
+  height: 14px;
+}
+.map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.25); }
+.filter-divider {
+  display: block !important;
+  width: 1px !important;
+  height: 14px !important;
+  min-width: 1px !important;
+  background: rgba(255,255,255,.08) !important;
+  flex-shrink: 0 !important;
+  margin: 0 2px !important;
+}
+
+/* ── 지하철역 마커 ── */
+.subway-marker {
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 2px;
+  pointer-events: none;
+}
+.subway-circle {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 900; color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,.55);
+}
+.subway-name {
+  font-size: 9px; font-weight: 700; color: #1a1a2e;
+  background: rgba(255,255,255,.88);
+  padding: 1px 4px; border-radius: 3px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  letter-spacing: -.3px;
+}
+
 /* 레이아웃 */
 .map-app {
   display: flex; flex-direction: row;
   width: 100%; height: 100%;
+  flex: 1; min-height: 0;
   background: #08090d;
   font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
 }
@@ -720,6 +905,16 @@ td:first-child{color:var(--t1);font-weight:500}
   flex: 1;
   min-width: 0;
   height: 100%;
+  position: relative;
+}
+
+.map-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 사이드바 */
@@ -773,13 +968,23 @@ td:first-child{color:var(--t1);font-weight:500}
 .map-tab-pane.active { display: block; }
 
 /* 건물 카드 */
-.bldg-card { border-bottom: 1px solid #151821; transition: background .15s; }
-.bldg-card.active { background: #151821; }
+.bldg-card { border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; position: relative; }
+.bldg-card.active { background: rgba(59,127,255,.07); }
+
+/* 선택(selected) 상태 — 건물 클릭 시 */
+.bldg-card.selected {
+  background: rgba(59,127,255,.12);
+  border-bottom-color: rgba(59,127,255,.2);
+  box-shadow: inset 3px 0 0 #3b7fff;
+}
+.bldg-card.selected .bldg-name { color: #7eb3ff; }
+.bldg-card.selected .bldg-header { background: transparent; }
+
 .bldg-header {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 14px; cursor: pointer; user-select: none;
 }
-.bldg-header:hover { background: #151821; }
+.bldg-header:hover { background: rgba(255,255,255,.03); }
 .bldg-num {
   width: 26px; height: 26px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -938,6 +1143,108 @@ td:first-child{color:var(--t1);font-weight:500}
 .leaflet-popup-content { margin: 2px; }
 .leaflet-popup-content-wrapper { border-radius: 10px !important; padding: 0 !important; }
 
+/* ── 동별 그룹 아코디언 ── */
+.dong-group {
+  margin-bottom: 0;
+  border-bottom: 2px solid rgba(255,255,255,.08);  /* 구분선 더 진하게 */
+  transition: border-color .2s, margin .2s;
+}
+.dong-group.dong-open {
+  border-bottom: 2px solid rgba(59,91,219,.5);
+  margin-bottom: 4px;
+}
+
+.dong-group-header {
+  display: flex;
+  align-items: stretch;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  background: #0f1120;
+  transition: background .15s;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  width: 100%;
+  box-sizing: border-box;
+}
+.dong-group-header:hover { background: #161a32; }
+.dong-group-header.open { background: #181d38; border-bottom: 1px solid rgba(59,91,219,.4); }
+
+/* 좌측 컬러 바 */
+.dong-color-bar {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background: #3b5bdb;
+}
+
+.dong-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+}
+.dong-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #c7cfe8;
+  padding: 3px 9px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  letter-spacing: -.3px;
+  background: #1a1f3a;
+  border: 1px solid rgba(59,91,219,.5);  /* 테두리 더 뚜렷하게 */
+}
+.dong-stats {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.dong-stat-item { font-size: 11px; color: #5060a0; }
+.dong-stat-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7080c0;
+}
+.dong-stat-sep { color: #3040708; margin: 0 1px; }
+
+.dong-chevron {
+  font-size: 9px;
+  color: #3b5bdb;
+  transition: transform .22s, color .15s;
+  flex-shrink: 0;
+  padding: 10px 14px 10px 6px;
+  align-self: center;
+}
+.dong-group-header:hover .dong-chevron { color: #6680ff; }
+.dong-group-header.open .dong-chevron { color: #7890ff; transform: rotate(180deg); }
+
+/* 펼쳐진 동 본문 */
+.dong-group-body {
+  display: none;
+  border-left: 3px solid rgba(59,91,219,.4);
+  background: rgba(10,12,28,.7);
+  padding-bottom: 6px;
+}
+.dong-group-body.open { display: block; }
+
+/* 빈 결과 메시지 */
+.no-result-msg {
+  padding: 18px 14px;
+  font-size: 12px;
+  color: #4a5270;
+  text-align: center;
+  line-height: 1.7;
+}
+.no-result-msg span { display: block; font-size: 20px; margin-bottom: 6px; }
+
 /* 모바일 */
 @media(max-width:768px){
   .map-app { flex-direction: column; }
@@ -979,10 +1286,10 @@ td:first-child{color:var(--t1);font-weight:500}
   color:var(--t1);
   border-color:var(--blue);
 }
-#sec-mapview{height:calc(100vh - 160px);min-height:720px;}
-#sec-mapview>.map-wrap{height:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);position:relative;display:flex;flex-direction:row;}
-.map-app{width:100%;height:100%;display:flex;flex-direction:row;}
-#map{flex:1;min-width:0;height:100%;min-height:520px;}
+#sec-mapview{flex:1;min-height:0;display:flex;flex-direction:column;}
+#sec-mapview>.map-wrap{flex:1;min-height:0;border-radius:0;overflow:hidden;border:none;position:relative;display:flex;flex-direction:column;}
+.map-app{width:100%;flex:1;min-height:0;display:flex;flex-direction:row;}
+#map{flex:1;min-width:0;height:100%;}
 
 /* ── 업데이트 버튼 ── */
 .btn-update{display:flex;align-items:center;gap:6px;
@@ -1085,12 +1392,46 @@ td:first-child{color:var(--t1);font-weight:500}
   </div>
 </div>
 <div id="sec-mapview" class="sec on">
-  <div class="map-wrap">
-    <div id="map-loader">
-      <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:mapSpin .8s linear infinite;margin:0 auto 10px"></div>
+  <div class="map-wrap" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;">
+    <div id="map-loader" style="position:absolute;inset:0;z-index:900;background:rgba(8,9,13,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px"></div>
       <div style="font-size:12px;color:var(--t2);">상권 데이터 로딩 중…</div>
     </div>
-    <div class="map-app">
+
+    <!-- ══ 키워드 필터 바 (가로 고정 바) ══ -->
+    <div class="map-filter-bar" id="map-filter-bar" style="display:flex!important;flex-wrap:nowrap!important;flex-direction:row!important;align-items:center!important;overflow-x:auto!important;overflow-y:hidden!important;height:36px!important;min-height:36px!important;max-height:36px!important;white-space:nowrap!important;flex-shrink:0!important;gap:4px;padding:0 8px;background:#09090f;border-bottom:1px solid rgba(255,255,255,.07);scrollbar-width:none;box-sizing:border-box;">
+      <div class="map-filter-chip active" data-filter="all" onclick="applyMapFilter('all',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">🗺️</span> 전체 <span class="chip-cnt" id="fc-all">0</span>
+      </div>
+      <div class="filter-divider" style="flex-shrink:0!important;"></div>
+      <div class="map-filter-chip" data-filter="core" onclick="applyMapFilter('core',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">📍</span> 인접 300m <span class="chip-cnt" id="fc-core">0</span>
+      </div>
+      <div class="filter-divider" style="flex-shrink:0!important;"></div>
+      <div class="map-filter-chip" data-filter="F&B/음식점" onclick="applyMapFilter('F&B/음식점',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">🍽️</span> 음식점 <span class="chip-cnt" id="fc-food">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="카페" onclick="applyMapFilter('카페',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">☕</span> 카페 <span class="chip-cnt" id="fc-cafe">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="병원/의료" onclick="applyMapFilter('병원/의료',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">🏥</span> 의료 <span class="chip-cnt" id="fc-med">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="사무실/기업" onclick="applyMapFilter('사무실/기업',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">🏢</span> 사무실 <span class="chip-cnt" id="fc-office">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="뷰티/미용" onclick="applyMapFilter('뷰티/미용',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">💅</span> 뷰티 <span class="chip-cnt" id="fc-beauty">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="학원/교육" onclick="applyMapFilter('학원/교육',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">📚</span> 학원 <span class="chip-cnt" id="fc-edu">0</span>
+      </div>
+      <div class="map-filter-chip" data-filter="공실" onclick="applyMapFilter('공실',this)" style="flex-shrink:0!important;white-space:nowrap!important;">
+        <span class="chip-ico">🔓</span> 공실 <span class="chip-cnt" id="fc-vacant">0</span>
+      </div>
+    </div>
+
+    <div class="map-app" style="flex:1;min-height:0;">
   <!-- ══ MAP ══ -->
   <div id="map"></div>
 
@@ -1160,17 +1501,21 @@ const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J
 const OUR_BUILDING = {
   id:'ours', isOurs:true,
   name:'케이프혼타워 (신축예정)', short:'우리건물',
-  address:'신사동 529 외 2필지',
-  lat:37.5232, lng:127.0212,
+  address:'서울 강남구 신사동 529 외 2필지',
+  lat:37.5243, lng:127.0213,
   price:null, dong:'신사동', distance:'core', tenants:[]
 };
 
 let buildings = [OUR_BUILDING];
 
 function parseMapCSV(text){
-  const lines=text.trim().split('\n');
-  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
-  return lines.slice(1).map(line=>{
+  // BOM 제거
+  text = text.replace(/^\uFEFF/, '');
+  const lines=text.trim().split(/\r?\n/);
+  // 헤더: 따옴표·공백·BOM 모두 제거
+  const headers=lines[0].split(',').map(h=>h.replace(/^["'\s\uFEFF]+|["'\s]+$/g,'').trim());
+  console.log('[CSV] headers:', headers);
+  const parsed = lines.slice(1).map(line=>{
     const vals=[]; let cur='',inQ=false;
     for(const ch of line){
       if(ch==='"')inQ=!inQ;
@@ -1182,25 +1527,270 @@ function parseMapCSV(text){
     headers.forEach((h,i)=>{obj[h]=(vals[i]||'').replace(/^"|"$/g,'');});
     return obj;
   }).filter(r=>r['건물명']&&r['건물명'].trim());
+  console.log('[CSV] 총 행수:', parsed.length, '/ 첫 행 샘플:', parsed[0]);
+  return parsed;
+}
+
+function calcDistance(lat1, lng1, lat2, lng2) {
+  // 위도/경도 기반 대략 거리 (m) — Haversine 간소화
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+            Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function rowsToBuildings(rows){
   const bmap={};
+  const ourLat = OUR_BUILDING.lat, ourLng = OUR_BUILDING.lng;
   rows.forEach(row=>{
     const key=row['건물명'].trim();
     if(!bmap[key]){
+      const lat=parseFloat(row['위도'])||0, lng=parseFloat(row['경도'])||0;
+      const dist = (lat && lng) ? calcDistance(ourLat, ourLng, lat, lng) : 9999;
+      const distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
       bmap[key]={
         id:key.replace(/[^\w가-힣]/g,'_'),
         name:row['건물명'], short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
-        address:row['주소']||'', lat:parseFloat(row['위도'])||0, lng:parseFloat(row['경도'])||0,
-        price:row['매매가']||null, dong:row['동']||'기타', distance:'mid',
+        address:row['주소']||'', lat, lng,
+        price: row['매매가(억)'] ? row['매매가(억)']+'억' : row['매매가'] ? row['매매가']+'억' : null,
+        dong:row['동']||'기타', distance,
         source:row['파일명']||'', tenants:[]
       };
     }
-    if(row['임차인']&&row['임차인'].trim())
-      bmap[key].tenants.push({floor:row['층']||'',name:row['임차인'].trim(),type:row['업종']||'기타'});
+    if(row['임차인']&&row['임차인'].trim()){
+      const rawType = row['업종']||'';
+      bmap[key].tenants.push({
+        floor:row['층']||'',
+        name:row['임차인'].trim(),
+        type: normalizeType(rawType),
+        rawType: rawType
+      });
+    }
   });
   return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
+}
+
+// ══ 지하철역 — 건물 데이터 있는 권역 주변 핵심 역만 ══
+// 강남구·서초구·마포구·용산구·종로구·중구·성동구·송파구 위주
+const SUBWAY_STATIONS = [
+  // 2호선
+  { name:'강남',       line:'2', color:'#00A140', lat:37.4979, lng:127.0276 },
+  { name:'역삼',       line:'2', color:'#00A140', lat:37.5005, lng:127.0364 },
+  { name:'선릉',       line:'2', color:'#00A140', lat:37.5044, lng:127.0490 },
+  { name:'삼성',       line:'2', color:'#00A140', lat:37.5088, lng:127.0632 },
+  { name:'잠실',       line:'2', color:'#00A140', lat:37.5133, lng:127.1001 },
+  { name:'교대',       line:'2', color:'#00A140', lat:37.4935, lng:127.0139 },
+  { name:'방배',       line:'2', color:'#00A140', lat:37.4814, lng:126.9976 },
+  { name:'사당',       line:'2', color:'#00A140', lat:37.4765, lng:126.9814 },
+  { name:'서울대입구', line:'2', color:'#00A140', lat:37.4813, lng:126.9528 },
+  { name:'홍대입구',   line:'2', color:'#00A140', lat:37.5573, lng:126.9243 },
+  { name:'왕십리',     line:'2', color:'#00A140', lat:37.5612, lng:127.0372 },
+  { name:'성수',       line:'2', color:'#00A140', lat:37.5448, lng:127.0566 },
+  { name:'건대입구',   line:'2', color:'#00A140', lat:37.5401, lng:127.0700 },
+  // 3호선
+  { name:'신사',       line:'3', color:'#EF6C00', lat:37.5256, lng:127.0205 },
+  { name:'압구정',     line:'3', color:'#EF6C00', lat:37.5272, lng:127.0283 },
+  { name:'옥수',       line:'3', color:'#EF6C00', lat:37.5404, lng:127.0178 },
+  { name:'고속터미널', line:'3', color:'#EF6C00', lat:37.5048, lng:127.0047 },
+  { name:'양재',       line:'3', color:'#EF6C00', lat:37.4843, lng:127.0342 },
+  { name:'남부터미널', line:'3', color:'#EF6C00', lat:37.4851, lng:127.0140 },
+  { name:'충무로',     line:'3', color:'#EF6C00', lat:37.5619, lng:126.9946 },
+  { name:'안국',       line:'3', color:'#EF6C00', lat:37.5762, lng:126.9853 },
+  { name:'경복궁',     line:'3', color:'#EF6C00', lat:37.5759, lng:126.9747 },
+  // 4호선
+  { name:'서울역',     line:'4', color:'#00A4E3', lat:37.5546, lng:126.9707 },
+  { name:'명동',       line:'4', color:'#00A4E3', lat:37.5634, lng:126.9853 },
+  { name:'동작',       line:'4', color:'#00A4E3', lat:37.5036, lng:126.9793 },
+  { name:'이수',       line:'4', color:'#00A4E3', lat:37.4874, lng:126.9820 },
+  // 5호선
+  { name:'광화문',     line:'5', color:'#996CAC', lat:37.5716, lng:126.9769 },
+  { name:'여의도',     line:'5', color:'#996CAC', lat:37.5218, lng:126.9244 },
+  { name:'공덕',       line:'5', color:'#996CAC', lat:37.5447, lng:126.9523 },
+  // 6호선
+  { name:'이태원',     line:'6', color:'#C55C1D', lat:37.5347, lng:126.9945 },
+  { name:'한강진',     line:'6', color:'#C55C1D', lat:37.5400, lng:127.0047 },
+  { name:'약수',       line:'6', color:'#C55C1D', lat:37.5543, lng:127.0137 },
+  // 7호선
+  { name:'청담',       line:'7', color:'#747F00', lat:37.5252, lng:127.0499 },
+  { name:'강남구청',   line:'7', color:'#747F00', lat:37.5173, lng:127.0440 },
+  { name:'학동',       line:'7', color:'#747F00', lat:37.5129, lng:127.0325 },
+  { name:'논현',       line:'7', color:'#747F00', lat:37.5115, lng:127.0248 },
+  { name:'반포',       line:'7', color:'#747F00', lat:37.5055, lng:127.0039 },
+  { name:'이수',       line:'7', color:'#747F00', lat:37.4874, lng:126.9820 },
+  { name:'뚝섬유원지', line:'7', color:'#747F00', lat:37.5300, lng:127.0668 },
+  // 9호선
+  { name:'신논현',     line:'9', color:'#BDB427', lat:37.5047, lng:127.0252 },
+  { name:'언주',       line:'9', color:'#BDB427', lat:37.5076, lng:127.0388 },
+  { name:'선정릉',     line:'9', color:'#BDB427', lat:37.5099, lng:127.0491 },
+  { name:'봉은사',     line:'9', color:'#BDB427', lat:37.5148, lng:127.0731 },
+  { name:'고속터미널', line:'9', color:'#BDB427', lat:37.5048, lng:127.0047 },
+  { name:'흑석',       line:'9', color:'#BDB427', lat:37.5098, lng:126.9634 },
+  // 신분당선
+  { name:'강남',       line:'신분', color:'#D4003B', lat:37.4979, lng:127.0282 },
+  { name:'양재',       line:'신분', color:'#D4003B', lat:37.4843, lng:127.0348 },
+  // 수인분당선
+  { name:'압구정로데오',line:'분당',color:'#F5A623', lat:37.5272, lng:127.0397 },
+  { name:'서울숲',     line:'분당', color:'#F5A623', lat:37.5447, lng:127.0437 },
+  { name:'한티',       line:'분당', color:'#F5A623', lat:37.4970, lng:127.0577 },
+  { name:'대치',       line:'분당', color:'#F5A623', lat:37.4943, lng:127.0551 },
+  { name:'도곡',       line:'분당', color:'#F5A623', lat:37.4928, lng:127.0441 },
+];
+
+let subwayMarkers = [];
+
+function addSubwayMarkers(map) {
+  subwayMarkers.forEach(m => map.removeLayer(m));
+  subwayMarkers = [];
+  // 줌 13 미만이면 주요 거점역만, 13 이상이면 전체 표시
+  const zoom = map.getZoom();
+  const CORE = new Set(['강남','역삼','신사','압구정','논현','강남구청','청담','선릉','삼성',
+                        '잠실','홍대입구','여의도','서울역','광화문','고속터미널','왕십리','성수',
+                        '건대입구','교대','공덕','이태원','신논현','언주']);
+
+  SUBWAY_STATIONS.forEach(st => {
+    if (zoom < 13 && !CORE.has(st.name)) return;
+    const html = `<div class="subway-marker">
+      <div class="subway-circle" style="background:${st.color}">${st.line}</div>
+      <div class="subway-name">${st.name}</div>
+    </div>`;
+    const icon = L.divIcon({
+      className: '', html,
+      iconSize: [56, 34], iconAnchor: [28, 9],
+    });
+    const m = L.marker([st.lat, st.lng], { icon, zIndexOffset: -200, interactive: false }).addTo(map);
+    subwayMarkers.push(m);
+  });
+}
+
+function setupSubwayZoomListener(map) {
+  map.on('zoomend', function() { addSubwayMarkers(map); });
+}
+
+// ══ 키워드 필터 ══
+let activeMapFilter = 'all';
+
+function updateFilterCounts() {
+  const nonOurs = buildings.filter(b => !b.isOurs);
+  const allTenants = t => nonOurs.some(b => b.tenants.some(t2 => t2.type === t));
+
+  document.getElementById('fc-all').textContent    = nonOurs.length;
+  document.getElementById('fc-core').textContent   = nonOurs.filter(b=>b.distance==='core').length;
+  document.getElementById('fc-food').textContent   = nonOurs.filter(b=>b.tenants.some(t=>t.type==='F&B/음식점')).length;
+  document.getElementById('fc-cafe').textContent   = nonOurs.filter(b=>b.tenants.some(t=>t.type==='카페')).length;
+  document.getElementById('fc-med').textContent    = nonOurs.filter(b=>b.tenants.some(t=>t.type==='병원/의료')).length;
+  document.getElementById('fc-office').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.type==='사무실/기업')).length;
+  document.getElementById('fc-beauty').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.type==='뷰티/미용')).length;
+  document.getElementById('fc-edu').textContent    = nonOurs.filter(b=>b.tenants.some(t=>t.type==='학원/교육')).length;
+  document.getElementById('fc-vacant').textContent = nonOurs.filter(b=>b.tenants.some(t=>t.name.includes('공실')||t.rawType==='공실')).length;
+}
+
+// ── 필터 매칭 헬퍼 ──
+function buildingMatchesFilter(b, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'core') return b.distance === 'core';
+  if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
+  return b.tenants.some(t => t.type === filter);
+}
+
+function applyMapFilter(filter, chipEl) {
+  // 토글: 같은 탭 재클릭 → 전체로
+  if (activeMapFilter === filter && filter !== 'all') {
+    filter = 'all';
+  }
+  activeMapFilter = filter;
+
+  // 상단 칩 active 갱신
+  document.querySelectorAll('.map-filter-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.filter === filter);
+  });
+
+  // 업종 분석 탭 차트 바도 동기화 (selectType 이 아닌 경로에서 호출될 때)
+  // 업종 필터가 아니면 차트 바 선택 해제
+  const typeFilters = Object.keys(TYPES || {}).concat(['F&B/음식점','카페','병원/의료','사무실/기업','뷰티/미용','학원/교육','공실']);
+  if (!typeFilters.includes(filter)) {
+    document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
+    document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display = 'none');
+    const rb = document.getElementById('reset-btn-el');
+    if (rb) rb.remove();
+    if (filter === 'all') selectedType = null;
+  }
+
+  const nonOurs = buildings.filter(b => !b.isOurs);
+
+  nonOurs.forEach(b => {
+    const show = buildingMatchesFilter(b, filter);
+
+    // 지도 마커 - 숨김/표시
+    const marker = markersMap[b.id];
+    if (marker && window.mapInstance) {
+      if (show) {
+        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+        const mkw = document.getElementById('mkw-' + b.id);
+        if (mkw) mkw.classList.remove('dimmed', 'type-match');
+      } else {
+        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+      }
+    }
+
+    // 사이드바 카드 표시/숨김
+    const card = document.getElementById('card-' + b.id);
+    if (card) card.style.display = show ? '' : 'none';
+  });
+
+  // 필터로 숨겨진 건물이 선택 중이면 선택 해제
+  if (selectedId && selectedId !== 'ours') {
+    const selB = buildings.find(b => b.id === selectedId);
+    if (selB && !buildingMatchesFilter(selB, filter)) {
+      document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active', 'selected'));
+      document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
+      selectedId = null;
+    }
+  }
+
+  // 동 그룹 opacity 처리 + 건물 없는 동은 완전히 숨김
+  let totalVisible = 0;
+  document.querySelectorAll('.dong-group').forEach(dg => {
+    const dongName = dg.id.replace('dg-', '');
+    const visibleInDong = nonOurs.filter(b => b.dong === dongName && buildingMatchesFilter(b, filter)).length;
+    if (visibleInDong > 0) {
+      dg.style.display = '';
+      dg.style.opacity = '1';
+      totalVisible += visibleInDong;
+    } else {
+      // 필터 결과 없으면 동 그룹 자체 숨김
+      dg.style.display = filter === 'all' ? '' : 'none';
+      if (filter === 'all') { dg.style.opacity = '1'; totalVisible += 0; }
+    }
+  });
+
+  // 빈 결과 메시지
+  const listEl = document.getElementById('building-list');
+  const noRes = document.getElementById('filter-no-result');
+  if (totalVisible === 0 && filter !== 'all') {
+    if (!noRes && listEl) {
+      const msg = document.createElement('div');
+      msg.id = 'filter-no-result';
+      msg.className = 'no-result-msg';
+      msg.innerHTML = '<span>🔍</span>해당 조건의 건물이 없습니다';
+      listEl.prepend(msg);
+    }
+  } else {
+    if (noRes) noRes.remove();
+  }
+
+  // 지도 범위 조정
+  if (filter !== 'all') {
+    const matched = nonOurs.filter(b => buildingMatchesFilter(b, filter));
+    if (matched.length > 0 && window.mapInstance) {
+      const bounds = L.latLngBounds(matched.map(b => [b.lat, b.lng]));
+      window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
+    }
+  } else if (window.mapInstance) {
+    window.mapInstance.flyTo([37.5228, 127.0220], 14, { duration: 0.8 });
+  }
 }
 
 async function loadMapData(){
@@ -1221,7 +1811,7 @@ async function loadMapData(){
   }
 }
 
-// ══ 업종 색상 ══
+// ══ 업종 색상 (표준 키 — TYPES 기준) ══
 const TYPES = {
   'F&B/음식점':    '#ef4444',
   '병원/의료':     '#06b6d4',
@@ -1234,7 +1824,68 @@ const TYPES = {
   '편의점':        '#6b7280',
   '공유오피스':    '#0ea5e9',
   '스튜디오/공간': '#a855f7',
+  '카페':          '#92400e',
+  '주점/노래방':   '#be185d',
+  '의료기기':      '#0891b2',
+  '근린생활':      '#64748b',
+  '주거':          '#78716c',
+  '갤러리':        '#7c3aed',
+  '법무법인':      '#1d4ed8',
+  '제약사':        '#059669',
+  '헬스케어':      '#0d9488',
+  '기타':          '#64748b',
 };
+
+// ══ 시트 업종명 → TYPES 표준키 변환 ══
+function normalizeType(raw) {
+  if (!raw) return '기타';
+  const t = raw.trim();
+  const map = {
+    // 음식점/카페
+    '음식점':'F&B/음식점', '고기요리':'F&B/음식점', '양갈비':'F&B/음식점',
+    '이탈리아음식':'F&B/음식점', '브런치전문점':'F&B/음식점', '소주방':'F&B/음식점',
+    '주류회사':'주점/노래방', '주점':'주점/노래방', '노래방':'주점/노래방',
+    '카페':'카페',
+    // 병원/의료
+    '병원':'병원/의료', '치과':'병원/의료', '한의원':'병원/의료',
+    '피부과':'병원/의료', '성형외과':'병원/의료', '한방병원':'병원/의료',
+    '신경외과':'병원/의료', '산부인과':'병원/의료', '비뇨기과':'병원/의료',
+    '통증의학과':'병원/의료', '가정의학과':'병원/의료', '이비인후과':'병원/의료',
+    '요가원':'스포츠/레저', '골프연습장':'스포츠/레저', '필라테스':'스포츠/레저',
+    '스포츠':'스포츠/레저', '댄스학원':'스포츠/레저',
+    // 뷰티
+    '미용실':'뷰티/미용', '네일아트':'뷰티/미용', '뷰티업체':'뷰티/미용',
+    '뷰티':'뷰티/미용', '피부관리':'뷰티/미용', '에스테틱':'뷰티/미용', '가발':'뷰티/미용',
+    '미용교육':'뷰티/미용',
+    // 사무실
+    '사무실':'사무실/기업', '경영컨설팅':'사무실/기업', '인테리어디자인':'사무실/기업',
+    '광고회사':'사무실/기업', '영상편집':'사무실/기업', '사무소':'사무실/기업',
+    '업무시설':'사무실/기업',
+    // 학원/교육
+    '학원':'학원/교육', '미용교육':'학원/교육',
+    // 패션/잡화
+    '패션':'패션/잡화', '패션잡화':'패션/잡화', '의류':'패션/잡화',
+    // 약국/편의점
+    '약국':'약국', '편의점':'편의점',
+    // 공유오피스
+    '공유오피스':'공유오피스',
+    // 스튜디오
+    '스튜디오':'스튜디오/공간', '사진관':'스튜디오/공간', '창고':'스튜디오/공간',
+    // 기타
+    '통신':'기타', '당구장':'기타', '안경':'기타', '은행':'기타',
+    '근린생활':'근린생활', '주거':'주거', '갤러리':'갤러리',
+    '법무법인':'법무법인', '제약사':'제약사', '헬스케어':'헬스케어',
+    '의료기기':'의료기기',
+    '공실':'기타',
+  };
+  // 직접 매칭
+  if (map[t]) return map[t];
+  // 부분 매칭 (예: "카페", "음식점" 포함 여부)
+  for (const [key, val] of Object.entries(map)) {
+    if (t.includes(key)) return val;
+  }
+  return '기타';
+}
 
 // ══ 전역 상태 ══
 let markersMap = {};
@@ -1264,20 +1915,33 @@ function selectBuilding(id) {
   if (selectedId) {
     document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
     const prev = document.getElementById('card-'+selectedId);
-    if (prev) prev.classList.remove('active');
+    if (prev) { prev.classList.remove('active', 'selected'); }
   }
 
   if (selectedId === id) { selectedId = null; return; }
   selectedId = id;
 
-  // 마커 하이라이트
+  // 마커 강조 (selected)
   const mkw = document.getElementById('mkw-'+id);
   if (mkw) mkw.classList.add('selected');
 
-  // 카드 열기 및 스크롤
+  // 카드 선택 상태 표시
   const card = document.getElementById('card-'+id);
   if (card) {
-    card.classList.add('active');
+    card.classList.add('active', 'selected');
+
+    // 속한 동 그룹이 닫혀있으면 먼저 열기
+    const dongBody = card.closest('.dong-group-body');
+    if (dongBody && !dongBody.classList.contains('open')) {
+      const dong = dongBody.id.replace('dgb-', '');
+      const header = document.getElementById('dgh-' + dong);
+      dongBody.classList.add('open');
+      if (header) header.classList.add('open');
+      // 동 강조
+      const dg = document.getElementById('dg-' + dong);
+      if (dg) dg.style.borderBottom = '2px solid rgba(59,127,255,.25)';
+    }
+
     card.scrollIntoView({ behavior:'smooth', block:'nearest' });
   }
 
@@ -1290,19 +1954,19 @@ function selectBuilding(id) {
 
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
-  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.8 });
+  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
 }
 
 function toggleCard(id) {
   const card = document.getElementById('card-'+id);
-  const isActive = card.classList.contains('active');
+  const isSelected = card.classList.contains('selected');
 
-  // 모든 카드 닫기
-  document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active'));
+  // 모든 카드 초기화
+  document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active', 'selected'));
   document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
   selectedId = null;
 
-  if (!isActive) selectBuilding(id);
+  if (!isSelected) selectBuilding(id);
 }
 
 // ══════════════════════════════════════════════
@@ -1310,67 +1974,152 @@ function toggleCard(id) {
 // ══════════════════════════════════════════════
 function renderBuildingList() {
   const list = document.getElementById('building-list');
-  list.innerHTML = buildings.map((b, idx) => {
-    if (b.isOurs) {
+
+  // ── 우리 건물 카드 ──
+  const oursCard = `
+    <div class="bldg-card ours-card" id="card-ours" style="margin-bottom:4px;">
+      <div class="bldg-header" onclick="toggleCard('ours')">
+        <div class="bldg-num ours">⭐</div>
+        <div class="bldg-info">
+          <div class="bldg-name ours-name">🏗️ 케이프혼타워 (신축예정)</div>
+          <div class="bldg-meta">신사동 529 외 2필지</div>
+        </div>
+        <div class="bldg-right">
+          <span class="bldg-tenant-cnt">신축 예정</span>
+          <span class="chevron">▼</span>
+        </div>
+      </div>
+      <div class="bldg-detail">
+        <div class="ours-placeholder" style="font-size:12px;color:#92400e;line-height:1.7;">
+          현재 공사 준비 중인 부지입니다.<br>
+          지번: 신사동 529 외 2필지<br>건축주: 블루피카
+        </div>
+      </div>
+    </div>`;
+
+  // ── 동별 그룹화 ──
+  const nonOurs = buildings.filter(b => !b.isOurs);
+  const dongMap = {};
+  nonOurs.forEach((b, globalIdx) => {
+    if (!dongMap[b.dong]) dongMap[b.dong] = [];
+    dongMap[b.dong].push({ b, globalIdx: globalIdx + 1 });
+  });
+
+  const dongKeys = Object.keys(dongMap).sort((a, b) => {
+    if (a === '신사동') return -1; if (b === '신사동') return 1;
+    if (a === '논현동') return -1; if (b === '논현동') return 1;
+    return a.localeCompare(b, 'ko');
+  });
+
+  const dongGroups = dongKeys.map(dong => {
+    const items = dongMap[dong];
+    const totalBldg = items.length;
+    const totalTenant = items.reduce((s, {b}) => s + b.tenants.length, 0);
+
+    const cards = items.map(({b, globalIdx}) => {
+      const dominantColor = getDominantColor(b);
+      const distLabel = { core:'🔴', mid:'🟡', far:'⚪' }[b.distance] || '';
+      const rows = b.tenants.map(t => `
+        <tr>
+          <td class="floor-cell">${t.floor}</td>
+          <td class="name-cell">${t.name}</td>
+          <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
+        </tr>`).join('');
       return `
-        <div class="bldg-card ours-card" id="card-${b.id}">
+        <div class="bldg-card" id="card-${b.id}">
           <div class="bldg-header" onclick="toggleCard('${b.id}')">
-            <div class="bldg-num ours">⭐</div>
+            <div class="bldg-num" style="background:${dominantColor}">${globalIdx}</div>
             <div class="bldg-info">
-              <div class="bldg-name ours-name">🏗️ ${b.name}</div>
-              <div class="bldg-meta">${b.address}</div>
+              <div class="bldg-name">${b.name}</div>
+              <div class="bldg-meta" style="font-size:10px;">${b.address||''} ${distLabel}</div>
             </div>
             <div class="bldg-right">
-              <span class="bldg-tenant-cnt">신축 예정</span>
+              ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
+              <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
               <span class="chevron">▼</span>
             </div>
           </div>
           <div class="bldg-detail">
-            <div class="ours-placeholder" style="font-size:12px;color:#92400e;line-height:1.7;">
-              현재 공사 준비 중인 부지입니다.<br>
-              지번: 신사동 529 외 2필지<br>건축주: 블루피카
+            <div class="detail-inner">
+              <table class="floor-table">
+                <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
             </div>
           </div>
         </div>`;
-    }
-
-    const tenantCount = b.tenants.length;
-    const dominantColor = getDominantColor(b);
-    const distLabel = { core:'🔴 인접', mid:'🟡 근거리', far:'⚪ 참고' }[b.distance];
-
-    const rows = b.tenants.map(t => `
-      <tr>
-        <td class="floor-cell">${t.floor}</td>
-        <td class="name-cell">${t.name}</td>
-        <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
-      </tr>`).join('');
+    }).join('');
 
     return `
-      <div class="bldg-card" id="card-${b.id}">
-        <div class="bldg-header" onclick="toggleCard('${b.id}')">
-          <div class="bldg-num" style="background:${dominantColor}">${idx}</div>
-          <div class="bldg-info">
-            <div class="bldg-name">${b.name}</div>
-            <div class="bldg-meta">${b.address} &nbsp;${distLabel}</div>
+      <div class="dong-group" id="dg-${dong}">
+        <div class="dong-group-header" id="dgh-${dong}" onclick="toggleDongGroup('${dong}')">
+          <div class="dong-color-bar"></div>
+          <div class="dong-left">
+            <span class="dong-badge">${dong}</span>
+            <div class="dong-stats">
+              <span class="dong-stat-item">건물 <span class="dong-stat-num">${totalBldg}</span></span>
+              <span class="dong-stat-sep">·</span>
+              <span class="dong-stat-item">임차인 <span class="dong-stat-num">${totalTenant}</span></span>
+            </div>
           </div>
-          <div class="bldg-right">
-            ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
-            <span class="bldg-tenant-cnt">${tenantCount}건</span>
-            <span class="chevron">▼</span>
-          </div>
+          <span class="dong-chevron" id="dgc-${dong}">▼</span>
         </div>
-        <div class="bldg-detail">
-          <div class="detail-inner">
-            <table class="floor-table">
-              <thead>
-                <tr><th>층</th><th>임차인</th><th>업종</th></tr>
-              </thead>
-              <tbody>${rows}</tbody>
-            </table>
-          </div>
+        <div class="dong-group-body" id="dgb-${dong}">
+          ${cards}
         </div>
       </div>`;
   }).join('');
+
+  list.innerHTML = oursCard + dongGroups;
+}
+
+function toggleDongGroup(dong) {
+  const body = document.getElementById('dgb-' + dong);
+  const header = document.getElementById('dgh-' + dong);
+  const dg = document.getElementById('dg-' + dong);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+
+  // 열기/닫기 토글
+  body.classList.toggle('open', !isOpen);
+  header.classList.toggle('open', !isOpen);
+  if (dg) dg.classList.toggle('dong-open', !isOpen);
+
+  if (!isOpen) {
+    // ── 동 펼칠 때: 해당 동 건물만 지도에 표시, 나머지 숨김 ──
+    const nonOurs = buildings.filter(b => !b.isOurs);
+    nonOurs.forEach(b => {
+      const isDong = b.dong === dong;
+      const marker = markersMap[b.id];
+      if (!marker || !window.mapInstance) return;
+      if (isDong) {
+        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+      } else {
+        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+      }
+    });
+    // 지도 줌인 - 해당 동 건물들 범위로
+    const dongBuildings = buildings.filter(b => !b.isOurs && b.dong === dong);
+    if (dongBuildings.length === 1) {
+      window.mapInstance.flyTo([dongBuildings[0].lat, dongBuildings[0].lng], 17, { duration: 0.7 });
+    } else if (dongBuildings.length > 1) {
+      const bounds = L.latLngBounds(dongBuildings.map(b => [b.lat, b.lng]));
+      window.mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true });
+    }
+  } else {
+    // ── 동 닫을 때: 현재 activeMapFilter 기준으로 전체 복원 ──
+    const nonOurs = buildings.filter(b => !b.isOurs);
+    nonOurs.forEach(b => {
+      const show = buildingMatchesFilter(b, activeMapFilter);
+      const marker = markersMap[b.id];
+      if (!marker || !window.mapInstance) return;
+      if (show) {
+        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+      } else {
+        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+      }
+    });
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1449,62 +2198,53 @@ function renderChart() {
 // ══════════════════════════════════════════════
 function typeKey(type) { return type.replace(/\//g,'_'); }
 
-function resetTypeFilter() {
-  selectedType = null;
+// ── 업종 분석 탭 필터 키 변환 ──
+function typeKey(type) { return type.replace(/\//g,'_'); }
+
+// ── 업종 분석 탭 차트 바 선택 표시만 갱신 (실제 필터는 applyMapFilter 공유) ──
+function _syncChartUI(type) {
   document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
   document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('dimmed','type-match'));
-  const rb = document.getElementById('reset-btn-el');
-  if (rb) rb.remove();
+  if (type) {
+    const row = document.getElementById('tyrow-' + typeKey(type));
+    if (row) row.classList.add('t-selected');
+    const list = document.getElementById('tblist-' + typeKey(type));
+    if (list) list.style.display = 'block';
+  }
+  // 초기화 버튼
+  const existing = document.getElementById('reset-btn-el');
+  if (existing) existing.remove();
+  if (type) {
+    const btn = document.createElement('div');
+    btn.id = 'reset-btn-el';
+    btn.className = 'reset-filter';
+    btn.textContent = '✕ 필터 해제';
+    btn.onclick = () => resetTypeFilter();
+    const chartEl = document.getElementById('type-chart');
+    if (chartEl) chartEl.prepend(btn);
+  }
+}
+
+function resetTypeFilter() {
+  selectedType = null;
+  _syncChartUI(null);
+  // 상단 탭도 전체로 복원
+  applyMapFilter('all', null);
 }
 
 function selectType(type) {
-  if (selectedType === type) { resetTypeFilter(); return; }
+  // 토글: 같은 업종 재클릭 시 필터 해제
+  if (selectedType === type) {
+    resetTypeFilter();
+    return;
+  }
   selectedType = type;
 
-  // 차트 바 스타일 갱신
-  document.querySelectorAll('.type-row').forEach(r => r.classList.remove('t-selected'));
-  document.querySelectorAll('[id^="tblist-"]').forEach(el => el.style.display='none');
-  const row = document.getElementById('tyrow-'+typeKey(type));
-  if (row) row.classList.add('t-selected');
-  const list = document.getElementById('tblist-'+typeKey(type));
-  if (list) list.style.display = 'block';
+  // 차트 바 UI 갱신
+  _syncChartUI(type);
 
-  // 초기화 버튼 삽입 (한 번만)
-  const existing = document.getElementById('reset-btn-el');
-  if (existing) existing.remove();
-  const btn = document.createElement('div');
-  btn.id = 'reset-btn-el';
-  btn.className = 'reset-filter';
-  btn.textContent = '✕ 필터 해제';
-  btn.onclick = () => resetTypeFilter();
-  document.getElementById('type-chart').prepend(btn);
-
-  // 해당 업종이 있는 건물 ID 목록
-  const matchIds = new Set(
-    buildings.filter(b => !b.isOurs && b.tenants.some(t => t.type === type)).map(b=>b.id)
-  );
-
-  // 마커 dim / highlight
-  buildings.forEach(b => {
-    if (b.isOurs) return;
-    const mkw = document.getElementById('mkw-'+b.id);
-    if (!mkw) return;
-    if (matchIds.has(b.id)) {
-      mkw.classList.remove('dimmed');
-      mkw.classList.add('type-match');
-    } else {
-      mkw.classList.add('dimmed');
-      mkw.classList.remove('type-match');
-    }
-  });
-
-  // 지도 범위를 해당 건물들로 맞춤
-  const matched = buildings.filter(b => matchIds.has(b.id));
-  if (matched.length > 0) {
-    const bounds = L.latLngBounds(matched.map(b=>[b.lat,b.lng]));
-    window.mapInstance.fitBounds(bounds, { padding:[60,60], maxZoom:17, animate:true });
-  }
+  // 상단 탭 + 지도 + 건물목록 동시 필터링 (applyMapFilter 공유)
+  applyMapFilter(type, null);
 }
 
 // 업종 필터에서 건물 클릭 → 지도 이동만 (탭 전환/아코디언 없음)
@@ -1578,58 +2318,41 @@ function renderReport() {
   // ── 종합 스택바 ──
   const { segs: allSegs, legend: allLegend } = makeStackBar(allTenants);
 
-  // ── 동(洞) 정의 — 추후 데이터 추가 시 여기에 항목 추가 ──
-  const dongDefs = [
-    {
-      key: '신사동',
-      label: '신사동',
-      color: '#1e40af',
-      colorLight: '#eff6ff',
-      icon: '📍',
-      desc: '강남구 신사동 · 가로수길 · 압구정로 일대',
-      note: '케이프혼타워 사업지가 위치한 핵심 상권. 업종 다양성이 가장 높고 임대 데이터 밀도가 높음.',
-      strategy: '압구정로 접면부 F&B(저층)·오피스(중고층) 조합이 검증된 패턴. 뷰티·학원 중층 유치로 공실 리스크 분산 권장.',
-    },
-    {
-      key: '논현동',
-      label: '논현동',
-      color: '#065f46',
-      colorLight: '#f0fdf4',
-      icon: '🏥',
-      desc: '강남구 논현동 · 언주로·학동로 일대',
-      note: '메디컬 특화 상권. 병원·의원의 전층 통임대 사례가 두드러짐. 안정적 장기 임차 수요 확인.',
-      strategy: '전층 메디컬 통임대 시 임대수익 안정성 최고. 단, 업종 다양성 포기 & 계약 종료 후 공실 리스크 주의.',
-    },
-    {
-      key: '삼성동',
-      label: '삼성동',
-      color: '#7c3aed',
-      colorLight: '#faf5ff',
-      icon: '🏛️',
-      desc: '강남구 삼성동 · 삼성로 일대',
-      note: '청담 인접 메디컬·스포츠 복합 사례. 전층 병원 통임대 구조로 임대인 개입 최소화.',
-      strategy: '대형 병원 단독 통임대 시 관리 부담 최소. 고가 의료장비 입주 특성상 장기 계약 유리.',
-    },
-  ];
+  // ── 동(洞) 정의 — 데이터에서 자동 추출 + 미리 정의된 컬러/설명 적용 ──
+  const dongMeta = {
+    '신사동':  { color:'#1e40af', icon:'📍', desc:'강남구 신사동 · 가로수길 · 압구정로 일대', note:'케이프혼타워 사업지가 위치한 핵심 상권. 업종 다양성이 가장 높고 임대 데이터 밀도가 높음.', strategy:'압구정로 접면부 F&B(저층)·오피스(중고층) 조합이 검증된 패턴. 뷰티·학원 중층 유치로 공실 리스크 분산 권장.' },
+    '논현동':  { color:'#065f46', icon:'🏥', desc:'강남구 논현동 · 언주로·학동로 일대', note:'메디컬 특화 상권. 병원·의원의 전층 통임대 사례가 두드러짐. 안정적 장기 임차 수요 확인.', strategy:'메디컬 전층 임대 또는 오피스·클리닉 혼합 구성. 장기 계약 유도가 수익 안정화 핵심.' },
+    '삼성동':  { color:'#7c3aed', icon:'🏢', desc:'강남구 삼성동 · COEX 인근 일대', note:'대형 오피스·의료시설 중심. 고가 임대 사례가 집중됨.', strategy:'전층 메디컬 또는 대형 기업 단독 임대. 분산 임차보다 통임대 수익 극대화 전략 권장.' },
+    '청담동':  { color:'#b45309', icon:'✨', desc:'강남구 청담동 · 명품·럭셔리 상권', note:'럭셔리 브랜드·F&B·성형외과 클러스터. 임대료 프리미엄이 가장 높은 권역.', strategy:'저층 명품/F&B, 중고층 성형·피부과 유치로 프리미엄 임대 수익 확보.' },
+    '역삼동':  { color:'#0f766e', icon:'🏗️', desc:'강남구 역삼동 · 테헤란로·역삼역 일대', note:'오피스·사무실 수요가 압도적. 스타트업·IT기업 밀집 지역.', strategy:'중소형 사무실 분할 임대 또는 공유오피스 유치. 공실 시 업무시설 복합 구성 검토.' },
+    '대치동':  { color:'#1d4ed8', icon:'📚', desc:'강남구 대치동 · 학원가 밀집 상권', note:'학원/교육 업종이 절대 다수. 장기 계약 안정적.', strategy:'학원 전층 임대가 가장 안정적. 저층 카페·편의점으로 집객 강화.' },
+    '방배동':  { color:'#6d28d9', icon:'🌿', desc:'서초구 방배동 · 방배역 일대', note:'주거 친화 상권. 병원·학원·미용 복합 구성이 특징.', strategy:'근린생활형 임차인 중심 구성. 지역 밀착형 소규모 업종 유치 권장.' },
+    '반포동':  { color:'#0369a1', icon:'🏘️', desc:'서초구 반포동 일대', note:'주거·사무 혼합 지역. 소규모 빌딩 임대 데이터 수집 중.', strategy:'사무실·근린생활 혼합 임대. 공실 장기화 방지를 위한 단기임대 병행 검토.' },
+    '서초동':  { color:'#064e3b', icon:'⚖️', desc:'서초구 서초동 · 법조타운 인근', note:'법무법인·사무소 집중. 전문직 임차인 장기 계약 선호.', strategy:'법무·회계 사무실 유치. 저층 카페·식음 복합으로 임차 믹스 다양화.' },
+    '삼전동':  { color:'#831843', icon:'🏙️', desc:'송파구 삼전동 · 잠실 인근', note:'F&B·뷰티·의료 복합 상권. 유동인구 높은 주거 인접 지역.', strategy:'저층 F&B, 중층 뷰티·의료 복합 구성이 최적. 프랜차이즈 브랜드 유치 우선.' },
+    '한남동':  { color:'#7f1d1d', icon:'🌉', desc:'용산구 한남동 · 이태원 인근', note:'고급 F&B·사무실 복합 상권. 외국계 기업 수요 존재.', strategy:'럭셔리 F&B 또는 기업 사무실. 브랜드 임차인 유치 시 프리미엄 임대료 실현 가능.' },
+    '성수동1가':{ color:'#166534', icon:'🏭', desc:'성동구 성수동 · 팝업·F&B 핫플레이스', note:'팝업스토어·브런치·F&B 특화 상권. 젊은 유동인구 집중.', strategy:'단기·팝업 임대와 장기 임대 혼합. 브랜드 노출 효과 높은 저층 F&B 우선.' },
+    '신공덕동': { color:'#164e63', icon:'🏥', desc:'마포구 신공덕동 · 공덕 메디컬 상권', note:'메디컬·사무 복합 빌딩 중심. 병원 통임대 사례 확인.', strategy:'의료기관 전층 임대가 가장 안정적. 저층 식음 서비스 업종 병행 권장.' },
+    '당주동':  { color:'#1e3a5f', icon:'🏛️', desc:'종로구 당주동 · 광화문 인근', note:'상업·오피스 복합. 유동인구 많은 도심 상권.', strategy:'저층 통신·F&B, 중고층 사무실 임대. 입지 프리미엄 활용한 브랜드 유치.' },
+    '낙원동':  { color:'#422006', icon:'🎵', desc:'종로구 낙원동 · 인사동 인근', note:'F&B·엔터테인먼트 복합 상권.', strategy:'저층 F&B·주점, 중층 전문직·교육 업종 혼합.' },
+    '수하동':  { color:'#1c1917', icon:'🏢', desc:'중구 수하동 · 을지로 인근', note:'오피스·식음 복합 도심 상권.', strategy:'사무·식음 혼합 임대. 직장인 수요 높은 카페·음식점 저층 유치 권장.' },
+    '충무로1가':{ color:'#7f1d1d', icon:'💄', desc:'중구 충무로 · 명동 상권', note:'뷰티·유통 플래그십 상권. 고가 프리미엄 임대.', strategy:'뷰티 플래그십·브랜드 직영점 유치. 임대료 프리미엄 최대화 전략.' },
+    '청담동대': { color:'#78350f', icon:'✨', desc:'강남구 청담동 일대', note:'청담 럭셔리 상권.', strategy:'명품·뷰티 브랜드 유치 우선.' },
+  };
 
-  // ── 동별 섹션 HTML ──
-  // 실제 데이터가 있는 동만 렌더링 + 데이터 없는 동은 "업로드 대기" 표시
-  const allDongs = [...new Set(buildings.filter(b=>!b.isOurs).map(b=>b.dong))];
-  
-  // dongDefs 순서대로 + 데이터가 있지만 정의 없는 동은 뒤에 자동 추가
-  const dongsToRender = [
-    ...dongDefs,
-    ...allDongs
-      .filter(d => !dongDefs.find(dd=>dd.key===d))
-      .map(d => ({
-        key: d, label: d, color: '#64748b', colorLight: '#f8fafc',
-        icon: '📌', desc: `강남구 ${d} 일대`,
-        note: `${d} 데이터가 추가되었습니다.`,
-        strategy: '추가 분석 예정',
-      }))
-  ];
+  // 데이터에서 동 목록 자동 추출 (우리 건물 제외)
+  const dongSet = new Set(buildings.filter(b=>!b.isOurs).map(b=>b.dong));
+  const dongDefs = Array.from(dongSet).sort((a,b)=>{
+    // 신사동 우선, 나머지 가나다순
+    if (a==='신사동') return -1; if (b==='신사동') return 1;
+    if (a==='논현동') return -1; if (b==='논현동') return 1;
+    return a.localeCompare(b, 'ko');
+  }).map(key => {
+    const meta = dongMeta[key] || { color:'#374151', icon:'📌', desc:`${key} 일대`, note:'데이터 수집 중.', strategy:'추가 데이터 분석 후 전략 수립 예정.' };
+    return { key, label: key, ...meta };
+  });
 
-  const areaSections = dongsToRender.map(def => {
+  const areaSections = dongDefs.map(def => {
     const bldgs = buildings.filter(b => !b.isOurs && b.dong === def.key);
     
     // 데이터 없는 동 → 업로드 대기 UI
@@ -1754,7 +2477,7 @@ function renderReport() {
   document.getElementById('report-wrap').innerHTML = `
     <div class="rp-summary-header">
       <div class="rp-summary-title">📊 케이프혼타워 상권 임대 리포트</div>
-      <div class="rp-summary-sub">강남구 신사동·논현동·삼성동 · 분석 기준: 2025.08 · ${totalBuildings}개 건물</div>
+      <div class="rp-summary-sub">서울 · 분석 기준: 최신 업로드 데이터 · ${totalBuildings}개 건물</div>
     </div>
 
     <div class="rp-total-kpi">
@@ -1794,7 +2517,7 @@ function renderReport() {
     <div class="rp-upload-notice">
       <b>📂 지역별 임대자료 추가 업로드 예정</b>
       새 지역 자료가 업로드되면 동별 섹션에 자동으로 추가됩니다.<br>
-      현재 <b>신사동 11개 · 논현동 2개 · 삼성동 1개</b> 건물 데이터 적용 중
+      현재 <b>${dongDefs.map(d=>d.label+' '+buildings.filter(b=>!b.isOurs&&b.dong===d.key).length+'개').join(' · ')}</b> 건물 데이터 적용 중
     </div>
 
     <div class="rp-dong-section-header">
@@ -1833,14 +2556,50 @@ function mapShowTab(name) {
     }
     // ── 지도 생성 ──
     window.mapInstance = L.map('map', {
-      center: [37.5228, 127.0220], zoom: 16, zoomControl: true
+      center: [37.5228, 127.0220], zoom: 14, zoomControl: true
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OSM &copy; CARTO',
+    // 네이버 지도 스타일 — 밝고 선명한 한국 지도
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(window.mapInstance);
+
+    // ── 주소 기반 좌표 보정 (좌표 이상한 건물만 geocoding) ──
+    var geocodeQueue = buildings.filter(function(b) {
+      return !b.isOurs && b.address && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
+    });
+    if (geocodeQueue.length > 0) {
+      geocodeBuildings(geocodeQueue, 0, function() { createAllMarkers(); });
+    } else {
+      createAllMarkers();
+    }
+  }
+
+  // 주소 → 좌표 변환 (OSM Nominatim, 순차 처리)
+  function geocodeBuildings(queue, idx, callback) {
+    if (idx >= queue.length) { callback(); return; }
+    var b = queue[idx];
+    var addr = encodeURIComponent(b.address);
+    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + addr + '&limit=1', {
+      headers: { 'Accept-Language': 'ko', 'User-Agent': 'CapeHornTower/1.0' }
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.length > 0) {
+          b.lat = parseFloat(data[0].lat);
+          b.lng = parseFloat(data[0].lon);
+          console.log('📍 Geocoded:', b.name, '->', b.lat, b.lng);
+        }
+      })
+      .catch(function() {})
+      .finally(function() {
+        setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 1200); // rate limit 준수
+      });
+  }
+
+  function createAllMarkers() {
     // ── 마커 생성 ──
     buildings.forEach(function(b, idx) {
+      if (!b.isOurs && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng))) return; // 좌표 없으면 건너뜀
       var color = getDominantColor(b);
       var size  = getMarkerSize(b);
       var inner = b.isOurs
@@ -1863,6 +2622,17 @@ function mapShowTab(name) {
     });
     // ── 렌더링 ──
     renderBuildingList(); renderChart(); renderReport(); renderLegend();
+    // ── 지하철역 마커 ──
+    addSubwayMarkers(window.mapInstance);
+    setupSubwayZoomListener(window.mapInstance);
+    // ── 필터 카운트 업데이트 ──
+    updateFilterCounts();
+    // ── 사이드바 헤더 동적 업데이트 ──
+    const bCnt = buildings.filter(b=>!b.isOurs).length;
+    const hTitle = document.querySelector('.map-sidebar-header h1');
+    const hMeta  = document.querySelector('.map-sidebar-header p');
+    if (hTitle) hTitle.textContent = '📍 신사동 529 주변 건물 임차인 현황';
+    if (hMeta)  hMeta.textContent  = `강남구 신사동 일대 · 총 ${bCnt}개 건물 분석`;
     // ── 크기 재계산 ──
     setTimeout(function(){ window.mapInstance.invalidateSize(); }, 300);
   }
@@ -1929,6 +2699,8 @@ window.resetTypeFilter  = resetTypeFilter;
 window.toggleArea       = toggleArea;
 window.flyToBuilding    = flyToBuilding;
 window.selectType       = selectType;
+window.applyMapFilter   = applyMapFilter;
+window.toggleDongGroup  = toggleDongGroup;
 /* mrShow / selectMarketReport / backToMarketList / closeMarketDetail 는
    첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
    여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
@@ -2122,10 +2894,11 @@ async function runUpdatePipeline() {
         markersMap[b.id] = marker;
       });
       renderBuildingList(); renderChart(); renderReport(); renderLegend();
+      addSubwayMarkers(window.mapInstance);
+      updateFilterCounts();
+      applyMapFilter('all', document.querySelector('.map-filter-chip[data-filter="all"]'));
       setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
     }
-
-    _finishUpdate(btn, true);
 
   } catch (err) {
     updLog('❌ 오류: ' + err.message);
