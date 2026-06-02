@@ -719,11 +719,16 @@ td:first-child{color:var(--t1);font-weight:500}
 .mr-link{color:#60a5fa;text-decoration:none;word-break:break-all}
 .mr-link:hover{color:#93c5fd;text-decoration:underline}
 #mr-detail-body{white-space:normal!important}
-#mr-detail-body::-webkit-scrollbar{width:10px}
-#mr-detail-body::-webkit-scrollbar-track{background:#0f1118;border-radius:10px}
-#mr-detail-body::-webkit-scrollbar-thumb{background:#2a3050;border-radius:10px;border:2px solid #0f1118}
-#mr-detail-body::-webkit-scrollbar-thumb:hover{background:#3b7fff}
+#mr-detail-body::-webkit-scrollbar,
+#mr-list::-webkit-scrollbar{width:10px}
+#mr-detail-body::-webkit-scrollbar-track,
+#mr-list::-webkit-scrollbar-track{background:#0f1118;border-radius:10px}
+#mr-detail-body::-webkit-scrollbar-thumb,
+#mr-list::-webkit-scrollbar-thumb{background:#2a3050;border-radius:10px;border:2px solid #0f1118}
+#mr-detail-body::-webkit-scrollbar-thumb:hover,
+#mr-list::-webkit-scrollbar-thumb:hover{background:#3b7fff}
 #mr-detail-body{scrollbar-width:thin;scrollbar-color:#2a3050 #0f1118}
+#mr-list{scrollbar-width:thin;scrollbar-color:#2a3050 #0f1118}
 /* 시장 리포트 모바일 뒤로가기 버튼 — 기본 숨김 */
 .mr-mobile-back{display:none}
 /* 시장 리포트 모바일 세로 (Portrait) — 목록/상세 화면 전환 */
