@@ -705,44 +705,56 @@ td:first-child{color:var(--t1);font-weight:500}
 .map-filter-bar {
   position: relative;
   z-index: 800;
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 4px;
   flex-wrap: nowrap;
   overflow-x: auto; overflow-y: hidden;
-  height: 44px; min-height: 44px; max-height: 44px;
-  padding: 0 12px;
-  background: rgba(8,9,13,.97);
-  border-bottom: 1px solid rgba(59,127,255,.18);
+  height: 46px; min-height: 46px; max-height: 46px;
+  padding: 0 10px;
+  background: #08090d;
+  border-bottom: 1px solid rgba(59,127,255,.12);
   flex-shrink: 0;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 .map-filter-bar::-webkit-scrollbar { display: none; }
+
 .map-filter-chip {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 12px;
-  background: rgba(21,24,33,.9);
-  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(21,24,33,.0);
+  border: 1.5px solid rgba(255,255,255,.08);
   border-radius: 20px;
-  font-size: 11.5px; font-weight: 600; color: #8890aa;
+  font-size: 12px; font-weight: 600; color: #4a5270;
   cursor: pointer; white-space: nowrap;
-  transition: all .15s;
+  transition: all .16s;
   flex-shrink: 0;
   line-height: 1;
 }
-.map-filter-chip:hover { background: rgba(40,45,65,.95); color: #eef0f8; border-color: rgba(59,127,255,.5); }
-.map-filter-chip.active {
-  background: #3b7fff; border-color: #3b7fff; color: #fff;
-  box-shadow: 0 2px 8px rgba(59,127,255,.4);
+.map-filter-chip:hover {
+  background: rgba(40,45,65,.6);
+  color: #8890aa;
+  border-color: rgba(59,127,255,.3);
 }
-.map-filter-chip .chip-ico { font-size: 12px; line-height: 1; }
+.map-filter-chip.active {
+  background: #3b7fff;
+  border-color: #3b7fff;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(59,127,255,.45);
+  font-weight: 700;
+}
+.map-filter-chip .chip-ico { font-size: 13px; line-height: 1; }
 .map-filter-chip .chip-cnt {
-  background: rgba(255,255,255,.18); border-radius: 10px;
+  background: rgba(0,0,0,.25);
+  border-radius: 10px;
   padding: 1px 6px; font-size: 10px; font-weight: 700;
   min-width: 18px; text-align: center;
+  font-family: 'DM Mono', monospace;
 }
-.map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.28); }
+.map-filter-chip.active .chip-cnt { background: rgba(255,255,255,.25); }
 .filter-divider {
-  width: 1px; height: 16px; background: rgba(255,255,255,.12); flex-shrink: 0; margin: 0 2px;
+  width: 1px; height: 16px;
+  background: rgba(255,255,255,.08);
+  flex-shrink: 0; margin: 0 2px;
 }
 
 /* ── 지하철역 마커 ── */
@@ -843,13 +855,23 @@ td:first-child{color:var(--t1);font-weight:500}
 .map-tab-pane.active { display: block; }
 
 /* 건물 카드 */
-.bldg-card { border-bottom: 1px solid #151821; transition: background .15s; }
-.bldg-card.active { background: #151821; }
+.bldg-card { border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; position: relative; }
+.bldg-card.active { background: rgba(59,127,255,.07); }
+
+/* 선택(selected) 상태 — 건물 클릭 시 */
+.bldg-card.selected {
+  background: rgba(59,127,255,.12);
+  border-bottom-color: rgba(59,127,255,.2);
+  box-shadow: inset 3px 0 0 #3b7fff;
+}
+.bldg-card.selected .bldg-name { color: #7eb3ff; }
+.bldg-card.selected .bldg-header { background: transparent; }
+
 .bldg-header {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 14px; cursor: pointer; user-select: none;
 }
-.bldg-header:hover { background: #151821; }
+.bldg-header:hover { background: rgba(255,255,255,.03); }
 .bldg-num {
   width: 26px; height: 26px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -1055,8 +1077,17 @@ td:first-child{color:var(--t1);font-weight:500}
 .dong-group-body { 
   display: none;
   border-left: 4px solid rgba(255,255,255,.04);
+  background: rgba(0,0,0,.15);
+  padding-bottom: 4px;
 }
 .dong-group-body.open { display: block; }
+
+/* 열린 동 그룹 하단 강조 구분선 */
+.dong-group:has(.dong-group-body.open) {
+  border-bottom: 2px solid rgba(59,127,255,.18);
+  margin-bottom: 3px;
+}
+/* :has() 미지원 폴백은 JS로 처리 */
 
 /* 모바일 */
 @media(max-width:768px){
@@ -1509,8 +1540,6 @@ function applyMapFilter(filter, chipEl) {
   const nonOurs = buildings.filter(b => !b.isOurs);
 
   nonOurs.forEach(b => {
-    const mkw = document.getElementById('mkw-' + b.id);
-    if (!mkw) return;
     let show = false;
     if (filter === 'all') {
       show = true;
@@ -1521,11 +1550,37 @@ function applyMapFilter(filter, chipEl) {
     } else {
       show = b.tenants.some(t => t.type === filter);
     }
-    mkw.classList.toggle('dimmed', !show);
-    mkw.classList.toggle('type-match', show && filter !== 'all');
+
+    // 마커 숨김/표시 (지도에서 완전히 제거/추가)
+    const marker = markersMap[b.id];
+    if (marker && window.mapInstance) {
+      if (show) {
+        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+        const mkw = document.getElementById('mkw-' + b.id);
+        if (mkw) { mkw.classList.remove('dimmed', 'type-match'); }
+      } else {
+        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+      }
+    }
+
+    // 사이드바 건물 카드 표시/숨김
+    const card = document.getElementById('card-' + b.id);
+    if (card) card.style.display = show ? '' : 'none';
   });
 
-  // 필터 결과 건물들로 지도 범위 조정 (전체 제외)
+  // 동 그룹 헤더 - 표시할 건물이 없으면 흐리게
+  document.querySelectorAll('.dong-group').forEach(dg => {
+    const dongName = dg.id.replace('dg-', '');
+    const visibleInDong = nonOurs.filter(b => b.dong === dongName).some(b => {
+      if (filter === 'all') return true;
+      if (filter === 'core') return b.distance === 'core';
+      if (filter === '공실') return b.tenants.some(t => t.name.includes('공실') || t.rawType === '공실');
+      return b.tenants.some(t => t.type === filter);
+    });
+    dg.style.opacity = visibleInDong ? '1' : '0.3';
+  });
+
+  // 지도 범위 조정
   if (filter !== 'all') {
     const matched = nonOurs.filter(b => {
       if (filter === 'core') return b.distance === 'core';
@@ -1537,7 +1592,7 @@ function applyMapFilter(filter, chipEl) {
       window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
     }
   } else if (window.mapInstance) {
-    window.mapInstance.flyTo([37.5228, 127.0220], 15, { duration: 0.8 });
+    window.mapInstance.flyTo([37.5228, 127.0220], 14, { duration: 0.8 });
   }
 }
 
@@ -1663,20 +1718,33 @@ function selectBuilding(id) {
   if (selectedId) {
     document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
     const prev = document.getElementById('card-'+selectedId);
-    if (prev) prev.classList.remove('active');
+    if (prev) { prev.classList.remove('active', 'selected'); }
   }
 
   if (selectedId === id) { selectedId = null; return; }
   selectedId = id;
 
-  // 마커 하이라이트
+  // 마커 강조 (selected)
   const mkw = document.getElementById('mkw-'+id);
   if (mkw) mkw.classList.add('selected');
 
-  // 카드 열기 및 스크롤
+  // 카드 선택 상태 표시
   const card = document.getElementById('card-'+id);
   if (card) {
-    card.classList.add('active');
+    card.classList.add('active', 'selected');
+
+    // 속한 동 그룹이 닫혀있으면 먼저 열기
+    const dongBody = card.closest('.dong-group-body');
+    if (dongBody && !dongBody.classList.contains('open')) {
+      const dong = dongBody.id.replace('dgb-', '');
+      const header = document.getElementById('dgh-' + dong);
+      dongBody.classList.add('open');
+      if (header) header.classList.add('open');
+      // 동 강조
+      const dg = document.getElementById('dg-' + dong);
+      if (dg) dg.style.borderBottom = '2px solid rgba(59,127,255,.25)';
+    }
+
     card.scrollIntoView({ behavior:'smooth', block:'nearest' });
   }
 
@@ -1689,19 +1757,19 @@ function selectBuilding(id) {
 
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
-  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.8 });
+  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
 }
 
 function toggleCard(id) {
   const card = document.getElementById('card-'+id);
-  const isActive = card.classList.contains('active');
+  const isSelected = card.classList.contains('selected');
 
-  // 모든 카드 닫기
-  document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active'));
+  // 모든 카드 초기화
+  document.querySelectorAll('.bldg-card').forEach(c => c.classList.remove('active', 'selected'));
   document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
   selectedId = null;
 
-  if (!isActive) selectBuilding(id);
+  if (!isSelected) selectBuilding(id);
 }
 
 // ══════════════════════════════════════════════
@@ -1820,20 +1888,39 @@ function renderBuildingList() {
 function toggleDongGroup(dong) {
   const body = document.getElementById('dgb-' + dong);
   const header = document.getElementById('dgh-' + dong);
+  const dg = document.getElementById('dg-' + dong);
   const isOpen = body.classList.contains('open');
 
   // 토글
   body.classList.toggle('open', !isOpen);
   header.classList.toggle('open', !isOpen);
 
+  // 열림/닫힘 시 구분선 처리
+  if (!isOpen) {
+    // 열릴 때: 헤더 컬러 바 색상으로 하단 강조 + 동 바디 좌측 라인 색상 동기화
+    const colorBar = header.querySelector('.dong-color-bar');
+    const color = colorBar ? colorBar.style.background : '#3b7fff';
+    if (dg) dg.style.borderBottom = `2px solid ${color}55`;
+    if (body) body.style.borderLeftColor = `${color}40`;
+  } else {
+    if (dg) dg.style.borderBottom = '';
+    if (body) body.style.borderLeftColor = '';
+  }
+
   // 열릴 때 해당 동 건물들로 지도 줌인
   if (!isOpen && window.mapInstance) {
     const dongBuildings = buildings.filter(b => !b.isOurs && b.dong === dong);
-    if (dongBuildings.length > 0) {
-      if (dongBuildings.length === 1) {
-        window.mapInstance.flyTo([dongBuildings[0].lat, dongBuildings[0].lng], 17, { duration: 0.7 });
+    // 현재 필터에서 보이는 건물만
+    const visible = dongBuildings.filter(b => {
+      const marker = markersMap[b.id];
+      return marker && window.mapInstance.hasLayer(marker);
+    });
+    const targets = visible.length > 0 ? visible : dongBuildings;
+    if (targets.length > 0) {
+      if (targets.length === 1) {
+        window.mapInstance.flyTo([targets[0].lat, targets[0].lng], 17, { duration: 0.7 });
       } else {
-        const bounds = L.latLngBounds(dongBuildings.map(b => [b.lat, b.lng]));
+        const bounds = L.latLngBounds(targets.map(b => [b.lat, b.lng]));
         window.mapInstance.fitBounds(bounds, { padding: [60, 60], maxZoom: 17, animate: true, duration: 0.7 });
       }
     }
@@ -2290,8 +2377,43 @@ function mapShowTab(name) {
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(window.mapInstance);
+
+    // ── 주소 기반 좌표 보정 (좌표 이상한 건물만 geocoding) ──
+    var geocodeQueue = buildings.filter(function(b) {
+      return !b.isOurs && b.address && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
+    });
+    if (geocodeQueue.length > 0) {
+      geocodeBuildings(geocodeQueue, 0, function() { createAllMarkers(); });
+    } else {
+      createAllMarkers();
+    }
+  }
+
+  // 주소 → 좌표 변환 (OSM Nominatim, 순차 처리)
+  function geocodeBuildings(queue, idx, callback) {
+    if (idx >= queue.length) { callback(); return; }
+    var b = queue[idx];
+    var addr = encodeURIComponent(b.address);
+    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + addr + '&limit=1', {
+      headers: { 'Accept-Language': 'ko', 'User-Agent': 'CapeHornTower/1.0' }
+    }).then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.length > 0) {
+          b.lat = parseFloat(data[0].lat);
+          b.lng = parseFloat(data[0].lon);
+          console.log('📍 Geocoded:', b.name, '->', b.lat, b.lng);
+        }
+      })
+      .catch(function() {})
+      .finally(function() {
+        setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 1200); // rate limit 준수
+      });
+  }
+
+  function createAllMarkers() {
     // ── 마커 생성 ──
     buildings.forEach(function(b, idx) {
+      if (!b.isOurs && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng))) return; // 좌표 없으면 건너뜀
       var color = getDominantColor(b);
       var size  = getMarkerSize(b);
       var inner = b.isOurs
