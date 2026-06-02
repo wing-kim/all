@@ -1492,6 +1492,7 @@ td:first-child{color:var(--t1);font-weight:500}
 </div>
 </div>
 </div>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2a3ec83cc3ca9f434e295d2ded3f0eac&libraries=services"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
@@ -1501,8 +1502,8 @@ const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J
 const OUR_BUILDING = {
   id:'ours', isOurs:true,
   name:'케이프혼타워 (신축예정)', short:'우리건물',
-  address:'서울 강남구 신사동 529 외 2필지',
-  lat:37.5243, lng:127.0213,
+  address:'서울 강남구 압구정로 112',
+  lat:37.5253, lng:127.0209,
   price:null, dong:'신사동', distance:'core', tenants:[]
 };
 
@@ -1793,7 +1794,7 @@ function applyMapFilter(filter, chipEl) {
       window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
     }
   } else if (window.mapInstance) {
-    window.mapInstance.flyTo([37.5228, 127.0220], 14, { duration: 0.8 });
+    window.mapInstance.flyTo([37.5253, 127.0209], 14, { duration: 0.8 });
   }
 }
 
@@ -2562,7 +2563,7 @@ function mapShowTab(name) {
     }
     // ── 지도 생성 ──
     window.mapInstance = L.map('map', {
-      center: [37.5228, 127.0220], zoom: 14, zoomControl: true
+      center: [37.5253, 127.0209], zoom: 14, zoomControl: true
     });
     // 네이버 지도 스타일 — 밝고 선명한 한국 지도
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2588,53 +2589,38 @@ function mapShowTab(name) {
     }
   }
 
-  // 주소 → 좌표 변환 (카카오 로컬 API — 한국 주소 최적화)
-  var KAKAO_API_KEY = '2a3ec83cc3ca9f434e295d2ded3f0eac';
-
+  // 주소 → 좌표 변환 (카카오맵 SDK Geocoder — JS키 사용, CORS 없음)
   function geocodeBuildings(queue, idx, callback) {
     if (idx >= queue.length) { callback(); return; }
     var b = queue[idx];
-    var query = (b.address || b.name || '').trim();
-    console.log('[지오코딩]', (idx+1)+'/'+queue.length, b.name, '→', query);
 
-    fetch('https://dapi.kakao.com/v2/local/search/address.json?query=' + encodeURIComponent(query), {
-      headers: { 'Authorization': 'KakaoAK ' + KAKAO_API_KEY }
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var doc = data.documents && data.documents[0];
-      if (doc) {
-        b.lat = parseFloat(doc.y);
-        b.lng = parseFloat(doc.x);
-        b._needGeocode = false;
-        var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, b.lat, b.lng);
-        b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
-        console.log('📍 완료:', b.name, '->', b.lat, b.lng);
+    if (!b.address || !b.address.trim()) {
+      console.warn('📍 주소 없음 → 건너뜀:', b.name);
+      setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 50);
+      return;
+    }
+
+    var geocoder = new kakao.maps.services.Geocoder();
+    console.log('[지오코딩]', (idx+1)+'/'+queue.length, b.name, '→', b.address);
+
+    geocoder.addressSearch(b.address, function(result, status) {
+      if (status === kakao.maps.services.Status.OK && result.length > 0) {
+        var lat = parseFloat(result[0].y);
+        var lng = parseFloat(result[0].x);
+        var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, lat, lng);
+        if (dist > 15000) {
+          console.warn('📍 오매칭 무시 (' + Math.round(dist/1000) + 'km):', b.name);
+        } else {
+          b.lat = lat; b.lng = lng;
+          b._needGeocode = false;
+          b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
+          console.log('📍 완료:', b.name, '->', lat, lng, '(' + Math.round(dist) + 'm)');
+        }
       } else {
-        // 주소 검색 실패 시 키워드 검색으로 재시도
-        return fetch('https://dapi.kakao.com/v2/local/search/keyword.json?query=' + encodeURIComponent(query), {
-          headers: { 'Authorization': 'KakaoAK ' + KAKAO_API_KEY }
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(kdata) {
-          var kdoc = kdata.documents && kdata.documents[0];
-          if (kdoc) {
-            b.lat = parseFloat(kdoc.y);
-            b.lng = parseFloat(kdoc.x);
-            b._needGeocode = false;
-            var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, b.lat, b.lng);
-            b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
-            console.log('📍 키워드 완료:', b.name, '->', b.lat, b.lng);
-          } else {
-            console.warn('📍 결과 없음:', b.name, query);
-          }
-        });
+        console.warn('📍 결과 없음:', b.name, b.address);
       }
-    })
-    .catch(function(e) { console.warn('📍 오류:', b.name, e.message); })
-    .finally(function() {
-      // 카카오 API는 빠르므로 딜레이 최소화
-      setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 100);
+      // SDK는 rate limit 없으므로 바로 다음으로
+      geocodeBuildings(queue, idx + 1, callback);
     });
   }
 
@@ -2967,9 +2953,11 @@ function _finishUpdate(btn, success) {
 
 </script>
 <script>
-// Leaflet 로드 완료 후 바로 실행
+// Leaflet + 카카오맵 SDK 모두 로드 완료 후 실행
 (function waitForLeaflet(){
-  if(typeof L !== 'undefined' && typeof window._initMapView === 'function'){
+  if(typeof L !== 'undefined' && typeof window._initMapView === 'function'
+     && typeof kakao !== 'undefined' && typeof kakao.maps !== 'undefined'
+     && typeof kakao.maps.services !== 'undefined'){
     window._initMapView();
   } else {
     setTimeout(waitForLeaflet, 50);
