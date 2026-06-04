@@ -969,11 +969,11 @@ td:first-child{color:var(--t1);font-weight:500}
 
 /* 건물 카드 */
 .bldg-card { border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; position: relative; }
-.bldg-card.active { background: rgba(59,127,255,.07); }
+.bldg-card.active { background: rgba(59,127,255,.04); }
 
 /* 선택(selected) 상태 — 건물 클릭 시 */
 .bldg-card.selected {
-  background: rgba(59,127,255,.12);
+  background: rgba(59,127,255,.04);
   border-bottom-color: rgba(59,127,255,.2);
   box-shadow: inset 3px 0 0 #3b7fff;
 }
@@ -984,7 +984,7 @@ td:first-child{color:var(--t1);font-weight:500}
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px; cursor: pointer; user-select: none;
 }
-.bldg-header:hover { background: rgba(255,255,255,.03); }
+.bldg-header:hover { background: rgba(255,255,255,.02); }
 .bldg-num {
   width: 4px; height: 36px; border-radius: 2px;
   background: #2a3050; flex-shrink: 0;
@@ -1209,8 +1209,8 @@ td:first-child{color:var(--t1);font-weight:500}
   width: 100%;
   box-sizing: border-box;
 }
-.dong-group-header:hover { background: #161a32; }
-.dong-group-header.open { background: #181d38; border-bottom: 1px solid rgba(59,91,219,.4); }
+.dong-group-header:hover { background: rgba(22,26,50,.5); }
+.dong-group-header.open { background: rgba(24,29,56,.5); border-bottom: 1px solid rgba(59,91,219,.3); }
 
 /* 좌측 컬러 바 */
 .dong-color-bar {
@@ -1236,7 +1236,7 @@ td:first-child{color:var(--t1);font-weight:500}
   border-radius: 5px;
   flex-shrink: 0;
   letter-spacing: -.3px;
-  background: #1a1f3a;
+  background: rgba(26,31,58,.6);
   border: 1px solid rgba(59,91,219,.5);  /* 테두리 더 뚜렷하게 */
 }
 .dong-stats {
@@ -1270,7 +1270,7 @@ td:first-child{color:var(--t1);font-weight:500}
 .dong-group-body {
   display: none;
   border-left: 3px solid rgba(59,91,219,.4);
-  background: rgba(10,12,28,.7);
+  background: rgba(10,12,28,.35);
   padding-bottom: 6px;
 }
 .dong-group-body.open { display: block; }
@@ -1683,7 +1683,8 @@ function rowsToBuildings(rows){
         address:row['주소']||'', lat, lng,
         _needGeocode: !hasCoord,  // 좌표 없으면 지오코딩 필요
         price: (function(){
-          var v = row['매매가(억)'] || row['매매가'] || row['매매가(억'] || '';
+          // 시트 컬럼명 변형 모두 대응: '매매가 (억)' / '매매가(억)' / '매매가'
+          var v = row['매매가 (억)'] || row['매매가(억)'] || row['매매가'] || '';
           v = v.trim();
           if (!v || v === '0') return null;
           // 이미 '억' 포함이면 그대로, 아니면 '억' 추가
@@ -2070,7 +2071,6 @@ function selectBuilding(id) {
       const header = document.getElementById('dgh-' + dong);
       dongBody.classList.add('open');
       if (header) header.classList.add('open');
-      // 동 강조
       const dg = document.getElementById('dg-' + dong);
       if (dg) dg.style.borderBottom = '2px solid rgba(59,127,255,.25)';
     }
@@ -2088,6 +2088,11 @@ function selectBuilding(id) {
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
   if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
+
+  // ✅ 마커 클릭 시 상세 모달 자동 오픈
+  if (typeof openBldgModal === 'function') {
+    setTimeout(function(){ openBldgModal(id); }, 400); // flyTo 애니메이션 후 오픈
+  }
 }
 
 function toggleCard(id) {
@@ -2260,18 +2265,20 @@ function toggleDongGroup(dong) {
 // 업종 차트 렌더링 (클릭 필터 포함)
 // ══════════════════════════════════════════════
 function renderChart() {
-  // 업종별 건물 목록 사전 계산
-  const typeBuildings = {}; // type -> [{building, tenants:[]}]
+  // 업종별 건물 목록 사전 계산 (type별 독립 seen 사용)
+  const typeBuildings = {}; // type -> [{b, floors:[]}]
   buildings.forEach(b => {
     if (b.isOurs) return;
-    const seen = {};
+    // 이 건물의 type별 floors를 독립적으로 집계
+    const typeFloors = {}; // type -> [floors]
     b.tenants.forEach(t => {
-      if (!typeBuildings[t.type]) typeBuildings[t.type] = [];
-      if (!seen[b.id]) {
-        seen[b.id] = { b, floors: [] };
-        typeBuildings[t.type].push(seen[b.id]);
-      }
-      seen[b.id].floors.push(t.floor);
+      if (!typeFloors[t.type]) typeFloors[t.type] = [];
+      typeFloors[t.type].push(t.floor);
+    });
+    // typeBuildings에 건물별로 추가
+    Object.entries(typeFloors).forEach(([type, floors]) => {
+      if (!typeBuildings[type]) typeBuildings[type] = [];
+      typeBuildings[type].push({ b, floors });
     });
   });
 
@@ -3089,8 +3096,8 @@ function openBldgModal(id) {
   }).join('');
 
   // KPI
-  // price 디버그: 어떤 값이 들어오는지 콘솔 확인
-  console.log('[모달] 건물:', b.name, '/ price:', b.price, '/ source:', b.source);
+  // price 디버그
+  console.log('[모달] 건물:', b.name, '/ price:', b.price, '/ fileId:', b.fileId, '/ source:', b.source);
   document.getElementById('bm-price').textContent = b.price || '미공개';
   document.getElementById('bm-price').style.color = b.price ? '#3b7fff' : '#4a5270';
   document.getElementById('bm-tenant-cnt').textContent = b.tenants.length;
