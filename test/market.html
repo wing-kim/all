@@ -986,9 +986,9 @@ td:first-child{color:var(--t1);font-weight:500}
 }
 .bldg-header:hover { background: rgba(255,255,255,.03); }
 .bldg-num {
-  width: 26px; height: 26px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+  font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0;
 }
 .bldg-info { flex: 1; min-width: 0; }
 .bldg-name { font-size: 13px; font-weight: 700; color: #eef0f8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1132,12 +1132,12 @@ td:first-child{color:var(--t1);font-weight:500}
 /* 마커 */
 .mk-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform .2s; }
 .mk-wrap:hover { transform: scale(1.12); }
-.mk-circle { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; transition: transform .25s, box-shadow .25s; }
+.mk-circle { width: 30px; height: 30px; border-radius: 8px; border: 2px solid rgba(255,255,255,.85); box-shadow: 0 2px 8px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; transition: transform .25s, box-shadow .25s; }
 .mk-label { margin-top: 3px; background: rgba(15,17,24,.95); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #eef0f8; box-shadow: 0 1px 4px rgba(0,0,0,.3); white-space: nowrap; max-width: 80px; text-align: center; overflow: hidden; text-overflow: ellipsis; }
-.mk-wrap.selected .mk-circle { transform: scale(1.35); box-shadow: 0 0 0 5px rgba(59,127,255,.4), 0 4px 14px rgba(0,0,0,.5); }
-.mk-wrap.ours-wrap .mk-circle { background: #f59e0b; border-color: #fbbf24; box-shadow: 0 0 0 4px rgba(245,158,11,.3), 0 3px 10px rgba(0,0,0,.4); }
+.mk-wrap.selected .mk-circle { transform: scale(1.35); box-shadow: 0 0 0 4px rgba(59,127,255,.5), 0 4px 14px rgba(0,0,0,.5); }
+.mk-wrap.ours-wrap .mk-circle { background: #f59e0b; border-color: #fbbf24; border-radius: 50%; box-shadow: 0 0 0 4px rgba(245,158,11,.3), 0 3px 10px rgba(0,0,0,.4); }
 .mk-wrap.dimmed { opacity: 0.12; transition: opacity .25s; }
-.mk-wrap.type-match .mk-circle { transform: scale(1.3) !important; box-shadow: 0 0 0 5px rgba(255,255,255,0.9), 0 4px 16px rgba(0,0,0,.5) !important; }
+.mk-wrap.type-match .mk-circle { transform: scale(1.3) !important; box-shadow: 0 0 0 4px rgba(255,255,255,0.9), 0 4px 16px rgba(0,0,0,.5) !important; }
 
 /* Leaflet popup */
 .leaflet-popup-content { margin: 2px; }
@@ -1586,7 +1586,7 @@ const OUR_BUILDING = {
   id:'ours', isOurs:true,
   name:'케이프혼타워 (신축예정)', short:'우리건물',
   address:'서울 강남구 압구정로 112',
-  lat:37.5253, lng:127.0209,
+  lat:37.5232, lng:127.0212,
   price:null, dong:'신사동', distance:'core', tenants:[]
 };
 
@@ -1876,7 +1876,7 @@ function applyMapFilter(filter, chipEl) {
       window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
     }
   } else if (window.mapInstance) {
-    window.mapInstance.flyTo([37.5253, 127.0209], 14, { duration: 0.8 });
+    window.mapInstance.flyTo([37.5232, 127.0212], 14, { duration: 0.8 });
   }
 }
 
@@ -1992,7 +1992,7 @@ function getDominantColor(b) {
 
 function getMarkerSize(b) {
   if (b.isOurs) return 34;
-  return b.distance === 'core' ? 30 : b.distance === 'mid' ? 26 : 22;
+  return b.distance === 'core' ? 32 : b.distance === 'mid' ? 28 : 24;
 }
 
 
@@ -2654,7 +2654,7 @@ function mapShowTab(name) {
     }
     // ── 지도 생성 ──
     window.mapInstance = L.map('map', {
-      center: [37.5253, 127.0209], zoom: 14, zoomControl: true
+      center: [37.5232, 127.0212], zoom: 14, zoomControl: true
     });
     // 네이버 지도 스타일 — 밝고 선명한 한국 지도
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
