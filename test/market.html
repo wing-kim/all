@@ -1492,7 +1492,6 @@ td:first-child{color:var(--t1);font-weight:500}
 </div>
 </div>
 </div>
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2a3ec83cc3ca9f434e295d2ded3f0eac&libraries=services"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
@@ -1574,8 +1573,7 @@ function rowsToBuildings(rows){
       });
     }
   });
-  // 좌표 있는 것 + 주소로 지오코딩 가능한 것 모두 반환
-  return Object.values(bmap).filter(b => (b.lat!==0 && b.lng!==0) || b.address);
+  return Object.values(bmap).filter(b => b.lat !== 0 && b.lng !== 0);
 }
 
 // ══ 지하철역 — 건물 데이터 있는 권역 주변 핵심 역만 ══
@@ -2589,39 +2587,9 @@ function mapShowTab(name) {
     }
   }
 
-  // 주소 → 좌표 변환 (카카오맵 SDK Geocoder — JS키 사용, CORS 없음)
+  // 주소 → 좌표는 Apps Script가 시트에 미리 저장 — 여기선 그냥 마커 생성
   function geocodeBuildings(queue, idx, callback) {
-    if (idx >= queue.length) { callback(); return; }
-    var b = queue[idx];
-
-    if (!b.address || !b.address.trim()) {
-      console.warn('📍 주소 없음 → 건너뜀:', b.name);
-      setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 50);
-      return;
-    }
-
-    var geocoder = new kakao.maps.services.Geocoder();
-    console.log('[지오코딩]', (idx+1)+'/'+queue.length, b.name, '→', b.address);
-
-    geocoder.addressSearch(b.address, function(result, status) {
-      if (status === kakao.maps.services.Status.OK && result.length > 0) {
-        var lat = parseFloat(result[0].y);
-        var lng = parseFloat(result[0].x);
-        var dist = calcDistance(OUR_BUILDING.lat, OUR_BUILDING.lng, lat, lng);
-        if (dist > 15000) {
-          console.warn('📍 오매칭 무시 (' + Math.round(dist/1000) + 'km):', b.name);
-        } else {
-          b.lat = lat; b.lng = lng;
-          b._needGeocode = false;
-          b.distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
-          console.log('📍 완료:', b.name, '->', lat, lng, '(' + Math.round(dist) + 'm)');
-        }
-      } else {
-        console.warn('📍 결과 없음:', b.name, b.address);
-      }
-      // SDK는 rate limit 없으므로 바로 다음으로
-      geocodeBuildings(queue, idx + 1, callback);
-    });
+    callback(); // 즉시 완료 (지오코딩 불필요)
   }
 
   function createAllMarkers() {
@@ -2953,11 +2921,9 @@ function _finishUpdate(btn, success) {
 
 </script>
 <script>
-// Leaflet + 카카오맵 SDK 모두 로드 완료 후 실행
+// Leaflet 로드 완료 후 실행 (카카오 SDK는 별도 비동기 로드)
 (function waitForLeaflet(){
-  if(typeof L !== 'undefined' && typeof window._initMapView === 'function'
-     && typeof kakao !== 'undefined' && typeof kakao.maps !== 'undefined'
-     && typeof kakao.maps.services !== 'undefined'){
+  if(typeof L !== 'undefined' && typeof window._initMapView === 'function'){
     window._initMapView();
   } else {
     setTimeout(waitForLeaflet, 50);
