@@ -1726,7 +1726,7 @@ const SUBWAY_STATIONS = [
   { name:'성수',       line:'2', color:'#00A140', lat:37.5448, lng:127.0566 },
   { name:'건대입구',   line:'2', color:'#00A140', lat:37.5401, lng:127.0700 },
   // 3호선
-  { name:'신사',       line:'3', color:'#EF6C00', lat:37.5256, lng:127.0205 },
+  { name:'신사',       line:'3', color:'#EF6C00', lat:37.5197, lng:127.0208 },
   { name:'압구정',     line:'3', color:'#EF6C00', lat:37.5272, lng:127.0283 },
   { name:'옥수',       line:'3', color:'#EF6C00', lat:37.5404, lng:127.0178 },
   { name:'고속터미널', line:'3', color:'#EF6C00', lat:37.5048, lng:127.0047 },
@@ -2078,20 +2078,24 @@ function selectBuilding(id) {
     card.scrollIntoView({ behavior:'smooth', block:'nearest' });
   }
 
-  // 업종 필터 초기화
-  if (selectedType) resetTypeFilter();
-
-  // 탭이 건물목록이 아니면 전환
+  // 현재 탭 상태 기억
   const buildingsPane = document.getElementById('map-tab-buildings');
-  if (!buildingsPane.classList.contains('active')) mapShowTab('buildings');
+  const isOnBuildingsTab = buildingsPane.classList.contains('active');
+
+  // 업종분석 탭에서 누른 경우: 탭 전환 없이 모달만 오픈
+  // 건물목록 탭에서 누른 경우: 기존대로 카드 스크롤
+  if (isOnBuildingsTab) {
+    // 건물목록 탭일 때만 업종 필터 초기화
+    if (selectedType) resetTypeFilter();
+  }
 
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
   if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
 
-  // ✅ 마커 클릭 시 상세 모달 자동 오픈
+  // 상세 모달 오픈 (탭 관계없이 항상)
   if (typeof openBldgModal === 'function') {
-    setTimeout(function(){ openBldgModal(id); }, 400); // flyTo 애니메이션 후 오픈
+    setTimeout(function(){ openBldgModal(id); }, 400);
   }
 }
 
