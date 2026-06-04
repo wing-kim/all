@@ -1029,10 +1029,10 @@ td:first-child{color:var(--t1);font-weight:500}
 .type-row.t-selected { border-color: rgba(59,127,255,.3); background: rgba(59,127,255,.05); }
 .type-bar-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; cursor: pointer; transition: background .15s; }
 .type-bar-row:hover { background: #151821; }
-.type-lbl { width: 80px; font-size: 12px; font-weight: 600; color: #8890aa; text-align: right; flex-shrink: 0; line-height: 1.2; }
-.type-track { flex: 1; background: #151821; border-radius: 6px; height: 36px; overflow: hidden; position: relative; }
-.type-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; min-width: 40px; transition: width .7s cubic-bezier(.22,1,.36,1); }
-.type-cnt { font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.type-lbl { width: 76px; font-size: 11px; font-weight: 600; color: #8890aa; text-align: right; flex-shrink: 0; line-height: 1.2; }
+.type-track { flex: 1; background: #151821; border-radius: 6px; height: 28px; overflow: hidden; position: relative; }
+.type-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; padding-left: 8px; min-width: 36px; transition: width .7s cubic-bezier(.22,1,.36,1); }
+.type-cnt { font-size: 14px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.3); white-space: nowrap; }
 .type-dot-sm { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .type-hint { font-size: 10px; color: #4a5270; text-align: center; margin: 0 0 10px; padding: 6px; background: #151821; border-radius: 6px; border: 1px dashed #222636; }
 .type-bldg-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px 8px; margin-top: 2px; }
@@ -1316,6 +1316,90 @@ td:first-child{color:var(--t1);font-weight:500}
 .upd-step.active .upd-step-label{color:var(--t1)}
 .upd-step.done .upd-step-label{color:var(--green)}
 .upd-step.err .upd-step-label{color:var(--red)}
+
+/* ── 건물 상세 모달 ── */
+#bldg-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#bldg-modal-overlay.open { display: flex; }
+#bldg-modal {
+  background: #0f1118; border: 1px solid #222636;
+  border-radius: 14px; width: 100%; max-width: 560px;
+  max-height: 85vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  overflow: hidden; animation: modalIn .22s ease;
+}
+@keyframes modalIn { from { transform: translateY(18px); opacity:0; } to { transform: none; opacity:1; } }
+.bm-header {
+  padding: 18px 20px 14px;
+  background: linear-gradient(135deg,rgba(59,127,255,.12),rgba(108,72,245,.08));
+  border-bottom: 1px solid #222636; flex-shrink: 0;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.bm-icon {
+  width: 44px; height: 44px; border-radius: 10px; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.08);
+}
+.bm-title-wrap { flex: 1; min-width: 0; }
+.bm-title { font-size: 16px; font-weight: 800; color: #eef0f8; line-height: 1.3; }
+.bm-addr { font-size: 11px; color: #4a5270; margin-top: 4px; }
+.bm-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.bm-tag { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+  border: 1px solid; white-space: nowrap; }
+.bm-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.06); border: 1px solid #222636;
+  color: #8890aa; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.bm-close:hover { background: rgba(240,56,96,.15); color: #f03860; border-color: rgba(240,56,96,.3); }
+.bm-kpi-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border-bottom: 1px solid #151821; flex-shrink: 0;
+}
+.bm-kpi { padding: 12px 14px; text-align: center; border-right: 1px solid #151821; }
+.bm-kpi:last-child { border-right: none; }
+.bm-kpi-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 700; color: #eef0f8; }
+.bm-kpi-lbl { font-size: 10px; color: #4a5270; margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+.bm-body { flex: 1; overflow-y: auto; padding: 0; scrollbar-width: thin; scrollbar-color: #2a3050 #0f1118; }
+.bm-body::-webkit-scrollbar { width: 4px; }
+.bm-body::-webkit-scrollbar-thumb { background: #2a3050; border-radius: 2px; }
+.bm-section-title {
+  font-size: 10px; font-weight: 700; color: #4a5270;
+  text-transform: uppercase; letter-spacing: .8px;
+  padding: 12px 16px 6px; border-bottom: 1px solid #151821;
+  display: flex; align-items: center; gap: 6px;
+}
+.bm-section-title::before { content: ''; display: block; width: 3px; height: 12px; background: #3b7fff; border-radius: 2px; }
+.bm-floor-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bm-floor-table th { background: #0c0e14; color: #4a5270; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; padding: 7px 14px; text-align: left; border-bottom: 1px solid #151821; }
+.bm-floor-table td { padding: 8px 14px; border-bottom: 1px solid #151821; color: #8890aa; vertical-align: middle; }
+.bm-floor-table tr:last-child td { border-bottom: none; }
+.bm-floor-table tr:hover td { background: rgba(59,127,255,.03); }
+.bm-floor-cell { font-weight: 700; color: #4a5270; white-space: nowrap; width: 46px; }
+.bm-name-cell { color: #eef0f8; font-weight: 500; }
+.bm-footer {
+  padding: 14px 16px; border-top: 1px solid #151821;
+  display: flex; gap: 8px; flex-shrink: 0; background: #08090d;
+}
+.bm-btn {
+  flex: 1; padding: 10px 14px; border-radius: 8px; font-size: 12px;
+  font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.bm-btn-primary { background: #3b7fff; color: #fff; }
+.bm-btn-primary:hover { background: #5591ff; }
+.bm-btn-secondary { background: rgba(255,255,255,.05); border: 1px solid #222636; color: #8890aa; }
+.bm-btn-secondary:hover { background: rgba(255,255,255,.08); color: #eef0f8; border-color: #3b7fff; }
+.bm-btn-pdf { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #ef4444; }
+.bm-btn-pdf:hover { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); }
+.bm-empty { padding: 30px; text-align: center; color: #4a5270; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -2030,10 +2114,16 @@ function renderBuildingList() {
           <td class="name-cell">${t.name}</td>
           <td><span class="type-badge" style="background:${TYPES[t.type]||'#888'}">${t.type}</span></td>
         </tr>`).join('');
+      // 업종 이모지 아이콘 (사이드바 카드용)
+      const cardEmojis = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','기타':'📌'};
+      const domTypeCard = {};
+      b.tenants.forEach(t => { domTypeCard[t.type] = (domTypeCard[t.type]||0)+1; });
+      const topTypeCard = Object.keys(domTypeCard).sort((a,c)=>domTypeCard[c]-domTypeCard[a])[0] || '기타';
+      const cardEmoji = cardEmojis[topTypeCard] || '📌';
       return `
         <div class="bldg-card" id="card-${b.id}">
           <div class="bldg-header" onclick="toggleCard('${b.id}')">
-            <div class="bldg-num" style="background:${dominantColor}">${globalIdx}</div>
+            <div class="bldg-num" style="background:${dominantColor};font-size:14px">${cardEmoji}</div>
             <div class="bldg-info">
               <div class="bldg-name">${b.name}</div>
               <div class="bldg-meta" style="font-size:10px;">${b.address||''} ${distLabel}</div>
@@ -2041,6 +2131,7 @@ function renderBuildingList() {
             <div class="bldg-right">
               ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
               <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
+              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="background:rgba(59,127,255,.15);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;font-family:var(--sans)" title="상세 보기">상세</button>
               <span class="chevron">▼</span>
             </div>
           </div>
@@ -2160,22 +2251,24 @@ function renderChart() {
     const numInside = pct >= 22; // 막대가 충분히 넓으면 안에, 좁으면 바깥
 
     const bldgList = (typeBuildings[type]||[]).map(({b, floors}) => `
-      <div class="type-bldg-item" style="border-color:${color}40"
-           onmouseover="this.style.background='${color}';this.style.borderColor='${color}';this.style.color='#fff'"
-           onmouseout="this.style.background='';this.style.borderColor='${color}40';this.style.color=''"
-           onclick="event.stopPropagation(); flyToBuilding('${b.id}')">
-        ${b.name} <span class="bldg-arrow">→</span>
+      <div class="type-bldg-item" style="border-color:${color}40;display:flex;gap:4px;padding:5px 8px;"
+           onmouseover="this.style.background='${color}22';this.style.borderColor='${color}';this.style.color='#fff'"
+           onmouseout="this.style.background='';this.style.borderColor='${color}40';this.style.color=''">
+        <span onclick="event.stopPropagation(); flyToBuilding('${b.id}')" style="flex:1;cursor:pointer">${b.name} <span class="bldg-arrow">→</span></span>
+        <span onclick="event.stopPropagation(); openBldgModal('${b.id}')" style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(59,127,255,.2);color:#3b7fff;cursor:pointer;white-space:nowrap;font-weight:700">상세</span>
       </div>`).join('');
 
+    // 건물 수 (임차인 수 아닌 건물 수로 표기)
+    const bldgCnt = (typeBuildings[type]||[]).length;
     return `
       <div class="type-row" id="tyrow-${type.replace(/\//g,'_')}" onclick="selectType('${type}')">
         <div class="type-bar-row">
           <div class="type-lbl">${type}</div>
           <div class="type-track" style="position:relative;">
-            <div class="type-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}bb,${color});">
-              ${numInside ? `<span class="type-cnt">${n}</span>` : ''}
+            <div class="type-fill" style="width:${Math.max(pct,4)}%;background:linear-gradient(90deg,${color}bb,${color});min-width:36px;">
+              <span class="type-cnt">${n}</span>
             </div>
-            ${!numInside ? `<span style="position:absolute;left:calc(${pct}% + 8px);top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:${color};">${n}</span>` : ''}
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,0.5);">${bldgCnt}개 건물</span>
           </div>
         </div>
         <div class="type-bldg-list" id="tblist-${type.replace(/\//g,'_')}" style="display:none">
@@ -2598,9 +2691,13 @@ function mapShowTab(name) {
       if (!b.isOurs && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng))) return; // 좌표 없으면 건너뜀
       var color = getDominantColor(b);
       var size  = getMarkerSize(b);
+      // 업종별 이모지 마커 (숫자 대신)
+      var typeEmoji = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','법무법인':'⚖','제약사':'🧬','헬스케어':'❤','기타':'📌'};
+      var domType = b.tenants.length > 0 ? b.tenants.reduce(function(acc,t){acc[t.type]=(acc[t.type]||0)+1;return acc;},{}) : {};
+      var topType = Object.keys(domType).sort(function(a,b2){return domType[b2]-domType[a];})[0] || '기타';
       var inner = b.isOurs
         ? '⭐'
-        : '<span style="font-size:' + (size<28?10:12) + 'px">' + idx + '</span>';
+        : '<span style="font-size:'+(size<28?11:13)+'px;line-height:1">' + (typeEmoji[topType]||'📌') + '</span>';
       var html =
         '<div class="mk-wrap' + (b.isOurs?' ours-wrap':'') + '" id="mkw-' + b.id + '">' +
         '<div class="mk-circle" style="width:' + size + 'px;height:' + size + 'px;background:' + (b.isOurs?'#f59e0b':color) + ';">' +
@@ -2716,7 +2813,10 @@ function reloadMap() {
       buildings.forEach(function(b, idx){
         var color = getDominantColor(b);
         var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var tEmoji = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','기타':'📌'};
+        var domT = b.tenants.length > 0 ? b.tenants.reduce(function(ac,t){ac[t.type]=(ac[t.type]||0)+1;return ac;},{}) : {};
+        var topT = Object.keys(domT).sort(function(a,b2){return domT[b2]-domT[a];})[0] || '기타';
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?11:13)+'px;line-height:1">'+(tEmoji[topT]||'📌')+'</span>';
         var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
           +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
           +'<div class="mk-label">'+b.short+'</div></div>';
@@ -2881,7 +2981,10 @@ async function runUpdatePipeline() {
       buildings.forEach(function(b, idx){
         var color = getDominantColor(b);
         var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var tEmoji2 = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','기타':'📌'};
+        var domT2 = b.tenants.length > 0 ? b.tenants.reduce(function(ac,t){ac[t.type]=(ac[t.type]||0)+1;return ac;},{}) : {};
+        var topT2 = Object.keys(domT2).sort(function(a,b2){return domT2[b2]-domT2[a];})[0] || '기타';
+        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?11:13)+'px;line-height:1">'+(tEmoji2[topT2]||'📌')+'</span>';
         var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
           +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
           +'<div class="mk-label">'+b.short+'</div></div>';
@@ -2919,6 +3022,97 @@ function _finishUpdate(btn, success) {
   updLog(success ? '━━ 업데이트 완료 ━━' : '━━ 업데이트 실패 (위 로그 확인) ━━');
 }
 
+
+// ══════════════════════════════════════════════
+// 건물 상세 모달
+// ══════════════════════════════════════════════
+var DRIVE_PDF_BASE = 'https://drive.google.com/file/d/';
+var DRIVE_FOLDER_VIEW = 'https://drive.google.com/drive/folders/' + '1A0_psOadZpujctRfOlC3d-Zmbk9lFfSb';
+
+// 업종별 이모지 (모달용)
+var BM_EMOJI = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','법무법인':'⚖','기타':'📌'};
+
+function openBldgModal(id) {
+  var b = (typeof buildings !== 'undefined' ? buildings : []).find(function(x){ return x.id === id; });
+  if (!b) return;
+
+  var overlay = document.getElementById('bldg-modal-overlay');
+  var TYPES_LOCAL = typeof TYPES !== 'undefined' ? TYPES : {};
+
+  // 헤더
+  var domCnt = {};
+  b.tenants.forEach(function(t){ domCnt[t.type] = (domCnt[t.type]||0)+1; });
+  var topType = Object.keys(domCnt).sort(function(a,c){ return domCnt[c]-domCnt[a]; })[0] || '기타';
+  document.getElementById('bm-icon').textContent = BM_EMOJI[topType] || '🏢';
+  document.getElementById('bm-title').textContent = b.name;
+  var distStr = b.distance === 'core' ? '🔴 근거리 300m 이내' : b.distance === 'mid' ? '🟡 중거리 300~700m' : '⚪ 원거리 700m+';
+  document.getElementById('bm-addr').textContent = (b.address || '') + (b.dong ? '  ·  ' + b.dong : '') + '  ·  ' + distStr;
+
+  // 태그 (상위 업종 3개)
+  var sortedTypes = Object.entries(domCnt).sort(function(a,c){ return c[1]-a[1]; }).slice(0,3);
+  document.getElementById('bm-tags').innerHTML = sortedTypes.map(function(e) {
+    var color = TYPES_LOCAL[e[0]] || '#888';
+    return '<span class="bm-tag" style="color:' + color + ';border-color:' + color + '40;background:' + color + '15">' + e[0] + ' ' + e[1] + '건</span>';
+  }).join('');
+
+  // KPI
+  document.getElementById('bm-price').textContent = b.price || '미공개';
+  document.getElementById('bm-price').style.color = b.price ? '#3b7fff' : '#4a5270';
+  document.getElementById('bm-tenant-cnt').textContent = b.tenants.length;
+  var floors = b.tenants.map(function(t){ return t.floor; }).filter(Boolean);
+  var uniqueFloors = floors.filter(function(v,i,a){ return a.indexOf(v)===i; });
+  document.getElementById('bm-floor-cnt').textContent = uniqueFloors.length + '개';
+
+  // 층별 테이블
+  var sorted = b.tenants.slice().sort(function(a,c){
+    var fa = parseInt((a.floor||'0').replace(/[^0-9\-]/g,''))||0;
+    var fb = parseInt((c.floor||'0').replace(/[^0-9\-]/g,''))||0;
+    return fa - fb;
+  });
+  document.getElementById('bm-floor-body').innerHTML = sorted.length > 0
+    ? sorted.map(function(t) {
+        var color = TYPES_LOCAL[t.type] || '#888';
+        var isVacant = t.name.includes('공실');
+        var isLeaving = t.name.includes('퇴거') || t.name.includes('명도');
+        return '<tr>' +
+          '<td class="bm-floor-cell">' + (t.floor || '—') + '</td>' +
+          '<td class="bm-name-cell" style="' + (isVacant?'color:#4a5270;font-style:italic':isLeaving?'color:#f59e0b':'') + '">' + t.name + (isLeaving?' ⚠️':'') + '</td>' +
+          '<td><span class="type-badge" style="background:' + color + ';font-size:10px;padding:2px 7px">' + t.type + '</span></td>' +
+          '</tr>';
+      }).join('')
+    : '<tr><td colspan="3" class="bm-empty">임차인 정보 없음</td></tr>';
+
+  // 지도 버튼
+  document.getElementById('bm-map-btn').onclick = function() {
+    closeBldgModal();
+    if (typeof selectBuilding === 'function') selectBuilding(id);
+  };
+
+  // PDF 버튼 — 파일명이 있으면 Drive 폴더 링크
+  var pdfBtn = document.getElementById('bm-pdf-btn');
+  if (b.source) {
+    pdfBtn.style.display = 'flex';
+    pdfBtn.onclick = function() {
+      window.open(DRIVE_FOLDER_VIEW, '_blank');
+    };
+    pdfBtn.textContent = '📄 PDF (' + (b.source.length > 20 ? b.source.substring(0,20)+'…' : b.source) + ')';
+  } else {
+    pdfBtn.style.display = 'none';
+  }
+
+  overlay.classList.add('open');
+  document.addEventListener('keydown', _modalKeyClose);
+}
+
+function closeBldgModal() {
+  document.getElementById('bldg-modal-overlay').classList.remove('open');
+  document.removeEventListener('keydown', _modalKeyClose);
+}
+
+function _modalKeyClose(e) { if (e.key === 'Escape') closeBldgModal(); }
+
+window.openBldgModal = openBldgModal;
+window.closeBldgModal = closeBldgModal;
 </script>
 <script>
 // Leaflet 로드 완료 후 실행 (카카오 SDK는 별도 비동기 로드)
@@ -2931,5 +3125,46 @@ function _finishUpdate(btn, success) {
 })();
 </script>
 
+
+<!-- 건물 상세 모달 -->
+<div id="bldg-modal-overlay" onclick="if(event.target===this)closeBldgModal()">
+  <div id="bldg-modal">
+    <div class="bm-header">
+      <div class="bm-icon" id="bm-icon">🏢</div>
+      <div class="bm-title-wrap">
+        <div class="bm-title" id="bm-title">건물명</div>
+        <div class="bm-addr" id="bm-addr"></div>
+        <div class="bm-tags" id="bm-tags"></div>
+      </div>
+      <button class="bm-close" onclick="closeBldgModal()">✕</button>
+    </div>
+    <div class="bm-kpi-row">
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-price">—</div>
+        <div class="bm-kpi-lbl">매매가</div>
+      </div>
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-tenant-cnt">0</div>
+        <div class="bm-kpi-lbl">임차인 수</div>
+      </div>
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-floor-cnt">0</div>
+        <div class="bm-kpi-lbl">층 수</div>
+      </div>
+    </div>
+    <div class="bm-body">
+      <div class="bm-section-title">층별 임차인 현황</div>
+      <table class="bm-floor-table">
+        <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
+        <tbody id="bm-floor-body"></tbody>
+      </table>
+    </div>
+    <div class="bm-footer">
+      <button class="bm-btn bm-btn-secondary" onclick="closeBldgModal()">닫기</button>
+      <button class="bm-btn bm-btn-primary" id="bm-map-btn" onclick="">🗺 지도에서 보기</button>
+      <button class="bm-btn bm-btn-pdf" id="bm-pdf-btn" style="display:none">📄 PDF 원본</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
