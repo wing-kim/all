@@ -969,11 +969,11 @@ td:first-child{color:var(--t1);font-weight:500}
 
 /* 건물 카드 */
 .bldg-card { border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; position: relative; }
-.bldg-card.active { background: rgba(59,127,255,.07); }
+.bldg-card.active { background: rgba(59,127,255,.04); }
 
 /* 선택(selected) 상태 — 건물 클릭 시 */
 .bldg-card.selected {
-  background: rgba(59,127,255,.12);
+  background: rgba(59,127,255,.04);
   border-bottom-color: rgba(59,127,255,.2);
   box-shadow: inset 3px 0 0 #3b7fff;
 }
@@ -981,14 +981,14 @@ td:first-child{color:var(--t1);font-weight:500}
 .bldg-card.selected .bldg-header { background: transparent; }
 
 .bldg-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px; cursor: pointer; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; cursor: pointer; user-select: none;
 }
-.bldg-header:hover { background: rgba(255,255,255,.03); }
+.bldg-header:hover { background: rgba(255,255,255,.02); }
 .bldg-num {
-  width: 26px; height: 26px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0;
+  width: 4px; height: 36px; border-radius: 2px;
+  background: #2a3050; flex-shrink: 0;
+  align-self: stretch;
 }
 .bldg-info { flex: 1; min-width: 0; }
 .bldg-name { font-size: 13px; font-weight: 700; color: #eef0f8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1029,10 +1029,10 @@ td:first-child{color:var(--t1);font-weight:500}
 .type-row.t-selected { border-color: rgba(59,127,255,.3); background: rgba(59,127,255,.05); }
 .type-bar-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; cursor: pointer; transition: background .15s; }
 .type-bar-row:hover { background: #151821; }
-.type-lbl { width: 80px; font-size: 12px; font-weight: 600; color: #8890aa; text-align: right; flex-shrink: 0; line-height: 1.2; }
-.type-track { flex: 1; background: #151821; border-radius: 6px; height: 36px; overflow: hidden; position: relative; }
-.type-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; min-width: 40px; transition: width .7s cubic-bezier(.22,1,.36,1); }
-.type-cnt { font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.type-lbl { width: 76px; font-size: 11px; font-weight: 600; color: #8890aa; text-align: right; flex-shrink: 0; line-height: 1.2; }
+.type-track { flex: 1; background: #151821; border-radius: 6px; height: 28px; overflow: hidden; position: relative; }
+.type-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-start; padding-left: 8px; min-width: 36px; transition: width .7s cubic-bezier(.22,1,.36,1); }
+.type-cnt { font-size: 14px; font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.3); white-space: nowrap; }
 .type-dot-sm { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .type-hint { font-size: 10px; color: #4a5270; text-align: center; margin: 0 0 10px; padding: 6px; background: #151821; border-radius: 6px; border: 1px dashed #222636; }
 .type-bldg-list { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 8px 8px; margin-top: 2px; }
@@ -1132,12 +1132,52 @@ td:first-child{color:var(--t1);font-weight:500}
 /* 마커 */
 .mk-wrap { display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform .2s; }
 .mk-wrap:hover { transform: scale(1.12); }
-.mk-circle { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; transition: transform .25s, box-shadow .25s; }
-.mk-label { margin-top: 3px; background: rgba(15,17,24,.95); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: #eef0f8; box-shadow: 0 1px 4px rgba(0,0,0,.3); white-space: nowrap; max-width: 80px; text-align: center; overflow: hidden; text-overflow: ellipsis; }
-.mk-wrap.selected .mk-circle { transform: scale(1.35); box-shadow: 0 0 0 5px rgba(59,127,255,.4), 0 4px 14px rgba(0,0,0,.5); }
-.mk-wrap.ours-wrap .mk-circle { background: #f59e0b; border-color: #fbbf24; box-shadow: 0 0 0 4px rgba(245,158,11,.3), 0 3px 10px rgba(0,0,0,.4); }
-.mk-wrap.dimmed { opacity: 0.12; transition: opacity .25s; }
-.mk-wrap.type-match .mk-circle { transform: scale(1.3) !important; box-shadow: 0 0 0 5px rgba(255,255,255,0.9), 0 4px 16px rgba(0,0,0,.5) !important; }
+
+/* ── 건물 마커: 다이아몬드 핀 — 지하철 원형과 명확히 구분 ── */
+.mk-pin {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+}
+.mk-circle {
+  width: 22px; height: 22px;
+  border-radius: 6px 6px 6px 1px;   /* 왼쪽하단만 뾰족 → 핀 모양 */
+  background: #3b5bdb;
+  border: 1.5px solid rgba(255,255,255,.75);
+  box-shadow: 0 2px 6px rgba(0,0,0,.4);
+  transform: rotate(-45deg);
+  transition: box-shadow .2s;
+  flex-shrink: 0;
+}
+.mk-label {
+  margin-top: 6px; background: rgba(10,12,20,.92);
+  padding: 2px 6px; border-radius: 3px;
+  font-size: 9.5px; font-weight: 700; color: #eef0f8;
+  box-shadow: 0 1px 4px rgba(0,0,0,.35);
+  white-space: nowrap; max-width: 80px;
+  text-align: center; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -.2px;
+}
+
+/* 우리 건물 ⭐ — 원형 유지, 금색 */
+.mk-wrap.ours-wrap .mk-circle {
+  background: #f59e0b; border-color: #fcd34d;
+  border-radius: 50%; transform: none; width: 30px; height: 30px;
+  box-shadow: 0 0 0 3px rgba(245,158,11,.35), 0 3px 8px rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.mk-wrap.ours-wrap .mk-pin { width: 30px; height: 30px; }
+.mk-wrap.ours-wrap .mk-label { margin-top: 4px; }
+
+/* 선택 상태 */
+.mk-wrap.selected .mk-circle {
+  box-shadow: 0 0 0 4px rgba(59,127,255,.6), 0 3px 10px rgba(0,0,0,.5);
+}
+.mk-wrap.dimmed { opacity: 0.15; transition: opacity .25s; }
+.mk-wrap.type-match .mk-circle {
+  box-shadow: 0 0 0 4px rgba(255,255,255,.85), 0 3px 10px rgba(0,0,0,.5) !important;
+}
 
 /* Leaflet popup */
 .leaflet-popup-content { margin: 2px; }
@@ -1169,8 +1209,8 @@ td:first-child{color:var(--t1);font-weight:500}
   width: 100%;
   box-sizing: border-box;
 }
-.dong-group-header:hover { background: #161a32; }
-.dong-group-header.open { background: #181d38; border-bottom: 1px solid rgba(59,91,219,.4); }
+.dong-group-header:hover { background: rgba(22,26,50,.5); }
+.dong-group-header.open { background: rgba(24,29,56,.5); border-bottom: 1px solid rgba(59,91,219,.3); }
 
 /* 좌측 컬러 바 */
 .dong-color-bar {
@@ -1196,7 +1236,7 @@ td:first-child{color:var(--t1);font-weight:500}
   border-radius: 5px;
   flex-shrink: 0;
   letter-spacing: -.3px;
-  background: #1a1f3a;
+  background: rgba(26,31,58,.6);
   border: 1px solid rgba(59,91,219,.5);  /* 테두리 더 뚜렷하게 */
 }
 .dong-stats {
@@ -1230,7 +1270,7 @@ td:first-child{color:var(--t1);font-weight:500}
 .dong-group-body {
   display: none;
   border-left: 3px solid rgba(59,91,219,.4);
-  background: rgba(10,12,28,.7);
+  background: rgba(10,12,28,.35);
   padding-bottom: 6px;
 }
 .dong-group-body.open { display: block; }
@@ -1316,6 +1356,90 @@ td:first-child{color:var(--t1);font-weight:500}
 .upd-step.active .upd-step-label{color:var(--t1)}
 .upd-step.done .upd-step-label{color:var(--green)}
 .upd-step.err .upd-step-label{color:var(--red)}
+
+/* ── 건물 상세 모달 ── */
+#bldg-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 99999;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+#bldg-modal-overlay.open { display: flex; }
+#bldg-modal {
+  background: #0f1118; border: 1px solid #222636;
+  border-radius: 14px; width: 100%; max-width: 560px;
+  max-height: 85vh; display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,.7);
+  overflow: hidden; animation: modalIn .22s ease;
+}
+@keyframes modalIn { from { transform: translateY(18px); opacity:0; } to { transform: none; opacity:1; } }
+.bm-header {
+  padding: 18px 20px 14px;
+  background: linear-gradient(135deg,rgba(59,127,255,.12),rgba(108,72,245,.08));
+  border-bottom: 1px solid #222636; flex-shrink: 0;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.bm-icon {
+  width: 44px; height: 44px; border-radius: 10px; display: flex;
+  align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0; border: 1px solid rgba(255,255,255,.08);
+}
+.bm-title-wrap { flex: 1; min-width: 0; }
+.bm-title { font-size: 16px; font-weight: 800; color: #eef0f8; line-height: 1.3; }
+.bm-addr { font-size: 11px; color: #4a5270; margin-top: 4px; }
+.bm-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.bm-tag { font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+  border: 1px solid; white-space: nowrap; }
+.bm-close {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.06); border: 1px solid #222636;
+  color: #8890aa; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; flex-shrink: 0;
+}
+.bm-close:hover { background: rgba(240,56,96,.15); color: #f03860; border-color: rgba(240,56,96,.3); }
+.bm-kpi-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border-bottom: 1px solid #151821; flex-shrink: 0;
+}
+.bm-kpi { padding: 12px 14px; text-align: center; border-right: 1px solid #151821; }
+.bm-kpi:last-child { border-right: none; }
+.bm-kpi-val { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 700; color: #eef0f8; }
+.bm-kpi-lbl { font-size: 10px; color: #4a5270; margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+.bm-body { flex: 1; overflow-y: auto; padding: 0; scrollbar-width: thin; scrollbar-color: #2a3050 #0f1118; }
+.bm-body::-webkit-scrollbar { width: 4px; }
+.bm-body::-webkit-scrollbar-thumb { background: #2a3050; border-radius: 2px; }
+.bm-section-title {
+  font-size: 10px; font-weight: 700; color: #4a5270;
+  text-transform: uppercase; letter-spacing: .8px;
+  padding: 12px 16px 6px; border-bottom: 1px solid #151821;
+  display: flex; align-items: center; gap: 6px;
+}
+.bm-section-title::before { content: ''; display: block; width: 3px; height: 12px; background: #3b7fff; border-radius: 2px; }
+.bm-floor-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bm-floor-table th { background: #0c0e14; color: #4a5270; font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; padding: 7px 14px; text-align: left; border-bottom: 1px solid #151821; }
+.bm-floor-table td { padding: 8px 14px; border-bottom: 1px solid #151821; color: #8890aa; vertical-align: middle; }
+.bm-floor-table tr:last-child td { border-bottom: none; }
+.bm-floor-table tr:hover td { background: rgba(59,127,255,.03); }
+.bm-floor-cell { font-weight: 700; color: #4a5270; white-space: nowrap; width: 46px; }
+.bm-name-cell { color: #eef0f8; font-weight: 500; }
+.bm-footer {
+  padding: 14px 16px; border-top: 1px solid #151821;
+  display: flex; gap: 8px; flex-shrink: 0; background: #08090d;
+}
+.bm-btn {
+  flex: 1; padding: 10px 14px; border-radius: 8px; font-size: 12px;
+  font-weight: 600; cursor: pointer; border: none; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.bm-btn-primary { background: #3b7fff; color: #fff; }
+.bm-btn-primary:hover { background: #5591ff; }
+.bm-btn-secondary { background: rgba(255,255,255,.05); border: 1px solid #222636; color: #8890aa; }
+.bm-btn-secondary:hover { background: rgba(255,255,255,.08); color: #eef0f8; border-color: #3b7fff; }
+.bm-btn-pdf { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #ef4444; }
+.bm-btn-pdf:hover { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); }
+.bm-empty { padding: 30px; text-align: center; color: #4a5270; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -1501,8 +1625,8 @@ const MAP_SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSqODQv0J
 const OUR_BUILDING = {
   id:'ours', isOurs:true,
   name:'케이프혼타워 (신축예정)', short:'우리건물',
-  address:'서울 강남구 신사동 529 외 2필지',
-  lat:37.5243, lng:127.0213,
+  address:'서울 강남구 압구정로 112',
+  lat:37.5232, lng:127.0212,
   price:null, dong:'신사동', distance:'core', tenants:[]
 };
 
@@ -1549,15 +1673,26 @@ function rowsToBuildings(rows){
     const key=row['건물명'].trim();
     if(!bmap[key]){
       const lat=parseFloat(row['위도'])||0, lng=parseFloat(row['경도'])||0;
-      const dist = (lat && lng) ? calcDistance(ourLat, ourLng, lat, lng) : 9999;
+      // 시트에 유효한 좌표가 있으면 그대로, 없으면 지오코딩 필요 플래그
+      const hasCoord = lat !== 0 && lng !== 0;
+      const dist = hasCoord ? calcDistance(ourLat, ourLng, lat, lng) : 9999;
       const distance = dist < 300 ? 'core' : dist < 700 ? 'mid' : 'far';
       bmap[key]={
         id:key.replace(/[^\w가-힣]/g,'_'),
         name:row['건물명'], short:row['건물명'].length>6?row['건물명'].slice(0,6):row['건물명'],
         address:row['주소']||'', lat, lng,
-        price: row['매매가(억)'] ? row['매매가(억)']+'억' : row['매매가'] ? row['매매가']+'억' : null,
+        _needGeocode: !hasCoord,  // 좌표 없으면 지오코딩 필요
+        price: (function(){
+          // 시트 컬럼명 변형 모두 대응: '매매가 (억)' / '매매가(억)' / '매매가'
+          var v = row['매매가 (억)'] || row['매매가(억)'] || row['매매가'] || '';
+          v = v.trim();
+          if (!v || v === '0') return null;
+          // 이미 '억' 포함이면 그대로, 아니면 '억' 추가
+          return v.includes('억') ? v : v + '억';
+        })(),
         dong:row['동']||'기타', distance,
-        source:row['파일명']||'', tenants:[]
+        source:row['파일명']||'',
+        fileId:row['파일ID']||'', tenants:[]
       };
     }
     if(row['임차인']&&row['임차인'].trim()){
@@ -1570,7 +1705,7 @@ function rowsToBuildings(rows){
       });
     }
   });
-  return Object.values(bmap).filter(b=>b.lat!==0&&b.lng!==0);
+  return Object.values(bmap).filter(b => b.lat !== 0 && b.lng !== 0);
 }
 
 // ══ 지하철역 — 건물 데이터 있는 권역 주변 핵심 역만 ══
@@ -1789,7 +1924,7 @@ function applyMapFilter(filter, chipEl) {
       window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
     }
   } else if (window.mapInstance) {
-    window.mapInstance.flyTo([37.5228, 127.0220], 14, { duration: 0.8 });
+    window.mapInstance.flyTo([37.5232, 127.0212], 14, { duration: 0.8 });
   }
 }
 
@@ -1801,8 +1936,10 @@ async function loadMapData(){
     if(!res.ok) throw new Error('HTTP '+res.status);
     const text=await res.text();
     const rows=parseMapCSV(text);
-    buildings=rows.length>0?[OUR_BUILDING,...rowsToBuildings(rows)]:[OUR_BUILDING];
-    console.log('✅ 지도데이터:', buildings.length-1, '개 건물');
+    const valid=rowsToBuildings(rows);
+    buildings=rows.length>0?[OUR_BUILDING,...valid]:[OUR_BUILDING];
+    const needGeo=valid.filter(b=>b._needGeocode).length;
+    console.log('✅ 지도데이터:', valid.length, '개 건물 (주소→좌표변환 필요:', needGeo, '개)');
   }catch(e){
     console.warn('⚠️ 지도데이터 실패:', e.message);
     buildings=[OUR_BUILDING];
@@ -1895,15 +2032,12 @@ let selectedType = null;
 // ══ 렌더/인터랙션 함수들 ══
 function getDominantColor(b) {
   if (b.isOurs) return '#f59e0b';
-  const cnt = {};
-  b.tenants.forEach(t => { cnt[t.type] = (cnt[t.type]||0)+1; });
-  const top = Object.keys(cnt).sort((a,b2)=>cnt[b2]-cnt[a])[0];
-  return top ? TYPES[top] : '#6b7280';
+  return '#3b5bdb'; // 단일 통일 색상 (딥블루)
 }
 
 function getMarkerSize(b) {
   if (b.isOurs) return 34;
-  return b.distance === 'core' ? 30 : b.distance === 'mid' ? 26 : 22;
+  return 24; // 모든 건물 동일 크기
 }
 
 
@@ -1937,7 +2071,6 @@ function selectBuilding(id) {
       const header = document.getElementById('dgh-' + dong);
       dongBody.classList.add('open');
       if (header) header.classList.add('open');
-      // 동 강조
       const dg = document.getElementById('dg-' + dong);
       if (dg) dg.style.borderBottom = '2px solid rgba(59,127,255,.25)';
     }
@@ -1955,6 +2088,11 @@ function selectBuilding(id) {
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
   if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
+
+  // ✅ 마커 클릭 시 상세 모달 자동 오픈
+  if (typeof openBldgModal === 'function') {
+    setTimeout(function(){ openBldgModal(id); }, 400); // flyTo 애니메이션 후 오픈
+  }
 }
 
 function toggleCard(id) {
@@ -2028,7 +2166,7 @@ function renderBuildingList() {
       return `
         <div class="bldg-card" id="card-${b.id}">
           <div class="bldg-header" onclick="toggleCard('${b.id}')">
-            <div class="bldg-num" style="background:${dominantColor}">${globalIdx}</div>
+            <div class="bldg-num" style="background:${dominantColor}"></div>
             <div class="bldg-info">
               <div class="bldg-name">${b.name}</div>
               <div class="bldg-meta" style="font-size:10px;">${b.address||''} ${distLabel}</div>
@@ -2036,6 +2174,7 @@ function renderBuildingList() {
             <div class="bldg-right">
               ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
               <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
+              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="background:rgba(59,127,255,.15);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;font-family:var(--sans)" title="상세 보기">상세</button>
               <span class="chevron">▼</span>
             </div>
           </div>
@@ -2126,18 +2265,20 @@ function toggleDongGroup(dong) {
 // 업종 차트 렌더링 (클릭 필터 포함)
 // ══════════════════════════════════════════════
 function renderChart() {
-  // 업종별 건물 목록 사전 계산
-  const typeBuildings = {}; // type -> [{building, tenants:[]}]
+  // 업종별 건물 목록 사전 계산 (type별 독립 seen 사용)
+  const typeBuildings = {}; // type -> [{b, floors:[]}]
   buildings.forEach(b => {
     if (b.isOurs) return;
-    const seen = {};
+    // 이 건물의 type별 floors를 독립적으로 집계
+    const typeFloors = {}; // type -> [floors]
     b.tenants.forEach(t => {
-      if (!typeBuildings[t.type]) typeBuildings[t.type] = [];
-      if (!seen[b.id]) {
-        seen[b.id] = { b, floors: [] };
-        typeBuildings[t.type].push(seen[b.id]);
-      }
-      seen[b.id].floors.push(t.floor);
+      if (!typeFloors[t.type]) typeFloors[t.type] = [];
+      typeFloors[t.type].push(t.floor);
+    });
+    // typeBuildings에 건물별로 추가
+    Object.entries(typeFloors).forEach(([type, floors]) => {
+      if (!typeBuildings[type]) typeBuildings[type] = [];
+      typeBuildings[type].push({ b, floors });
     });
   });
 
@@ -2155,22 +2296,24 @@ function renderChart() {
     const numInside = pct >= 22; // 막대가 충분히 넓으면 안에, 좁으면 바깥
 
     const bldgList = (typeBuildings[type]||[]).map(({b, floors}) => `
-      <div class="type-bldg-item" style="border-color:${color}40"
-           onmouseover="this.style.background='${color}';this.style.borderColor='${color}';this.style.color='#fff'"
-           onmouseout="this.style.background='';this.style.borderColor='${color}40';this.style.color=''"
-           onclick="event.stopPropagation(); flyToBuilding('${b.id}')">
-        ${b.name} <span class="bldg-arrow">→</span>
+      <div class="type-bldg-item" style="border-color:${color}40;display:flex;gap:4px;padding:5px 8px;"
+           onmouseover="this.style.background='${color}22';this.style.borderColor='${color}';this.style.color='#fff'"
+           onmouseout="this.style.background='';this.style.borderColor='${color}40';this.style.color=''">
+        <span onclick="event.stopPropagation(); flyToBuilding('${b.id}')" style="flex:1;cursor:pointer">${b.name} <span class="bldg-arrow">→</span></span>
+        <span onclick="event.stopPropagation(); openBldgModal('${b.id}')" style="font-size:10px;padding:1px 6px;border-radius:4px;background:rgba(59,127,255,.2);color:#3b7fff;cursor:pointer;white-space:nowrap;font-weight:700">상세</span>
       </div>`).join('');
 
+    // 건물 수 (임차인 수 아닌 건물 수로 표기)
+    const bldgCnt = (typeBuildings[type]||[]).length;
     return `
       <div class="type-row" id="tyrow-${type.replace(/\//g,'_')}" onclick="selectType('${type}')">
         <div class="type-bar-row">
           <div class="type-lbl">${type}</div>
           <div class="type-track" style="position:relative;">
-            <div class="type-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}bb,${color});">
-              ${numInside ? `<span class="type-cnt">${n}</span>` : ''}
+            <div class="type-fill" style="width:${Math.max(pct,4)}%;background:linear-gradient(90deg,${color}bb,${color});min-width:36px;">
+              <span class="type-cnt">${n}</span>
             </div>
-            ${!numInside ? `<span style="position:absolute;left:calc(${pct}% + 8px);top:50%;transform:translateY(-50%);font-size:14px;font-weight:800;color:${color};">${n}</span>` : ''}
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:rgba(255,255,255,0.5);">${bldgCnt}개 건물</span>
           </div>
         </div>
         <div class="type-bldg-list" id="tblist-${type.replace(/\//g,'_')}" style="display:none">
@@ -2556,7 +2699,7 @@ function mapShowTab(name) {
     }
     // ── 지도 생성 ──
     window.mapInstance = L.map('map', {
-      center: [37.5228, 127.0220], zoom: 14, zoomControl: true
+      center: [37.5232, 127.0212], zoom: 14, zoomControl: true
     });
     // 네이버 지도 스타일 — 밝고 선명한 한국 지도
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -2564,36 +2707,27 @@ function mapShowTab(name) {
       subdomains: 'abcd', maxZoom: 19
     }).addTo(window.mapInstance);
 
-    // ── 주소 기반 좌표 보정 (좌표 이상한 건물만 geocoding) ──
+    // ── 주소 기반 좌표 보정 (좌표 없거나 이상한 건물만 geocoding) ──
     var geocodeQueue = buildings.filter(function(b) {
-      return !b.isOurs && b.address && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
+      return !b.isOurs && b.address && (b._needGeocode || b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
     });
     if (geocodeQueue.length > 0) {
-      geocodeBuildings(geocodeQueue, 0, function() { createAllMarkers(); });
+      console.log('[지오코딩] 대상:', geocodeQueue.length, '개 건물 순차 변환 시작');
+      geocodeBuildings(geocodeQueue, 0, function() {
+        createAllMarkers();
+        // 지오코딩 완료 후 목록/차트/리포트도 갱신 (좌표 반영)
+        renderBuildingList(); renderChart(); renderReport(); renderLegend();
+        updateFilterCounts();
+        console.log('[지오코딩] 전체 완료 → 마커/목록 갱신');
+      });
     } else {
       createAllMarkers();
     }
   }
 
-  // 주소 → 좌표 변환 (OSM Nominatim, 순차 처리)
+  // 주소 → 좌표는 Apps Script가 시트에 미리 저장 — 여기선 그냥 마커 생성
   function geocodeBuildings(queue, idx, callback) {
-    if (idx >= queue.length) { callback(); return; }
-    var b = queue[idx];
-    var addr = encodeURIComponent(b.address);
-    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + addr + '&limit=1', {
-      headers: { 'Accept-Language': 'ko', 'User-Agent': 'CapeHornTower/1.0' }
-    }).then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data && data.length > 0) {
-          b.lat = parseFloat(data[0].lat);
-          b.lng = parseFloat(data[0].lon);
-          console.log('📍 Geocoded:', b.name, '->', b.lat, b.lng);
-        }
-      })
-      .catch(function() {})
-      .finally(function() {
-        setTimeout(function() { geocodeBuildings(queue, idx + 1, callback); }, 1200); // rate limit 준수
-      });
+    callback(); // 즉시 완료 (지오코딩 불필요)
   }
 
   function createAllMarkers() {
@@ -2602,19 +2736,19 @@ function mapShowTab(name) {
       if (!b.isOurs && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng))) return; // 좌표 없으면 건너뜀
       var color = getDominantColor(b);
       var size  = getMarkerSize(b);
-      var inner = b.isOurs
-        ? '⭐'
-        : '<span style="font-size:' + (size<28?10:12) + 'px">' + idx + '</span>';
+      var inner = b.isOurs ? '⭐' : '';
+      var pinHtml = b.isOurs
+        ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
+        : '<div class="mk-pin"><div class="mk-circle"></div></div>';
       var html =
         '<div class="mk-wrap' + (b.isOurs?' ours-wrap':'') + '" id="mkw-' + b.id + '">' +
-        '<div class="mk-circle" style="width:' + size + 'px;height:' + size + 'px;background:' + (b.isOurs?'#f59e0b':color) + ';">' +
-        inner + '</div>' +
+        pinHtml +
         '<div class="mk-label">' + b.short + '</div></div>';
       var icon = L.divIcon({
         className: '', html: html,
-        iconSize:   [size+30, size+22],
-        iconAnchor: [(size+30)/2, size/2+3],
-        popupAnchor:[0, -(size/2+4)]
+        iconSize:   [60, 46],
+        iconAnchor: [30, 18],   /* 다이아몬드 핀 중심 */
+        popupAnchor:[0, -20]
       });
       var marker = L.marker([b.lat, b.lng], {icon: icon}).addTo(window.mapInstance);
       marker.on('click', (function(bid){ return function(){ window.selectBuilding(bid); }; })(b.id));
@@ -2661,8 +2795,9 @@ function mapShowTab(name) {
       })
       .then(function(text) {
         var rows = parseMapCSV(text);
-        buildings = rows.length > 0 ? [OUR_BUILDING].concat(rowsToBuildings(rows)) : [OUR_BUILDING];
-        console.log('✅ 지도데이터 로딩 완료, 건물:', buildings.length - 1);
+        var all = rowsToBuildings(rows);
+        buildings = rows.length > 0 ? [OUR_BUILDING].concat(all) : [OUR_BUILDING];
+        console.log('✅ 지도데이터 로딩 완료, 건물:', all.length, '/ 지오코딩필요:', all.filter(function(b){return b._needGeocode;}).length);
       })
       .catch(function(e) {
         console.warn('⚠️ 지도데이터 실패:', e.message);
@@ -2719,11 +2854,13 @@ function reloadMap() {
       buildings.forEach(function(b, idx){
         var color = getDominantColor(b);
         var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var inner = b.isOurs ? '⭐' : '';
+        var pinR = b.isOurs
+          ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
+          : '<div class="mk-pin"><div class="mk-circle"></div></div>';
         var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
-          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
-          +'<div class="mk-label">'+b.short+'</div></div>';
-        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+          +pinR+'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[60,46],iconAnchor:[30,18],popupAnchor:[0,-20]});
         var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
         marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
         markersMap[b.id]=marker;
@@ -2837,12 +2974,13 @@ async function runUpdatePipeline() {
     // ── STEP 3: CSV 생성 → Drive 업로드 ──
     updStep('upload', 'active', 'CSV 생성 후 드라이브 업로드 중…');
     var batchName = '_batch_' + Date.now() + '.csv';
-    var header = '파일명,동,건물명,주소,위도,경도,매매가(억),층,임차인,업종,등록일,업로드일';
+    var header = '파일명,동,건물명,주소,위도,경도,매매가(억),층,임차인,업종,등록일,업로드일,파일ID';
     var today = new Date().toISOString().slice(0, 10);
     var csvLines = [header].concat(rows.map(function(r) {
       return [r['파일명']||'',r['동']||'',r['건물명']||'',r['주소']||'',
               r['위도']||'',r['경도']||'',r['매매가']||'',r['층']||'',
-              r['임차인']||'',r['업종']||'',r['등록일']||today,today
+              r['임차인']||'',r['업종']||'',r['등록일']||today,today,
+              r['파일ID']||''  /* Apps Script upload 후 채워짐 */
              ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
     }));
     var csvContent = csvLines.join('\n');
@@ -2884,11 +3022,13 @@ async function runUpdatePipeline() {
       buildings.forEach(function(b, idx){
         var color = getDominantColor(b);
         var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '<span style="font-size:'+(size<28?10:12)+'px">'+idx+'</span>';
+        var inner = b.isOurs ? '⭐' : '';
+        var pinU = b.isOurs
+          ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
+          : '<div class="mk-pin"><div class="mk-circle"></div></div>';
         var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
-          +'<div class="mk-circle" style="width:'+size+'px;height:'+size+'px;background:'+(b.isOurs?'#f59e0b':color)+';">'+inner+'</div>'
-          +'<div class="mk-label">'+b.short+'</div></div>';
-        var icon = L.divIcon({className:'',html:html,iconSize:[size+30,size+22],iconAnchor:[(size+30)/2,size/2+3],popupAnchor:[0,-(size/2+4)]});
+          +pinU+'<div class="mk-label">'+b.short+'</div></div>';
+        var icon = L.divIcon({className:'',html:html,iconSize:[60,46],iconAnchor:[30,18],popupAnchor:[0,-20]});
         var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
         marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
         markersMap[b.id] = marker;
@@ -2922,9 +3062,129 @@ function _finishUpdate(btn, success) {
   updLog(success ? '━━ 업데이트 완료 ━━' : '━━ 업데이트 실패 (위 로그 확인) ━━');
 }
 
+
+// ══════════════════════════════════════════════
+// 건물 상세 모달
+// ══════════════════════════════════════════════
+var DRIVE_PDF_BASE = 'https://drive.google.com/file/d/';
+var DRIVE_FOLDER_VIEW = 'https://drive.google.com/drive/folders/' + '1A0_psOadZpujctRfOlC3d-Zmbk9lFfSb';
+
+// 업종별 이모지 (모달용)
+var BM_EMOJI = {'F&B/음식점':'🍽','병원/의료':'🏥','뷰티/미용':'💅','사무실/기업':'🏢','학원/교육':'📚','패션/잡화':'👗','스포츠/레저':'🏃','약국':'💊','편의점':'🏪','공유오피스':'💻','스튜디오/공간':'📷','카페':'☕','주점/노래방':'🎵','갤러리':'🎨','법무법인':'⚖','기타':'📌'};
+
+function openBldgModal(id) {
+  var b = (typeof buildings !== 'undefined' ? buildings : []).find(function(x){ return x.id === id; });
+  if (!b) return;
+
+  var overlay = document.getElementById('bldg-modal-overlay');
+  var TYPES_LOCAL = typeof TYPES !== 'undefined' ? TYPES : {};
+
+  // 헤더
+  var domCnt = {};
+  b.tenants.forEach(function(t){ domCnt[t.type] = (domCnt[t.type]||0)+1; });
+  var topType = Object.keys(domCnt).sort(function(a,c){ return domCnt[c]-domCnt[a]; })[0] || '기타';
+  document.getElementById('bm-icon').textContent = BM_EMOJI[topType] || '🏢';
+  document.getElementById('bm-title').textContent = b.name;
+  var distStr = b.distance === 'core' ? '🔴 근거리 300m 이내' : b.distance === 'mid' ? '🟡 중거리 300~700m' : '⚪ 원거리 700m+';
+  document.getElementById('bm-addr').textContent = (b.address || '') + (b.dong ? '  ·  ' + b.dong : '') + '  ·  ' + distStr;
+
+  // 태그 (상위 업종 3개)
+  var sortedTypes = Object.entries(domCnt).sort(function(a,c){ return c[1]-a[1]; }).slice(0,3);
+  document.getElementById('bm-tags').innerHTML = sortedTypes.map(function(e) {
+    var color = TYPES_LOCAL[e[0]] || '#888';
+    return '<span class="bm-tag" style="color:' + color + ';border-color:' + color + '40;background:' + color + '15">' + e[0] + ' ' + e[1] + '건</span>';
+  }).join('');
+
+  // KPI
+  // price 디버그
+  console.log('[모달] 건물:', b.name, '/ price:', b.price, '/ fileId:', b.fileId, '/ source:', b.source);
+  document.getElementById('bm-price').textContent = b.price || '미공개';
+  document.getElementById('bm-price').style.color = b.price ? '#3b7fff' : '#4a5270';
+  document.getElementById('bm-tenant-cnt').textContent = b.tenants.length;
+  var floors = b.tenants.map(function(t){ return t.floor; }).filter(Boolean);
+  var uniqueFloors = floors.filter(function(v,i,a){ return a.indexOf(v)===i; });
+  document.getElementById('bm-floor-cnt').textContent = uniqueFloors.length + '개';
+
+  // 층별 테이블
+  var sorted = b.tenants.slice().sort(function(a,c){
+    var fa = parseInt((a.floor||'0').replace(/[^0-9\-]/g,''))||0;
+    var fb = parseInt((c.floor||'0').replace(/[^0-9\-]/g,''))||0;
+    return fa - fb;
+  });
+  document.getElementById('bm-floor-body').innerHTML = sorted.length > 0
+    ? sorted.map(function(t) {
+        var color = TYPES_LOCAL[t.type] || '#888';
+        var isVacant = t.name.includes('공실');
+        var isLeaving = t.name.includes('퇴거') || t.name.includes('명도');
+        return '<tr>' +
+          '<td class="bm-floor-cell">' + (t.floor || '—') + '</td>' +
+          '<td class="bm-name-cell" style="' + (isVacant?'color:#4a5270;font-style:italic':isLeaving?'color:#f59e0b':'') + '">' + t.name + (isLeaving?' ⚠️':'') + '</td>' +
+          '<td><span class="type-badge" style="background:' + color + ';font-size:10px;padding:2px 7px">' + t.type + '</span></td>' +
+          '</tr>';
+      }).join('')
+    : '<tr><td colspan="3" class="bm-empty">임차인 정보 없음</td></tr>';
+
+  // 지도 버튼
+  document.getElementById('bm-map-btn').onclick = function() {
+    closeBldgModal();
+    if (typeof selectBuilding === 'function') selectBuilding(id);
+  };
+
+  // PDF 버튼 — 파일명이 있으면 Drive 폴더 링크
+  var pdfBtn = document.getElementById('bm-pdf-btn');
+  // 기존 안내 배너 제거
+  var oldNote = document.getElementById('bm-pdf-note');
+  if (oldNote) oldNote.remove();
+
+  if (b.fileId) {
+    // ✅ 파일 ID 있음 → 누구나 바로 열기 가능 (공개 설정된 파일)
+    pdfBtn.style.display = 'flex';
+    pdfBtn.style.background = 'rgba(34,209,134,.1)';
+    pdfBtn.style.borderColor = 'rgba(34,209,134,.3)';
+    pdfBtn.style.color = '#22d186';
+    var viewUrl = 'https://drive.google.com/file/d/' + b.fileId + '/view';
+    pdfBtn.onclick = function() { window.open(viewUrl, '_blank'); };
+    var dispName = b.source && b.source.length > 20 ? b.source.substring(0,20)+'…' : (b.source || 'PDF 원본');
+    pdfBtn.innerHTML = '📄 ' + dispName;
+    pdfBtn.title = '클릭하면 PDF가 바로 열립니다';
+  } else if (b.source) {
+    // ⚠ 파일 ID 없음 → Drive 검색 (권한 필요)
+    pdfBtn.style.display = 'flex';
+    pdfBtn.style.background = '';
+    pdfBtn.style.borderColor = '';
+    pdfBtn.style.color = '';
+    var fname = b.source.replace(/\.pdf$/i, '');
+    var searchUrl = 'https://drive.google.com/drive/search?q=' + encodeURIComponent(fname);
+    pdfBtn.onclick = function() { window.open(searchUrl, '_blank'); };
+    var dispName2 = b.source.length > 20 ? b.source.substring(0,20)+'…' : b.source;
+    pdfBtn.innerHTML = '📄 ' + dispName2;
+    pdfBtn.title = '드라이브 계정 로그인 필요 (파일ID 미등록)';
+    // 안내 배너 표시
+    var noteEl = document.createElement('div');
+    noteEl.id = 'bm-pdf-note';
+    noteEl.style.cssText = 'margin:8px 16px 0;padding:7px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;font-size:10px;color:#b45309;line-height:1.6;';
+    noteEl.innerHTML = '⚠ 이 파일은 공개 링크가 아직 없습니다. Apps Script 재실행 후 파일ID가 등록되면 누구나 바로 열 수 있습니다.';
+    document.querySelector('#bldg-modal .bm-body') && document.querySelector('#bldg-modal .bm-body').appendChild(noteEl);
+  } else {
+    pdfBtn.style.display = 'none';
+  }
+
+  overlay.classList.add('open');
+  document.addEventListener('keydown', _modalKeyClose);
+}
+
+function closeBldgModal() {
+  document.getElementById('bldg-modal-overlay').classList.remove('open');
+  document.removeEventListener('keydown', _modalKeyClose);
+}
+
+function _modalKeyClose(e) { if (e.key === 'Escape') closeBldgModal(); }
+
+window.openBldgModal = openBldgModal;
+window.closeBldgModal = closeBldgModal;
 </script>
 <script>
-// Leaflet 로드 완료 후 바로 실행
+// Leaflet 로드 완료 후 실행 (카카오 SDK는 별도 비동기 로드)
 (function waitForLeaflet(){
   if(typeof L !== 'undefined' && typeof window._initMapView === 'function'){
     window._initMapView();
@@ -2934,5 +3194,46 @@ function _finishUpdate(btn, success) {
 })();
 </script>
 
+
+<!-- 건물 상세 모달 -->
+<div id="bldg-modal-overlay" onclick="if(event.target===this)closeBldgModal()">
+  <div id="bldg-modal">
+    <div class="bm-header">
+      <div class="bm-icon" id="bm-icon">🏢</div>
+      <div class="bm-title-wrap">
+        <div class="bm-title" id="bm-title">건물명</div>
+        <div class="bm-addr" id="bm-addr"></div>
+        <div class="bm-tags" id="bm-tags"></div>
+      </div>
+      <button class="bm-close" onclick="closeBldgModal()">✕</button>
+    </div>
+    <div class="bm-kpi-row">
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-price">—</div>
+        <div class="bm-kpi-lbl">매매가</div>
+      </div>
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-tenant-cnt">0</div>
+        <div class="bm-kpi-lbl">임차인 수</div>
+      </div>
+      <div class="bm-kpi">
+        <div class="bm-kpi-val" id="bm-floor-cnt">0</div>
+        <div class="bm-kpi-lbl">층 수</div>
+      </div>
+    </div>
+    <div class="bm-body">
+      <div class="bm-section-title">층별 임차인 현황</div>
+      <table class="bm-floor-table">
+        <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
+        <tbody id="bm-floor-body"></tbody>
+      </table>
+    </div>
+    <div class="bm-footer" id="bm-footer">
+      <button class="bm-btn bm-btn-secondary" onclick="closeBldgModal()">닫기</button>
+      <button class="bm-btn bm-btn-primary" id="bm-map-btn" onclick="">🗺 지도에서 보기</button>
+      <button class="bm-btn bm-btn-pdf" id="bm-pdf-btn" style="display:none">📄 PDF 원본</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
