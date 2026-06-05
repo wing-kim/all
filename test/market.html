@@ -1630,10 +1630,7 @@ td:first-child{color:var(--t1);font-weight:500}
   }
   .leaflet-top.leaflet-left { top: 6px !important; left: 6px !important; }
 
-  /* ── 버전 배지 (모바일 하단) ── */
-  #version-badge {
-    display: block !important;
-  }
+
 }
 
 /* ── 초소형 360px ── */
@@ -3446,18 +3443,17 @@ window.closeBldgModal = closeBldgModal;
 
 
 
-<!-- 버전/빌드 배지 (모바일에서만 보임) -->
+<!-- 버전/빌드 배지 (PC + 모바일 공통) -->
 <div id="version-badge" style="
-  display: none;
   position: fixed;
-  bottom: 10px; left: 50%; transform: translateX(-50%);
-  background: rgba(15,17,24,.85); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 20px; padding: 3px 12px;
-  font-size: 10px; color: rgba(136,144,170,.7);
+  bottom: 8px; right: 12px;
+  background: rgba(15,17,24,.75); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 9.5px; color: rgba(136,144,170,.55);
   font-family: 'DM Mono', monospace;
   z-index: 8000; pointer-events: none;
-  white-space: nowrap;
+  white-space: nowrap; letter-spacing: .3px;
 ">v<span id="ver-num">—</span> · <span id="ver-time">—</span></div>
 
 <script>
@@ -3493,38 +3489,54 @@ window.closeBldgModal = closeBldgModal;
     }, { passive: true });
   });
 
-  // ── JS로 실제 뷰포트 높이 계산 (모바일 주소창 대응) ──
+  // ── JS로 모바일 레이아웃 직접 제어 (인라인 스타일 override) ──
   function setVh() {
-    if (window.innerWidth > 768) return;
+    if (window.innerWidth > 768) {
+      // PC: 원래대로 복원
+      var mapApp = document.querySelector('.map-app');
+      if (mapApp) {
+        mapApp.style.flexDirection = '';
+        mapApp.style.height = '';
+      }
+      var mapWrap = document.querySelector('#sec-mapview > .map-wrap');
+      if (mapWrap) { mapWrap.style.flex = ''; mapWrap.style.height = ''; }
+      var sidebar = document.querySelector('.map-sidebar');
+      if (sidebar) { sidebar.style.flex = ''; sidebar.style.height = ''; sidebar.style.width = ''; }
+      return;
+    }
+
     var vh = window.innerHeight;
     var mapApp = document.querySelector('.map-app');
     var mapWrap = document.querySelector('#sec-mapview > .map-wrap');
     var sidebar = document.querySelector('.map-sidebar');
     if (!mapApp || !mapWrap || !sidebar) return;
 
-    // 헤더 + 필터바 높이 계산
-    var header  = document.querySelector('header');
-    var filterBar = document.querySelector('.filter-bar, .map-filter-bar');
-    var usedH = (header  ? header.offsetHeight  : 48)
+    // ★ 인라인 스타일로 직접 세로 배치 강제
+    mapApp.style.cssText = 'flex:1; min-height:0; flex-direction:column; display:flex; overflow:hidden;';
+
+    // 헤더 + 필터바 높이
+    var header = document.querySelector('header');
+    var filterBar = document.querySelector('.filter-bar') || document.querySelector('.map-filter-bar');
+    var usedH = (header    ? header.offsetHeight    : 48)
               + (filterBar ? filterBar.offsetHeight : 38);
 
-    var remain = vh - usedH;
-    var mapH    = Math.round(remain * 0.45);
-    var sideH   = remain - mapH;
+    var remain = Math.max(vh - usedH, 400);
+    var mapH   = Math.round(remain * 0.44);
+    var sideH  = remain - mapH;
 
-    mapWrap.style.flex    = 'none';
-    mapWrap.style.height  = mapH + 'px';
-    mapWrap.style.minHeight = '200px';
-    sidebar.style.flex    = 'none';
-    sidebar.style.height  = sideH + 'px';
-    sidebar.style.minHeight = '200px';
+    mapWrap.style.cssText = 'flex:none; height:' + mapH + 'px; min-height:200px; overflow:hidden; display:flex; flex-direction:column;';
+    sidebar.style.cssText = 'flex:none; height:' + sideH + 'px; min-height:200px; width:100%; border-left:none; border-top:1px solid rgba(59,127,255,.2); display:flex; flex-direction:column; overflow:hidden;';
+
+    // Leaflet 지도 크기 강제 갱신
+    if (window.mapInstance) {
+      setTimeout(function() { window.mapInstance.invalidateSize(); }, 100);
+    }
   }
 
-  setVh();
+  // 초기 실행 + 이벤트
+  setTimeout(setVh, 50);  // DOM 렌더 후 실행
   window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', function() {
-    setTimeout(setVh, 300);
-  });
+  window.addEventListener('orientationchange', function() { setTimeout(setVh, 350); });
 })();
 </script>
 </body>
