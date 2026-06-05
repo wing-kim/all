@@ -2168,7 +2168,7 @@ function getMarkerSize(b) {
 // ══════════════════════════════════════════════
 // 건물 선택 (지도↔목록 연동)
 // ══════════════════════════════════════════════
-function selectBuilding(id) {
+function selectBuilding(id, noModal) {
   // 이전 선택 해제
   if (selectedId) {
     document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
@@ -2217,8 +2217,8 @@ function selectBuilding(id) {
   const b = buildings.find(x=>x.id===id);
   if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
 
-  // 상세 모달 오픈 (탭 관계없이 항상)
-  if (typeof openBldgModal === 'function') {
+  // 상세 모달 오픈 (noModal=true이면 스킵)
+  if (!noModal && typeof openBldgModal === 'function') {
     setTimeout(function(){ openBldgModal(id); }, 400);
   }
 }
@@ -2232,7 +2232,7 @@ function toggleCard(id) {
   document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
   selectedId = null;
 
-  if (!isSelected) selectBuilding(id);
+  if (!isSelected) selectBuilding(id, true);
 }
 
 // ══════════════════════════════════════════════
@@ -3371,7 +3371,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0605.1900';
+  if(el) el.textContent = '0605.1930';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
