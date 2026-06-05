@@ -1441,205 +1441,128 @@ td:first-child{color:var(--t1);font-weight:500}
 .bm-btn-pdf:hover { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); }
 .bm-empty { padding: 30px; text-align: center; color: #4a5270; font-size: 12px; }
 
-/* ═══════════════════════════════════════════════════════
-   모바일 전용 ≤768px  |  PC는 완전 불변
-═══════════════════════════════════════════════════════ */
-@media screen and (max-width: 768px) {
+/* ── 버전 배지 ── */
+#ver-badge {
+  position: fixed;
+  z-index: 99999;
+  font-size: 9.5px;
+  font-family: 'DM Mono', monospace;
+  color: rgba(136,144,170,.6);
+  background: rgba(8,9,13,.7);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  padding: 2px 9px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* PC: 사이드바 우하단 */
+@media (min-width: 769px) {
+  #ver-badge { bottom: 8px; right: 8px; }
+}
+/* 모바일: 필터바 위 좌측 */
+@media (max-width: 768px) {
+  #ver-badge { bottom: 6px; left: 8px; }
+}
 
-  /* html/body: dvh 사용 (모바일 주소창 대응) */
-  html, body { height: 100% !important; overflow: hidden !important; }
-  .page { height: 100% !important; display: flex !important; flex-direction: column !important; }
+/* ════════════════════════════════════════
+   모바일 전용 스타일 (≤768px)
+   PC 레이아웃 완전 불변
+════════════════════════════════════════ */
+@media screen and (max-width: 768px){
 
-  /* ── 헤더: 1줄 48px ── */
+  /* 헤더 1줄 컴팩트 */
   header {
     height: 48px !important;
     min-height: 48px !important;
-    max-height: 48px !important;
     padding: 0 10px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
   }
-  header > div:first-child {
-    display: flex !important; align-items: center !important;
-    gap: 6px !important; min-width: 0 !important; overflow: hidden !important;
-    flex: 1 !important;
-  }
-  header a[href="index.html"] {
-    padding: 5px 8px !important; font-size: 11px !important;
-    flex-shrink: 0 !important; white-space: nowrap !important;
-  }
-  .brand { min-width: 0 !important; overflow: hidden !important; flex-shrink: 1 !important; }
   .brand-name {
-    font-size: 13px !important; letter-spacing: 0 !important;
-    white-space: nowrap !important; overflow: hidden !important;
-    text-overflow: ellipsis !important; display: block !important;
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
   }
   .brand-sub { display: none !important; }
-  .header-r { gap: 5px !important; flex-shrink: 0 !important; }
   .sync-badge { display: none !important; }
-  .btn-ref { padding: 5px 7px !important; font-size: 10px !important; gap: 3px !important; white-space: nowrap !important; }
-  .btn-update { padding: 5px 9px !important; font-size: 10px !important; gap: 3px !important; white-space: nowrap !important; }
+  .btn-ref {
+    padding: 5px 7px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+  }
+  .btn-update {
+    padding: 5px 9px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+  }
 
-  /* ── 필터바 ── */
-  .filter-bar, .map-filter-bar {
-    height: 38px !important; min-height: 38px !important; max-height: 38px !important;
-    padding: 0 8px !important; gap: 5px !important; flex-shrink: 0 !important;
+  /* 필터바 */
+  .map-filter-bar, .filter-bar {
+    height: 36px !important;
+    min-height: 36px !important;
+    flex-shrink: 0 !important;
   }
   .filter-chip, .dong-chip, .road-chip {
-    font-size: 10px !important; padding: 2px 8px !important;
-    height: 24px !important; white-space: nowrap !important; flex-shrink: 0 !important;
-  }
-  .filter-mode-btn { font-size: 10px !important; padding: 2px 7px !important; }
-
-  /* ── sec-mapview: 남은 높이 전부 사용 ── */
-  #sec-mapview {
-    flex: 1 !important;
-    min-height: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-  }
-
-  /* ── map-app: 세로 배치 ── */
-  .map-app {
-    flex-direction: column !important;
-    flex: 1 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-  }
-
-  /* ── 지도: 화면의 45% ── */
-  #sec-mapview > .map-wrap {
-    flex: 0 0 45% !important;
-    height: 45% !important;
-    min-height: 200px !important;
-    max-height: none !important;
-    overflow: hidden !important;
-  }
-  #map { height: 100% !important; width: 100% !important; }
-
-  /* ── 사이드바: 남은 55% ── */
-  .map-sidebar {
-    flex: 1 1 55% !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: 55% !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    border-left: none !important;
-    border-top: 1px solid rgba(59,127,255,.25) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    height: 22px !important;
   }
 
   /* 사이드바 내부 헤더 */
-  .map-sidebar-header {
-    padding: 7px 12px 5px !important;
-    flex-shrink: 0 !important;
-  }
+  .map-sidebar-header { padding: 7px 12px 5px !important; flex-shrink:0 !important; }
   .map-sidebar-header h1 { font-size: 12px !important; }
-  .map-sidebar-header p  { font-size: 10px !important; margin: 0 !important; }
+  .map-sidebar-header p  { font-size: 10px !important; margin:0 !important; }
 
-  /* 탭 바 */
-  .map-tabs {
-    flex-shrink: 0 !important;
-    padding: 0 !important; gap: 0 !important;
-  }
+  /* 탭 버튼 */
+  .map-tabs { flex-shrink: 0 !important; padding: 0 !important; }
   .map-tab-btn {
-    flex: 1 !important; text-align: center !important;
+    flex: 1 !important;
     justify-content: center !important;
-    font-size: 11px !important; padding: 7px 4px !important;
+    font-size: 11px !important;
+    padding: 7px 4px !important;
   }
 
-  /* 탭 패널: 스크롤 영역 */
+  /* 탭 패널 스크롤 */
   .map-tab-pane {
     display: none !important;
-    flex: 1 !important; min-height: 0 !important;
-    overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex: 1 !important;
+    min-height: 0 !important;
   }
-  .map-tab-pane::-webkit-scrollbar { display: none !important; }
-  .map-tab-pane.active {
-    display: flex !important;
-    flex-direction: column !important;
-  }
+  .map-tab-pane.active { display: flex !important; flex-direction: column !important; }
 
-  /* ── 건물 카드 ── */
-  .bldg-header { padding: 8px 10px !important; gap: 6px !important; }
-  .bldg-name { font-size: 12px !important; }
-  .bldg-meta { font-size: 9.5px !important; }
-  .bldg-right { gap: 4px !important; }
-  .bldg-price, .bldg-tenant-cnt { font-size: 9.5px !important; }
-  .bldg-header button[onclick*="openBldgModal"] {
-    font-size: 9px !important; padding: 2px 5px !important;
-  }
+  /* 건물 카드 */
+  .bldg-header { padding: 8px 10px !important; }
+  .bldg-name   { font-size: 12px !important; }
+  .bldg-meta   { font-size: 9.5px !important; }
   .dong-group-header { padding: 7px 10px !important; font-size: 11px !important; }
-  .dong-badge { font-size: 9px !important; padding: 1px 6px !important; }
 
-  /* ── 업종분석 ── */
-  .type-row { padding: 3px 10px !important; }
-  .type-lbl { width: 60px !important; font-size: 10px !important; }
-  .type-track { height: 22px !important; }
-  .type-bldg-item { font-size: 11px !important; padding: 5px 8px !important; }
+  /* 업종 차트 */
+  .type-row  { padding: 3px 10px !important; }
+  .type-lbl  { width: 60px !important; font-size: 10px !important; }
+  .type-track{ height: 22px !important; }
 
-  /* ── 마커 레이블 ── */
-  .mk-label {
-    font-size: 8.5px !important; max-width: 56px !important;
-    padding: 1px 4px !important; margin-top: 5px !important;
-  }
+  /* 마커 */
+  .mk-label { font-size: 8.5px !important; max-width: 54px !important; }
 
-  /* ── 상세 모달: 바텀시트 ── */
-  #bldg-modal-overlay {
-    padding: 0 !important; align-items: flex-end !important;
-  }
+  /* 상세 모달 바텀시트 */
+  #bldg-modal-overlay { padding: 0 !important; align-items: flex-end !important; }
   #bldg-modal {
-    max-width: 100% !important; width: 100% !important;
-    max-height: 85vh !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 88vh !important;
     border-radius: 14px 14px 0 0 !important;
-    animation: mSlideUp .22s ease !important;
   }
-  @keyframes mSlideUp {
-    from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-  #bldg-modal::before {
-    content: ''; display: block;
-    width: 32px; height: 4px;
-    background: rgba(255,255,255,.12); border-radius: 2px;
-    margin: 10px auto 2px;
-  }
-  .bm-header { padding: 8px 14px 6px !important; }
-  .bm-title { font-size: 14px !important; }
-  .bm-icon { width: 34px !important; height: 34px !important; font-size: 17px !important; }
-  .bm-kpi { padding: 8px 8px !important; }
-  .bm-kpi-val { font-size: 15px !important; }
-  .bm-kpi-lbl { font-size: 9px !important; }
-  .bm-floor-table th { font-size: 9px !important; padding: 5px 10px !important; }
-  .bm-floor-table td { font-size: 11px !important; padding: 5px 10px !important; }
-  .bm-footer { padding: 8px 12px !important; gap: 6px !important; }
-  .bm-btn { font-size: 11px !important; padding: 8px 8px !important; }
+  .bm-title    { font-size: 14px !important; }
+  .bm-kpi-val  { font-size: 15px !important; }
+  .bm-footer   { padding: 8px 12px !important; }
 
-  /* ── Leaflet 컨트롤 ── */
-  .leaflet-control-zoom a {
-    width: 30px !important; height: 30px !important;
-    line-height: 30px !important; font-size: 16px !important;
-  }
-  .leaflet-top.leaflet-left { top: 6px !important; left: 6px !important; }
-
-
+  /* 스크롤바 숨김 */
+  .map-sidebar::-webkit-scrollbar,
+  .map-tab-pane::-webkit-scrollbar { display: none !important; }
 }
 
-/* ── 초소형 360px ── */
-@media screen and (max-width: 360px) {
-  .brand-name { font-size: 11px !important; }
-  .btn-ref { display: none !important; }
-  .map-tab-btn { font-size: 10px !important; padding: 6px 3px !important; }
-  .type-lbl { width: 52px !important; font-size: 9px !important; }
-}
 </style>
 </head>
 <body>
@@ -3439,141 +3362,108 @@ window.closeBldgModal = closeBldgModal;
     </div>
   </div>
 </div>
-<script>
 
-
-
-<!-- 버전/빌드 배지 (PC + 모바일 공통) -->
-<div id="version-badge" style="
-  position: fixed;
-  bottom: 8px; right: 12px;
-  background: rgba(15,17,24,.9); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 20px; padding: 3px 10px;
-  font-size: 9.5px; color: rgba(136,144,170,.7);
-  font-family: 'DM Mono', monospace;
-  z-index: 100000; pointer-events: none;
-  white-space: nowrap; letter-spacing: .3px;
-">v<span id="ver-num">—</span> · <span id="ver-time">—</span></div>
+<!-- 버전 배지 -->
+<div id="ver-badge">v<span id="ver-num"></span></div>
 
 <script>
-// 모바일 UX + 버전 배지
-(function() {
-  // ── 버전 배지 표시 ──
-  var BUILD_TIME = new Date().toLocaleString('ko-KR', {
-    month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', hour12: false
-  });
-  // 버전: 날짜 기반 (MMDD.HHmm)
-  var now = new Date();
-  var VER = (now.getMonth()+1+'').padStart(2,'0') + now.getDate().toString().padStart(2,'0')
-          + '.' + now.getHours().toString().padStart(2,'0') + now.getMinutes().toString().padStart(2,'0');
+(function(){
+  /* 버전: 페이지 로드 시각 기반 */
+  var d = new Date();
+  var v = (d.getMonth()+1+'').padStart(2,'0')
+        + d.getDate().toString().padStart(2,'0')
+        + '.' + d.getHours().toString().padStart(2,'0')
+        + d.getMinutes().toString().padStart(2,'0');
+  var el = document.getElementById('ver-num');
+  if(el) el.textContent = v;
 
-  var verNum  = document.getElementById('ver-num');
-  var verTime = document.getElementById('ver-time');
-  if (verNum)  verNum.textContent  = VER;
-  if (verTime) verTime.textContent = BUILD_TIME;
-
-  // ── 모달 스와이프 다운 닫기 ──
-  document.addEventListener('DOMContentLoaded', function() {
-    var modal = document.getElementById('bldg-modal');
-    if (!modal) return;
-    var startY = 0;
-    modal.addEventListener('touchstart', function(e) {
-      startY = e.touches[0].clientY;
-    }, { passive: true });
-    modal.addEventListener('touchend', function(e) {
-      if (e.changedTouches[0].clientY - startY > 80) {
-        if (typeof closeBldgModal === 'function') closeBldgModal();
-      }
-    }, { passive: true });
-  });
-
-  // ── JS로 모바일 레이아웃 직접 제어 (인라인 스타일 override) ──
-  function setVh() {
-    var mobile = window.innerWidth <= 768;
-
-    var header    = document.querySelector('header');
-    var secMap    = document.getElementById('sec-mapview');
-    var mapWrap   = secMap ? secMap.querySelector('.map-wrap') : null;
-    var filterBar = document.getElementById('map-filter-bar');
-    var mapApp    = document.querySelector('.map-app');
-    var mapEl     = document.getElementById('map');
-    var sidebar   = document.querySelector('.map-sidebar');
-
-    if (!mapApp || !mapEl || !sidebar) return;
-
-    if (!mobile) {
-      // ── PC: 인라인 스타일 초기화 ──
-      [mapWrap, mapApp, mapEl, sidebar].forEach(function(el) {
-        if (el) el.removeAttribute('data-mobile');
-      });
-      mapApp.style.flexDirection = '';
-      mapApp.style.height = '';
-      mapApp.style.overflow = '';
-      mapEl.style.height = '';
-      mapEl.style.flex = '';
-      sidebar.style.width = '';
-      sidebar.style.height = '';
-      sidebar.style.flex = '';
-      sidebar.style.borderLeft = '';
-      sidebar.style.borderTop = '';
+  /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
+  function applyMobileLayout(){
+    if(window.innerWidth > 768){
+      /* PC 복원 */
+      var ma = document.querySelector('.map-app');
+      var me = document.getElementById('map');
+      var sb = document.querySelector('.map-sidebar');
+      if(ma){ ma.style.cssText='flex:1;min-height:0;'; }
+      if(me){ me.style.cssText=''; }
+      if(sb){ sb.style.cssText=''; }
       return;
     }
 
-    // ── 모바일: 실제 픽셀 계산 ──
-    var vh       = window.innerHeight;
-    var headerH  = header    ? header.offsetHeight    : 48;
-    var filterH  = filterBar ? filterBar.offsetHeight : 38;
-    var remain   = vh - headerH - filterH;
-    var mapH     = Math.max(Math.round(remain * 0.42), 180);
-    var sideH    = Math.max(remain - mapH, 200);
+    var hdr = document.querySelector('header');
+    var fbr = document.getElementById('map-filter-bar');
+    var ma  = document.querySelector('.map-app');
+    var me  = document.getElementById('map');
+    var sb  = document.querySelector('.map-sidebar');
+    if(!ma||!me||!sb) return;
 
-    // map-app: 세로 배치, 높이 = mapH + sideH
-    mapApp.style.cssText = [
-      'display:flex',
-      'flex-direction:column',
-      'flex:none',
-      'width:100%',
-      'height:' + (mapH + sideH) + 'px',
-      'overflow:hidden'
-    ].join(';') + ';';
+    var totalH  = window.innerHeight;
+    var headerH = hdr ? hdr.getBoundingClientRect().height : 48;
+    var filterH = fbr ? fbr.getBoundingClientRect().height : 38;
+    var remain  = totalH - headerH - filterH;
+    var mapH    = Math.max(Math.floor(remain * 0.42), 180);
+    var sideH   = Math.max(remain - mapH, 220);
 
-    // #map: 지도 영역
-    mapEl.style.cssText = [
-      'flex:none',
-      'height:' + mapH + 'px',
-      'width:100%',
-      'min-height:180px',
-      'position:relative'
-    ].join(';') + ';';
+    /* map-app: 세로 컨테이너 */
+    ma.style.cssText = [
+      'display:flex','flex-direction:column',
+      'width:100%','height:'+(mapH+sideH)+'px',
+      'min-height:0','overflow:hidden'
+    ].join(';')+';';
 
-    // .map-sidebar: 리스트 영역
-    sidebar.style.cssText = [
-      'flex:none',
-      'width:100%',
-      'height:' + sideH + 'px',
-      'min-height:200px',
+    /* #map */
+    me.style.cssText = [
+      'width:100%','height:'+mapH+'px',
+      'flex:none','min-height:0'
+    ].join(';')+';';
+
+    /* .map-sidebar */
+    sb.style.cssText = [
+      'width:100%','height:'+sideH+'px',
+      'flex:none','min-height:0',
       'border-left:none',
-      'border-top:1px solid rgba(59,127,255,.2)',
-      'display:flex',
-      'flex-direction:column',
-      'overflow:hidden',
+      'border-top:1px solid rgba(59,127,255,.18)',
+      'display:flex','flex-direction:column','overflow:hidden',
       'background:#0f1118'
-    ].join(';') + ';';
+    ].join(';')+';';
 
-    // Leaflet 갱신
-    if (window.mapInstance) {
-      setTimeout(function() { window.mapInstance.invalidateSize(); }, 150);
+    /* Leaflet 재조정 */
+    if(window.mapInstance){
+      clearTimeout(window._leafletResizeTimer);
+      window._leafletResizeTimer = setTimeout(function(){
+        window.mapInstance.invalidateSize();
+      }, 200);
     }
   }
 
-  // 초기 실행 + 이벤트
-  setTimeout(setVh, 100);   // DOM 렌더 후
-  setTimeout(setVh, 600);   // 지도 로드 완료 후 한번 더
-  window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', function() { setTimeout(setVh, 400); });
+  /* 실행 타이밍: 여러 번 호출해서 안전하게 */
+  applyMobileLayout();
+  setTimeout(applyMobileLayout, 300);
+  setTimeout(applyMobileLayout, 1000);
+  window.addEventListener('resize', applyMobileLayout);
+  window.addEventListener('orientationchange', function(){
+    setTimeout(applyMobileLayout, 400);
+  });
+
+  /* 모달 스와이프 닫기 */
+  var startY = 0;
+  document.addEventListener('touchstart', function(e){
+    var modal = document.getElementById('bldg-modal-overlay');
+    if(modal && modal.classList.contains('open')){
+      startY = e.touches[0].clientY;
+    }
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var modal = document.getElementById('bldg-modal-overlay');
+    if(modal && modal.classList.contains('open')){
+      if(e.changedTouches[0].clientY - startY > 80){
+        if(typeof closeBldgModal==='function') closeBldgModal();
+      }
+    }
+  }, {passive:true});
+
 })();
 </script>
+
 </body>
 </html>
