@@ -110,8 +110,8 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
   /* 카드: 가로형 행 레이아웃 */
   .card{
     display:flex;flex-direction:row;align-items:center;
-    padding:14px 12px 14px 0;
-    min-height:unset;border-radius:10px;
+    padding:20px 12px 20px 0;
+    min-height:90px;border-radius:10px;
     border-top:1px solid var(--border);
     border-right:1px solid var(--border);
     border-bottom:1px solid var(--border);
@@ -123,23 +123,23 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
   /* 좌측: 아이콘 + 이름 */
   .card-top{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:4px;margin-bottom:0;flex-shrink:0;
-    width:70px;padding:0 6px;
+    gap:6px;margin-bottom:0;flex-shrink:0;
+    width:76px;padding:0 6px;
   }
-  .card-icon{font-size:22px;line-height:1;}
-  .card-name{font-family:var(--disp);font-size:13px;letter-spacing:.5px;
+  .card-icon{font-size:26px;line-height:1;}
+  .card-name{font-family:var(--disp);font-size:14px;letter-spacing:.5px;
     color:var(--t1);text-align:center;line-height:1.2;}
 
   /* 중앙: 설명 + 태그 */
   .card-body-m{
     flex:1;min-width:0;
-    display:flex;flex-direction:column;gap:6px;
-    padding:0 8px;
+    display:flex;flex-direction:column;gap:8px;
+    padding:0 10px;
     border-left:1px solid var(--border);
   }
-  .card-desc{font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:0;}
-  .card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:0;}
-  .tag{font-size:9px;padding:2px 5px;}
+  .card-desc{font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:0;}
+  .card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:0;}
+  .tag{font-size:10px;padding:3px 7px;}
 
   /* 푸터 숨김 */
   .card-foot{display:none;}
@@ -232,7 +232,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
     <a class="card card-teal" href="report.html">
       <div class="card-top">
         <span class="card-icon">📊</span>
-        <span class="card-name">시장리포트</span>
+        <span class="card-name">시장<br>리포트</span>
       </div>
       <div class="card-body-m">
         <div class="card-desc">건축 관련 시장 동향, 금리·공급·임대료 흐름 리포트</div>
@@ -285,7 +285,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
 /* 버전 배지 */
 document.addEventListener('DOMContentLoaded',function(){
   var el=document.getElementById('ver-num');
-  if(el) el.textContent='0605.1800';
+  if(el) el.textContent='0605.1840';
 });
 
 function tick(){
