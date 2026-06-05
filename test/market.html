@@ -1287,8 +1287,8 @@ td:first-child{color:var(--t1);font-weight:500}
 }
 .no-result-msg span { display: block; font-size: 20px; margin-bottom: 6px; }
 
-/* 모바일 */
-@media(max-width:768px){
+/* 모바일 세로 */
+@media(max-width:768px) and (orientation:portrait){
   .map-app { flex-direction: column; }
   #map { height: 45vh; flex: none; width: 100%; }
   .map-sidebar { width: 100%; flex: 1; border-left: none; border-top: 2px solid #222636; }
@@ -1296,8 +1296,26 @@ td:first-child{color:var(--t1);font-weight:500}
   .rp-kpi-row { grid-template-columns: repeat(3,1fr); gap: 6px; }
   .rp-total-kpi { grid-template-columns: repeat(2,1fr); gap: 6px; }
 }
-@media(max-width:380px){
+@media(max-width:380px) and (orientation:portrait){
   #map { height: 40vh; }
+}
+
+/* 모바일 가로 */
+@media(max-width:1024px) and (orientation:landscape){
+  .map-app { flex-direction: row; }
+  #map { flex: 1; height: 100%; width: auto; }
+  .map-sidebar {
+    width: 260px;
+    flex: none;
+    border-left: 2px solid #222636;
+    border-top: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .map-tab { font-size: 11px; padding: 7px 4px; }
+  .map-sidebar-header { padding: 6px 10px 4px !important; }
+  .map-sidebar-header h1 { font-size: 11px !important; }
+  .map-sidebar-header p  { font-size: 10px !important; margin: 0 !important; }
 }
 
 /* ── 브리핑 목록 스크롤 ── */
@@ -3371,7 +3389,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0605.1930';
+  if(el) el.textContent = '0605.2000';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
