@@ -1445,23 +1445,24 @@ td:first-child{color:var(--t1);font-weight:500}
 #ver-badge {
   position: fixed;
   z-index: 99999;
-  font-size: 9.5px;
+  font-size: 12px;
   font-family: 'DM Mono', monospace;
-  color: rgba(136,144,170,.6);
-  background: rgba(8,9,13,.7);
-  border: 1px solid rgba(255,255,255,.07);
+  color: rgba(136,144,170,.85);
+  background: rgba(8,9,13,.82);
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 10px;
-  padding: 2px 9px;
+  padding: 4px 12px;
   pointer-events: none;
   white-space: nowrap;
+  letter-spacing: .3px;
 }
 /* PC: 사이드바 우하단 */
 @media (min-width: 769px) {
-  #ver-badge { bottom: 8px; right: 8px; }
+  #ver-badge { bottom: 10px; right: 10px; }
 }
-/* 모바일: 필터바 위 좌측 */
+/* 모바일: 하단 좌측 */
 @media (max-width: 768px) {
-  #ver-badge { bottom: 6px; left: 8px; }
+  #ver-badge { bottom: 8px; left: 10px; font-size: 11px; }
 }
 
 /* ════════════════════════════════════════
