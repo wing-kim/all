@@ -701,7 +701,11 @@ td:first-child{color:var(--t1);font-weight:500}
 }
 @media(max-width:600px){
   .page{padding:0 14px 60px}.kpi-row{grid-template-columns:1fr 1fr}
-  .brand-name{font-size:22px}.irr-metrics{grid-template-columns:1fr}
+  /* 헤더 한 줄 유지 — "시장 리포트" 6글자+공백 대응 */
+  .brand-name{font-size:17px;letter-spacing:1px}
+  .brand{gap:6px}
+  /* ← 메인 버튼 텍스트 축소 */
+  header a[href="index.html"]{padding:6px 10px;font-size:11px}.irr-metrics{grid-template-columns:1fr}
 }
 
 /* ══ 시장 리포트 탭 ══════════════════════════════════════ */
@@ -768,7 +772,11 @@ td:first-child{color:var(--t1);font-weight:500}
   .header-r{gap:8px}
   .btn-ref{padding:6px 10px;font-size:11px}
   header{padding:14px 0 14px;margin-bottom:16px}
-  .brand-name{font-size:22px}
+  /* 헤더 한 줄 유지 — "시장 리포트" 6글자+공백 대응 */
+  .brand-name{font-size:17px;letter-spacing:1px}
+  .brand{gap:6px}
+  /* ← 메인 버튼 텍스트 축소 */
+  header a[href="index.html"]{padding:6px 10px;font-size:11px}
 
   /* ── 목록 카드: 항목 패딩·폰트 확대 ── */
   .mr-item{padding:14px 16px}
