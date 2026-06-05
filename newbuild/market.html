@@ -1440,6 +1440,127 @@ td:first-child{color:var(--t1);font-weight:500}
 .bm-btn-pdf { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #ef4444; }
 .bm-btn-pdf:hover { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); }
 .bm-empty { padding: 30px; text-align: center; color: #4a5270; font-size: 12px; }
+
+/* ── 버전 배지 ── */
+#ver-badge {
+  position: fixed;
+  z-index: 99999;
+  font-size: 9.5px;
+  font-family: 'DM Mono', monospace;
+  color: rgba(136,144,170,.6);
+  background: rgba(8,9,13,.7);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px;
+  padding: 2px 9px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* PC: 사이드바 우하단 */
+@media (min-width: 769px) {
+  #ver-badge { bottom: 8px; right: 8px; }
+}
+/* 모바일: 필터바 위 좌측 */
+@media (max-width: 768px) {
+  #ver-badge { bottom: 6px; left: 8px; }
+}
+
+/* ════════════════════════════════════════
+   모바일 전용 스타일 (≤768px)
+   PC 레이아웃 완전 불변
+════════════════════════════════════════ */
+@media screen and (max-width: 768px){
+
+  /* 헤더 1줄 컴팩트 */
+  header {
+    height: 46px !important;
+    min-height: 46px !important;
+    padding: 0 8px !important;
+    overflow: hidden !important;
+    flex-shrink: 0 !important;
+  }
+  .brand-name {
+    font-size: 13px !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+  }
+  .brand-sub { display: none !important; }
+  .sync-badge { display: none !important; }
+  .btn-ref {
+    padding: 4px 7px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+  }
+  .btn-update {
+    display: none !important;  /* 모바일에서 숨김 */
+  }
+
+  /* 필터바 */
+  .map-filter-bar, .filter-bar {
+    height: 36px !important;
+    min-height: 36px !important;
+    flex-shrink: 0 !important;
+  }
+  .filter-chip, .dong-chip, .road-chip {
+    font-size: 10px !important;
+    padding: 2px 8px !important;
+    height: 22px !important;
+  }
+
+  /* 사이드바 내부 헤더 */
+  .map-sidebar-header { padding: 7px 12px 5px !important; flex-shrink:0 !important; }
+  .map-sidebar-header h1 { font-size: 12px !important; }
+  .map-sidebar-header p  { font-size: 10px !important; margin:0 !important; }
+
+  /* 탭 버튼 */
+  .map-tabs { flex-shrink: 0 !important; padding: 0 !important; }
+  .map-tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    font-size: 11px !important;
+    padding: 7px 4px !important;
+  }
+
+  /* 탭 패널 스크롤 */
+  .map-tab-pane {
+    display: none !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+  .map-tab-pane.active { display: flex !important; flex-direction: column !important; }
+
+  /* 건물 카드 */
+  .bldg-header { padding: 8px 10px !important; }
+  .bldg-name   { font-size: 12px !important; }
+  .bldg-meta   { font-size: 9.5px !important; }
+  .dong-group-header { padding: 7px 10px !important; font-size: 11px !important; }
+
+  /* 업종 차트 */
+  .type-row  { padding: 3px 10px !important; }
+  .type-lbl  { width: 60px !important; font-size: 10px !important; }
+  .type-track{ height: 22px !important; }
+
+  /* 마커 */
+  .mk-label { font-size: 8.5px !important; max-width: 54px !important; }
+
+  /* 상세 모달 바텀시트 */
+  #bldg-modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  #bldg-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 14px 14px 0 0 !important;
+  }
+  .bm-title    { font-size: 14px !important; }
+  .bm-kpi-val  { font-size: 15px !important; }
+  .bm-footer   { padding: 8px 12px !important; }
+
+  /* 스크롤바 숨김 */
+  .map-sidebar::-webkit-scrollbar,
+  .map-tab-pane::-webkit-scrollbar { display: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -3239,5 +3360,108 @@ window.closeBldgModal = closeBldgModal;
     </div>
   </div>
 </div>
+
+<!-- 버전 배지 -->
+<div id="ver-badge">v<span id="ver-num"></span></div>
+
+<script>
+(function(){
+  /* 버전: 페이지 로드 시각 기반 */
+  var d = new Date();
+  var v = (d.getMonth()+1+'').padStart(2,'0')
+        + d.getDate().toString().padStart(2,'0')
+        + '.' + d.getHours().toString().padStart(2,'0')
+        + d.getMinutes().toString().padStart(2,'0');
+  var el = document.getElementById('ver-num');
+  if(el) el.textContent = v;
+
+  /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
+  function applyMobileLayout(){
+    if(window.innerWidth > 768){
+      /* PC 복원 */
+      var ma = document.querySelector('.map-app');
+      var me = document.getElementById('map');
+      var sb = document.querySelector('.map-sidebar');
+      if(ma){ ma.style.cssText='flex:1;min-height:0;'; }
+      if(me){ me.style.cssText=''; }
+      if(sb){ sb.style.cssText=''; }
+      return;
+    }
+
+    var hdr = document.querySelector('header');
+    var fbr = document.getElementById('map-filter-bar');
+    var ma  = document.querySelector('.map-app');
+    var me  = document.getElementById('map');
+    var sb  = document.querySelector('.map-sidebar');
+    if(!ma||!me||!sb) return;
+
+    var totalH  = window.innerHeight;
+    var headerH = hdr ? hdr.getBoundingClientRect().height : 46;
+    var filterH = fbr ? fbr.getBoundingClientRect().height : 38;
+    var remain  = totalH - headerH - filterH;
+    var mapH    = Math.max(Math.floor(remain * 0.42), 180);
+    var sideH   = Math.max(remain - mapH, 220);
+
+    /* map-app: 세로 컨테이너 */
+    ma.style.cssText = [
+      'display:flex','flex-direction:column',
+      'width:100%','height:'+(mapH+sideH)+'px',
+      'min-height:0','overflow:hidden'
+    ].join(';')+';';
+
+    /* #map */
+    me.style.cssText = [
+      'width:100%','height:'+mapH+'px',
+      'flex:none','min-height:0'
+    ].join(';')+';';
+
+    /* .map-sidebar */
+    sb.style.cssText = [
+      'width:100%','height:'+sideH+'px',
+      'flex:none','min-height:0',
+      'border-left:none',
+      'border-top:1px solid rgba(59,127,255,.18)',
+      'display:flex','flex-direction:column','overflow:hidden',
+      'background:#0f1118'
+    ].join(';')+';';
+
+    /* Leaflet 재조정 */
+    if(window.mapInstance){
+      clearTimeout(window._leafletResizeTimer);
+      window._leafletResizeTimer = setTimeout(function(){
+        window.mapInstance.invalidateSize();
+      }, 200);
+    }
+  }
+
+  /* 실행 타이밍: 여러 번 호출해서 안전하게 */
+  applyMobileLayout();
+  setTimeout(applyMobileLayout, 300);
+  setTimeout(applyMobileLayout, 1000);
+  window.addEventListener('resize', applyMobileLayout);
+  window.addEventListener('orientationchange', function(){
+    setTimeout(applyMobileLayout, 400);
+  });
+
+  /* 모달 스와이프 닫기 */
+  var startY = 0;
+  document.addEventListener('touchstart', function(e){
+    var modal = document.getElementById('bldg-modal-overlay');
+    if(modal && modal.classList.contains('open')){
+      startY = e.touches[0].clientY;
+    }
+  }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var modal = document.getElementById('bldg-modal-overlay');
+    if(modal && modal.classList.contains('open')){
+      if(e.changedTouches[0].clientY - startY > 80){
+        if(typeof closeBldgModal==='function') closeBldgModal();
+      }
+    }
+  }, {passive:true});
+
+})();
+</script>
+
 </body>
 </html>
