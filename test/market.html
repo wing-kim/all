@@ -3447,12 +3447,12 @@ window.closeBldgModal = closeBldgModal;
 <div id="version-badge" style="
   position: fixed;
   bottom: 8px; right: 12px;
-  background: rgba(15,17,24,.75); backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,.07);
+  background: rgba(15,17,24,.9); backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,.1);
   border-radius: 20px; padding: 3px 10px;
-  font-size: 9.5px; color: rgba(136,144,170,.55);
+  font-size: 9.5px; color: rgba(136,144,170,.7);
   font-family: 'DM Mono', monospace;
-  z-index: 8000; pointer-events: none;
+  z-index: 100000; pointer-events: none;
   white-space: nowrap; letter-spacing: .3px;
 ">v<span id="ver-num">—</span> · <span id="ver-time">—</span></div>
 
@@ -3491,52 +3491,88 @@ window.closeBldgModal = closeBldgModal;
 
   // ── JS로 모바일 레이아웃 직접 제어 (인라인 스타일 override) ──
   function setVh() {
-    if (window.innerWidth > 768) {
-      // PC: 원래대로 복원
-      var mapApp = document.querySelector('.map-app');
-      if (mapApp) {
-        mapApp.style.flexDirection = '';
-        mapApp.style.height = '';
-      }
-      var mapWrap = document.querySelector('#sec-mapview > .map-wrap');
-      if (mapWrap) { mapWrap.style.flex = ''; mapWrap.style.height = ''; }
-      var sidebar = document.querySelector('.map-sidebar');
-      if (sidebar) { sidebar.style.flex = ''; sidebar.style.height = ''; sidebar.style.width = ''; }
+    var mobile = window.innerWidth <= 768;
+
+    var header    = document.querySelector('header');
+    var secMap    = document.getElementById('sec-mapview');
+    var mapWrap   = secMap ? secMap.querySelector('.map-wrap') : null;
+    var filterBar = document.getElementById('map-filter-bar');
+    var mapApp    = document.querySelector('.map-app');
+    var mapEl     = document.getElementById('map');
+    var sidebar   = document.querySelector('.map-sidebar');
+
+    if (!mapApp || !mapEl || !sidebar) return;
+
+    if (!mobile) {
+      // ── PC: 인라인 스타일 초기화 ──
+      [mapWrap, mapApp, mapEl, sidebar].forEach(function(el) {
+        if (el) el.removeAttribute('data-mobile');
+      });
+      mapApp.style.flexDirection = '';
+      mapApp.style.height = '';
+      mapApp.style.overflow = '';
+      mapEl.style.height = '';
+      mapEl.style.flex = '';
+      sidebar.style.width = '';
+      sidebar.style.height = '';
+      sidebar.style.flex = '';
+      sidebar.style.borderLeft = '';
+      sidebar.style.borderTop = '';
       return;
     }
 
-    var vh = window.innerHeight;
-    var mapApp = document.querySelector('.map-app');
-    var mapWrap = document.querySelector('#sec-mapview > .map-wrap');
-    var sidebar = document.querySelector('.map-sidebar');
-    if (!mapApp || !mapWrap || !sidebar) return;
+    // ── 모바일: 실제 픽셀 계산 ──
+    var vh       = window.innerHeight;
+    var headerH  = header    ? header.offsetHeight    : 48;
+    var filterH  = filterBar ? filterBar.offsetHeight : 38;
+    var remain   = vh - headerH - filterH;
+    var mapH     = Math.max(Math.round(remain * 0.42), 180);
+    var sideH    = Math.max(remain - mapH, 200);
 
-    // ★ 인라인 스타일로 직접 세로 배치 강제
-    mapApp.style.cssText = 'flex:1; min-height:0; flex-direction:column; display:flex; overflow:hidden;';
+    // map-app: 세로 배치, 높이 = mapH + sideH
+    mapApp.style.cssText = [
+      'display:flex',
+      'flex-direction:column',
+      'flex:none',
+      'width:100%',
+      'height:' + (mapH + sideH) + 'px',
+      'overflow:hidden'
+    ].join(';') + ';';
 
-    // 헤더 + 필터바 높이
-    var header = document.querySelector('header');
-    var filterBar = document.querySelector('.filter-bar') || document.querySelector('.map-filter-bar');
-    var usedH = (header    ? header.offsetHeight    : 48)
-              + (filterBar ? filterBar.offsetHeight : 38);
+    // #map: 지도 영역
+    mapEl.style.cssText = [
+      'flex:none',
+      'height:' + mapH + 'px',
+      'width:100%',
+      'min-height:180px',
+      'position:relative'
+    ].join(';') + ';';
 
-    var remain = Math.max(vh - usedH, 400);
-    var mapH   = Math.round(remain * 0.44);
-    var sideH  = remain - mapH;
+    // .map-sidebar: 리스트 영역
+    sidebar.style.cssText = [
+      'flex:none',
+      'width:100%',
+      'height:' + sideH + 'px',
+      'min-height:200px',
+      'border-left:none',
+      'border-top:1px solid rgba(59,127,255,.2)',
+      'display:flex',
+      'flex-direction:column',
+      'overflow:hidden',
+      'background:#0f1118'
+    ].join(';') + ';';
 
-    mapWrap.style.cssText = 'flex:none; height:' + mapH + 'px; min-height:200px; overflow:hidden; display:flex; flex-direction:column;';
-    sidebar.style.cssText = 'flex:none; height:' + sideH + 'px; min-height:200px; width:100%; border-left:none; border-top:1px solid rgba(59,127,255,.2); display:flex; flex-direction:column; overflow:hidden;';
-
-    // Leaflet 지도 크기 강제 갱신
+    // Leaflet 갱신
     if (window.mapInstance) {
-      setTimeout(function() { window.mapInstance.invalidateSize(); }, 100);
+      setTimeout(function() { window.mapInstance.invalidateSize(); }, 150);
     }
   }
 
   // 초기 실행 + 이벤트
-  setTimeout(setVh, 50);  // DOM 렌더 후 실행
+  setTimeout(setVh, 100);   // DOM 렌더 후
+  setTimeout(setVh, 600);   // 지도 로드 완료 후 한번 더
   window.addEventListener('resize', setVh);
-  window.addEventListener('orientationchange', function() { setTimeout(setVh, 350); });
+  window.addEventListener('orientationchange', function() { setTimeout(setVh, 400); });
 })();
 </script>
 </body>
