@@ -698,10 +698,58 @@ td:first-child{color:var(--t1);font-weight:500}
   .g-row{flex-wrap:wrap}.g-info{width:100%}
   .ls-group-sum{display:none}
 }
-@media(max-width:600px){
-  .page{padding:0 14px 60px}.kpi-row{grid-template-columns:1fr 1fr}
-  .brand-name{font-size:22px}.irr-metrics{grid-template-columns:1fr}
+
+/* ═══════════════════════════════════
+   모바일 전용 (480px 이하)
+═══════════════════════════════════ */
+@media(max-width:480px){
+  .page{padding:0 12px 60px;max-width:100%}
+  header{padding:10px 0;flex-wrap:wrap;gap:8px}
+  .brand-name{font-size:18px}
+  .btn-ref{font-size:11px;padding:6px 10px}
+  .sync-badge{font-size:10px}
+  .tab-nav{padding:0;gap:0;overflow-x:auto;white-space:nowrap;
+    display:flex;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tab-nav::-webkit-scrollbar{display:none}
+  .tab-btn{flex-shrink:0;font-size:11px;padding:10px 12px}
+  .kpi-row{grid-template-columns:1fr 1fr;gap:6px}
+  .kpi{padding:10px 12px;min-height:64px}
+  .kpi-val{font-size:15px}
+  .kpi-lbl{font-size:9px}
+  .tl-wrap{padding:0 0 16px;overflow-x:auto}
+  .tl-ruler-row,.tl-gantt-body{min-width:540px}
+  .tl-ruler-lbl{width:130px;font-size:8px}
+  .g-row{min-width:540px}
+  .g-info{width:130px;padding-right:8px}
+  .g-name{font-size:11px}
+  .g-period-txt{font-size:8.5px}
+  .g-dur{width:48px;font-size:10px}
+  .irr-addr-grid{grid-template-columns:1fr;gap:10px}
+  .irr-kpi-row{grid-template-columns:1fr 1fr;gap:6px}
+  .calc-grid{grid-template-columns:1fr;gap:10px}
+  .prop-grid{grid-template-columns:1fr;gap:10px}
+  .irr-res-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .irr-metrics{grid-template-columns:1fr}
+  .irr-detail-grid{grid-template-columns:1fr}
+  .irr-cf-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .irr-tabs{gap:1px;padding:2px}
+  .irr-tab{font-size:10px;padding:6px 6px}
+  .ls-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .ls-table{font-size:11px;min-width:500px}
+  .ls-table th{padding:6px 8px;font-size:8.5px}
+  .ls-table td{padding:6px 8px}
+  .ls-group-head{padding:8px 10px;flex-wrap:wrap;gap:6px}
+  .cf-section-head{padding:10px 14px;flex-wrap:wrap;gap:6px}
+  .cf-section-title{font-size:12px}
+  .cf-summary-split{grid-template-columns:1fr;gap:10px}
+  .cf-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .cf-table{font-size:11px}
+  .cf-table th{padding:7px 8px;font-size:9px}
+  .cf-table td{padding:7px 8px}
+  #sec-corp .cf-section-monthly .cf-table td,
+  #sec-corp .cf-section-monthly .cf-table th{padding-left:6px!important;padding-right:6px!important}
 }
+
 </style>
 </head>
 <body>
