@@ -742,7 +742,7 @@ td:first-child{color:var(--t1);font-weight:500}
   #sec-market.market-detail-open .card:last-child{display:block!important;min-height:520px}
   /* 뒤로가기 버튼 표시 */
   .mr-mobile-back{display:block;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border2);border-radius:8px;background:var(--s2);color:var(--t1);font-size:13px;font-weight:600;cursor:pointer;user-select:none}
-  #mr-detail-body{max-height:70vh;overflow-y:auto}
+  /* 본문 높이는 모바일 전용 미디어쿼리에서 관리 */
 }
 /* 시장 리포트 모바일 가로 (Landscape) — 2열 복원 */
 @media(max-width:1024px) and (orientation:landscape){
@@ -753,6 +753,73 @@ td:first-child{color:var(--t1);font-weight:500}
 /* 탭 모바일 가로 스크롤 */
 .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tab{flex-shrink:0}
+
+/* ════════════════════════════════════════════════
+   모바일 세로 (≤768px portrait) — 가독성 최적화
+   PC 레이아웃/스타일 일체 수정 없음
+════════════════════════════════════════════════ */
+@media(max-width:768px){
+
+  /* ── 페이지 여백 축소 ── */
+  .page{padding:0 14px 60px}
+
+  /* ── 헤더: 시간 배지 숨기고 버튼 간격 축소 ── */
+  .sync-badge{display:none}
+  .header-r{gap:8px}
+  .btn-ref{padding:6px 10px;font-size:11px}
+  header{padding:14px 0 14px;margin-bottom:16px}
+  .brand-name{font-size:22px}
+
+  /* ── 목록 카드: 항목 패딩·폰트 확대 ── */
+  .mr-item{padding:14px 16px}
+  .mr-date{font-size:11px;margin-bottom:4px}
+  .mr-title{font-size:14px;margin-bottom:5px}
+  .mr-preview{font-size:12px;line-height:1.6}
+
+  /* ── 본문 영역: 스크롤 높이 전체화면으로 ── */
+  #mr-detail-body{
+    max-height:calc(100vh - 180px)!important;
+    padding:16px 16px 32px!important;
+    font-size:14px;
+    line-height:2;
+  }
+
+  /* ── 본문 텍스트 가독성 ── */
+  .mr-heading{
+    font-size:15px;
+    margin:20px 0 8px;
+    line-height:1.5;
+    word-break:keep-all;
+  }
+  .mr-line{
+    font-size:13.5px;
+    line-height:2;
+    word-break:keep-all;
+    color:#a0a8c0;
+  }
+  .mr-source{
+    font-size:12px;
+    margin:6px 0 14px;
+    padding-left:0;
+    word-break:break-all;
+  }
+  .mr-link{font-size:12px}
+  .mr-divider{margin:12px 0}
+
+  /* ── 뒤로가기 버튼 크기 확대 ── */
+  .mr-mobile-back{
+    padding:14px 16px!important;
+    font-size:14px!important;
+    border-radius:10px!important;
+  }
+
+  /* ── 카드 헤더 폰트 ── */
+  .card-head{padding:12px 14px}
+  .card-title{font-size:13px}
+
+  /* ── notice 배너 ── */
+  .notice{font-size:11px;padding:9px 12px;flex-wrap:wrap;gap:6px}
+}
 
 
 /* reset handled by parent */
