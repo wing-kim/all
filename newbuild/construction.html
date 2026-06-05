@@ -757,6 +757,28 @@ td:first-child{color:var(--t1);font-weight:500}
     overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important}
 }
 
+
+/* ── 버전 배지 ── */
+#ver-badge {
+  position: fixed;
+  z-index: 99999;
+  font-size: 12px;
+  font-family: var(--mono), monospace;
+  color: rgba(136,144,170,.85);
+  background: rgba(8,9,13,.82);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: 4px 12px;
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: .3px;
+}
+@media (min-width: 769px) {
+  #ver-badge { bottom: 10px; right: 10px; }
+}
+@media (max-width: 768px) {
+  #ver-badge { bottom: 8px; left: 10px; font-size: 11px; }
+}
 </style>
 </head>
 <body>
@@ -4595,6 +4617,13 @@ LOADED.add('timeline');
 load('timeline');
 /* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
 setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
+
+  /* ── 버전 배지 ── */
+  document.addEventListener('DOMContentLoaded', function(){
+    var el = document.getElementById('ver-num');
+    if(el) el.textContent = '0605.1630';
+  });
 </script>
+<div id="ver-badge">v<span id="ver-num"></span></div>
 </body>
 </html>

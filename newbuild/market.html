@@ -997,6 +997,8 @@ td:first-child{color:var(--t1);font-weight:500}
 .bldg-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .bldg-price { font-size: 11px; font-weight: 600; color: #3b7fff; background: rgba(59,127,255,.1); padding: 2px 7px; border-radius: 20px; }
 .bldg-tenant-cnt { font-size: 11px; color: #4a5270; background: #151821; padding: 2px 6px; border-radius: 20px; }
+.detail-hint { font-size: 10px; color: var(--blue); opacity: .7; font-weight: 600; letter-spacing: .3px; transition: opacity .15s; white-space: nowrap; }
+.bldg-header:hover .detail-hint { opacity: 1; }
 .chevron { font-size: 10px; color: #4a5270; transition: transform .25s; width: 14px; text-align: center; }
 .bldg-card.active .chevron { transform: rotate(180deg); }
 
@@ -1445,23 +1447,24 @@ td:first-child{color:var(--t1);font-weight:500}
 #ver-badge {
   position: fixed;
   z-index: 99999;
-  font-size: 9.5px;
+  font-size: 12px;
   font-family: 'DM Mono', monospace;
-  color: rgba(136,144,170,.6);
-  background: rgba(8,9,13,.7);
-  border: 1px solid rgba(255,255,255,.07);
+  color: rgba(136,144,170,.85);
+  background: rgba(8,9,13,.82);
+  border: 1px solid rgba(255,255,255,.12);
   border-radius: 10px;
-  padding: 2px 9px;
+  padding: 4px 12px;
   pointer-events: none;
   white-space: nowrap;
+  letter-spacing: .3px;
 }
 /* PC: 사이드바 우하단 */
 @media (min-width: 769px) {
-  #ver-badge { bottom: 8px; right: 8px; }
+  #ver-badge { bottom: 10px; right: 10px; }
 }
-/* 모바일: 필터바 위 좌측 */
+/* 모바일: 하단 좌측 */
 @media (max-width: 768px) {
-  #ver-badge { bottom: 6px; left: 8px; }
+  #ver-badge { bottom: 8px; left: 10px; font-size: 11px; }
 }
 
 /* ════════════════════════════════════════
@@ -2165,7 +2168,7 @@ function getMarkerSize(b) {
 // ══════════════════════════════════════════════
 // 건물 선택 (지도↔목록 연동)
 // ══════════════════════════════════════════════
-function selectBuilding(id) {
+function selectBuilding(id, noModal) {
   // 이전 선택 해제
   if (selectedId) {
     document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
@@ -2214,8 +2217,8 @@ function selectBuilding(id) {
   const b = buildings.find(x=>x.id===id);
   if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
 
-  // 상세 모달 오픈 (탭 관계없이 항상)
-  if (typeof openBldgModal === 'function') {
+  // 상세 모달 오픈 (noModal=true이면 스킵)
+  if (!noModal && typeof openBldgModal === 'function') {
     setTimeout(function(){ openBldgModal(id); }, 400);
   }
 }
@@ -2229,7 +2232,7 @@ function toggleCard(id) {
   document.querySelectorAll('.mk-wrap').forEach(el => el.classList.remove('selected'));
   selectedId = null;
 
-  if (!isSelected) selectBuilding(id);
+  if (!isSelected) selectBuilding(id, true);
 }
 
 // ══════════════════════════════════════════════
@@ -2299,7 +2302,6 @@ function renderBuildingList() {
             <div class="bldg-right">
               ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
               <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
-              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="background:rgba(59,127,255,.15);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;font-family:var(--sans)" title="상세 보기">상세</button>
               <span class="chevron">▼</span>
             </div>
           </div>
@@ -2309,6 +2311,7 @@ function renderBuildingList() {
                 <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
                 <tbody>${rows}</tbody>
               </table>
+              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="margin-top:10px;width:100%;background:rgba(59,127,255,.12);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:11px;font-weight:700;padding:6px 0;border-radius:5px;cursor:pointer;font-family:var(--sans);">📄 상세 보기</button>
             </div>
           </div>
         </div>`;
@@ -3367,13 +3370,8 @@ window.closeBldgModal = closeBldgModal;
 <script>
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
-  var d = new Date();
-  var v = (d.getMonth()+1+'').padStart(2,'0')
-        + d.getDate().toString().padStart(2,'0')
-        + '.' + d.getHours().toString().padStart(2,'0')
-        + d.getMinutes().toString().padStart(2,'0');
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = v;
+  if(el) el.textContent = '0605.1930';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
