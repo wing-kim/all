@@ -748,6 +748,13 @@ td:first-child{color:var(--t1);font-weight:500}
   .cf-table td{padding:7px 8px}
   #sec-corp .cf-section-monthly .cf-table td,
   #sec-corp .cf-section-monthly .cf-table th{padding-left:6px!important;padding-right:6px!important}
+
+  /* 법인비용 고정 테이블 → 모바일에서 가로 스크롤로 전환 */
+  #sec-corp .cf-section:not(.cf-section-monthly) .cf-table{
+    table-layout:auto!important;width:max-content!important;min-width:100%}
+  #sec-corp .cf-section:not(.cf-section-monthly) .cf-table td,
+  #sec-corp .cf-section:not(.cf-section-monthly) .cf-table th{
+    overflow:visible!important;white-space:nowrap!important;text-overflow:clip!important}
 }
 
 </style>
