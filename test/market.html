@@ -1472,9 +1472,9 @@ td:first-child{color:var(--t1);font-weight:500}
 
   /* 헤더 1줄 컴팩트 */
   header {
-    height: 48px !important;
-    min-height: 48px !important;
-    padding: 0 10px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    padding: 0 8px !important;
     overflow: hidden !important;
     flex-shrink: 0 !important;
   }
@@ -1486,14 +1486,12 @@ td:first-child{color:var(--t1);font-weight:500}
   .brand-sub { display: none !important; }
   .sync-badge { display: none !important; }
   .btn-ref {
-    padding: 5px 7px !important;
+    padding: 4px 7px !important;
     font-size: 10px !important;
     white-space: nowrap !important;
   }
   .btn-update {
-    padding: 5px 9px !important;
-    font-size: 10px !important;
-    white-space: nowrap !important;
+    display: none !important;  /* 모바일에서 숨김 */
   }
 
   /* 필터바 */
@@ -3398,7 +3396,7 @@ window.closeBldgModal = closeBldgModal;
     if(!ma||!me||!sb) return;
 
     var totalH  = window.innerHeight;
-    var headerH = hdr ? hdr.getBoundingClientRect().height : 48;
+    var headerH = hdr ? hdr.getBoundingClientRect().height : 46;
     var filterH = fbr ? fbr.getBoundingClientRect().height : 38;
     var remain  = totalH - headerH - filterH;
     var mapH    = Math.max(Math.floor(remain * 0.42), 180);
