@@ -1440,6 +1440,244 @@ td:first-child{color:var(--t1);font-weight:500}
 .bm-btn-pdf { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25); color: #ef4444; }
 .bm-btn-pdf:hover { background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.4); }
 .bm-empty { padding: 30px; text-align: center; color: #4a5270; font-size: 12px; }
+
+/* ═══════════════════════════════════════════════════════
+   모바일 반응형 (768px 이하)
+   PC 레이아웃 완전 유지, 모바일만 적용
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── 기본 폰트/터치 최적화 ── */
+  * { -webkit-tap-highlight-color: transparent; }
+
+  /* ── 헤더 ── */
+  header {
+    padding: 10px 12px 8px;
+  }
+  header h1, .map-header-title {
+    font-size: 14px !important;
+  }
+  .header-actions, .map-header-actions {
+    gap: 6px !important;
+  }
+  .header-actions button, .map-header-actions button {
+    font-size: 11px !important;
+    padding: 5px 8px !important;
+  }
+
+  /* ── 전체 레이아웃: 가로 → 세로 전환 ── */
+  .map-app {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  /* ── 지도: 화면 50vh 고정 ── */
+  #map {
+    height: 50vh !important;
+    min-height: 260px !important;
+    max-height: 380px !important;
+    flex: none !important;
+  }
+  .map-wrap {
+    height: 50vh !important;
+    min-height: 260px !important;
+    max-height: 380px !important;
+    flex: none !important;
+  }
+
+  /* ── 필터바 ── */
+  .filter-bar,
+  .map-filter-bar {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 8px !important;
+    gap: 6px !important;
+  }
+  .filter-chip, .dong-chip, .road-chip {
+    font-size: 11px !important;
+    padding: 3px 9px !important;
+    height: 26px !important;
+    white-space: nowrap !important;
+  }
+  .filter-mode-btn {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+  }
+
+  /* ── 사이드바: 전체폭, 고정 높이 ── */
+  .map-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    max-height: calc(100vh - 50vh - 90px) !important;
+    min-height: 280px !important;
+    border-left: none !important;
+    border-top: 1px solid #222636 !important;
+    flex: 1 !important;
+  }
+
+  /* ── 사이드바 헤더/탭 ── */
+  .map-sidebar-header {
+    padding: 8px 12px !important;
+  }
+  .map-tabs {
+    padding: 0 12px !important;
+    gap: 0 !important;
+  }
+  .map-tab-btn {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+    flex: 1 !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  /* ── 사이드바 패널: 스크롤 ── */
+  .map-tab-pane.active {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .map-tab-buildings,
+  .map-tab-types,
+  .map-tab-report {
+    max-height: none !important;
+  }
+
+  /* ── 건물 카드 ── */
+  .bldg-header {
+    padding: 9px 12px !important;
+    gap: 7px !important;
+  }
+  .bldg-name {
+    font-size: 12px !important;
+  }
+  .bldg-meta {
+    font-size: 10px !important;
+  }
+  .bldg-price {
+    font-size: 10px !important;
+  }
+  .bldg-tenant-cnt {
+    font-size: 10px !important;
+  }
+  /* 상세 버튼 */
+  .bldg-header button[onclick*="openBldgModal"] {
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+  }
+
+  /* ── 동 그룹 헤더 ── */
+  .dong-group-header {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* ── 업종분석 탭 ── */
+  .type-row {
+    padding: 4px 12px !important;
+  }
+  .type-bar-row {
+    gap: 6px !important;
+  }
+  .type-lbl {
+    width: 64px !important;
+    font-size: 10px !important;
+  }
+  .type-track {
+    height: 24px !important;
+  }
+  .type-cnt {
+    font-size: 12px !important;
+  }
+  .type-bldg-item {
+    font-size: 11px !important;
+    padding: 5px 10px !important;
+  }
+
+  /* ── 건물 상세 모달: 모바일 풀스크린 ── */
+  #bldg-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important; /* 하단에서 올라오는 시트 */
+  }
+  #bldg-modal {
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    animation: modalSlideUp .25s ease !important;
+  }
+  @keyframes modalSlideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  /* 모달 상단 드래그 핸들 */
+  #bldg-modal::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: rgba(255,255,255,.15);
+    border-radius: 2px;
+    margin: 10px auto 0;
+  }
+  .bm-header {
+    padding: 12px 14px 10px !important;
+  }
+  .bm-title { font-size: 14px !important; }
+  .bm-kpi-val { font-size: 16px !important; }
+  .bm-kpi-lbl { font-size: 9px !important; }
+  .bm-floor-table th { font-size: 9px !important; padding: 5px 10px !important; }
+  .bm-floor-table td { font-size: 11px !important; padding: 6px 10px !important; }
+  .bm-btn { font-size: 11px !important; padding: 9px 10px !important; }
+  .bm-footer { padding: 10px 12px !important; gap: 6px !important; }
+
+  /* ── 마커 레이블 ── */
+  .mk-label {
+    font-size: 9px !important;
+    max-width: 60px !important;
+    padding: 1px 4px !important;
+  }
+
+  /* ── 범례 ── */
+  .map-legend {
+    font-size: 10px !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    bottom: 8px !important;
+    right: 8px !important;
+  }
+
+  /* ── 줌 컨트롤 위치 조정 ── */
+  .leaflet-top.leaflet-right {
+    top: 8px !important;
+    right: 8px !important;
+  }
+  .leaflet-control-zoom a {
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    font-size: 16px !important;
+  }
+
+  /* ── 업데이트 버튼 (하단 고정) ── */
+  #update-btn-wrap, .update-btn-wrap {
+    position: fixed !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    z-index: 9000 !important;
+  }
+
+  /* ── 스크롤바 숨김 (모바일) ── */
+  .map-sidebar::-webkit-scrollbar,
+  .map-tab-pane::-webkit-scrollbar { display: none !important; }
+
+}
+
+/* ── 아주 작은 화면 (360px 이하) ── */
+@media (max-width: 360px) {
+  .type-lbl { width: 56px !important; font-size: 9.5px !important; }
+  .map-tab-btn { font-size: 11px !important; padding: 7px 8px !important; }
+  .bm-kpi-val { font-size: 14px !important; }
+}
 </style>
 </head>
 <body>
@@ -3239,5 +3477,71 @@ window.closeBldgModal = closeBldgModal;
     </div>
   </div>
 </div>
+<script>
+// ═══════════════════════════════════════════════════════
+// 모바일 UX 개선
+// ═══════════════════════════════════════════════════════
+(function() {
+  var isMobile = function() { return window.innerWidth <= 768; };
+
+  // ── 마커/건물 클릭 시 모바일에서 지도 영역으로 스크롤 ──
+  var origSelect = window.selectBuilding;
+  if (origSelect) {
+    window.selectBuilding = function(id) {
+      origSelect(id);
+      if (isMobile()) {
+        // 지도 영역 상단으로 스크롤
+        var mapEl = document.getElementById('map') || document.querySelector('.map-wrap');
+        if (mapEl) {
+          mapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+  }
+
+  // ── 모달 스와이프 다운으로 닫기 ──
+  var modal = document.getElementById('bldg-modal');
+  if (modal) {
+    var startY = 0, isDragging = false;
+    modal.addEventListener('touchstart', function(e) {
+      startY = e.touches[0].clientY;
+      isDragging = true;
+    }, { passive: true });
+    modal.addEventListener('touchmove', function(e) {
+      if (!isDragging) return;
+      var dy = e.touches[0].clientY - startY;
+      if (dy > 0) {
+        modal.style.transform = 'translateY(' + dy + 'px)';
+        modal.style.transition = 'none';
+      }
+    }, { passive: true });
+    modal.addEventListener('touchend', function(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      var dy = e.changedTouches[0].clientY - startY;
+      modal.style.transition = '';
+      if (dy > 80) {
+        // 80px 이상 내리면 닫기
+        modal.style.transform = '';
+        if (typeof closeBldgModal === 'function') closeBldgModal();
+      } else {
+        modal.style.transform = '';
+      }
+    }, { passive: true });
+  }
+
+  // ── 사이드바 탭 전환 시 모바일에서 사이드바로 스크롤 ──
+  document.addEventListener('click', function(e) {
+    if (!isMobile()) return;
+    var btn = e.target.closest('.map-tab-btn');
+    if (btn) {
+      setTimeout(function() {
+        var sidebar = document.querySelector('.map-sidebar');
+        if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+  });
+})();
+</script>
 </body>
 </html>
