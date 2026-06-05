@@ -997,6 +997,8 @@ td:first-child{color:var(--t1);font-weight:500}
 .bldg-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .bldg-price { font-size: 11px; font-weight: 600; color: #3b7fff; background: rgba(59,127,255,.1); padding: 2px 7px; border-radius: 20px; }
 .bldg-tenant-cnt { font-size: 11px; color: #4a5270; background: #151821; padding: 2px 6px; border-radius: 20px; }
+.detail-hint { font-size: 10px; color: var(--blue); opacity: .7; font-weight: 600; letter-spacing: .3px; transition: opacity .15s; white-space: nowrap; }
+.bldg-header:hover .detail-hint { opacity: 1; }
 .chevron { font-size: 10px; color: #4a5270; transition: transform .25s; width: 14px; text-align: center; }
 .bldg-card.active .chevron { transform: rotate(180deg); }
 
@@ -2300,7 +2302,6 @@ function renderBuildingList() {
             <div class="bldg-right">
               ${b.price ? `<span class="bldg-price">${b.price}</span>` : ''}
               <span class="bldg-tenant-cnt">${b.tenants.length}건</span>
-              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="background:rgba(59,127,255,.15);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;cursor:pointer;white-space:nowrap;font-family:var(--sans)" title="상세 보기">상세</button>
               <span class="chevron">▼</span>
             </div>
           </div>
@@ -2310,6 +2311,7 @@ function renderBuildingList() {
                 <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
                 <tbody>${rows}</tbody>
               </table>
+              <button onclick="event.stopPropagation();openBldgModal('${b.id}')" style="margin-top:10px;width:100%;background:rgba(59,127,255,.12);border:1px solid rgba(59,127,255,.3);color:#3b7fff;font-size:11px;font-weight:700;padding:6px 0;border-radius:5px;cursor:pointer;font-family:var(--sans);">📄 상세 보기</button>
             </div>
           </div>
         </div>`;
@@ -3369,7 +3371,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0605.1630';
+  if(el) el.textContent = '0605.1900';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
