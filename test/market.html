@@ -1761,6 +1761,30 @@ td:first-child{color:var(--t1);font-weight:500}
   color: #4a5270; font-size: 12px; line-height: 2;
 }
 
+/* 단일 슬라이더 행 */
+.ana-single-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 4px;
+}
+.ana-single-label {
+  font-size: 9.5px; color: #3b7fff; width: 24px; flex-shrink: 0;
+  font-weight: 700; letter-spacing: .2px;
+}
+.ana-single-unit {
+  font-size: 10px; color: #4a5270; flex-shrink: 0;
+  font-family: 'DM Mono', monospace; min-width: 30px;
+}
+.ana-single-row input[type=range] {
+  flex: 1; height: 3px; border-radius: 2px;
+  -webkit-appearance: none; appearance: none;
+  background: #1c2030; outline: none; cursor: pointer;
+}
+.ana-single-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 14px; height: 14px;
+  border-radius: 50%; background: #3b7fff;
+  border: 2px solid #08090d; cursor: pointer;
+  box-shadow: 0 0 4px rgba(59,127,255,.4);
+}
+
 /* 모달 신규 컬럼 섹션 */
 .bm-info-grid {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -1947,51 +1971,57 @@ td:first-child{color:var(--t1);font-weight:500}
 
           <!-- 업종 필터 -->
           <div class="ana-filter-group">
-            <div class="ana-filter-label">업종</div>
+            <div class="ana-filter-label">업종 <span style="color:#4a5270;font-weight:400;font-size:9px">(복수 선택 가능)</span></div>
             <div class="ana-type-chips" id="ana-type-chips"></div>
           </div>
 
-          <!-- 면적 필터 -->
+          <!-- 면적 필터 — 단일 슬라이더: 이 평수 이상 -->
           <div class="ana-filter-group">
-            <div class="ana-filter-label">임차인 면적 <span class="ana-range-val" id="ana-area-val">전체</span></div>
-            <div class="ana-range-row">
-              <span class="ana-range-unit">평</span>
-              <input type="range" id="ana-area-min" min="0" max="500" value="0" step="5" oninput="anaUpdateRange()">
-              <span class="ana-range-sep">~</span>
-              <input type="range" id="ana-area-max" min="0" max="500" value="500" step="5" oninput="anaUpdateRange()">
+            <div class="ana-filter-label">면적 <span class="ana-range-val" id="ana-area-val">전체</span></div>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이상</span>
+              <input type="range" id="ana-area-min" min="0" max="300" value="0" step="5" oninput="anaUpdateRange()">
+              <span class="ana-single-unit">평</span>
+            </div>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이하</span>
+              <input type="range" id="ana-area-max" min="0" max="300" value="300" step="5" oninput="anaUpdateRange()">
+              <span class="ana-single-unit">평</span>
             </div>
           </div>
 
           <!-- 임대료 필터 -->
           <div class="ana-filter-group">
             <div class="ana-filter-label">월 임대료 <span class="ana-range-val" id="ana-rent-val">전체</span></div>
-            <div class="ana-range-row">
-              <span class="ana-range-unit">만원</span>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이상</span>
               <input type="range" id="ana-rent-min" min="0" max="5000" value="0" step="50" oninput="anaUpdateRange()">
-              <span class="ana-range-sep">~</span>
+              <span class="ana-single-unit">만원</span>
+            </div>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이하</span>
               <input type="range" id="ana-rent-max" min="0" max="5000" value="5000" step="50" oninput="anaUpdateRange()">
+              <span class="ana-single-unit">만원</span>
             </div>
           </div>
 
           <!-- 준공년도 필터 -->
           <div class="ana-filter-group">
             <div class="ana-filter-label">준공년도 <span class="ana-range-val" id="ana-year-val">전체</span></div>
-            <div class="ana-range-row">
-              <span class="ana-range-unit">년</span>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이후</span>
               <input type="range" id="ana-year-min" min="1960" max="2025" value="1960" step="1" oninput="anaUpdateRange()">
-              <span class="ana-range-sep">~</span>
-              <input type="range" id="ana-year-max" min="1960" max="2025" value="2025" step="1" oninput="anaUpdateRange()">
+              <span class="ana-single-unit">년</span>
             </div>
           </div>
 
           <!-- 매매가 필터 -->
           <div class="ana-filter-group">
-            <div class="ana-filter-label">건물 매매가 <span class="ana-range-val" id="ana-price-val">전체</span></div>
-            <div class="ana-range-row">
-              <span class="ana-range-unit">억</span>
-              <input type="range" id="ana-price-min" min="0" max="3000" value="0" step="50" oninput="anaUpdateRange()">
-              <span class="ana-range-sep">~</span>
+            <div class="ana-filter-label">매매가 <span class="ana-range-val" id="ana-price-val">전체</span></div>
+            <div class="ana-single-row">
+              <span class="ana-single-label">이하</span>
               <input type="range" id="ana-price-max" min="0" max="3000" value="3000" step="50" oninput="anaUpdateRange()">
+              <span class="ana-single-unit">억</span>
             </div>
           </div>
 
@@ -3112,13 +3142,25 @@ function mapShowTab(name) {
   document.querySelectorAll('#sec-mapview .map-tab').forEach((t,i)=>t.classList.toggle('active', names[i]===name));
   document.querySelectorAll('#sec-mapview .map-tab-pane').forEach(p=>p.classList.toggle('active', p.id==='map-tab-'+name));
   if (name !== 'chart' && selectedType) resetTypeFilter();
+
+  // 상권분석 탭: 사이드바 넓어지고 마커 필터 적용
+  var sidebar = document.querySelector('.map-sidebar');
+  var mapEl   = document.getElementById('map');
+  var mapApp  = document.querySelector('.map-app');
   if (name === 'analysis') {
     anaInit();
-    // 상권분석 탭에선 지도 필터 해제 (분석 자체 필터로 운영)
+    if (sidebar && window.innerWidth > 768) {
+      sidebar.style.width = '380px';
+      sidebar.style.minWidth = '380px';
+    }
   } else {
-    // 다른 탭으로 돌아가면 상권분석 필터 해제
     anaResetMarkers();
+    if (sidebar && window.innerWidth > 768) {
+      sidebar.style.width = '';
+      sidebar.style.minWidth = '';
+    }
   }
+  if (window.mapInstance) window.mapInstance.invalidateSize();
 }
 
 // ══ 지도 초기화 (lazy) ══
@@ -3345,10 +3387,10 @@ function anaUpdateRange() {
   _anaFilter.yearMin = yMin; _anaFilter.yearMax = yMax;
   _anaFilter.priceMin = pMin; _anaFilter.priceMax = pMax;
 
-  var aVal = (aMin===0 && aMax===500) ? '전체' : aMin+'~'+aMax+'평';
-  var rVal = (rMin===0 && rMax===5000) ? '전체' : rMin.toLocaleString()+'~'+rMax.toLocaleString()+'만원';
-  var yVal = (yMin===1960 && yMax===2025) ? '전체' : yMin+'~'+yMax+'년';
-  var pVal = (pMin===0 && pMax===3000) ? '전체' : pMin+'~'+pMax+'억';
+  var aVal = (aMin===0 && aMax===300) ? '전체' : (aMin>0&&aMax<300) ? aMin+'평~'+aMax+'평' : aMin>0 ? aMin+'평 이상' : aMax+'평 이하';
+  var rVal = (rMin===0 && rMax===5000) ? '전체' : (rMin>0&&rMax<5000) ? rMin.toLocaleString()+'~'+rMax.toLocaleString()+'만' : rMin>0 ? rMin.toLocaleString()+'만 이상' : rMax.toLocaleString()+'만 이하';
+  var yVal = (yMin===1960) ? '전체' : yMin+'년 이후';
+  var pVal = (pMax===3000) ? '전체' : pMax+'억 이하';
 
   document.getElementById('ana-area-val').textContent = aVal;
   document.getElementById('ana-rent-val').textContent = rVal;
@@ -3365,15 +3407,15 @@ function anaReset() {
     el.style.background = '';
     el.style.borderColor = '';
   });
-  ['ana-area-min','ana-rent-min','ana-year-min','ana-price-min'].forEach(function(id){
+  ['ana-area-min','ana-rent-min','ana-year-min'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = el.min;
   });
-  ['ana-area-max','ana-rent-max','ana-year-max','ana-price-max'].forEach(function(id){
+  ['ana-area-max','ana-rent-max','ana-price-max'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value = el.max;
   });
-  _anaFilter.areaMin=0; _anaFilter.areaMax=500;
+  _anaFilter.areaMin=0; _anaFilter.areaMax=300;
   _anaFilter.rentMin=0; _anaFilter.rentMax=5000;
   _anaFilter.yearMin=1960; _anaFilter.yearMax=2025;
   _anaFilter.priceMin=0; _anaFilter.priceMax=3000;
@@ -3503,16 +3545,21 @@ function anaRender() {
 
 function _anaApplyMarkersToMap(matchedBuildings) {
   var matchedIds = new Set(matchedBuildings.map(function(b){ return b.id; }));
+  // 필터가 아무것도 안 걸려있으면 전체 표시
+  var isFiltered = matchedBuildings.length < (typeof buildings !== 'undefined' ? buildings.filter(function(b){return !b.isOurs;}).length : 0);
   if (typeof markersMap === 'undefined') return;
   Object.keys(markersMap).forEach(function(id){
+    var marker = markersMap[id];
+    if (!marker) return;
     var el = document.getElementById('mkw-'+id);
-    if (!el) return;
     if (matchedIds.has(id)) {
-      el.classList.remove('dimmed');
-      el.classList.add('type-match');
+      // 조건 일치 — 표시
+      if (marker._icon) marker._icon.style.display = '';
+      if (el) { el.classList.remove('dimmed'); el.classList.add('type-match'); }
     } else {
-      el.classList.add('dimmed');
-      el.classList.remove('type-match');
+      // 조건 불일치 — 완전 숨김
+      if (marker._icon) marker._icon.style.display = 'none';
+      if (el) { el.classList.remove('type-match'); el.classList.remove('dimmed'); }
     }
   });
 }
@@ -3520,6 +3567,8 @@ function _anaApplyMarkersToMap(matchedBuildings) {
 function anaResetMarkers() {
   if (typeof markersMap === 'undefined') return;
   Object.keys(markersMap).forEach(function(id){
+    var marker = markersMap[id];
+    if (marker && marker._icon) marker._icon.style.display = '';
     var el = document.getElementById('mkw-'+id);
     if (!el) return;
     el.classList.remove('dimmed');
@@ -3979,7 +4028,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0616.2300';
+  if(el) el.textContent = '0616.2330';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
