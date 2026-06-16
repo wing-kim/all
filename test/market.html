@@ -3292,7 +3292,7 @@ function anaInit() {
       var types = Object.keys(typeof TYPES !== 'undefined' ? TYPES : {});
       chipsEl.innerHTML = types.map(function(t){
         var color = (typeof TYPES !== 'undefined' ? TYPES[t] : '') || '#888';
-        return '<div class="ana-type-chip" data-type="'+t+'" onclick="anaToggleType(''+t+'')" style="--chip-color:'+color+'">'+t+'</div>';
+        return '<div class="ana-type-chip" data-type="'+t+'" onclick="anaToggleType(\''+t+'\')" style="--chip-color:'+color+'">'+t+'</div>';
       }).join('');
     }
     _anaInited = true;
@@ -3489,7 +3489,7 @@ function anaRender() {
       metaItems.push(distLabel);
     }
 
-    return '<div class="ana-bldg-card" onclick="anaSelectBuilding(''+b.id+'')">' +
+    return '<div class="ana-bldg-card" onclick="anaSelectBuilding(\''+b.id+'\')">' +
       '<div class="ana-bldg-head">' +
         '<div class="ana-bldg-dot"></div>' +
         '<div class="ana-bldg-name">'+b.name+'</div>' +
