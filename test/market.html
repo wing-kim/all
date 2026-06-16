@@ -3150,8 +3150,8 @@ function mapShowTab(name) {
   if (name === 'analysis') {
     anaInit();
     if (sidebar && window.innerWidth > 768) {
-      sidebar.style.width = '380px';
-      sidebar.style.minWidth = '380px';
+      sidebar.style.width = '480px';
+      sidebar.style.minWidth = '480px';
     }
   } else {
     anaResetMarkers();
@@ -3366,36 +3366,41 @@ function anaToggleType(type) {
   anaRender();
 }
 
-function anaUpdateRange() {
-  var aMin = parseInt(document.getElementById('ana-area-min').value)||0;
-  var aMax = parseInt(document.getElementById('ana-area-max').value)||500;
-  var rMin = parseInt(document.getElementById('ana-rent-min').value)||0;
-  var rMax = parseInt(document.getElementById('ana-rent-max').value)||5000;
-  var yMin = parseInt(document.getElementById('ana-year-min').value)||1960;
-  var yMax = parseInt(document.getElementById('ana-year-max').value)||2025;
-  var pMin = parseInt(document.getElementById('ana-price-min').value)||0;
-  var pMax = parseInt(document.getElementById('ana-price-max').value)||3000;
+function _getSliderVal(id, fallback) {
+  var el = document.getElementById(id);
+  return el ? (parseInt(el.value) || fallback) : fallback;
+}
 
-  // 최소/최대 교차 방지
-  if (aMin > aMax) { aMin = aMax; document.getElementById('ana-area-min').value = aMin; }
-  if (rMin > rMax) { rMin = rMax; document.getElementById('ana-rent-min').value = rMin; }
-  if (yMin > yMax) { yMin = yMax; document.getElementById('ana-year-min').value = yMin; }
-  if (pMin > pMax) { pMin = pMax; document.getElementById('ana-price-min').value = pMin; }
+function anaUpdateRange() {
+  var aMin = _getSliderVal('ana-area-min', 0);
+  var aMax = _getSliderVal('ana-area-max', 300);
+  var rMin = _getSliderVal('ana-rent-min', 0);
+  var rMax = _getSliderVal('ana-rent-max', 5000);
+  var yMin = _getSliderVal('ana-year-min', 1960);
+  var pMax = _getSliderVal('ana-price-max', 3000);
 
   _anaFilter.areaMin = aMin; _anaFilter.areaMax = aMax;
   _anaFilter.rentMin = rMin; _anaFilter.rentMax = rMax;
-  _anaFilter.yearMin = yMin; _anaFilter.yearMax = yMax;
-  _anaFilter.priceMin = pMin; _anaFilter.priceMax = pMax;
+  _anaFilter.yearMin = yMin; _anaFilter.yearMax = 2025;
+  _anaFilter.priceMin = 0;   _anaFilter.priceMax = pMax;
 
-  var aVal = (aMin===0 && aMax===300) ? '전체' : (aMin>0&&aMax<300) ? aMin+'평~'+aMax+'평' : aMin>0 ? aMin+'평 이상' : aMax+'평 이하';
-  var rVal = (rMin===0 && rMax===5000) ? '전체' : (rMin>0&&rMax<5000) ? rMin.toLocaleString()+'~'+rMax.toLocaleString()+'만' : rMin>0 ? rMin.toLocaleString()+'만 이상' : rMax.toLocaleString()+'만 이하';
+  var aVal = (aMin===0 && aMax===300) ? '전체'
+    : aMin>0 && aMax<300 ? aMin+'~'+aMax+'평'
+    : aMin>0 ? aMin+'평 이상' : aMax+'평 이하';
+  var rVal = (rMin===0 && rMax===5000) ? '전체'
+    : rMin>0 && rMax<5000 ? rMin.toLocaleString()+'~'+rMax.toLocaleString()+'만'
+    : rMin>0 ? rMin.toLocaleString()+'만 이상' : rMax.toLocaleString()+'만 이하';
   var yVal = (yMin===1960) ? '전체' : yMin+'년 이후';
   var pVal = (pMax===3000) ? '전체' : pMax+'억 이하';
 
-  document.getElementById('ana-area-val').textContent = aVal;
-  document.getElementById('ana-rent-val').textContent = rVal;
-  document.getElementById('ana-year-val').textContent = yVal;
-  document.getElementById('ana-price-val').textContent = pVal;
+  var aEl = document.getElementById('ana-area-val');
+  var rEl = document.getElementById('ana-rent-val');
+  var yEl = document.getElementById('ana-year-val');
+  var pEl = document.getElementById('ana-price-val');
+  if (aEl) aEl.textContent = aVal;
+  if (rEl) rEl.textContent = rVal;
+  if (yEl) yEl.textContent = yVal;
+  if (pEl) pEl.textContent = pVal;
 
   anaRender();
 }
@@ -4028,7 +4033,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0616.2330';
+  if(el) el.textContent = '0616.2345';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
