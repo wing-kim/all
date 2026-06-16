@@ -1582,6 +1582,214 @@ td:first-child{color:var(--t1);font-weight:500}
   .map-tab-pane::-webkit-scrollbar { display: none !important; }
 }
 
+
+/* ══════════════════════════════════════════
+   상권 분석 탭 — 필터 + 결과 패널
+══════════════════════════════════════════ */
+#map-tab-analysis {
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+#map-tab-analysis.active { display: flex; }
+
+.ana-filter-panel {
+  flex-shrink: 0;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid #1c2030;
+  background: #0a0c14;
+  overflow-y: auto;
+  max-height: 55%;
+  scrollbar-width: thin;
+  scrollbar-color: #2a3050 transparent;
+}
+.ana-filter-title {
+  font-size: 11px; font-weight: 800; color: #8890aa;
+  text-transform: uppercase; letter-spacing: .8px;
+  margin-bottom: 8px;
+}
+.ana-filter-group {
+  margin-bottom: 10px;
+}
+.ana-filter-label {
+  font-size: 10px; font-weight: 700; color: #4a5270;
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 5px; display: flex; align-items: center; gap: 6px;
+}
+.ana-range-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: #3b7fff;
+  background: rgba(59,127,255,.1);
+  border: 1px solid rgba(59,127,255,.2);
+  padding: 1px 6px; border-radius: 3px;
+  margin-left: auto;
+}
+.ana-range-row {
+  display: flex; align-items: center; gap: 5px;
+}
+.ana-range-unit {
+  font-size: 9px; color: #4a5270; width: 22px; flex-shrink: 0;
+}
+.ana-range-sep {
+  font-size: 10px; color: #2a3050; flex-shrink: 0;
+}
+.ana-range-row input[type=range] {
+  flex: 1; height: 3px; border-radius: 2px;
+  -webkit-appearance: none; appearance: none;
+  background: #1c2030; outline: none; cursor: pointer;
+}
+.ana-range-row input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px;
+  border-radius: 50%; background: #3b7fff;
+  border: 2px solid #08090d; cursor: pointer;
+}
+.ana-type-chips {
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.ana-type-chip {
+  font-size: 10px; padding: 2px 8px; border-radius: 20px;
+  border: 1px solid #2a3050; color: #8890aa;
+  background: #0f1118; cursor: pointer; transition: all .15s;
+  white-space: nowrap;
+}
+.ana-type-chip.on {
+  color: #fff; border-color: transparent;
+}
+.ana-reset-btn {
+  width: 100%; margin-top: 6px; padding: 6px;
+  background: rgba(255,255,255,.04); border: 1px solid #1c2030;
+  border-radius: 6px; color: #4a5270; font-size: 11px;
+  cursor: pointer; transition: all .15s;
+}
+.ana-reset-btn:hover { color: #eef0f8; border-color: #3b7fff; }
+
+/* 결과 패널 */
+.ana-result-panel {
+  flex: 1; min-height: 0; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: #2a3050 transparent;
+}
+.ana-result-summary {
+  padding: 10px 12px;
+  background: #09090f;
+  border-bottom: 1px solid #1c2030;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.ana-sum-kpi {
+  display: flex; flex-direction: column; align-items: center;
+  background: #0f1118; border: 1px solid #1c2030;
+  border-radius: 6px; padding: 5px 10px; min-width: 56px;
+}
+.ana-sum-kpi-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px; font-weight: 700; color: #eef0f8;
+}
+.ana-sum-kpi-lbl {
+  font-size: 9px; color: #4a5270; margin-top: 2px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+.ana-insight {
+  width: 100%; font-size: 10px; color: #8890aa;
+  line-height: 1.7; margin-top: 2px;
+  background: rgba(59,127,255,.05);
+  border: 1px solid rgba(59,127,255,.1);
+  border-radius: 6px; padding: 6px 10px;
+}
+.ana-result-list {
+  padding: 6px 8px;
+}
+.ana-bldg-card {
+  background: #0f1118; border: 1px solid #1c2030;
+  border-radius: 8px; margin-bottom: 6px; overflow: hidden;
+  cursor: pointer; transition: border-color .15s;
+}
+.ana-bldg-card:hover { border-color: #3b5bdb; }
+.ana-bldg-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+}
+.ana-bldg-dot {
+  width: 8px; height: 8px; border-radius: 2px;
+  flex-shrink: 0; transform: rotate(45deg);
+  background: #3b5bdb;
+}
+.ana-bldg-name {
+  font-size: 12px; font-weight: 700; color: #eef0f8;
+  flex: 1; min-width: 0; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.ana-bldg-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: #3b7fff; flex-shrink: 0;
+}
+.ana-bldg-meta {
+  padding: 0 10px 8px;
+  display: flex; flex-wrap: wrap; gap: 4px;
+}
+.ana-bldg-meta-item {
+  font-size: 9.5px; color: #4a5270;
+  background: #151821; border: 1px solid #1c2030;
+  border-radius: 4px; padding: 1px 6px;
+}
+.ana-tenant-rows {
+  border-top: 1px solid #151821;
+  padding: 4px 0;
+}
+.ana-tenant-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 10px; font-size: 10px;
+}
+.ana-tenant-floor {
+  color: #4a5270; font-family: 'DM Mono', monospace;
+  font-size: 9px; width: 28px; flex-shrink: 0;
+}
+.ana-tenant-name {
+  color: #c7cfe8; flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ana-tenant-type {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px;
+  color: #fff; flex-shrink: 0;
+}
+.ana-tenant-rent {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px; color: #22d186; flex-shrink: 0;
+  white-space: nowrap;
+}
+.ana-empty {
+  padding: 30px 14px; text-align: center;
+  color: #4a5270; font-size: 12px; line-height: 2;
+}
+
+/* 모달 신규 컬럼 섹션 */
+.bm-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; padding: 12px 16px;
+  border-bottom: 1px solid #151821;
+}
+.bm-info-item {
+  display: flex; flex-direction: column;
+  background: #080a10; border: 1px solid #1c2030;
+  border-radius: 6px; padding: 6px 10px;
+}
+.bm-info-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 600; color: #eef0f8;
+}
+.bm-info-lbl {
+  font-size: 9px; color: #4a5270; margin-top: 2px;
+  text-transform: uppercase; letter-spacing: .3px;
+}
+/* 층별 테이블 확장 컬럼 */
+.bm-floor-table th.bm-th-rent { text-align: right; }
+.bm-floor-table td.bm-td-rent {
+  text-align: right; font-family: 'DM Mono', monospace;
+  font-size: 10px; color: #22d186;
+}
+.bm-floor-table td.bm-td-area {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; color: #8890aa;
+}
 </style>
 </head>
 <body>
@@ -1711,7 +1919,7 @@ td:first-child{color:var(--t1);font-weight:500}
     <div class="map-tabs">
       <div class="map-tab active" onclick="mapShowTab('buildings')">건물 목록</div>
       <div class="map-tab" onclick="mapShowTab('chart')">업종 분석</div>
-      <div class="map-tab" onclick="mapShowTab('report')">임대 리포트</div>
+      <div class="map-tab" onclick="mapShowTab('analysis')">상권 분석</div>
       <div class="map-tab" onclick="mapShowTab('legend')">범례</div>
     </div>
 
@@ -1731,9 +1939,70 @@ td:first-child{color:var(--t1);font-weight:500}
         </div>
       </div>
 
-      <!-- ══ 임대 리포트 TAB ══ -->
-      <div class="map-tab-pane" id="map-tab-report">
-        <div class="report-wrap" id="report-wrap"></div>
+      <!-- ══ 상권 분석 TAB ══ -->
+      <div class="map-tab-pane" id="map-tab-analysis">
+        <!-- 필터 패널 -->
+        <div class="ana-filter-panel">
+          <div class="ana-filter-title">🔍 필터 조건</div>
+
+          <!-- 업종 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">업종</div>
+            <div class="ana-type-chips" id="ana-type-chips"></div>
+          </div>
+
+          <!-- 면적 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">임차인 면적 <span class="ana-range-val" id="ana-area-val">전체</span></div>
+            <div class="ana-range-row">
+              <span class="ana-range-unit">평</span>
+              <input type="range" id="ana-area-min" min="0" max="500" value="0" step="5" oninput="anaUpdateRange()">
+              <span class="ana-range-sep">~</span>
+              <input type="range" id="ana-area-max" min="0" max="500" value="500" step="5" oninput="anaUpdateRange()">
+            </div>
+          </div>
+
+          <!-- 임대료 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">월 임대료 <span class="ana-range-val" id="ana-rent-val">전체</span></div>
+            <div class="ana-range-row">
+              <span class="ana-range-unit">만원</span>
+              <input type="range" id="ana-rent-min" min="0" max="5000" value="0" step="50" oninput="anaUpdateRange()">
+              <span class="ana-range-sep">~</span>
+              <input type="range" id="ana-rent-max" min="0" max="5000" value="5000" step="50" oninput="anaUpdateRange()">
+            </div>
+          </div>
+
+          <!-- 준공년도 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">준공년도 <span class="ana-range-val" id="ana-year-val">전체</span></div>
+            <div class="ana-range-row">
+              <span class="ana-range-unit">년</span>
+              <input type="range" id="ana-year-min" min="1960" max="2025" value="1960" step="1" oninput="anaUpdateRange()">
+              <span class="ana-range-sep">~</span>
+              <input type="range" id="ana-year-max" min="1960" max="2025" value="2025" step="1" oninput="anaUpdateRange()">
+            </div>
+          </div>
+
+          <!-- 매매가 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">건물 매매가 <span class="ana-range-val" id="ana-price-val">전체</span></div>
+            <div class="ana-range-row">
+              <span class="ana-range-unit">억</span>
+              <input type="range" id="ana-price-min" min="0" max="3000" value="0" step="50" oninput="anaUpdateRange()">
+              <span class="ana-range-sep">~</span>
+              <input type="range" id="ana-price-max" min="0" max="3000" value="3000" step="50" oninput="anaUpdateRange()">
+            </div>
+          </div>
+
+          <button class="ana-reset-btn" onclick="anaReset()">↺ 필터 초기화</button>
+        </div>
+
+        <!-- 결과 패널 -->
+        <div class="ana-result-panel" id="ana-result-panel">
+          <div class="ana-result-summary" id="ana-result-summary"></div>
+          <div class="ana-result-list" id="ana-result-list"></div>
+        </div>
       </div>
 
       <!-- ══ 범례 TAB ══ -->
@@ -1834,7 +2103,15 @@ function rowsToBuildings(rows){
         })(),
         dong:row['동']||'기타', distance,
         source:row['파일명']||'',
-        fileId:row['파일ID']||'', tenants:[]
+        fileId:row['파일ID']||'',
+        priceNum: (function(){
+          var v = row['매매가 (억)'] || row['매매가(억)'] || row['매매가'] || '0';
+          return parseFloat(v.replace(/[^0-9.]/g,'')) || 0;
+        })(),
+        builtYear: parseInt(row['준공년도']||'0')||0,
+        elevator: row['승강기']||'',
+        parking:  row['주차대수']||'',
+        tenants:[]
       };
     }
     if(row['임차인']&&row['임차인'].trim()){
@@ -1843,7 +2120,12 @@ function rowsToBuildings(rows){
         floor:row['층']||'',
         name:row['임차인'].trim(),
         type: normalizeType(rawType),
-        rawType: rawType
+        rawType: rawType,
+        areaM2:  parseFloat(row['면적(㎡)']||'0')||0,
+        areaPy:  parseFloat(row['면적(평)']||'0')||0,
+        deposit: parseInt(row['보증금(만원)']||'0')||0,
+        rent:    parseInt(row['임대료(만원)']||'0')||0,
+        mgmt:    parseInt(row['관리비(만원)']||'0')||0,
       });
     }
   });
@@ -2826,10 +3108,17 @@ function toggleArea(key) {
 
 
 function mapShowTab(name) {
-  const names = ['buildings','chart','report','legend'];
+  const names = ['buildings','chart','analysis','legend'];
   document.querySelectorAll('#sec-mapview .map-tab').forEach((t,i)=>t.classList.toggle('active', names[i]===name));
   document.querySelectorAll('#sec-mapview .map-tab-pane').forEach(p=>p.classList.toggle('active', p.id==='map-tab-'+name));
   if (name !== 'chart' && selectedType) resetTypeFilter();
+  if (name === 'analysis') {
+    anaInit();
+    // 상권분석 탭에선 지도 필터 해제 (분석 자체 필터로 운영)
+  } else {
+    // 다른 탭으로 돌아가면 상권분석 필터 해제
+    anaResetMarkers();
+  }
 }
 
 // ══ 지도 초기화 (lazy) ══
@@ -2982,6 +3271,274 @@ window.flyToBuilding    = flyToBuilding;
 window.selectType       = selectType;
 window.applyMapFilter   = applyMapFilter;
 window.toggleDongGroup  = toggleDongGroup;
+
+// ══════════════════════════════════════════════
+// 상권 분석 탭 — 필터 & 결과 엔진
+// ══════════════════════════════════════════════
+var _anaInited = false;
+var _anaFilter = {
+  types: new Set(),   // 선택 업종 (비어있으면 전체)
+  areaMin: 0, areaMax: 500,
+  rentMin: 0, rentMax: 5000,
+  yearMin: 1960, yearMax: 2025,
+  priceMin: 0, priceMax: 3000,
+};
+
+function anaInit() {
+  if (!_anaInited) {
+    // 업종 칩 생성
+    var chipsEl = document.getElementById('ana-type-chips');
+    if (chipsEl && chipsEl.children.length === 0) {
+      var types = Object.keys(typeof TYPES !== 'undefined' ? TYPES : {});
+      chipsEl.innerHTML = types.map(function(t){
+        var color = (typeof TYPES !== 'undefined' ? TYPES[t] : '') || '#888';
+        return '<div class="ana-type-chip" data-type="'+t+'" onclick="anaToggleType(''+t+'')" style="--chip-color:'+color+'">'+t+'</div>';
+      }).join('');
+    }
+    _anaInited = true;
+  }
+  anaUpdateRange();
+  anaRender();
+}
+
+function anaToggleType(type) {
+  if (_anaFilter.types.has(type)) {
+    _anaFilter.types.delete(type);
+  } else {
+    _anaFilter.types.add(type);
+  }
+  // 칩 UI 반영
+  document.querySelectorAll('.ana-type-chip').forEach(function(el){
+    var t = el.getAttribute('data-type');
+    var color = (typeof TYPES !== 'undefined' ? TYPES[t] : '') || '#888';
+    if (_anaFilter.types.has(t)) {
+      el.classList.add('on');
+      el.style.background = color;
+      el.style.borderColor = color;
+    } else {
+      el.classList.remove('on');
+      el.style.background = '';
+      el.style.borderColor = '';
+    }
+  });
+  anaRender();
+}
+
+function anaUpdateRange() {
+  var aMin = parseInt(document.getElementById('ana-area-min').value)||0;
+  var aMax = parseInt(document.getElementById('ana-area-max').value)||500;
+  var rMin = parseInt(document.getElementById('ana-rent-min').value)||0;
+  var rMax = parseInt(document.getElementById('ana-rent-max').value)||5000;
+  var yMin = parseInt(document.getElementById('ana-year-min').value)||1960;
+  var yMax = parseInt(document.getElementById('ana-year-max').value)||2025;
+  var pMin = parseInt(document.getElementById('ana-price-min').value)||0;
+  var pMax = parseInt(document.getElementById('ana-price-max').value)||3000;
+
+  // 최소/최대 교차 방지
+  if (aMin > aMax) { aMin = aMax; document.getElementById('ana-area-min').value = aMin; }
+  if (rMin > rMax) { rMin = rMax; document.getElementById('ana-rent-min').value = rMin; }
+  if (yMin > yMax) { yMin = yMax; document.getElementById('ana-year-min').value = yMin; }
+  if (pMin > pMax) { pMin = pMax; document.getElementById('ana-price-min').value = pMin; }
+
+  _anaFilter.areaMin = aMin; _anaFilter.areaMax = aMax;
+  _anaFilter.rentMin = rMin; _anaFilter.rentMax = rMax;
+  _anaFilter.yearMin = yMin; _anaFilter.yearMax = yMax;
+  _anaFilter.priceMin = pMin; _anaFilter.priceMax = pMax;
+
+  var aVal = (aMin===0 && aMax===500) ? '전체' : aMin+'~'+aMax+'평';
+  var rVal = (rMin===0 && rMax===5000) ? '전체' : rMin.toLocaleString()+'~'+rMax.toLocaleString()+'만원';
+  var yVal = (yMin===1960 && yMax===2025) ? '전체' : yMin+'~'+yMax+'년';
+  var pVal = (pMin===0 && pMax===3000) ? '전체' : pMin+'~'+pMax+'억';
+
+  document.getElementById('ana-area-val').textContent = aVal;
+  document.getElementById('ana-rent-val').textContent = rVal;
+  document.getElementById('ana-year-val').textContent = yVal;
+  document.getElementById('ana-price-val').textContent = pVal;
+
+  anaRender();
+}
+
+function anaReset() {
+  _anaFilter.types.clear();
+  document.querySelectorAll('.ana-type-chip').forEach(function(el){
+    el.classList.remove('on');
+    el.style.background = '';
+    el.style.borderColor = '';
+  });
+  ['ana-area-min','ana-rent-min','ana-year-min','ana-price-min'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = el.min;
+  });
+  ['ana-area-max','ana-rent-max','ana-year-max','ana-price-max'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = el.max;
+  });
+  _anaFilter.areaMin=0; _anaFilter.areaMax=500;
+  _anaFilter.rentMin=0; _anaFilter.rentMax=5000;
+  _anaFilter.yearMin=1960; _anaFilter.yearMax=2025;
+  _anaFilter.priceMin=0; _anaFilter.priceMax=3000;
+  document.getElementById('ana-area-val').textContent = '전체';
+  document.getElementById('ana-rent-val').textContent = '전체';
+  document.getElementById('ana-year-val').textContent = '전체';
+  document.getElementById('ana-price-val').textContent = '전체';
+  anaRender();
+}
+
+function _anaBuildingMatches(b) {
+  if (b.isOurs) return false;
+
+  // 매매가 필터
+  if (b.priceNum > 0 && (b.priceNum < _anaFilter.priceMin || b.priceNum > _anaFilter.priceMax)) return false;
+  // 준공년도 필터
+  if (b.builtYear > 0 && (b.builtYear < _anaFilter.yearMin || b.builtYear > _anaFilter.yearMax)) return false;
+
+  // 임차인 레벨 필터 — 해당 건물에 조건에 맞는 임차인이 1명 이상 있어야 함
+  var matchedTenants = _anaGetMatchedTenants(b);
+  return matchedTenants.length > 0;
+}
+
+function _anaGetMatchedTenants(b) {
+  return b.tenants.filter(function(t){
+    // 업종 필터
+    if (_anaFilter.types.size > 0 && !_anaFilter.types.has(t.type)) return false;
+    // 면적 필터 (0이면 필터 안함)
+    if (t.areaPy > 0) {
+      if (t.areaPy < _anaFilter.areaMin || t.areaPy > _anaFilter.areaMax) return false;
+    }
+    // 임대료 필터 (0이면 필터 안함)
+    if (t.rent > 0) {
+      if (t.rent < _anaFilter.rentMin || t.rent > _anaFilter.rentMax) return false;
+    }
+    return true;
+  });
+}
+
+function anaRender() {
+  var allBldgs = (typeof buildings !== 'undefined' ? buildings : []);
+  var matched = allBldgs.filter(_anaBuildingMatches);
+
+  // 지도 마커 반영
+  _anaApplyMarkersToMap(matched);
+
+  // 결과 통계 계산
+  var allMatchedTenants = matched.flatMap(function(b){ return _anaGetMatchedTenants(b); });
+  var totalTenants = allMatchedTenants.length;
+  var rents = allMatchedTenants.filter(function(t){ return t.rent > 0; }).map(function(t){ return t.rent; });
+  var avgRent = rents.length > 0 ? Math.round(rents.reduce(function(a,b){return a+b;},0)/rents.length) : 0;
+  var areas  = allMatchedTenants.filter(function(t){ return t.areaPy > 0; }).map(function(t){ return t.areaPy; });
+  var avgArea = areas.length > 0 ? Math.round(areas.reduce(function(a,b){return a+b;},0)/areas.length) : 0;
+  var vacantCnt = allMatchedTenants.filter(function(t){ return t.name.includes('공실')||t.name.includes('명도')||t.name.includes('퇴거'); }).length;
+
+  // 상위 업종
+  var typeCnt = {};
+  allMatchedTenants.forEach(function(t){ typeCnt[t.type] = (typeCnt[t.type]||0)+1; });
+  var topTypes = Object.entries(typeCnt).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+
+  // 인사이트 텍스트
+  var insight = '';
+  if (matched.length === 0) {
+    insight = '조건에 맞는 건물이 없습니다. 필터를 조정해보세요.';
+  } else {
+    var topType = topTypes[0] ? topTypes[0][0] : '';
+    var pctTop = topTypes[0] ? Math.round(topTypes[0][1]/totalTenants*100) : 0;
+    insight = matched.length + '개 건물, ' + totalTenants + '개 임차인이 조건을 충족합니다. ';
+    if (topType) insight += '가장 많은 업종은 <b>' + topType + '</b> (' + pctTop + '%)입니다. ';
+    if (avgRent > 0) insight += '평균 월 임대료 <b>' + avgRent.toLocaleString() + '만원</b>. ';
+    if (avgArea > 0) insight += '평균 면적 <b>' + Math.round(avgArea) + '평</b>. ';
+    if (vacantCnt > 0) insight += '공실·퇴거 예정 <b style="color:#ef4444">' + vacantCnt + '건</b> 포함.';
+  }
+
+  // 요약 KPI
+  document.getElementById('ana-result-summary').innerHTML =
+    '<div class="ana-sum-kpi"><div class="ana-sum-kpi-val" style="color:#3b7fff">'+matched.length+'</div><div class="ana-sum-kpi-lbl">건물</div></div>' +
+    '<div class="ana-sum-kpi"><div class="ana-sum-kpi-val">'+totalTenants+'</div><div class="ana-sum-kpi-lbl">임차인</div></div>' +
+    (avgRent>0 ? '<div class="ana-sum-kpi"><div class="ana-sum-kpi-val" style="color:#22d186">'+avgRent.toLocaleString()+'</div><div class="ana-sum-kpi-lbl">평균임대(만)</div></div>' : '') +
+    (vacantCnt>0 ? '<div class="ana-sum-kpi"><div class="ana-sum-kpi-val" style="color:#ef4444">'+vacantCnt+'</div><div class="ana-sum-kpi-lbl">공실·퇴거</div></div>' : '') +
+    '<div class="ana-insight">'+insight+'</div>';
+
+  // 건물 카드 목록
+  if (matched.length === 0) {
+    document.getElementById('ana-result-list').innerHTML = '<div class="ana-empty">🔍<br>조건에 맞는 건물이 없습니다<br><span style="font-size:10px">필터를 조정해보세요</span></div>';
+    return;
+  }
+
+  var TYPES_LOCAL = typeof TYPES !== 'undefined' ? TYPES : {};
+  document.getElementById('ana-result-list').innerHTML = matched.map(function(b){
+    var mTenants = _anaGetMatchedTenants(b);
+    var tenantRows = mTenants.slice(0,5).map(function(t){
+      var color = TYPES_LOCAL[t.type] || '#888';
+      var rentStr = t.rent > 0 ? t.rent.toLocaleString()+'만' : '';
+      var areaStr = t.areaPy > 0 ? Math.round(t.areaPy)+'평' : '';
+      return '<div class="ana-tenant-row">' +
+        '<div class="ana-tenant-floor">'+(t.floor||'—')+'F</div>' +
+        '<div class="ana-tenant-name">'+t.name+'</div>' +
+        '<div class="ana-tenant-type" style="background:'+color+'">'+t.type+'</div>' +
+        (areaStr ? '<div class="ana-tenant-rent" style="color:#8890aa">'+areaStr+'</div>' : '') +
+        (rentStr ? '<div class="ana-tenant-rent">'+rentStr+'</div>' : '') +
+        '</div>';
+    }).join('');
+    var moreStr = mTenants.length > 5 ? '<div style="padding:3px 10px;font-size:9px;color:#4a5270">+ '+(mTenants.length-5)+'개 더...</div>' : '';
+
+    var metaItems = [];
+    if (b.price) metaItems.push('💰 '+b.price);
+    if (b.builtYear > 0) metaItems.push('🏗 '+b.builtYear+'년');
+    if (b.elevator) metaItems.push('🛗 '+b.elevator);
+    if (b.parking) metaItems.push('🅿 '+b.parking);
+    if (b.distance) {
+      var distLabel = b.distance==='core'?'🔴 300m이내':b.distance==='mid'?'🟡 ~700m':'⚪ 700m+';
+      metaItems.push(distLabel);
+    }
+
+    return '<div class="ana-bldg-card" onclick="anaSelectBuilding(''+b.id+'')">' +
+      '<div class="ana-bldg-head">' +
+        '<div class="ana-bldg-dot"></div>' +
+        '<div class="ana-bldg-name">'+b.name+'</div>' +
+        '<div class="ana-bldg-price">'+(b.price||'')+'</div>' +
+      '</div>' +
+      (metaItems.length>0 ? '<div class="ana-bldg-meta">'+metaItems.map(function(m){return '<span class="ana-bldg-meta-item">'+m+'</span>';}).join('')+'</div>' : '') +
+      '<div class="ana-tenant-rows">'+tenantRows+moreStr+'</div>' +
+      '</div>';
+  }).join('');
+}
+
+function _anaApplyMarkersToMap(matchedBuildings) {
+  var matchedIds = new Set(matchedBuildings.map(function(b){ return b.id; }));
+  if (typeof markersMap === 'undefined') return;
+  Object.keys(markersMap).forEach(function(id){
+    var el = document.getElementById('mkw-'+id);
+    if (!el) return;
+    if (matchedIds.has(id)) {
+      el.classList.remove('dimmed');
+      el.classList.add('type-match');
+    } else {
+      el.classList.add('dimmed');
+      el.classList.remove('type-match');
+    }
+  });
+}
+
+function anaResetMarkers() {
+  if (typeof markersMap === 'undefined') return;
+  Object.keys(markersMap).forEach(function(id){
+    var el = document.getElementById('mkw-'+id);
+    if (!el) return;
+    el.classList.remove('dimmed');
+    el.classList.remove('type-match');
+  });
+}
+
+function anaSelectBuilding(id) {
+  // 지도로 이동 + 모달 오픈
+  if (typeof selectBuilding === 'function') selectBuilding(id);
+}
+
+window.anaInit = anaInit;
+window.anaToggleType = anaToggleType;
+window.anaUpdateRange = anaUpdateRange;
+window.anaReset = anaReset;
+window.anaSelectBuilding = anaSelectBuilding;
+window.anaResetMarkers = anaResetMarkers;
+
 /* mrShow / selectMarketReport / backToMarketList / closeMarketDetail 는
    첫 번째 <script> 블록에서 이미 window 전역으로 선언됨 → 재등록 불필요.
    여기서 재등록하면 window.fn → fn → window.fn → ∞ 무한재귀 발생하므로 삭제. */
@@ -3251,6 +3808,33 @@ function openBldgModal(id) {
   var uniqueFloors = floors.filter(function(v,i,a){ return a.indexOf(v)===i; });
   document.getElementById('bm-floor-cnt').textContent = uniqueFloors.length + '개';
 
+  // ── 건물 기본 정보 그리드 ──
+  var infoGrid = document.getElementById('bm-info-grid');
+  var infoItems = [];
+  if (b.builtYear > 0) infoItems.push({ lbl:'준공', val: b.builtYear+'년' });
+  if (b.elevator)      infoItems.push({ lbl:'승강기', val: b.elevator });
+  if (b.parking)       infoItems.push({ lbl:'주차', val: b.parking });
+  if (b.distance)      infoItems.push({ lbl:'거리', val: b.distance==='core'?'300m 이내':b.distance==='mid'?'~700m':'700m+' });
+  // 임차인 중 임대료 있는 것만 평균 계산
+  var rents = b.tenants.filter(function(t){return t.rent>0;}).map(function(t){return t.rent;});
+  if (rents.length>0) {
+    var avgR = Math.round(rents.reduce(function(a,c){return a+c;},0)/rents.length);
+    infoItems.push({ lbl:'평균임대료', val: avgR.toLocaleString()+'만원' });
+  }
+  var areas = b.tenants.filter(function(t){return t.areaPy>0;}).map(function(t){return t.areaPy;});
+  if (areas.length>0) {
+    var avgA = Math.round(areas.reduce(function(a,c){return a+c;},0)/areas.length);
+    infoItems.push({ lbl:'평균면적', val: avgA+'평' });
+  }
+  if (infoItems.length > 0) {
+    infoGrid.style.display = 'grid';
+    infoGrid.innerHTML = infoItems.map(function(item){
+      return '<div class="bm-info-item"><div class="bm-info-val">'+item.val+'</div><div class="bm-info-lbl">'+item.lbl+'</div></div>';
+    }).join('');
+  } else {
+    infoGrid.style.display = 'none';
+  }
+
   // 층별 테이블
   var sorted = b.tenants.slice().sort(function(a,c){
     var fa = parseInt((a.floor||'0').replace(/[^0-9\-]/g,''))||0;
@@ -3262,13 +3846,17 @@ function openBldgModal(id) {
         var color = TYPES_LOCAL[t.type] || '#888';
         var isVacant = t.name.includes('공실');
         var isLeaving = t.name.includes('퇴거') || t.name.includes('명도');
+        var areaStr = t.areaPy > 0 ? Math.round(t.areaPy)+'평' : '—';
+        var rentStr = t.rent > 0 ? t.rent.toLocaleString()+'만' : (t.deposit>0?'협의':'—');
         return '<tr>' +
           '<td class="bm-floor-cell">' + (t.floor || '—') + '</td>' +
           '<td class="bm-name-cell" style="' + (isVacant?'color:#4a5270;font-style:italic':isLeaving?'color:#f59e0b':'') + '">' + t.name + (isLeaving?' ⚠️':'') + '</td>' +
           '<td><span class="type-badge" style="background:' + color + ';font-size:10px;padding:2px 7px">' + t.type + '</span></td>' +
+          '<td class="bm-td-area">' + areaStr + '</td>' +
+          '<td class="bm-td-rent">' + rentStr + '</td>' +
           '</tr>';
       }).join('')
-    : '<tr><td colspan="3" class="bm-empty">임차인 정보 없음</td></tr>';
+    : '<tr><td colspan="5" class="bm-empty">임차인 정보 없음</td></tr>';
 
   // 지도 버튼
   document.getElementById('bm-map-btn').onclick = function() {
@@ -3368,9 +3956,11 @@ window.closeBldgModal = closeBldgModal;
       </div>
     </div>
     <div class="bm-body">
+      <!-- 건물 기본 정보 -->
+      <div class="bm-info-grid" id="bm-info-grid" style="display:none"></div>
       <div class="bm-section-title">층별 임차인 현황</div>
       <table class="bm-floor-table">
-        <thead><tr><th>층</th><th>임차인</th><th>업종</th></tr></thead>
+        <thead><tr><th>층</th><th>임차인</th><th>업종</th><th>면적</th><th class="bm-th-rent">임대료</th></tr></thead>
         <tbody id="bm-floor-body"></tbody>
       </table>
     </div>
@@ -3389,7 +3979,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0605.2000';
+  if(el) el.textContent = '0616.2300';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
