@@ -1785,6 +1785,23 @@ td:first-child{color:var(--t1);font-weight:500}
   box-shadow: 0 0 4px rgba(59,127,255,.4);
 }
 
+/* 토글 버튼 그룹 */
+.ana-toggle-group {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;
+}
+.ana-toggle-btn {
+  font-size: 10px; padding: 3px 10px; border-radius: 20px;
+  border: 1px solid #2a3050; color: #8890aa;
+  background: #0f1118; cursor: pointer; transition: all .15s;
+  white-space: nowrap;
+}
+.ana-toggle-btn:hover { border-color: #3b7fff; color: #eef0f8; }
+.ana-toggle-btn.active {
+  background: rgba(59,127,255,.15);
+  border-color: rgba(59,127,255,.5);
+  color: #3b7fff; font-weight: 700;
+}
+
 /* 모달 신규 컬럼 섹션 */
 .bm-info-grid {
   display: grid; grid-template-columns: 1fr 1fr;
@@ -2022,6 +2039,38 @@ td:first-child{color:var(--t1);font-weight:500}
               <span class="ana-single-label">이하</span>
               <input type="range" id="ana-price-max" min="0" max="3000" value="3000" step="50" oninput="anaUpdateRange()">
               <span class="ana-single-unit">억</span>
+            </div>
+          </div>
+
+          <!-- 승강기 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">승강기 <span class="ana-range-val" id="ana-elev-val">전체</span></div>
+            <div class="ana-toggle-group" id="ana-elev-group">
+              <div class="ana-toggle-btn active" data-val="" onclick="anaToggleBtn('elev', this, '')">전체</div>
+              <div class="ana-toggle-btn" data-val="있음" onclick="anaToggleBtn('elev', this, '있음')">있음</div>
+              <div class="ana-toggle-btn" data-val="없음" onclick="anaToggleBtn('elev', this, '없음')">없음</div>
+            </div>
+          </div>
+
+          <!-- 주차 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">주차 <span class="ana-range-val" id="ana-park-val">전체</span></div>
+            <div class="ana-toggle-group" id="ana-park-group">
+              <div class="ana-toggle-btn active" data-val="" onclick="anaToggleBtn('park', this, '')">전체</div>
+              <div class="ana-toggle-btn" data-val="자주식" onclick="anaToggleBtn('park', this, '자주식')">자주식</div>
+              <div class="ana-toggle-btn" data-val="기계식" onclick="anaToggleBtn('park', this, '기계식')">기계식</div>
+              <div class="ana-toggle-btn" data-val="없음" onclick="anaToggleBtn('park', this, '없음')">없음</div>
+            </div>
+          </div>
+
+          <!-- 거리 필터 -->
+          <div class="ana-filter-group">
+            <div class="ana-filter-label">우리 건물과의 거리 <span class="ana-range-val" id="ana-dist-val">전체</span></div>
+            <div class="ana-toggle-group" id="ana-dist-group">
+              <div class="ana-toggle-btn active" data-val="" onclick="anaToggleBtn('dist', this, '')">전체</div>
+              <div class="ana-toggle-btn" data-val="core" onclick="anaToggleBtn('dist', this, 'core')">🔴 300m이내</div>
+              <div class="ana-toggle-btn" data-val="mid" onclick="anaToggleBtn('dist', this, 'mid')">🟡 ~700m</div>
+              <div class="ana-toggle-btn" data-val="far" onclick="anaToggleBtn('dist', this, 'far')">⚪ 700m+</div>
             </div>
           </div>
 
@@ -3319,11 +3368,14 @@ window.toggleDongGroup  = toggleDongGroup;
 // ══════════════════════════════════════════════
 var _anaInited = false;
 var _anaFilter = {
-  types: new Set(),   // 선택 업종 (비어있으면 전체)
-  areaMin: 0, areaMax: 500,
+  types: new Set(),
+  areaMin: 0, areaMax: 300,
   rentMin: 0, rentMax: 5000,
   yearMin: 1960, yearMax: 2025,
   priceMin: 0, priceMax: 3000,
+  elev: '',    // '' = 전체, '있음', '없음'
+  park: '',    // '' = 전체, '자주식', '기계식', '없음'
+  dist: '',    // '' = 전체, 'core', 'mid', 'far'
 };
 
 function anaInit() {
@@ -3405,6 +3457,22 @@ function anaUpdateRange() {
   anaRender();
 }
 
+function anaToggleBtn(key, el, val) {
+  // 같은 그룹 내 active 해제
+  var group = document.getElementById('ana-' + key + '-group');
+  if (group) group.querySelectorAll('.ana-toggle-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+  _anaFilter[key] = val;
+
+  // 표시값 업데이트
+  var labelMap = { core:'300m이내', mid:'~700m', far:'700m+' };
+  var displayVal = val === '' ? '전체' : (labelMap[val] || val);
+  var valEl = document.getElementById('ana-' + key + '-val');
+  if (valEl) valEl.textContent = displayVal;
+
+  anaRender();
+}
+
 function anaReset() {
   _anaFilter.types.clear();
   document.querySelectorAll('.ana-type-chip').forEach(function(el){
@@ -3424,10 +3492,18 @@ function anaReset() {
   _anaFilter.rentMin=0; _anaFilter.rentMax=5000;
   _anaFilter.yearMin=1960; _anaFilter.yearMax=2025;
   _anaFilter.priceMin=0; _anaFilter.priceMax=3000;
-  document.getElementById('ana-area-val').textContent = '전체';
-  document.getElementById('ana-rent-val').textContent = '전체';
-  document.getElementById('ana-year-val').textContent = '전체';
-  document.getElementById('ana-price-val').textContent = '전체';
+  _anaFilter.elev=''; _anaFilter.park=''; _anaFilter.dist='';
+  ['ana-area-val','ana-rent-val','ana-year-val','ana-price-val',
+   'ana-elev-val','ana-park-val','ana-dist-val'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = '전체';
+  });
+  // 토글 버튼 초기화
+  ['ana-elev-group','ana-park-group','ana-dist-group'].forEach(function(gid){
+    var g = document.getElementById(gid);
+    if (!g) return;
+    g.querySelectorAll('.ana-toggle-btn').forEach(function(b,i){ b.classList.toggle('active', i===0); });
+  });
   anaRender();
 }
 
@@ -3435,11 +3511,27 @@ function _anaBuildingMatches(b) {
   if (b.isOurs) return false;
 
   // 매매가 필터
-  if (b.priceNum > 0 && (b.priceNum < _anaFilter.priceMin || b.priceNum > _anaFilter.priceMax)) return false;
+  if (b.priceNum > 0 && b.priceNum > _anaFilter.priceMax) return false;
   // 준공년도 필터
-  if (b.builtYear > 0 && (b.builtYear < _anaFilter.yearMin || b.builtYear > _anaFilter.yearMax)) return false;
+  if (b.builtYear > 0 && b.builtYear < _anaFilter.yearMin) return false;
 
-  // 임차인 레벨 필터 — 해당 건물에 조건에 맞는 임차인이 1명 이상 있어야 함
+  // 승강기 필터
+  if (_anaFilter.elev === '있음' && !b.elevator) return false;
+  if (_anaFilter.elev === '없음' && b.elevator && b.elevator !== '-') return false;
+
+  // 주차 필터
+  if (_anaFilter.park !== '') {
+    if (_anaFilter.park === '없음') {
+      if (b.parking && b.parking !== '-' && b.parking !== '0') return false;
+    } else {
+      if (!b.parking || !b.parking.includes(_anaFilter.park)) return false;
+    }
+  }
+
+  // 거리 필터
+  if (_anaFilter.dist !== '' && b.distance !== _anaFilter.dist) return false;
+
+  // 임차인 레벨 필터
   var matchedTenants = _anaGetMatchedTenants(b);
   return matchedTenants.length > 0;
 }
@@ -4033,7 +4125,7 @@ window.closeBldgModal = closeBldgModal;
 (function(){
   /* 버전: 페이지 로드 시각 기반 */
   var el = document.getElementById('ver-num');
-  if(el) el.textContent = '0616.2345';
+  if(el) el.textContent = '0616.2355';
 
   /* ── 모바일 레이아웃: JS로 직접 픽셀 배분 ── */
   function applyMobileLayout(){
