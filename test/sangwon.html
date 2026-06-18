@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>상권 현황 · 케이프혼타워</title>
+<title>상권분석 · 케이프혼타워</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
@@ -219,8 +219,16 @@ header{display:flex;align-items:center;justify-content:space-between;
 .reset-filter:hover{background:var(--s2);color:#ef4444;border-color:#ef4444}
 .t-selected{border:2px solid rgba(59,127,255,.3)!important;
   background:rgba(59,127,255,.05)!important;border-radius:8px}
-.ver-badge{position:fixed;bottom:12px;right:14px;
-  font-family:var(--mono);font-size:9px;color:var(--t3);z-index:999;pointer-events:none}
+/* ── 버전 배지: index.html 스타일과 통일 ── */
+.ver-badge{
+  position:fixed;z-index:99999;
+  font-size:12px;font-family:var(--mono),monospace;
+  color:rgba(136,144,170,.85);background:rgba(8,9,13,.82);
+  border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  padding:4px 12px;pointer-events:none;white-space:nowrap;letter-spacing:.3px;
+}
+@media(min-width:769px){.ver-badge{bottom:10px;right:10px;}}
+@media(max-width:768px){.ver-badge{bottom:8px;left:10px;font-size:11px;}}
 
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -233,11 +241,11 @@ header{display:flex;align-items:center;justify-content:space-between;
   <header>
     <div class="brand">
       <a class="hbtn" href="index.html" style="margin-right:4px">← 메인</a>
-      <span class="brand-name">상권 현황</span>
+      <span class="brand-name">상권분석</span>
       <span class="brand-sub">케이프혼타워</span>
     </div>
     <div class="header-r">
-      <a class="hbtn" href="market.html">임대 상권지도</a>
+      <a class="hbtn" href="market.html">임대상권지도</a>
     </div>
   </header>
 
@@ -255,8 +263,8 @@ header{display:flex;align-items:center;justify-content:space-between;
     <div class="map-sidebar">
 
       <div class="map-sidebar-header">
-        <h1>📍 압구정·신사 일대 상권 현황</h1>
-        <p>블루피카 상권 데이터 · 15,709개 업체</p>
+        <h1>📍 압구정·신사 일대 상권분석</h1>
+        <p>블루피카 상권분석 데이터 · 15,709개 업체</p>
       </div>
 
       <!-- KPI -->
@@ -318,7 +326,7 @@ header{display:flex;align-items:center;justify-content:space-between;
   </div>
 </div>
 
-<div class="ver-badge">0618.상권현황수정</div>
+<div class="ver-badge">v0618.상권분석</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
