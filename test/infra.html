@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0613</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0620</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -415,7 +415,7 @@ const CATEGORIES = [
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let map, infowindow;
+let map, ps, infowindow;
 let currentLat = OUR_LAT, currentLng = OUR_LNG;
 let currentRadius = 1000;
 let activeCats = new Set(CATEGORIES.map(c => c.id));
@@ -439,6 +439,7 @@ window.initKakaoMap = function() {
     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.BOTTOMLEFT);
 
     // 장소 검색 서비스
+    ps = new kakao.maps.services.Places();
     infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
 
     // 케이프혼타워 마커
@@ -586,7 +587,7 @@ function applyNewCenter() {
 // ══════════════════════════════════════════════
 function runSearch() {
   if (activeCats.size === 0) { alert('카테고리를 최소 1개 선택해주세요'); return; }
-  if (!map) { alert('지도가 아직 로딩 중입니다.'); return; }
+  if (!ps) { alert('지도가 아직 로딩 중입니다.'); return; }
 
   const btn = document.getElementById('btnRun');
   btn.disabled = true;
@@ -601,50 +602,32 @@ function runSearch() {
   });
 
   const cats = CATEGORIES.filter(c => activeCats.has(c.id));
-  // Apps Script 경유 카카오 REST API 검색
-  async function oneCat(cat) {
-    setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
-    try {
-      const url = APPS_URL
-        + '?action=infra'
-        + '&keyword=' + encodeURIComponent(cat.kw)
-        + '&lat=' + currentLat
-        + '&lng=' + currentLng
-        + '&radius=' + currentRadius
-        + '&size=15';
+  let done = 0;
 
-      const res = await fetch(url);
-      const json = await res.json();
-      console.log(`[${cat.name}] ok=${json.ok}, count=${json.documents?.length || 0}`);
-
-      if (json.ok && Array.isArray(json.documents)) {
-        json.documents.forEach(place => {
-          const dist = parseInt(place.distance || 0);
-          if (dist > currentRadius) return;
-          place._cat = cat;
-          allResults.push(place);
-          addMarker(place, cat);
-        });
-        const cnt = allResults.filter(r => r._cat.id === cat.id).length;
-        const el = document.getElementById('cnt-' + cat.id);
-        if (el && cnt) el.textContent = cnt;
-      } else if (!json.ok) {
-        showDebugMsg(`${cat.name}: ${json.error || '오류'}`);
-      }
-    } catch(e) {
-      console.error(`[${cat.name}] fetch error:`, e);
-      showDebugMsg(`${cat.name}: 네트워크 오류`);
-    }
-  }
-
-  // 순차 실행
-  (async () => {
-    for (const cat of cats) {
-      await oneCat(cat);
-      await new Promise(r => setTimeout(r, 100));
-    }
-    finishSearch();
-  })();
+  // 카카오 JS SDK categorySearch 사용
+  cats.forEach((cat, i) => {
+    setTimeout(() => {
+      setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
+      ps.categorySearch(cat.id, (data, status) => {
+        if (status === kakao.maps.services.Status.OK) {
+          data.forEach(place => {
+            place._cat = cat;
+            allResults.push(place);
+            addMarker(place, cat);
+          });
+          const el = document.getElementById('cnt-' + cat.id);
+          if (el && data.length) el.textContent = data.length;
+        }
+        done++;
+        if (done === cats.length) finishSearch();
+      }, {
+        location: new kakao.maps.LatLng(currentLat, currentLng),
+        radius: currentRadius,
+        useMapBounds: false,
+        size: 15
+      });
+    }, i * 150);
+  });
 }
 
 function finishSearch() {
