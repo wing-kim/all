@@ -438,7 +438,7 @@ window.initKakaoMap = function() {
     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.BOTTOMLEFT);
 
     // 장소 검색 서비스
-    ps = new kakao.maps.services.Places(map);
+    ps = new kakao.maps.services.Places();
     infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
 
     // 케이프혼타워 마커
@@ -599,12 +599,21 @@ function runSearch() {
   });
 
   const cats = [...activeCats];
-  // 한 카테고리씩 순차 처리 (카카오 API 안정성)
+  // 한 카테고리씩 순차 처리
   async function oneCat(cat) {
     return new Promise(resolve => {
       setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
-      // 카카오 categorySearch: useMapBounds:false + location+radius 조합
+
+      const opt = {
+        location: new kakao.maps.LatLng(currentLat, currentLng),
+        radius: currentRadius,
+        useMapBounds: false,
+        size: 15
+      };
+
       ps.categorySearch(cat.id, (data, status, pagination) => {
+        console.log(`[${cat.name}] status=${status}, count=${data ? data.length : 0}`);
+
         if (status === kakao.maps.services.Status.OK) {
           data.forEach(place => {
             place._cat = cat;
@@ -613,23 +622,22 @@ function runSearch() {
           });
           const el = document.getElementById('cnt-' + cat.id);
           if (el && data.length) el.textContent = data.length;
+        } else if (status === kakao.maps.services.Status.ERROR) {
+          console.error(`[${cat.name}] API ERROR — 앱키 도메인 등록 확인 필요`);
+          showDebugMsg(`API 오류: ${cat.name} (${status})`);
         }
+        // ZERO_RESULT 는 정상 (해당 반경에 없는 것)
 
         resolve();
-      }, {
-        location: new kakao.maps.LatLng(currentLat, currentLng),
-        radius: currentRadius,
-        sort: kakao.maps.services.SortBy.DISTANCE,
-        useMapBounds: false
-      });
+      }, opt);
     });
   }
 
-  // 순차 실행 (병렬 시 카카오 API 과부하 방지)
+  // 순차 실행
   (async () => {
     for (const cat of cats) {
       await oneCat(cat);
-      await new Promise(r => setTimeout(r, 80));
+      await new Promise(r => setTimeout(r, 100));
     }
     finishSearch();
   })();
@@ -640,7 +648,6 @@ function finishSearch() {
   renderResultList(allResults);
   renderLegend(allResults);
 
-  // 반경에 맞게 지도 조정
   map.setCenter(new kakao.maps.LatLng(currentLat, currentLng));
   const level = currentRadius <= 500 ? 4 : currentRadius <= 1000 ? 5 : currentRadius <= 2000 ? 6 : 7;
   map.setLevel(level);
@@ -650,6 +657,24 @@ function finishSearch() {
   btn.disabled = false;
   document.getElementById('runTxt').textContent = '다시 검색';
   document.getElementById('runIco').textContent = '🔄';
+
+  // 결과 0건 → 원인 힌트 표시
+  if (allResults.length === 0) {
+    const wrap = document.getElementById('resultWrap');
+    const errHint = _debugMsgs.length > 0
+      ? `<div style="font-size:10px;color:#f03860;margin-top:8px;padding:8px;background:rgba(240,56,96,.1);border-radius:6px;text-align:left">`
+        + `⚠️ ${_debugMsgs.join('<br>')}<br><br>`
+        + `카카오 디벨로퍼스 → 내 앱 → 플랫폼 → Web<br>`
+        + `사이트 도메인에 <b>wing-kim.github.io</b> 등록 확인`
+        + `</div>`
+      : `<div style="font-size:10px;color:#8890aa;margin-top:8px">반경을 늘리거나 다른 카테고리를 선택해보세요</div>`;
+    wrap.innerHTML = `<div class="result-empty">
+      <div class="e-ico">🔍</div>
+      <div>검색 결과가 없습니다${errHint}</div>
+    </div>`;
+    document.getElementById('exportBar').classList.add('hidden');
+  }
+  _debugMsgs = [];
 }
 
 // ══════════════════════════════════════════════
@@ -838,6 +863,12 @@ function exportCSV(selOnly) {
 function setLoading(on, msg='') {
   document.getElementById('loadingBar').classList.toggle('hidden', !on);
   if (msg) document.getElementById('loadingMsg').textContent = msg;
+}
+
+let _debugMsgs = [];
+function showDebugMsg(msg) {
+  _debugMsgs.push(msg);
+  console.warn('[INFRA DEBUG]', msg);
 }
 function formatDist(m) { return m >= 1000 ? (m/1000).toFixed(1)+'km' : m+'m'; }
 
