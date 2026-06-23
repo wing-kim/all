@@ -301,7 +301,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0630</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0635</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -546,7 +546,6 @@ function toggleCat(id) {
 function filterMarkersAndList() {
   // 오버레이(커스텀 마커) 재렌더
   overlays.forEach(o => o.setMap(null));
-  markers.forEach(m => m.setMap(null));
   overlays = []; markers = [];
 
   const filtered = allResults.filter(it => activeCats.has(it._cat.id));
@@ -695,53 +694,57 @@ function finishSearch() {
 function addMarker(place, cat) {
   const pos = new kakao.maps.LatLng(place.y, place.x);
 
-  // 커스텀 마커 (컬러 원 + 이모지)
-  const markerHtml = `
+  // 인포윈도우 내용
+  const iwContent = `
+    <div style="padding:10px 14px;font-family:'Noto Sans KR',sans-serif;min-width:160px;max-width:220px">
+      <div style="font-size:9px;color:${cat.color};font-weight:700;letter-spacing:1px;margin-bottom:3px">
+        ${cat.emoji} ${cat.name}
+      </div>
+      <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px">${place.place_name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:4px">${place.road_address_name || place.address_name || ''}</div>
+      ${place.distance ? `<div style="font-size:11px;color:${cat.color};font-weight:600">📏 ${formatDist(parseInt(place.distance))}</div>` : ''}
+    </div>`;
+
+  // CustomOverlay 하나만 — 투명 마커 없음
+  const el = document.createElement('div');
+  el.style.cssText = 'position:relative;display:inline-block;cursor:pointer;';
+  el.innerHTML = `
     <div style="
-      width:30px;height:30px;border-radius:50%;
+      width:22px;height:22px;border-radius:50%;
       background:${cat.color};
       display:flex;align-items:center;justify-content:center;
-      font-size:14px;border:2px solid rgba(255,255,255,.5);
-      box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;
+      font-size:11px;border:2px solid rgba(255,255,255,.8);
+      box-shadow:0 2px 6px rgba(0,0,0,.4);
       transform:translateX(-50%) translateY(-50%);
     ">${cat.emoji}</div>
     <div style="
-      position:absolute;top:16px;left:50%;transform:translateX(-50%);
-      background:rgba(0,0,0,.75);color:#fff;font-size:9.5px;font-weight:700;
-      padding:2px 6px;border-radius:4px;white-space:nowrap;
-      border:1px solid rgba(255,255,255,.15);pointer-events:none;
+      position:absolute;top:13px;left:50%;transform:translateX(-50%);
+      background:rgba(0,0,0,.72);color:#fff;font-size:9px;font-weight:700;
+      padding:1px 5px;border-radius:3px;white-space:nowrap;
+      border:1px solid rgba(255,255,255,.12);pointer-events:none;
     ">${place.place_name}</div>`;
+
+  // 클릭 이벤트 직접 DOM에 등록
+  el.addEventListener('click', () => {
+    infowindow.setContent(iwContent);
+    // CustomOverlay 위치에 인포윈도우 띄우기 (더미 마커 없이)
+    const tempMarker = new kakao.maps.Marker({ position: pos });
+    infowindow.open(map, tempMarker);
+  });
 
   const overlay = new kakao.maps.CustomOverlay({
     position: pos,
-    content: `<div style="position:relative;display:inline-block;">${markerHtml}</div>`,
-    zIndex: 3
+    content: el,
+    zIndex: 3,
+    yAnchor: 0.5,
+    xAnchor: 0.5
   });
   overlay.setMap(map);
   overlays.push(overlay);
-
-  // 클릭 → 인포윈도우
-  // CustomOverlay는 kakao.maps.event 못 씀 → DOM 이벤트 직접
-  // 대신 일반 마커도 같이 생성 (투명, 클릭용)
-  const m = new kakao.maps.Marker({ position: pos, map, opacity: 0, zIndex: 4 });
-  kakao.maps.event.addListener(m, 'click', () => {
-    infowindow.setContent(`
-      <div style="padding:10px 14px;font-family:'Noto Sans KR',sans-serif;min-width:180px">
-        <div style="font-size:9px;color:${cat.color};font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">
-          ${cat.emoji} ${cat.name}
-        </div>
-        <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px">${place.place_name}</div>
-        <div style="font-size:11px;color:#666;margin-bottom:6px">${place.road_address_name || place.address_name || ''}</div>
-        ${place.distance ? `<div style="font-size:11px;color:${cat.color};font-weight:600">📏 ${formatDist(parseInt(place.distance))}</div>` : ''}
-      </div>`);
-    infowindow.open(map, m);
-  });
-  markers.push(m);
 }
 
 function clearMarkers() {
   overlays.forEach(o => o.setMap(null));
-  markers.forEach(m => m.setMap(null));
   overlays = []; markers = [];
   selectedItems.clear();
   allSelected = false;
