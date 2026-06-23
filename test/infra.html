@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0517</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0550</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -394,8 +394,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 // ══════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════
-const JS_KEY  = '2a3ec83cc3ca9f434e295d2ded3f0eac';
 const OUR_LAT = 37.5232, OUR_LNG = 127.0212;
+const APPS_URL = 'https://script.google.com/macros/s/AKfycbyflo91eL18ds40xfXjUfPdY8SBFF7BIqbZlddVKUHArlh0kCFmT8VKibDMiMR3bbJ8/exec';
 
 const CATEGORIES = [
   { id:'SW8', name:'지하철역',  emoji:'🚇', color:'#3b7fff', kw:'지하철역' },
@@ -415,7 +415,7 @@ const CATEGORIES = [
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-let map, ps, infowindow;
+let map, infowindow;
 let currentLat = OUR_LAT, currentLng = OUR_LNG;
 let currentRadius = 1000;
 let activeCats = new Set(CATEGORIES.map(c => c.id));
@@ -439,7 +439,6 @@ window.initKakaoMap = function() {
     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.BOTTOMLEFT);
 
     // 장소 검색 서비스
-    ps = new kakao.maps.services.Places();
     infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
 
     // 케이프혼타워 마커
@@ -600,46 +599,47 @@ function runSearch() {
   });
 
   const cats = [...activeCats];
-  // keywordSearch 기반 카테고리 검색 (categorySearch 400 오류 우회)
+  // Apps Script 경유 카카오 REST API 검색
   async function oneCat(cat) {
-    return new Promise(resolve => {
-      setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
+    setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
+    try {
+      const url = APPS_URL
+        + '?action=infra'
+        + '&keyword=' + encodeURIComponent(cat.kw)
+        + '&lat=' + currentLat
+        + '&lng=' + currentLng
+        + '&radius=' + currentRadius
+        + '&size=15';
 
-      const opt = {
-        location: new kakao.maps.LatLng(currentLat, currentLng),
-        radius: currentRadius,
-        size: 15
-      };
+      const res = await fetch(url);
+      const json = await res.json();
+      console.log(`[${cat.name}] ok=${json.ok}, count=${json.documents?.length || 0}`);
 
-      ps.keywordSearch(cat.kw, (data, status) => {
-        console.log(`[${cat.name}] status=${status}, count=${Array.isArray(data) ? data.length : 0}`);
-
-        if (status === kakao.maps.services.Status.OK && Array.isArray(data)) {
-          data.forEach(place => {
-            // 거리 필터 (반경 초과 제거)
-            const dist = parseInt(place.distance || 0);
-            if (dist > currentRadius) return;
-            place._cat = cat;
-            allResults.push(place);
-            addMarker(place, cat);
-          });
-          const cnt = allResults.filter(r => r._cat.id === cat.id).length;
-          const el = document.getElementById('cnt-' + cat.id);
-          if (el && cnt) el.textContent = cnt;
-        } else if (status === kakao.maps.services.Status.ERROR) {
-          console.error(`[${cat.name}] ERROR`);
-          showDebugMsg(`${cat.name}: 오류`);
-        }
-        resolve();
-      }, opt);
-    });
+      if (json.ok && Array.isArray(json.documents)) {
+        json.documents.forEach(place => {
+          const dist = parseInt(place.distance || 0);
+          if (dist > currentRadius) return;
+          place._cat = cat;
+          allResults.push(place);
+          addMarker(place, cat);
+        });
+        const cnt = allResults.filter(r => r._cat.id === cat.id).length;
+        const el = document.getElementById('cnt-' + cat.id);
+        if (el && cnt) el.textContent = cnt;
+      } else if (!json.ok) {
+        showDebugMsg(`${cat.name}: ${json.error || '오류'}`);
+      }
+    } catch(e) {
+      console.error(`[${cat.name}] fetch error:`, e);
+      showDebugMsg(`${cat.name}: 네트워크 오류`);
+    }
   }
 
   // 순차 실행
   (async () => {
     for (const cat of cats) {
       await oneCat(cat);
-      await new Promise(r => setTimeout(r, 150));
+      await new Promise(r => setTimeout(r, 100));
     }
     finishSearch();
   })();
