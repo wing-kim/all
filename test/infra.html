@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0550</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0609</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -556,7 +556,9 @@ function geocodeAddress() {
       applyNewCenter();
       runSearch();
     } else {
-      ps.keywordSearch(addr, (result2, status2) => {
+      // 키워드 검색 fallback - Geocoder 사용
+      const ps2 = new kakao.maps.services.Places();
+      ps2.keywordSearch(addr, (result2, status2) => {
         if (status2 === kakao.maps.services.Status.OK) {
           currentLat = parseFloat(result2[0].y);
           currentLng = parseFloat(result2[0].x);
@@ -584,7 +586,7 @@ function applyNewCenter() {
 // ══════════════════════════════════════════════
 function runSearch() {
   if (activeCats.size === 0) { alert('카테고리를 최소 1개 선택해주세요'); return; }
-  if (!ps) { alert('지도가 아직 로딩 중입니다.'); return; }
+  if (!map) { alert('지도가 아직 로딩 중입니다.'); return; }
 
   const btn = document.getElementById('btnRun');
   btn.disabled = true;
@@ -899,7 +901,8 @@ async function geocodeAndSearch() {
         applyNewCenter();
         resolve();
       } else {
-        ps.keywordSearch(addr, (result2, status2) => {
+        const ps3 = new kakao.maps.services.Places();
+        ps3.keywordSearch(addr, (result2, status2) => {
           if (status2 === kakao.maps.services.Status.OK) {
             currentLat = parseFloat(result2[0].y);
             currentLng = parseFloat(result2[0].x);
