@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0609</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0613</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -600,7 +600,7 @@ function runSearch() {
     if (el) el.textContent = '';
   });
 
-  const cats = [...activeCats];
+  const cats = CATEGORIES.filter(c => activeCats.has(c.id));
   // Apps Script 경유 카카오 REST API 검색
   async function oneCat(cat) {
     setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
