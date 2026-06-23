@@ -309,7 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0511</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0517</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -398,18 +398,18 @@ const JS_KEY  = '2a3ec83cc3ca9f434e295d2ded3f0eac';
 const OUR_LAT = 37.5232, OUR_LNG = 127.0212;
 
 const CATEGORIES = [
-  { id:'SW8', name:'지하철역',  emoji:'🚇', color:'#3b7fff' },
-  { id:'HP8', name:'병원',      emoji:'🏥', color:'#f03860' },
-  { id:'PM9', name:'약국',      emoji:'💊', color:'#ff6b9d' },
-  { id:'BK9', name:'은행',      emoji:'🏦', color:'#f5bc30' },
-  { id:'MT1', name:'대형마트',  emoji:'🛒', color:'#22d186' },
-  { id:'CS2', name:'편의점',    emoji:'🏪', color:'#00d4ff' },
-  { id:'CE7', name:'카페',      emoji:'☕', color:'#9060f0' },
-  { id:'PS3', name:'어린이집',  emoji:'🧒', color:'#ffa94d' },
-  { id:'PK6', name:'주차장',    emoji:'🅿️', color:'#748ffc' },
-  { id:'AG2', name:'부동산',    emoji:'🏠', color:'#63e6be' },
-  { id:'OL7', name:'주유소',    emoji:'⛽', color:'#f07830' },
-  { id:'AC5', name:'숙박',      emoji:'🏨', color:'#c084fc' },
+  { id:'SW8', name:'지하철역',  emoji:'🚇', color:'#3b7fff', kw:'지하철역' },
+  { id:'HP8', name:'병원',      emoji:'🏥', color:'#f03860', kw:'병원' },
+  { id:'PM9', name:'약국',      emoji:'💊', color:'#ff6b9d', kw:'약국' },
+  { id:'BK9', name:'은행',      emoji:'🏦', color:'#f5bc30', kw:'은행' },
+  { id:'MT1', name:'대형마트',  emoji:'🛒', color:'#22d186', kw:'마트' },
+  { id:'CS2', name:'편의점',    emoji:'🏪', color:'#00d4ff', kw:'편의점' },
+  { id:'CE7', name:'카페',      emoji:'☕', color:'#9060f0', kw:'카페' },
+  { id:'PS3', name:'어린이집',  emoji:'🧒', color:'#ffa94d', kw:'어린이집' },
+  { id:'PK6', name:'주차장',    emoji:'🅿️', color:'#748ffc', kw:'주차장' },
+  { id:'AG2', name:'부동산',    emoji:'🏠', color:'#63e6be', kw:'부동산' },
+  { id:'OL7', name:'주유소',    emoji:'⛽', color:'#f07830', kw:'주유소' },
+  { id:'AC5', name:'숙박',      emoji:'🏨', color:'#c084fc', kw:'호텔' },
 ];
 
 // ══════════════════════════════════════════════
@@ -600,7 +600,7 @@ function runSearch() {
   });
 
   const cats = [...activeCats];
-  // 한 카테고리씩 순차 처리
+  // keywordSearch 기반 카테고리 검색 (categorySearch 400 오류 우회)
   async function oneCat(cat) {
     return new Promise(resolve => {
       setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
@@ -608,26 +608,28 @@ function runSearch() {
       const opt = {
         location: new kakao.maps.LatLng(currentLat, currentLng),
         radius: currentRadius,
-        useMapBounds: false,
         size: 15
       };
 
-      ps.categorySearch(cat.id, (status, data, pagination) => {
+      ps.keywordSearch(cat.kw, (data, status) => {
         console.log(`[${cat.name}] status=${status}, count=${Array.isArray(data) ? data.length : 0}`);
 
         if (status === kakao.maps.services.Status.OK && Array.isArray(data)) {
           data.forEach(place => {
+            // 거리 필터 (반경 초과 제거)
+            const dist = parseInt(place.distance || 0);
+            if (dist > currentRadius) return;
             place._cat = cat;
             allResults.push(place);
             addMarker(place, cat);
           });
+          const cnt = allResults.filter(r => r._cat.id === cat.id).length;
           const el = document.getElementById('cnt-' + cat.id);
-          if (el && data.length) el.textContent = data.length;
+          if (el && cnt) el.textContent = cnt;
         } else if (status === kakao.maps.services.Status.ERROR) {
-          console.error(`[${cat.name}] API ERROR`);
-          showDebugMsg(`${cat.name}: API 오류`);
+          console.error(`[${cat.name}] ERROR`);
+          showDebugMsg(`${cat.name}: 오류`);
         }
-
         resolve();
       }, opt);
     });
@@ -637,7 +639,7 @@ function runSearch() {
   (async () => {
     for (const cat of cats) {
       await oneCat(cat);
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 150));
     }
     finishSearch();
   })();
