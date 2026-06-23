@@ -309,6 +309,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
+    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0511</div>
   </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
@@ -611,10 +612,10 @@ function runSearch() {
         size: 15
       };
 
-      ps.categorySearch(cat.id, (data, status, pagination) => {
-        console.log(`[${cat.name}] status=${status}, count=${data ? data.length : 0}`);
+      ps.categorySearch(cat.id, (status, data, pagination) => {
+        console.log(`[${cat.name}] status=${status}, count=${Array.isArray(data) ? data.length : 0}`);
 
-        if (status === kakao.maps.services.Status.OK) {
+        if (status === kakao.maps.services.Status.OK && Array.isArray(data)) {
           data.forEach(place => {
             place._cat = cat;
             allResults.push(place);
@@ -623,10 +624,9 @@ function runSearch() {
           const el = document.getElementById('cnt-' + cat.id);
           if (el && data.length) el.textContent = data.length;
         } else if (status === kakao.maps.services.Status.ERROR) {
-          console.error(`[${cat.name}] API ERROR — 앱키 도메인 등록 확인 필요`);
-          showDebugMsg(`API 오류: ${cat.name} (${status})`);
+          console.error(`[${cat.name}] API ERROR`);
+          showDebugMsg(`${cat.name}: API 오류`);
         }
-        // ZERO_RESULT 는 정상 (해당 반경에 없는 것)
 
         resolve();
       }, opt);
