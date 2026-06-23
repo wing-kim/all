@@ -114,36 +114,42 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .cat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
 .cat-item{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:5px;padding:12px 6px;border-radius:12px;cursor:pointer;transition:.2s;
-  border:2px solid var(--border2);background:var(--s2);
-  position:relative;
+  gap:6px;padding:14px 6px;border-radius:10px;cursor:pointer;transition:.18s;
+  border:1.5px solid var(--border2);background:var(--s2);
+  position:relative;user-select:none;
 }
-.cat-item:hover{border-color:var(--t3);background:var(--s3)}
+.cat-item:hover{border-color:var(--border2);background:var(--s3)}
 .cat-item.on{
-  background:rgba(59,127,255,.12);
+  background:rgba(59,127,255,.1);
   border-color:var(--blue);
-  box-shadow:0 0 12px rgba(59,127,255,.2);
 }
 .cat-check{
-  position:absolute;top:5px;right:6px;
-  width:14px;height:14px;border-radius:50%;
+  position:absolute;top:6px;right:7px;
+  width:15px;height:15px;border-radius:50%;
   border:1.5px solid var(--border2);
   background:transparent;
   display:flex;align-items:center;justify-content:center;
-  font-size:8px;color:transparent;transition:.15s;
+  transition:.15s;flex-shrink:0;
 }
 .cat-item.on .cat-check{
   background:var(--blue);border-color:var(--blue);
-  color:#fff;font-size:9px;
 }
-.cat-emoji{font-size:20px;line-height:1}
-.cat-name{font-size:11px;color:var(--t2);font-weight:600;line-height:1.2;text-align:center}
+.cat-check::after{
+  content:'';display:block;
+  width:5px;height:3px;
+  border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;
+  transform:rotate(-45deg) translate(1px,-1px);
+  opacity:0;transition:.15s;
+}
+.cat-item.on .cat-check::after{opacity:1}
+.cat-emoji{font-size:22px;line-height:1}
+.cat-name{font-size:11.5px;color:var(--t3);font-weight:600;line-height:1.2;text-align:center;transition:.15s}
 .cat-item.on .cat-name{color:var(--t1)}
 .cat-cnt{
   font-family:var(--mono);font-size:10px;
   color:var(--green);font-weight:700;
-  background:rgba(34,209,134,.1);border-radius:10px;
-  padding:1px 6px;min-width:20px;text-align:center;
+  background:rgba(34,209,134,.12);border-radius:8px;
+  padding:1px 7px;
 }
 .cat-cnt:empty{display:none}
 
@@ -181,27 +187,64 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 }
 .result-count{font-family:var(--mono);font-size:12px;color:var(--t2)}
 .result-count span{color:var(--green);font-weight:700}
-.btn-csv{
+.result-hd-r{display:flex;align-items:center;gap:8px}
+.btn-sel-all{
   font-size:10px;padding:3px 10px;border-radius:20px;
   border:1px solid var(--border2);background:transparent;
   color:var(--t3);cursor:pointer;transition:.15s
 }
-.btn-csv:hover{border-color:var(--green);color:var(--green)}
+.btn-sel-all:hover{border-color:var(--blue);color:var(--blue)}
 
 .result-list{list-style:none}
 .result-item{
   display:flex;align-items:center;gap:10px;
-  padding:11px 18px;border-bottom:1px solid rgba(34,38,54,.45);
+  padding:10px 16px;border-bottom:1px solid rgba(34,38,54,.45);
   cursor:pointer;transition:.12s
 }
-.result-item:hover{background:rgba(59,127,255,.06)}
-.result-item:hover .ri-name{color:var(--blue)}
-.ri-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.result-item:hover{background:rgba(59,127,255,.05)}
+.result-item.selected{background:rgba(59,127,255,.08)}
+.ri-chk{
+  width:16px;height:16px;border-radius:4px;flex-shrink:0;
+  border:1.5px solid var(--border2);background:transparent;
+  display:flex;align-items:center;justify-content:center;transition:.15s;
+}
+.result-item.selected .ri-chk{background:var(--blue);border-color:var(--blue)}
+.ri-chk::after{
+  content:'';display:block;width:5px;height:3px;
+  border-left:1.5px solid #fff;border-bottom:1.5px solid #fff;
+  transform:rotate(-45deg) translate(1px,-1px);
+  opacity:0;transition:.15s;
+}
+.result-item.selected .ri-chk::after{opacity:1}
+.ri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .ri-info{flex:1;min-width:0}
-.ri-name{font-size:13px;font-weight:600;color:var(--t1);
+.ri-name{font-size:12.5px;font-weight:600;color:var(--t1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ri-cat{font-size:11px;color:var(--t3);margin-top:2px}
-.ri-dist{font-family:var(--mono);font-size:12px;color:var(--t2);flex-shrink:0}
+.ri-cat{font-size:10.5px;color:var(--t3);margin-top:2px}
+.ri-dist{font-family:var(--mono);font-size:11.5px;color:var(--t2);flex-shrink:0}
+
+/* 추출 바 */
+.export-bar{
+  padding:10px 16px;border-top:1px solid var(--border);
+  background:rgba(10,11,16,.97);flex-shrink:0;
+  display:flex;gap:7px;align-items:center;
+}
+.export-bar.hidden{display:none}
+.export-sel-cnt{font-size:11px;color:var(--t2);flex:1}
+.export-sel-cnt span{color:var(--green);font-weight:700}
+.btn-export-sel{
+  padding:7px 14px;border-radius:var(--r2);font-size:11.5px;font-weight:700;
+  cursor:pointer;transition:.15s;border:none;
+}
+.btn-export-all{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--t2);padding:7px 12px;border-radius:var(--r2);
+  font-size:11px;cursor:pointer;transition:.15s;
+}
+.btn-export-all:hover{border-color:var(--blue);color:var(--blue)}
+.btn-export-sel{background:var(--blue);color:#fff}
+.btn-export-sel:hover{background:#2f69f0}
+.btn-export-sel:disabled{opacity:.4;cursor:not-allowed}
 
 /* ── 좌측 하단 범례 ── */
 .legend-box{
@@ -331,6 +374,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
       <div>주소를 입력하고<br>카테고리를 선택 후<br>검색하세요</div>
     </div>
   </div>
+
+  <!-- 추출 바 -->
+  <div class="export-bar hidden" id="exportBar">
+    <div class="export-sel-cnt"><span id="selCnt">0</span>개 선택됨</div>
+    <button class="btn-export-all" onclick="exportCSV(false)">전체 CSV</button>
+    <button class="btn-export-sel" id="btnExportSel" onclick="exportCSV(true)" disabled>선택 추출</button>
+  </div>
 </div>
 
 <!-- 범례 -->
@@ -370,6 +420,7 @@ let currentRadius = 1000;
 let activeCats = new Set(CATEGORIES.map(c => c.id));
 let markers = [], overlays = [], circles = [];
 let allResults = [];
+let selectedItems = new Set(); // 선택된 결과 인덱스
 let centerMarker = null;
 
 // ══════════════════════════════════════════════
@@ -387,7 +438,7 @@ window.initKakaoMap = function() {
     map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.BOTTOMLEFT);
 
     // 장소 검색 서비스
-    ps = new kakao.maps.services.Places();
+    ps = new kakao.maps.services.Places(map);
     infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
 
     // 케이프혼타워 마커
@@ -464,7 +515,6 @@ function buildCatGrid() {
     const el = document.createElement('div');
     el.className = 'cat-item' + (activeCats.has(cat.id) ? ' on' : '');
     el.id = 'cat-' + cat.id;
-    el.style.borderColor = activeCats.has(cat.id) ? cat.color : '';
     el.onclick = () => toggleCat(cat.id);
     el.innerHTML = `
       <div class="cat-check">✓</div>
@@ -478,11 +528,7 @@ function buildCatGrid() {
 function toggleCat(id) {
   activeCats.has(id) ? activeCats.delete(id) : activeCats.add(id);
   const el = document.getElementById('cat-' + id);
-  const cat = CATEGORIES.find(c => c.id === id);
-  if (el) {
-    el.classList.toggle('on', activeCats.has(id));
-    el.style.borderColor = activeCats.has(id) ? cat.color : '';
-  }
+  if (el) el.classList.toggle('on', activeCats.has(id));
 }
 
 function toggleAllCats() {
@@ -490,10 +536,7 @@ function toggleAllCats() {
   activeCats = allOn ? new Set() : new Set(CATEGORIES.map(c => c.id));
   CATEGORIES.forEach(cat => {
     const el = document.getElementById('cat-' + cat.id);
-    if (el) {
-      el.classList.toggle('on', activeCats.has(cat.id));
-      el.style.borderColor = activeCats.has(cat.id) ? cat.color : '';
-    }
+    if (el) el.classList.toggle('on', activeCats.has(cat.id));
   });
 }
 
@@ -664,6 +707,10 @@ function clearMarkers() {
   overlays.forEach(o => o.setMap(null));
   markers.forEach(m => m.setMap(null));
   overlays = []; markers = [];
+  selectedItems.clear();
+  allSelected = false;
+  const selBtn = document.querySelector('.btn-sel-all');
+  if (selBtn) selBtn.textContent = '전체 선택';
   infowindow.close();
   document.getElementById('resultWrap').innerHTML =
     `<div class="result-empty"><div class="e-ico">⏳</div><div>검색 중…</div></div>`;
@@ -674,19 +721,25 @@ function clearMarkers() {
 // 결과 목록
 // ══════════════════════════════════════════════
 function renderResultList(items) {
+  selectedItems.clear();
+  updateExportBar();
   const wrap = document.getElementById('resultWrap');
   if (!items.length) {
     wrap.innerHTML = `<div class="result-empty"><div class="e-ico">🔍</div><div>검색 결과 없음<br>반경을 넓혀보세요</div></div>`;
+    document.getElementById('exportBar').classList.add('hidden');
     return;
   }
-  let html = `<div class="result-header">
+  let h = `<div class="result-header">
     <div class="result-count"><span>${items.length}</span>개 시설</div>
-    <button class="btn-csv" onclick="exportCSV()">📥 CSV</button>
+    <div class="result-hd-r">
+      <button class="btn-sel-all" onclick="toggleSelectAll()">전체 선택</button>
+    </div>
   </div><ul class="result-list">`;
   items.forEach((it, idx) => {
     const cat = it._cat;
     const dist = it.distance ? formatDist(parseInt(it.distance)) : '';
-    html += `<li class="result-item" onclick="flyTo(${parseFloat(it.y)},${parseFloat(it.x)})">
+    h += `<li class="result-item" id="ri-${idx}" onclick="toggleSelect(event,${idx},${parseFloat(it.y)},${parseFloat(it.x)})">
+      <div class="ri-chk"></div>
       <div class="ri-dot" style="background:${cat.color}"></div>
       <div class="ri-info">
         <div class="ri-name">${it.place_name}</div>
@@ -695,8 +748,42 @@ function renderResultList(items) {
       <div class="ri-dist">${dist}</div>
     </li>`;
   });
-  html += '</ul>';
-  wrap.innerHTML = html;
+  h += '</ul>';
+  wrap.innerHTML = h;
+  document.getElementById('exportBar').classList.remove('hidden');
+}
+
+function toggleSelect(e, idx, lat, lng) {
+  if (selectedItems.has(idx)) {
+    selectedItems.delete(idx);
+    document.getElementById('ri-'+idx)?.classList.remove('selected');
+  } else {
+    selectedItems.add(idx);
+    document.getElementById('ri-'+idx)?.classList.add('selected');
+    flyTo(lat, lng);
+  }
+  updateExportBar();
+}
+
+let allSelected = false;
+function toggleSelectAll() {
+  allSelected = !allSelected;
+  allResults.forEach((_, idx) => {
+    if (allSelected) selectedItems.add(idx);
+    else selectedItems.delete(idx);
+    document.getElementById('ri-'+idx)?.classList.toggle('selected', allSelected);
+  });
+  const btn = document.querySelector('.btn-sel-all');
+  if (btn) btn.textContent = allSelected ? '전체 해제' : '전체 선택';
+  updateExportBar();
+}
+
+function updateExportBar() {
+  const cnt = selectedItems.size;
+  const el = document.getElementById('selCnt');
+  if (el) el.textContent = cnt;
+  const btn = document.getElementById('btnExportSel');
+  if (btn) btn.disabled = cnt === 0;
 }
 
 function flyTo(lat, lng) {
@@ -725,10 +812,13 @@ function renderLegend(items) {
 // ══════════════════════════════════════════════
 // CSV 내보내기
 // ══════════════════════════════════════════════
-function exportCSV() {
-  if (!allResults.length) return;
+function exportCSV(selOnly) {
+  const target = selOnly
+    ? allResults.filter((_, i) => selectedItems.has(i))
+    : allResults;
+  if (!target.length) return;
   const rows = [['카테고리','시설명','도로명주소','지번주소','거리(m)','위도','경도']];
-  allResults.forEach(it => rows.push([
+  target.forEach(it => rows.push([
     it._cat.name, it.place_name,
     it.road_address_name||'', it.address_name||'',
     it.distance||'', it.y, it.x
@@ -737,7 +827,8 @@ function exportCSV() {
   const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `인프라분석_${new Date().toISOString().slice(0,10)}.csv`;
+  const suffix = selOnly ? `_선택${selectedItems.size}건` : `_전체${target.length}건`;
+  a.download = `인프라분석${suffix}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
