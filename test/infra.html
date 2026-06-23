@@ -246,6 +246,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .btn-export-sel:hover{background:#2f69f0}
 .btn-export-sel:disabled{opacity:.4;cursor:not-allowed}
 
+/* ── 버전 배지 ── */
+.ver-badge{
+  position:fixed;bottom:16px;right:16px;z-index:750;
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--t2);letter-spacing:1px;
+  background:rgba(10,11,16,.85);
+  border:1px solid var(--border2);
+  border-radius:6px;padding:4px 10px;
+  backdrop-filter:blur(8px);
+}
+
 /* ── 좌측 하단 범례 ── */
 .legend-box{
   position:fixed;bottom:20px;left:16px;z-index:700;
@@ -301,8 +312,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="brand">
     <div class="brand-name">BLUEPICA</div>
     <div class="brand-sub">INFRA SIMULATOR</div>
-    <div style="font-size:9px;color:var(--t3);letter-spacing:1px;font-family:var(--mono);margin-left:4px;align-self:flex-end;padding-bottom:2px">v0623.0635</div>
-  </div>
+      </div>
   <div class="topbar-r">
     <div class="sync-dot"></div>
     <a href="index.html" class="btn-back">← 허브로</a>
@@ -375,6 +385,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
     <button class="btn-export-sel" id="btnExportSel" onclick="exportCSV(true)" disabled>선택 추출</button>
   </div>
 </div>
+
+<!-- 버전 배지 -->
+<div class="ver-badge">v0623</div>
 
 <!-- 범례 -->
 <div class="legend-box hidden" id="legendBox">
@@ -546,6 +559,7 @@ function toggleCat(id) {
 function filterMarkersAndList() {
   // 오버레이(커스텀 마커) 재렌더
   overlays.forEach(o => o.setMap(null));
+  markers.forEach(m => m.setMap(null));
   overlays = []; markers = [];
 
   const filtered = allResults.filter(it => activeCats.has(it._cat.id));
@@ -628,29 +642,42 @@ function runSearch() {
   const cats = CATEGORIES.filter(c => activeCats.has(c.id));
   let done = 0;
 
-  // 카카오 JS SDK categorySearch 사용
-  cats.forEach((cat, i) => {
-    setTimeout(() => {
-      setLoading(true, `${cat.emoji} ${cat.name} 검색 중…`);
-      ps.categorySearch(cat.id, (data, status) => {
-        if (status === kakao.maps.services.Status.OK) {
-          data.forEach(place => {
-            place._cat = cat;
-            allResults.push(place);
-            addMarker(place, cat);
-          });
+  // 페이지네이션으로 전체 결과 가져오기 (카카오 1회 최대 15개 제한 우회)
+  function searchOnePage(cat, page) {
+    ps.categorySearch(cat.id, (data, status, pagination) => {
+      if (status === kakao.maps.services.Status.OK) {
+        data.forEach(place => {
+          place._cat = cat;
+          allResults.push(place);
+          addMarker(place, cat);
+        });
+        // 다음 페이지 있으면 계속
+        if (pagination.hasNextPage) {
+          setTimeout(() => searchOnePage(cat, page + 1), 100);
+        } else {
+          // 이 카테고리 완료
+          const cnt = allResults.filter(r => r._cat.id === cat.id).length;
           const el = document.getElementById('cnt-' + cat.id);
-          if (el && data.length) el.textContent = data.length;
+          if (el && cnt) el.textContent = cnt;
+          done++;
+          if (done === cats.length) finishSearch();
         }
+      } else {
+        // 에러 또는 결과없음도 완료 처리
         done++;
         if (done === cats.length) finishSearch();
-      }, {
-        location: new kakao.maps.LatLng(currentLat, currentLng),
-        radius: currentRadius,
-        useMapBounds: false,
-        size: 15
-      });
-    }, i * 150);
+      }
+    }, {
+      location: new kakao.maps.LatLng(currentLat, currentLng),
+      radius: currentRadius,
+      useMapBounds: false,
+      size: 15,
+      page: page
+    });
+  }
+
+  cats.forEach((cat, i) => {
+    setTimeout(() => searchOnePage(cat, 1), i * 200);
   });
 }
 
@@ -694,57 +721,48 @@ function finishSearch() {
 function addMarker(place, cat) {
   const pos = new kakao.maps.LatLng(place.y, place.x);
 
-  // 인포윈도우 내용
-  const iwContent = `
-    <div style="padding:10px 14px;font-family:'Noto Sans KR',sans-serif;min-width:160px;max-width:220px">
-      <div style="font-size:9px;color:${cat.color};font-weight:700;letter-spacing:1px;margin-bottom:3px">
-        ${cat.emoji} ${cat.name}
-      </div>
-      <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px">${place.place_name}</div>
-      <div style="font-size:11px;color:#666;margin-bottom:4px">${place.road_address_name || place.address_name || ''}</div>
-      ${place.distance ? `<div style="font-size:11px;color:${cat.color};font-weight:600">📏 ${formatDist(parseInt(place.distance))}</div>` : ''}
-    </div>`;
+  // 카테고리 색상으로 물방울 핀 이미지 생성 (SVG → base64)
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="28" viewBox="0 0 20 28">
+    <path d="M10 0C4.477 0 0 4.477 0 10c0 7.5 10 18 10 18S20 17.5 20 10C20 4.477 15.523 0 10 0z"
+      fill="${cat.color}" stroke="white" stroke-width="1.5"/>
+    <circle cx="10" cy="10" r="4" fill="white" opacity="0.9"/>
+  </svg>`;
+  const encoded = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 
-  // CustomOverlay 하나만 — 투명 마커 없음
-  const el = document.createElement('div');
-  el.style.cssText = 'position:relative;display:inline-block;cursor:pointer;';
-  el.innerHTML = `
-    <div style="
-      width:22px;height:22px;border-radius:50%;
-      background:${cat.color};
-      display:flex;align-items:center;justify-content:center;
-      font-size:11px;border:2px solid rgba(255,255,255,.8);
-      box-shadow:0 2px 6px rgba(0,0,0,.4);
-      transform:translateX(-50%) translateY(-50%);
-    ">${cat.emoji}</div>
-    <div style="
-      position:absolute;top:13px;left:50%;transform:translateX(-50%);
-      background:rgba(0,0,0,.72);color:#fff;font-size:9px;font-weight:700;
-      padding:1px 5px;border-radius:3px;white-space:nowrap;
-      border:1px solid rgba(255,255,255,.12);pointer-events:none;
-    ">${place.place_name}</div>`;
+  const markerImg = new kakao.maps.MarkerImage(
+    encoded,
+    new kakao.maps.Size(20, 28),
+    { offset: new kakao.maps.Point(10, 28) }
+  );
 
-  // 클릭 이벤트 직접 DOM에 등록
-  el.addEventListener('click', () => {
-    infowindow.setContent(iwContent);
-    // CustomOverlay 위치에 인포윈도우 띄우기 (더미 마커 없이)
-    const tempMarker = new kakao.maps.Marker({ position: pos });
-    infowindow.open(map, tempMarker);
-  });
-
-  const overlay = new kakao.maps.CustomOverlay({
+  const m = new kakao.maps.Marker({
     position: pos,
-    content: el,
-    zIndex: 3,
-    yAnchor: 0.5,
-    xAnchor: 0.5
+    image: markerImg,
+    map,
+    title: place.place_name,
+    zIndex: 3
   });
-  overlay.setMap(map);
-  overlays.push(overlay);
+
+  // 클릭 시 인포윈도우
+  kakao.maps.event.addListener(m, 'click', () => {
+    infowindow.setContent(`
+      <div style="padding:10px 14px;font-family:'Noto Sans KR',sans-serif;min-width:160px;max-width:220px">
+        <div style="font-size:9px;color:${cat.color};font-weight:700;letter-spacing:1px;margin-bottom:3px">
+          ${cat.emoji} ${cat.name}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#222;margin-bottom:4px">${place.place_name}</div>
+        <div style="font-size:11px;color:#666;margin-bottom:4px">${place.road_address_name || place.address_name || ''}</div>
+        ${place.distance ? `<div style="font-size:11px;color:${cat.color};font-weight:600">📏 ${formatDist(parseInt(place.distance))}</div>` : ''}
+      </div>`);
+    infowindow.open(map, m);
+  });
+
+  markers.push(m);
 }
 
 function clearMarkers() {
   overlays.forEach(o => o.setMap(null));
+  markers.forEach(m => m.setMap(null));
   overlays = []; markers = [];
   selectedItems.clear();
   allSelected = false;
