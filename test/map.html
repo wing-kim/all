@@ -279,6 +279,23 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .ana-panel{padding:14px 16px;border-bottom:1px solid var(--border);background:#0b0c13}.ana-label{font-size:11px;color:var(--t3);font-weight:800;margin:12px 0 7px}.ana-chips{display:flex;flex-wrap:wrap;gap:6px}.ana-chip{padding:5px 10px;border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--t2);cursor:pointer}.ana-chip.active{background:rgba(59,127,255,.16);border-color:var(--blue);color:var(--blue);font-weight:800}.ana-row{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:7px;margin:7px 0;color:var(--blue);font-size:11px;font-weight:800}.ana-row input{width:100%}.ana-reset{width:100%;margin-top:14px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#151821;color:var(--t3);cursor:pointer}.ana-summary{margin:14px 16px;padding:12px;border:1px solid var(--border2);border-radius:8px;background:#101320;color:var(--t2);font-size:12px;line-height:1.6}.ana-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 16px}.ana-kpi{border:1px solid var(--border);border-radius:8px;background:#101320;padding:10px;text-align:center}.ana-kpi strong{display:block;font-family:var(--mono);font-size:20px;color:var(--blue)}.ana-kpi span{font-size:10px;color:var(--t3)}
 .legend-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.legend-card{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#111320}.legend-dot2{width:10px;height:10px;border-radius:50%}.legend-card span{font-size:11px;color:var(--t2)}
 
+
+/* ══════════════════════════════════════════════
+   v4 레이아웃: 상단 모드/업종 필터 + 우측 기능 패널
+══════════════════════════════════════════════ */
+.mode-switch{display:flex;align-items:center;gap:6px;margin-right:4px}
+.mode-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:8px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;transition:.16s;white-space:nowrap}
+.mode-btn:hover{color:var(--t1);border-color:rgba(59,127,255,.45);background:rgba(59,127,255,.08)}
+.mode-btn.on{color:var(--t1);border-color:var(--blue);background:rgba(59,127,255,.18);box-shadow:inset 0 -2px 0 var(--blue)}
+.top-lease-filter{position:fixed;top:52px;left:0;right:var(--panel-w);z-index:760;height:38px;display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;padding:0 8px;background:rgba(8,9,13,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(59,127,255,.14);scrollbar-width:none}
+.top-lease-filter::-webkit-scrollbar{display:none}.top-lease-filter.hidden{display:none}
+.top-lease-filter .lease-chip{height:25px;padding:4px 10px;font-size:10.5px;background:rgba(21,24,33,.92)}
+.top-lease-filter .lease-chip .cnt{font-size:9px;color:var(--t3);background:rgba(255,255,255,.06)}
+.top-lease-filter .lease-chip.active .cnt{color:var(--green)}
+.panel{top:62px}.layer-wrap{display:none}.panel-head{padding:13px 18px 11px}
+.poi-mode .panel{top:62px}
+@media(max-width:640px){.top-lease-filter{right:0;top:52px}.panel{top:96px;max-height:52vh}.mode-btn{padding:0 9px;font-size:10px}.brand-sub{display:none}}
+
 </style>
 </head>
 <body>
@@ -292,12 +309,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
     <div class="brand-sub">통합 상권지도</div>
   </div>
   <div class="topbar-r">
+    <div class="mode-switch">
+      <button class="mode-btn on" id="modeLeaseBtn" onclick="showLeaseMode()">🏢 임대건물</button>
+      <button class="mode-btn" id="modePoiBtn" onclick="showPoiMode()">📍 인프라</button>
+    </div>
     <div class="dot"></div>
     <a href="index.html" class="btn-nav">← 허브로</a>
-    <a href="market.html" class="btn-nav">임대지도</a>
-    <a href="infra.html" class="btn-nav">인프라</a>
   </div>
 </div>
+
+<!-- 임대건물 상단 업종 필터 -->
+<div class="top-lease-filter" id="topLeaseFilterBar"></div>
 
 <!-- 우측 패널 -->
 <div class="panel">
@@ -305,18 +327,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <!-- 패널 헤더 -->
   <div class="panel-head">
     <div class="panel-title">🗺 통합 상권지도</div>
-    <div class="panel-sub">임대 데이터 + 실시간 상권을 한 화면에</div>
+    <div class="panel-sub">상단 필터 + 우측 상세 기능 패널</div>
   </div>
 
   <!-- 레이어 선택 -->
   <div class="layer-wrap">
-    <div class="layer-label">레이어 선택</div>
+    <div class="layer-label">보기 모드 선택</div>
     <div class="layer-row">
       <div class="layer-btn on" id="layerBld" onclick="toggleLayer('bld')">
         <div class="l-dot" style="background:#3b7fff"></div>
         🏢 임대 건물
       </div>
-      <div class="layer-btn on" id="layerPoi" onclick="toggleLayer('poi')">
+      <div class="layer-btn" id="layerPoi" onclick="toggleLayer('poi')">
         <div class="l-dot" style="background:#22d186"></div>
         📍 실시간 상권
       </div>
@@ -340,7 +362,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   </div>
 
   <!-- 실시간 카테고리 -->
-  <div class="cat-section" id="catSection">
+  <div class="cat-section hidden" id="catSection">
     <div class="cat-label">
       실시간 상권 카테고리
       <span class="cat-reset" onclick="toggleAllCats()">전체 토글</span>
@@ -349,7 +371,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   </div>
 
   <!-- 검색 실행 -->
-  <div class="run-wrap" id="runWrap">
+  <div class="run-wrap hidden" id="runWrap">
     <button class="btn-run" id="btnRun" onclick="runPoiSearch()">
       <span id="runIco">🔍</span>
       <span id="runTxt">실시간 상권 검색</span>
@@ -386,7 +408,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 </div>
 
 <!-- 버전 배지 -->
-<div class="ver-badge">v0624.1515</div>
+<div class="ver-badge">v0624.1540</div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -432,7 +454,7 @@ let map, ps, infowindow;
 let currentLat = OUR_LAT, currentLng = OUR_LNG;
 let currentRadius = 1000;
 let activeCats = new Set(CATEGORIES.map(c => c.id));
-let layerBld = true, layerPoi = true;
+let layerBld = true, layerPoi = false;
 
 // 마커 그룹
 let bldMarkers = [];      // 임대 건물 마커
@@ -1062,7 +1084,9 @@ let activeMapFilter = 'all';
 let anaState = { types:new Set(), areaMin:0, areaMax:300, rentMin:0, rentMax:5000, yearMin:1960, priceMax:3000, elev:'', park:'', dist:'' };
 
 function showLeaseMode(){
-  activeViewMode='lease'; layerBld=true; layerPoi=false;
+  activeViewMode='lease'; document.body.classList.remove('poi-mode'); document.getElementById('topLeaseFilterBar')?.classList.remove('hidden'); document.getElementById('modeLeaseBtn')?.classList.add('on'); document.getElementById('modePoiBtn')?.classList.remove('on');
+  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='🏢 임대건물 분석';
+  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='기존 마켓앱 탭/필터 기능 연동'; layerBld=true; layerPoi=false;
   document.getElementById('layerBld')?.classList.add('on');
   document.getElementById('layerPoi')?.classList.remove('on');
   document.getElementById('catSection')?.classList.add('hidden');
@@ -1070,7 +1094,9 @@ function showLeaseMode(){
   clearPoiMarkers(); drawBldMarkers(); renderLeaseShell();
 }
 function showPoiMode(){
-  activeViewMode='poi'; layerPoi=true; layerBld=false;
+  activeViewMode='poi'; document.body.classList.add('poi-mode'); document.getElementById('topLeaseFilterBar')?.classList.add('hidden'); document.getElementById('modePoiBtn')?.classList.add('on'); document.getElementById('modeLeaseBtn')?.classList.remove('on');
+  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='📍 실시간 상권 검색';
+  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='카카오 장소 검색 기반 카테고리 조회'; layerPoi=true; layerBld=false;
   document.getElementById('layerPoi')?.classList.add('on');
   document.getElementById('layerBld')?.classList.remove('on');
   document.getElementById('catSection')?.classList.remove('hidden');
@@ -1083,18 +1109,8 @@ function toggleLayer(type){ if(type==='bld') showLeaseMode(); else showPoiMode()
 
 function renderLeaseShell(){
   const wrap=document.getElementById('resultWrap');
+  renderTopLeaseFilters();
   wrap.innerHTML = `
-    <div class="lease-filter-bar" id="leaseFilterBar">
-      ${leaseFilterChip('all','🗺️','전체','fc-all')}
-      ${leaseFilterChip('core','📍','인접 300m','fc-core')}
-      ${leaseFilterChip('F&B/음식점','🍽️','음식점','fc-food')}
-      ${leaseFilterChip('카페','☕','카페','fc-cafe')}
-      ${leaseFilterChip('병원/의료','🏥','의료','fc-med')}
-      ${leaseFilterChip('사무실/기업','🏢','사무실','fc-office')}
-      ${leaseFilterChip('뷰티/미용','💅','뷰티','fc-beauty')}
-      ${leaseFilterChip('학원/교육','📚','학원','fc-edu')}
-      ${leaseFilterChip('공실','🔓','공실','fc-vacant')}
-    </div>
     <div class="lease-tabs">
       <div class="lease-tab ${activeLeaseTab==='buildings'?'active':''}" onclick="mapShowTab('buildings')">건물 목록</div>
       <div class="lease-tab ${activeLeaseTab==='chart'?'active':''}" onclick="mapShowTab('chart')">업종 분석</div>
@@ -1104,6 +1120,21 @@ function renderLeaseShell(){
     <div id="leasePane"></div>`;
   updateFilterCounts();
   renderActiveLeaseTab();
+}
+function renderTopLeaseFilters(){
+  const bar=document.getElementById('topLeaseFilterBar');
+  if(!bar) return;
+  bar.innerHTML = `
+    ${leaseFilterChip('all','🗺️','전체','fc-all')}
+    ${leaseFilterChip('core','📍','인접 300m','fc-core')}
+    ${leaseFilterChip('F&B/음식점','🍽️','음식점','fc-food')}
+    ${leaseFilterChip('카페','☕','카페','fc-cafe')}
+    ${leaseFilterChip('병원/의료','🏥','의료','fc-med')}
+    ${leaseFilterChip('사무실/기업','🏢','사무실','fc-office')}
+    ${leaseFilterChip('뷰티/미용','💅','뷰티','fc-beauty')}
+    ${leaseFilterChip('학원/교육','📚','학원','fc-edu')}
+    ${leaseFilterChip('공실','🔓','공실','fc-vacant')}`;
+  updateFilterCounts();
 }
 function leaseFilterChip(filter, ico, label, id){
   return `<div class="lease-chip ${activeMapFilter===filter?'active':''}" data-filter="${filter}" onclick="applyMapFilter('${filter}')"><span>${ico}</span>${label}<span class="cnt" id="${id}">0</span></div>`;
