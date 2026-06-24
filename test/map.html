@@ -336,6 +336,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .poi-mode .top-lease-filter{display:flex!important}
 @media(max-width:900px){.top-lease-filter{right:0}.panel{width:calc(100vw - 20px);right:10px;top:90px!important;bottom:0;border-radius:14px 14px 0 0}.poi-mode .panel{top:90px!important}.mode-btn{min-width:78px}.top-lease-filter{top:52px}.bld-popup{width:calc(100vw - 32px)}}
 
+
+/* ══════════════════════════════════════════════
+   v9 market-function UI tuning
+══════════════════════════════════════════════ */
+.top-lease-filter{position:fixed;top:52px;left:0;right:400px;z-index:760;height:38px;display:flex;align-items:center;gap:5px;overflow-x:auto;overflow-y:hidden;padding:0 12px;background:rgba(8,9,13,.95);border-bottom:1px solid rgba(59,127,255,.16);scrollbar-width:none}.top-lease-filter::-webkit-scrollbar{display:none}.top-lease-filter.hidden{display:none}.lease-chip{height:25px;flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border2);border-radius:18px;background:var(--s2);color:var(--t2);font-size:11px;font-weight:800;padding:0 10px;cursor:pointer;white-space:nowrap}.lease-chip:hover{border-color:rgba(59,127,255,.55);color:var(--t1)}.lease-chip.active{background:rgba(59,127,255,.2);border-color:var(--blue);color:#fff}.lease-chip .cnt{font-family:var(--mono);font-size:9px;min-width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,.08);color:var(--green)}
+.panel{top:52px;right:0;bottom:0;border-radius:0;width:400px}.poi-mode .panel{top:52px}.lease-tabs{display:grid;grid-template-columns:repeat(4,1fr);height:46px;background:#090a10;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2}.lease-tab{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--t3);border-right:1px solid rgba(255,255,255,.04);cursor:pointer}.lease-tab:last-child{border-right:0}.lease-tab.active{background:rgba(59,127,255,.08);color:var(--t1);box-shadow:inset 0 -3px 0 var(--blue)}.lease-pane-wrap{min-height:100%}.lease-list-help{font-size:10.5px;color:var(--t3);padding:9px 14px;border-bottom:1px solid var(--border);background:#0b0d14}.dong-group{border-bottom:1px solid rgba(255,255,255,.07)}.dong-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;background:#111320;border-left:3px solid var(--blue)}.dong-head:hover{background:#151827}.dong-badge{font-size:12px;font-weight:900;color:var(--t1);padding:4px 10px;border:1px solid rgba(59,127,255,.45);border-radius:7px;background:rgba(59,127,255,.08)}.dong-meta{font-size:11px;font-weight:700;color:#7f89b5}.dong-arrow{margin-left:auto;color:#748ffc;transition:.15s}.dong-body{display:none}.dong-group.open .dong-body{display:block}.dong-group.open .dong-arrow{transform:rotate(180deg)}
+.lease-bld-card{border-bottom:1px solid rgba(255,255,255,.06);background:#0d0f18;border-left:3px solid var(--blue);transition:.13s}.lease-bld-card:hover{background:#151827}.lease-bld-card.ours{background:rgba(245,158,11,.05);border-left-color:#f59e0b}.lease-bld-card.selected{background:rgba(59,127,255,.08);box-shadow:inset 0 0 0 1px rgba(59,127,255,.25)}.lease-bld-main{padding:12px 15px;cursor:pointer}.lease-bld-top{display:flex;align-items:center;gap:8px}.lease-bld-name{font-size:13px;font-weight:900;color:var(--t1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lease-bld-price{margin-left:auto;color:#7aa0ff;font-family:var(--mono);font-size:11px;white-space:nowrap}.lease-bld-meta{margin-top:7px;display:flex;gap:5px;flex-wrap:wrap}.lease-tag{font-size:10px;color:var(--t3);background:#151827;border:1px solid var(--border);border-radius:5px;padding:3px 7px}.lease-card-detail{display:none;padding:0 14px 13px 18px}.lease-card-detail.show{display:block}.lease-floor-line{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11.5px;color:var(--t2)}.lease-floor-line .fl{width:34px;color:var(--t3);font-family:var(--mono)}.lease-floor-line .tt{font-weight:700;color:var(--t1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lease-type-pill{font-size:10px;font-weight:700;color:#dce3ff;border-radius:5px;padding:2px 6px;border:1px solid rgba(59,127,255,.28)}.lease-rent{font-family:var(--mono);font-size:11px;color:var(--green);min-width:45px;text-align:right}.lease-detail-btn{margin-top:10px;width:100%;height:31px;border-radius:7px;border:1px solid rgba(59,127,255,.32);background:rgba(59,127,255,.1);color:var(--blue);font-size:11px;font-weight:900;cursor:pointer}.lease-empty-line{font-size:12px;color:var(--t3);padding:10px 0}
+.lease-pad{padding:14px 16px}.lease-section-title{font-size:12px;font-weight:900;color:var(--t2);margin-bottom:11px;display:flex;align-items:center;gap:7px}.lease-section-title:before{content:'';width:4px;height:15px;border-radius:3px;background:var(--blue)}.type-hint{font-size:10.5px;color:var(--t3);padding:7px 9px;border:1px dashed var(--border2);border-radius:7px;background:#111320;margin-bottom:10px}.type-row{display:grid;grid-template-columns:84px 1fr 45px;align-items:center;gap:8px;margin:5px 0;padding:3px;border:1px solid transparent;border-radius:8px;cursor:pointer}.type-row:hover{background:#151821}.type-row.t-selected{border-color:rgba(59,127,255,.35);background:rgba(59,127,255,.06)}.type-lbl{font-size:10.5px;font-weight:800;color:#9aa4c8;text-align:left;line-height:1.2}.type-track{height:24px;background:#151821;border-radius:6px;overflow:hidden}.type-fill{height:100%;display:flex;align-items:center;padding-left:7px;border-radius:6px;min-width:28px}.type-cnt{font-family:var(--mono);font-size:12px;font-weight:900;color:#fff}.type-bldg-num{text-align:right;font-size:10.5px;color:var(--t3);font-weight:800}.insight-box{margin-top:14px;border:1px solid rgba(245,188,48,.22);border-radius:10px;padding:12px 14px;background:rgba(245,188,48,.05);font-size:12px;line-height:1.75;color:var(--t2)}.insight-title{font-weight:900;color:var(--yellow);margin-bottom:5px}.insight-box ul{list-style:none}.insight-box li{padding:2px 0}.reset-filter{text-align:center;padding:8px;margin-top:10px;border:1px dashed var(--border2);border-radius:8px;color:var(--t3);font-size:11px;cursor:pointer}
+.ana-panel{padding:14px 16px;border-bottom:1px solid var(--border);background:#0b0c13}.ana-label{font-size:11px;color:var(--t3);font-weight:900;margin:12px 0 7px}.ana-label span{font-weight:500;color:var(--t4)}.ana-chips{display:flex;flex-wrap:wrap;gap:6px}.ana-chip{padding:5px 10px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--t2);font-size:11px;cursor:pointer}.ana-chip.active{background:rgba(59,127,255,.16);border-color:var(--blue);color:var(--blue);font-weight:900}.ana-row{display:grid;grid-template-columns:42px 1fr 32px;gap:7px;align-items:center;margin:7px 0;color:var(--blue);font-size:11px;font-weight:800}.ana-row input{width:100%}.ana-reset{width:100%;margin-top:14px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#151821;color:var(--t3);cursor:pointer}.ana-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:13px 14px}.ana-kpi{border:1px solid var(--border);border-radius:8px;background:#101320;padding:9px 4px;text-align:center}.ana-kpi strong{display:block;font-family:var(--mono);font-size:18px;color:var(--blue)}.ana-kpi span{font-size:9px;color:var(--t3)}.ana-summary{margin:12px 14px;padding:11px;border:1px solid var(--border2);border-radius:8px;background:#101320;color:var(--t2);font-size:12px;line-height:1.6}.ana-result-list{padding-bottom:12px}.legend-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.legend-card{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#111320}.legend-dot2{width:10px;height:10px;border-radius:50%;flex-shrink:0}.legend-card span{font-size:11px;color:var(--t2)}
+.popup-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);margin:-14px -18px 14px;border-bottom:1px solid var(--border)}.popup-stat-grid>div{padding:13px 8px;text-align:center;border-right:1px solid var(--border)}.popup-stat-grid>div:last-child{border-right:0}.popup-stat-grid b{display:block;font-family:var(--mono);font-size:19px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.popup-stat-grid span{font-size:10px;color:var(--t3)}.popup-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px}.popup-action-btn{height:38px;border-radius:8px;border:1px solid var(--border2);background:#151821;color:var(--t2);font-weight:900;cursor:pointer}.popup-action-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}.popup-action-btn.file{background:rgba(34,209,134,.11);border-color:rgba(34,209,134,.35);color:#7ee2aa}.popup-action-btn:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:640px){.top-lease-filter{right:0;top:52px}.panel{width:auto;left:8px;right:8px;top:90px;bottom:0;border-radius:12px 12px 0 0}.mode-switch{max-width:190px;overflow:hidden}.mode-btn{min-width:auto}.topbar{padding:0 10px}.brand-sub{display:none}}
+
 </style>
 </head>
 <body>
@@ -448,7 +460,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 </div>
 
 <!-- 버전 배지 -->
-<div class="ver-badge">v0624.1710-KAKAO</div>
+<div class="ver-badge">v9-KAKAO-MARKET</div>
 
 <script>
 // ══════════════════════════════════════════════
@@ -1119,289 +1131,346 @@ function calcDist(lat1, lng1, lat2, lng2) {
 
 
 // ══════════════════════════════════════════════
-// 임대상권 마켓앱 탭/필터 이식 패치
+// v9: KAKAO MAP BASE + MARKET ORIGINAL FUNCTIONS PORT
+// - 카카오맵은 map 앱 그대로 사용
+// - 마켓앱의 데이터/필터/탭/상세/PDF 로직을 우측 패널에 이식
 // ══════════════════════════════════════════════
-let activeViewMode = 'lease';
-let activeLeaseTab = 'buildings';
-let activeMapFilter = 'all';
-let anaState = { types:new Set(), areaMin:0, areaMax:300, rentMin:0, rentMax:5000, yearMin:1960, priceMax:3000, elev:'', park:'', dist:'' };
+var activeViewMode = 'lease';
+var activeLeaseTab = 'buildings';
+var activeMapFilter = 'all';
+var selectedLeaseBuildingId = null;
+var selectedTypeFilter = '';
+var anaState = { types:new Set(), areaMin:0, areaMax:300, rentMin:0, rentMax:5000, elev:'', park:'', dist:'' };
 
 function showLeaseMode(){
-  activeViewMode='lease'; document.body.classList.remove('poi-mode'); document.getElementById('topLeaseFilterBar')?.classList.remove('hidden'); document.getElementById('modeLeaseBtn')?.classList.add('on'); document.getElementById('modePoiBtn')?.classList.remove('on');
-  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='🏢 임대건물 분석';
-  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='기존 마켓앱 탭/필터 기능 연동'; layerBld=true; layerPoi=false;
+  activeViewMode = 'lease';
+  layerBld = true; layerPoi = false;
+  document.body.classList.remove('poi-mode');
+  document.getElementById('topLeaseFilterBar')?.classList.remove('hidden');
+  document.getElementById('modeLeaseBtn')?.classList.add('on');
+  document.getElementById('modePoiBtn')?.classList.remove('on');
   document.getElementById('layerBld')?.classList.add('on');
   document.getElementById('layerPoi')?.classList.remove('on');
   document.getElementById('catSection')?.classList.add('hidden');
   document.getElementById('runWrap')?.classList.add('hidden');
-  clearPoiMarkers(); drawBldMarkers(); renderLeaseShell();
+  const pt = document.querySelector('.panel-title'); if(pt) pt.textContent = '🏢 임대건물';
+  const psb = document.querySelector('.panel-sub'); if(psb) psb.textContent = '마켓앱 데이터/필터/분석 기능 연동';
+  clearPoiMarkers();
+  drawBldMarkersFiltered();
+  renderLeaseShell();
 }
+
 function showPoiMode(){
-  activeViewMode='poi'; document.body.classList.add('poi-mode'); document.getElementById('topLeaseFilterBar')?.classList.add('hidden'); document.getElementById('modePoiBtn')?.classList.add('on'); document.getElementById('modeLeaseBtn')?.classList.remove('on');
-  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='📍 실시간 상권 검색';
-  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='카카오 장소 검색 기반 카테고리 조회'; layerPoi=true; layerBld=false;
-  document.getElementById('layerPoi')?.classList.add('on');
+  activeViewMode = 'poi';
+  layerBld = false; layerPoi = true;
+  document.body.classList.add('poi-mode');
+  document.getElementById('topLeaseFilterBar')?.classList.add('hidden');
+  document.getElementById('modeLeaseBtn')?.classList.remove('on');
+  document.getElementById('modePoiBtn')?.classList.add('on');
   document.getElementById('layerBld')?.classList.remove('on');
+  document.getElementById('layerPoi')?.classList.add('on');
   document.getElementById('catSection')?.classList.remove('hidden');
   document.getElementById('runWrap')?.classList.remove('hidden');
+  const pt = document.querySelector('.panel-title'); if(pt) pt.textContent = '📍 인프라 / 실시간 상권';
+  const psb = document.querySelector('.panel-sub'); if(psb) psb.textContent = '카카오 장소 검색 기반 카테고리 조회';
   clearBldMarkers();
-  if(allPoi.length) renderPoiList(allPoi.filter(p=>activeCats.has(p._cat.id)));
+  if(allPoi.length) renderPoiList(allPoi.filter(p => activeCats.has(p._cat.id)));
   else document.getElementById('resultWrap').innerHTML = `<div class="result-empty"><div class="e-ico">📍</div><div>실시간 상권 카테고리 선택 후<br>검색하세요</div></div>`;
 }
-function toggleLayer(type){ if(type==='bld') showLeaseMode(); else showPoiMode(); }
+
+function toggleLayer(type){ type === 'bld' ? showLeaseMode() : showPoiMode(); }
 
 function renderLeaseShell(){
-  const wrap=document.getElementById('resultWrap');
   renderTopLeaseFilters();
+  const wrap = document.getElementById('resultWrap');
+  if(!wrap) return;
   wrap.innerHTML = `
     <div class="lease-tabs">
-      <div class="lease-tab ${activeLeaseTab==='buildings'?'active':''}" onclick="mapShowTab('buildings')">건물 목록</div>
-      <div class="lease-tab ${activeLeaseTab==='chart'?'active':''}" onclick="mapShowTab('chart')">업종 분석</div>
-      <div class="lease-tab ${activeLeaseTab==='analysis'?'active':''}" onclick="mapShowTab('analysis')">상권 분석</div>
+      <div class="lease-tab ${activeLeaseTab==='buildings'?'active':''}" onclick="mapShowTab('buildings')">건물목록</div>
+      <div class="lease-tab ${activeLeaseTab==='chart'?'active':''}" onclick="mapShowTab('chart')">업종분석</div>
+      <div class="lease-tab ${activeLeaseTab==='analysis'?'active':''}" onclick="mapShowTab('analysis')">상권분석</div>
       <div class="lease-tab ${activeLeaseTab==='legend'?'active':''}" onclick="mapShowTab('legend')">범례</div>
     </div>
-    <div id="leasePane"></div>`;
+    <div id="leasePane" class="lease-pane-wrap"></div>`;
   updateFilterCounts();
   renderActiveLeaseTab();
 }
+
+function mapShowTab(tab){
+  activeLeaseTab = tab;
+  document.querySelectorAll('.lease-tab').forEach(el => el.classList.toggle('active', el.getAttribute('onclick')?.includes(`'${tab}'`)));
+  renderActiveLeaseTab();
+}
+
+function leasePane(){ return document.getElementById('leasePane') || document.getElementById('resultWrap'); }
+function nonOurs(){ return buildings.filter(b => !b.isOurs); }
+function visibleBuildings(){ return nonOurs().filter(b => buildingMatchesFilter(b, activeMapFilter)); }
+
 function renderTopLeaseFilters(){
-  const bar=document.getElementById('topLeaseFilterBar');
+  const bar = document.getElementById('topLeaseFilterBar');
   if(!bar) return;
-  bar.innerHTML = `
-    ${leaseFilterChip('all','🗺️','전체','fc-all')}
-    ${leaseFilterChip('core','📍','인접 300m','fc-core')}
-    ${leaseFilterChip('F&B/음식점','🍽️','음식점','fc-food')}
-    ${leaseFilterChip('카페','☕','카페','fc-cafe')}
-    ${leaseFilterChip('병원/의료','🏥','의료','fc-med')}
-    ${leaseFilterChip('사무실/기업','🏢','사무실','fc-office')}
-    ${leaseFilterChip('뷰티/미용','💅','뷰티','fc-beauty')}
-    ${leaseFilterChip('학원/교육','📚','학원','fc-edu')}
-    ${leaseFilterChip('공실','🔓','공실','fc-vacant')}`;
+  const chips = [
+    ['all','🗺️','전체','fc-all'], ['core','📍','인접 300m','fc-core'],
+    ['F&B/음식점','🍽️','음식점','fc-food'], ['카페','☕','카페','fc-cafe'],
+    ['병원/의료','🏥','의료','fc-med'], ['사무실/기업','🏢','사무실','fc-office'],
+    ['뷰티/미용','💅','뷰티','fc-beauty'], ['학원/교육','📚','학원','fc-edu'],
+    ['공실','🔓','공실','fc-vacant']
+  ];
+  bar.innerHTML = chips.map(c => leaseFilterChip(...c)).join('');
   updateFilterCounts();
 }
 function leaseFilterChip(filter, ico, label, id){
-  return `<div class="lease-chip ${activeMapFilter===filter?'active':''}" data-filter="${filter}" onclick="applyMapFilter('${filter}')"><span>${ico}</span>${label}<span class="cnt" id="${id}">0</span></div>`;
+  return `<button class="lease-chip ${activeMapFilter===filter?'active':''}" data-filter="${escapeHtml(filter)}" onclick="applyMapFilter('${jsStr(filter)}')"><span>${ico}</span>${escapeHtml(label)}<span class="cnt" id="${id}">0</span></button>`;
 }
-function mapShowTab(tab){ activeLeaseTab=tab; document.querySelectorAll('.lease-tab').forEach((el,i)=>el.classList.toggle('active',['buildings','chart','analysis','legend'][i]===tab)); renderActiveLeaseTab(); }
-function renderActiveLeaseTab(){
-  if(activeLeaseTab==='buildings') renderBldList();
-  if(activeLeaseTab==='chart') renderTypeChart();
-  if(activeLeaseTab==='analysis') renderAnalysisTab();
-  if(activeLeaseTab==='legend') renderLeaseLegend();
-}
-function leasePane(){ return document.getElementById('leasePane') || document.getElementById('resultWrap'); }
-function nonOurs(){ return buildings.filter(b=>!b.isOurs); }
-function buildingMatchesFilter(b, filter){
-  if(filter==='all') return true;
-  if(filter==='core') return b.distance==='core' || calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng)<=300;
-  if(filter==='공실') return (b.tenants||[]).some(t => (t.name||'').includes('공실') || t.rawType==='공실');
-  return (b.tenants||[]).some(t => t.type===filter);
-}
-function applyMapFilter(filter){
-  if(activeMapFilter===filter && filter!=='all') filter='all';
-  activeMapFilter=filter;
-  document.querySelectorAll('.lease-chip').forEach(c=>c.classList.toggle('active', c.dataset.filter===filter));
-  drawBldMarkersFiltered();
-  renderActiveLeaseTab();
-}
+
 function updateFilterCounts(){
-  const arr=nonOurs(); const set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v};
-  set('fc-all', arr.length); set('fc-core', arr.filter(b=>buildingMatchesFilter(b,'core')).length);
-  set('fc-food', arr.filter(b=>buildingMatchesFilter(b,'F&B/음식점')).length); set('fc-cafe', arr.filter(b=>buildingMatchesFilter(b,'카페')).length);
-  set('fc-med', arr.filter(b=>buildingMatchesFilter(b,'병원/의료')).length); set('fc-office', arr.filter(b=>buildingMatchesFilter(b,'사무실/기업')).length);
-  set('fc-beauty', arr.filter(b=>buildingMatchesFilter(b,'뷰티/미용')).length); set('fc-edu', arr.filter(b=>buildingMatchesFilter(b,'학원/교육')).length);
-  set('fc-vacant', arr.filter(b=>buildingMatchesFilter(b,'공실')).length);
+  const arr = nonOurs();
+  const set = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent = String(v); };
+  set('fc-all', arr.length);
+  set('fc-core', arr.filter(b => buildingMatchesFilter(b,'core')).length);
+  set('fc-food', arr.filter(b => buildingMatchesFilter(b,'F&B/음식점')).length);
+  set('fc-cafe', arr.filter(b => buildingMatchesFilter(b,'카페')).length);
+  set('fc-med', arr.filter(b => buildingMatchesFilter(b,'병원/의료')).length);
+  set('fc-office', arr.filter(b => buildingMatchesFilter(b,'사무실/기업')).length);
+  set('fc-beauty', arr.filter(b => buildingMatchesFilter(b,'뷰티/미용')).length);
+  set('fc-edu', arr.filter(b => buildingMatchesFilter(b,'학원/교육')).length);
+  set('fc-vacant', arr.filter(b => buildingMatchesFilter(b,'공실')).length);
 }
+
+function buildingMatchesFilter(b, filter){
+  if(!filter || filter === 'all') return true;
+  if(filter === 'core') return b.distance === 'core' || calcDist(OUR_LAT, OUR_LNG, b.lat, b.lng) <= 300;
+  if(filter === '공실') return (b.tenants || []).some(t => /공실|퇴거|vacant/i.test(String(t.name||'') + ' ' + String(t.rawType||'')));
+  return (b.tenants || []).some(t => (t.type || normalizeType(t.rawType || '')) === filter || String(t.rawType||'').includes(filter));
+}
+
+function applyMapFilter(filter){
+  activeMapFilter = (activeMapFilter === filter && filter !== 'all') ? 'all' : filter;
+  selectedLeaseBuildingId = null;
+  renderTopLeaseFilters();
+  drawBldMarkersFiltered();
+  if(activeLeaseTab !== 'buildings') renderActiveLeaseTab();
+  else renderBldList();
+}
+
+function renderActiveLeaseTab(){
+  if(activeLeaseTab === 'buildings') renderBldList();
+  else if(activeLeaseTab === 'chart') renderTypeChart();
+  else if(activeLeaseTab === 'analysis') renderAnalysisTab();
+  else if(activeLeaseTab === 'legend') renderLeaseLegend();
+}
+
 function drawBldMarkersFiltered(){
   clearBldMarkers();
-  buildings.forEach(bld=>{
-    if(!bld.isOurs && !buildingMatchesFilter(bld, activeMapFilter)) return;
+  const bounds = new kakao.maps.LatLngBounds();
+  buildings.forEach(bld => {
     if(!bld.lat || !bld.lng) return;
-    const pos=new kakao.maps.LatLng(bld.lat,bld.lng); const color=bld.isOurs?'#3b7fff':'#5878ff'; const size=bld.isOurs?24:18, height=bld.isOurs?34:26;
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 18 26"><path d="M9 0C4.029 0 0 4.029 0 9c0 6.75 9 17 9 17S18 15.75 18 9C18 4.029 13.971 0 9 0z" fill="${color}" stroke="white" stroke-width="1.6"/><circle cx="9" cy="9" r="3.5" fill="white" opacity="0.9"/></svg>`;
-    const img=new kakao.maps.MarkerImage('data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg))), new kakao.maps.Size(size,height), {offset:new kakao.maps.Point(size/2,height)});
-    const m=new kakao.maps.Marker({position:pos,image:img,map,zIndex:bld.isOurs?20:5,title:bld.name}); kakao.maps.event.addListener(m,'click',()=>openBldPopup(bld)); bldMarkers.push(m);
+    if(!bld.isOurs && !buildingMatchesFilter(bld, activeMapFilter)) return;
+    const pos = new kakao.maps.LatLng(bld.lat, bld.lng);
+    bounds.extend(pos);
+    const color = bld.isOurs ? '#f59e0b' : (selectedLeaseBuildingId===bld.id ? '#ffffff' : getBldColor(bld));
+    const stroke = selectedLeaseBuildingId===bld.id ? '#3b7fff' : 'white';
+    const size = bld.isOurs || selectedLeaseBuildingId===bld.id ? 24 : 18;
+    const height = bld.isOurs || selectedLeaseBuildingId===bld.id ? 34 : 26;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 18 26"><path d="M9 0C4.029 0 0 4.029 0 9c0 6.75 9 17 9 17S18 15.75 18 9C18 4.029 13.971 0 9 0z" fill="${color}" stroke="${stroke}" stroke-width="2"/><circle cx="9" cy="9" r="3.5" fill="${selectedLeaseBuildingId===bld.id?'#3b7fff':'white'}" opacity="0.95"/></svg>`;
+    const img = new kakao.maps.MarkerImage('data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))), new kakao.maps.Size(size,height), {offset:new kakao.maps.Point(size/2,height)});
+    const m = new kakao.maps.Marker({position:pos, image:img, map, zIndex:bld.isOurs?50:(selectedLeaseBuildingId===bld.id?40:5), title:bld.name});
+    kakao.maps.event.addListener(m, 'click', () => { selectedLeaseBuildingId = bld.id; drawBldMarkersFiltered(); showSmallInfo(bld); openBldPopup(bld); });
+    bldMarkers.push(m);
   });
 }
 
 function renderBldList(){
-  const arr=nonOurs().filter(b=>buildingMatchesFilter(b,activeMapFilter)).sort((a,b)=>calcDist(OUR_LAT,OUR_LNG,a.lat,a.lng)-calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
-  const groups={}; arr.forEach(b=>{const d=b.dong||'기타'; (groups[d]||(groups[d]=[])).push(b);});
-  const totalTenants=arr.reduce((s,b)=>s+(b.tenants||[]).length,0);
-  let h=`<div class="lease-bld-card ours" onclick="openBldPopupById('ours')"><div class="lease-bld-top"><div class="lease-bld-name">⭐ 케이프혼타워 (신축예정)</div><div class="lease-bld-price">신축 예정</div></div><div class="bld-meta">신사동 529 외 2필지</div></div>`;
-  if(!arr.length) h+=`<div class="result-empty"><div class="e-ico">🏢</div><div>조건에 맞는 임대 건물이 없습니다</div></div>`;
-  Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).forEach(([dong,list],idx)=>{
-    const tc=list.reduce((s,b)=>s+(b.tenants||[]).length,0);
-    h+=`<div class="dong-group"><div class="dong-head" onclick="this.parentElement.classList.toggle('open')"><span class="dong-badge">${escapeHtml(dong)}</span><span class="dong-meta">건물 ${list.length} · 임차인 ${tc}</span><span class="dong-arrow">▼</span></div><div class="dong-body">`;
-    list.forEach(b=>{h+=leaseBuildingCard(b)}); h+=`</div></div>`;
-  });
-  leasePane().innerHTML=h;
-}
-function leaseBuildingCard(b){
-  const floors=(b.floors||[]).slice(0,3); const d=Math.round(calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
-  let h=`<div class="lease-bld-card" data-bid="${escapeHtml(b.id)}" onclick="focusLeaseBuilding('${escapeHtml(b.id)}')"><div class="lease-bld-top"><div class="lease-bld-name">◆ ${escapeHtml(b.name)}</div><div class="lease-bld-price">${escapeHtml(b.price||'')}</div></div><div class="lease-bld-meta"><span class="lease-tag">💰 ${escapeHtml(b.price||'-')}</span><span class="lease-tag">🏢 ${b.builtYear||'-'}년</span><span class="lease-tag">P ${escapeHtml(b.parking||'-')}</span><span class="lease-tag">${formatDist(d)}</span></div>`;
-  floors.forEach(f=>{const type=normalizeType(f.industry||'기타'); h+=`<div class="lease-floor-line"><span class="fl">${escapeHtml(formatFloor(f.floor))}</span><span class="tt">${escapeHtml(f.tenant||'공실')}</span><span class="lease-type-pill">${escapeHtml(type)}</span><span class="lease-rent">${f.rent?Number(f.rent).toLocaleString()+'만':''}</span></div>`});
-  return h+`</div>`;
-}
-function focusLeaseBuilding(id){
-  const bld = buildings.find(b=>b.id===id);
-  if(!bld) return;
-  document.querySelectorAll('.lease-bld-card').forEach(el=>el.classList.toggle('focused', el.dataset.bid===id));
-  if(bld.lat && bld.lng){ flyTo(bld.lat,bld.lng); }
-  openBldPopup(bld);
-}
-function renderTypeChart(){
-  const counts={}; const bsets={}; nonOurs().forEach(b=>{ if(!buildingMatchesFilter(b,activeMapFilter)) return; (b.tenants||[]).forEach(t=>{const ty=t.type||'기타'; counts[ty]=(counts[ty]||0)+1; (bsets[ty]||(bsets[ty]=new Set())).add(b.id);});});
-  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...entries.map(e=>e[1]));
-  let h=`<div class="lease-pad"><div class="lease-section-title">업종별 임차인 수 (전체 건물 합산)</div>`;
-  entries.forEach(([ty,c])=>{const color=TYPES[ty]||TYPES['기타']; h+=`<div class="type-row" onclick="applyMapFilter('${escapeHtml(ty)}'); activeLeaseTab='buildings'; renderLeaseShell();"><div class="type-label">${escapeHtml(ty)}</div><div class="type-bar-bg"><div class="type-bar" style="width:${Math.max(12,c/max*100)}%;background:${color}">${c}</div></div><div class="type-buildings">${bsets[ty].size}개 건물</div></div>`});
-  h+=`<div class="insight-box"><b>💡 주목할 인사이트</b><br>• <b>${entries[0]?.[0]||'-'}</b> 임차인이 가장 많은 업종입니다.<br>• 업종 막대를 클릭하면 해당 업종 건물만 지도와 목록에서 확인됩니다.<br>• 현재 필터: <b>${activeMapFilter==='all'?'전체':activeMapFilter}</b></div></div>`;
-  leasePane().innerHTML=h;
-}
-function renderLeaseLegend(){
-  let h=`<div class="lease-pad"><div class="lease-section-title">업종 색상</div><div class="legend-grid2">`;
-  Object.entries(TYPES).forEach(([k,c])=> h+=`<div class="legend-card"><i class="legend-dot2" style="background:${c}"></i><span>${escapeHtml(k)}</span></div>`);
-  h+=`</div><div class="insight-box"><b>마커 안내</b><br>⭐ 별 마커 — 케이프혼타워 신축 예정<br>색상 마커 — 건물의 주요 임차 업종 기준<br>상단 필터 선택 시 지도 마커와 건물 목록이 함께 변경됩니다.</div></div>`;
-  leasePane().innerHTML=h;
-}
-function renderAnalysisTab(){
-  const types=Object.keys(TYPES);
-  let h=`<div class="ana-panel"><div class="ana-label">업종 <span style="color:#4a5270;font-weight:400">복수 선택 가능</span></div><div class="ana-chips">`;
-  types.forEach(t=> h+=`<span class="ana-chip ${anaState.types.has(t)?'active':''}" onclick="anaToggleType('${escapeHtml(t)}')">${escapeHtml(t)}</span>`);
-  h+=`</div><div class="ana-label">면적 <span id="ana-area-val">${anaState.areaMin}~${anaState.areaMax}평</span></div><div class="ana-row"><span>이상</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMin}" oninput="anaState.areaMin=+this.value; renderAnalysisTab()"><span>평</span></div><div class="ana-row"><span>이하</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMax}" oninput="anaState.areaMax=+this.value; renderAnalysisTab()"><span>평</span></div><div class="ana-label">월 임대료 <span>${anaState.rentMin}~${anaState.rentMax}만원</span></div><div class="ana-row"><span>이상</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMin}" oninput="anaState.rentMin=+this.value; renderAnalysisTab()"><span>만원</span></div><div class="ana-row"><span>이하</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMax}" oninput="anaState.rentMax=+this.value; renderAnalysisTab()"><span>만원</span></div>${anaToggleGroup('dist','우리 건물과의 거리',[['','전체'],['core','🔴 300m이내'],['mid','🟡 ~700m'],['far','⚪ 700m+']])}<button class="ana-reset" onclick="anaReset()">↺ 필터 초기화</button></div>`;
-  const res=analysisResults(); const tenants=res.flatMap(b=>(b.tenants||[]).filter(t=>tenantPass(t,b)));
-  h+=`<div class="ana-kpis"><div class="ana-kpi"><strong>${res.length}</strong><span>건물</span></div><div class="ana-kpi"><strong>${tenants.length}</strong><span>임차인</span></div><div class="ana-kpi"><strong>${avgRent(tenants)}</strong><span>평균임대(만)</span></div><div class="ana-kpi"><strong>${tenants.filter(t=>(t.name||'').includes('공실')).length}</strong><span>공실·퇴거</span></div></div><div class="ana-summary">${res.length}개 건물, ${tenants.length}개 임차인이 조건을 충족합니다. 가장 많은 업종은 <b>${topType(tenants)}</b>입니다.</div><div>`;
-  res.forEach(b=> h+=leaseBuildingCard(b)); h+='</div>'; leasePane().innerHTML=h;
-}
-function anaToggleGroup(key,label,items){ return `<div class="ana-label">${label}</div><div class="ana-chips">`+items.map(([v,l])=>`<span class="ana-chip ${anaState[key]===v?'active':''}" onclick="anaState.${key}='${v}'; renderAnalysisTab()">${l}</span>`).join('')+`</div>`; }
-function anaToggleType(t){ anaState.types.has(t)?anaState.types.delete(t):anaState.types.add(t); renderAnalysisTab(); }
-function anaReset(){ anaState={types:new Set(),areaMin:0,areaMax:300,rentMin:0,rentMax:5000,yearMin:1960,priceMax:3000,elev:'',park:'',dist:''}; renderAnalysisTab(); }
-function tenantPass(t,b){ if(anaState.types.size && !anaState.types.has(t.type)) return false; const area=Number(t.areaPy||0), rent=Number(t.rent||0); if(area && (area<anaState.areaMin||area>anaState.areaMax)) return false; if(rent && (rent<anaState.rentMin||rent>anaState.rentMax)) return false; return true; }
-function analysisResults(){ return nonOurs().filter(b=>buildingMatchesFilter(b,activeMapFilter)).filter(b=>!anaState.dist || b.distance===anaState.dist).filter(b=>(b.tenants||[]).some(t=>tenantPass(t,b))); }
-function avgRent(ts){ const a=ts.map(t=>+t.rent||0).filter(Boolean); return a.length?Math.round(a.reduce((s,v)=>s+v,0)/a.length).toLocaleString():'-'; }
-function topType(ts){ const c={}; ts.forEach(t=>c[t.type]=(c[t.type]||0)+1); return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||'-'; }
-
-// 원본 로드/반경 변경 후 임대 UI 유지
-const _origLoadBuildingData = loadBuildingData;
-loadBuildingData = async function(){ await _origLoadBuildingData(); showLeaseMode(); };
-const _origSetRadius = setRadius;
-setRadius = function(r){ _origSetRadius(r); if(activeViewMode==='lease') renderActiveLeaseTab(); };
-
-
-
-/* ══════════════════════════════════════════════
-   v6 기능 재정의
-══════════════════════════════════════════════ */
-let selectedLeaseBuildingId = null;
-
-function renderInfraTopFilters(){
-  const bar=document.getElementById('topLeaseFilterBar'); if(!bar) return;
-  bar.classList.remove('hidden');
-  bar.innerHTML = `<div class="lease-chip active" onclick="showPoiMode()"><span>📍</span>전체<span class="cnt">${allPoi.length||0}</span></div>` +
-    CATEGORIES.map(c=>`<div class="lease-chip ${activeCats.has(c.id)?'active':''}" onclick="toggleInfraCatTop('${c.id}')"><span>${c.emoji}</span>${c.name}<span class="cnt" id="top-poi-${c.id}">${allPoi.filter(p=>p._cat&&p._cat.id===c.id).length||''}</span></div>`).join('');
-}
-function toggleInfraCatTop(id){
-  if(activeCats.has(id)) activeCats.delete(id); else activeCats.add(id);
-  renderInfraTopFilters(); renderCatGrid();
-  if(allPoi.length) renderPoiList(allPoi.filter(p=>activeCats.has(p._cat.id)));
-}
-const _v6ShowLeaseMode = showLeaseMode;
-showLeaseMode = function(){
-  activeViewMode='lease'; document.body.classList.remove('poi-mode');
-  document.getElementById('modeLeaseBtn')?.classList.add('on'); document.getElementById('modePoiBtn')?.classList.remove('on');
-  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='🏢 임대건물 분석';
-  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='기존 마켓앱 탭/필터 기능 연동';
-  layerBld=true; layerPoi=false; document.getElementById('catSection')?.classList.add('hidden'); document.getElementById('runWrap')?.classList.add('hidden');
-  clearPoiMarkers(); drawBldMarkersFiltered(); renderTopLeaseFilters(); renderLeaseShell();
-};
-showPoiMode = function(){
-  activeViewMode='poi'; document.body.classList.add('poi-mode');
-  document.getElementById('modePoiBtn')?.classList.add('on'); document.getElementById('modeLeaseBtn')?.classList.remove('on');
-  const pt=document.querySelector('.panel-title'); if(pt) pt.textContent='📍 실시간 상권 검색';
-  const psb=document.querySelector('.panel-sub'); if(psb) psb.textContent='카카오 장소 검색 기반 카테고리 조회';
-  layerPoi=true; layerBld=false; clearBldMarkers(); renderInfraTopFilters();
-  document.getElementById('catSection')?.classList.remove('hidden'); document.getElementById('runWrap')?.classList.remove('hidden');
-  if(allPoi.length) renderPoiList(allPoi.filter(p=>activeCats.has(p._cat.id)));
-  else document.getElementById('resultWrap').innerHTML = `<div class="result-empty"><div class="e-ico">📍</div><div>실시간 상권 카테고리 선택 후<br>검색하세요</div></div>`;
-};
-
-function renderBldList(){
-  const arr=nonOurs().filter(b=>buildingMatchesFilter(b,activeMapFilter)).sort((a,b)=>calcDist(OUR_LAT,OUR_LNG,a.lat,a.lng)-calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
-  const groups={}; arr.forEach(b=>{const d=b.dong||'기타'; (groups[d]||(groups[d]=[])).push(b);});
-  let h=`<div class="lease-bld-card ours" onclick="focusLeaseBuilding('ours')"><div class="lease-bld-top"><div class="lease-bld-name">⭐ 케이프혼타워 (신축예정)</div><div class="lease-bld-price">신축 예정</div></div><div class="bld-meta">신사동 529 외 2필지</div><div class="lease-map-hint">클릭하면 지도 위치로 이동합니다.</div></div>`;
-  if(!arr.length) h+=`<div class="result-empty"><div class="e-ico">🏢</div><div>조건에 맞는 임대 건물이 없습니다</div></div>`;
-  Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).forEach(([dong,list])=>{
-    const tc=list.reduce((s,b)=>s+(b.tenants||[]).length,0);
-    h+=`<div class="dong-group"><div class="dong-head" onclick="this.parentElement.classList.toggle('open')"><span class="dong-badge">${escapeHtml(dong)}</span><span class="dong-meta">건물 ${list.length} · 임차인 ${tc}</span><span class="dong-arrow">▼</span></div><div class="dong-body">`;
-    list.forEach(b=>{h+=leaseBuildingCard(b)}); h+=`</div></div>`;
-  });
-  leasePane().innerHTML=h;
-}
-function leaseBuildingCard(b){
-  const floors=(b.floors||[]); const d=Math.round(calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
-  const expanded = selectedLeaseBuildingId===b.id ? ' expanded focused' : '';
-  let h=`<div class="lease-bld-card${expanded}" data-bid="${escapeHtml(b.id)}" onclick="focusLeaseBuilding('${escapeHtml(b.id)}')"><div class="lease-bld-top"><div class="lease-bld-name">◆ ${escapeHtml(b.name)}</div><div class="lease-bld-price">${escapeHtml(b.price||'')}</div></div><div class="lease-bld-meta"><span class="lease-tag">💰 ${escapeHtml(b.price||'-')}</span><span class="lease-tag">🏢 ${b.builtYear||'-'}년</span><span class="lease-tag">P ${escapeHtml(b.parking||'-')}</span><span class="lease-tag">${formatDist(d)}</span></div>`;
-  h+=`<div class="lease-card-detail">`;
-  floors.slice(0,5).forEach(f=>{const type=normalizeType(f.industry||'기타'); h+=`<div class="lease-floor-line"><span class="fl">${escapeHtml(formatFloor(f.floor))}</span><span class="tt">${escapeHtml(f.tenant||'공실')}</span><span class="lease-type-pill">${escapeHtml(type)}</span><span class="lease-rent">${f.rent?Number(f.rent).toLocaleString()+'만':''}</span></div>`});
-  h+=`<button class="lease-detail-btn" onclick="event.stopPropagation(); openBldPopupById('${escapeHtml(b.id)}')">📄 상세 보기 / PDF 확인</button><div class="lease-map-hint">건물명을 클릭하면 지도 위치 확인, 상세 보기는 버튼을 눌러 확인합니다.</div></div></div>`;
-  return h;
-}
-function focusLeaseBuilding(id){
-  const bld = buildings.find(b=>b.id===id); if(!bld) return;
-  selectedLeaseBuildingId=id;
-  if(bld.lat && bld.lng){ flyTo(bld.lat,bld.lng); }
-  // 목록에서는 상세 팝업을 바로 열지 않고 위치 확인 + 카드 펼침만 수행
-  if(activeLeaseTab==='buildings') renderBldList();
-  if(window.kakao && infowindow && bld.lat && bld.lng){
-    const pos=new kakao.maps.LatLng(bld.lat,bld.lng);
-    infowindow.setContent(`<div style="padding:8px 12px;font-size:12px;color:#111;font-weight:700;white-space:nowrap">${escapeHtml(bld.name)}<br><span style="font-weight:400;color:#555">클릭한 건물 위치</span></div>`);
-    infowindow.setPosition(pos); infowindow.open(map);
+  const arr = visibleBuildings().sort((a,b)=>calcDist(OUR_LAT,OUR_LNG,a.lat,a.lng)-calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
+  const groups = {};
+  arr.forEach(b => { const d = b.dong || '기타'; (groups[d]||(groups[d]=[])).push(b); });
+  let html = `<div class="lease-list-help">건물명 클릭 → 지도 위치 이동 / 상세보기 클릭 → 임차인 정보 및 PDF 확인</div>`;
+  html += leaseBuildingCard(OUR_BUILDING, true);
+  if(!arr.length){
+    html += `<div class="result-empty"><div class="e-ico">🏢</div><div>조건에 맞는 임대 건물이 없습니다</div></div>`;
   }
+  Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).forEach(([dong,list])=>{
+    const tenants = list.reduce((s,b)=>s+(b.tenants||[]).length,0);
+    html += `<div class="dong-group"><div class="dong-head" onclick="toggleDongGroup(this)"><span class="dong-badge">${escapeHtml(dong)}</span><span class="dong-meta">건물 ${list.length} · 임차인 ${tenants}</span><span class="dong-arrow">▼</span></div><div class="dong-body">`;
+    list.forEach(b => html += leaseBuildingCard(b, false));
+    html += `</div></div>`;
+  });
+  leasePane().innerHTML = html;
+}
+function toggleDongGroup(head){ const g=head.closest('.dong-group'); if(g) g.classList.toggle('open'); }
+
+function leaseBuildingCard(b, ours){
+  const d = b.lat && b.lng ? Math.round(calcDist(OUR_LAT, OUR_LNG, b.lat, b.lng)) : 0;
+  const selected = selectedLeaseBuildingId === b.id;
+  const floors = (b.floors || []).slice(0, selected ? 8 : 3);
+  let html = `<div class="lease-bld-card ${ours?'ours':''} ${selected?'selected':''}" data-bid="${escapeHtml(b.id)}">
+    <div class="lease-bld-main" onclick="focusLeaseBuilding('${jsStr(b.id)}')">
+      <div class="lease-bld-top"><div class="lease-bld-name">${ours?'⭐':'◆'} ${escapeHtml(b.name)}</div><div class="lease-bld-price">${ours?'신축예정':escapeHtml(b.price||'')}</div></div>
+      <div class="lease-bld-meta"><span class="lease-tag">${escapeHtml(b.dong||'-')}</span><span class="lease-tag">${b.lat?formatDist(d):'-'}</span><span class="lease-tag">임차인 ${(b.tenants||[]).length}</span><span class="lease-tag">P ${escapeHtml(b.parking||'-')}</span></div>
+    </div>`;
+  html += `<div class="lease-card-detail ${selected?'show':''}">`;
+  if(!floors.length) html += `<div class="lease-empty-line">${ours?'기준 건물입니다.':'층별 임차인 데이터 없음'}</div>`;
+  floors.forEach(f => {
+    const type = normalizeType(f.industry || '기타');
+    html += `<div class="lease-floor-line"><span class="fl">${escapeHtml(formatFloor(f.floor))}</span><span class="tt">${escapeHtml(f.tenant||'공실')}</span><span class="lease-type-pill" style="background:${TYPES[type]||'#3b7fff'}22;border-color:${TYPES[type]||'#3b7fff'}55">${escapeHtml(type)}</span><span class="lease-rent">${f.rent?Number(f.rent).toLocaleString()+'만':'-'}</span></div>`;
+  });
+  html += `<button class="lease-detail-btn" onclick="event.stopPropagation(); openBldPopupById('${jsStr(b.id)}')">📄 상세 보기 / PDF 확인</button></div></div>`;
+  return html;
+}
+
+function focusLeaseBuilding(id){
+  const b = buildings.find(x => x.id === id); if(!b) return;
+  selectedLeaseBuildingId = id;
+  if(b.lat && b.lng){ flyTo(b.lat, b.lng); showSmallInfo(b); }
+  drawBldMarkersFiltered();
+  if(activeLeaseTab === 'buildings') renderBldList();
+}
+function showSmallInfo(b){
+  if(!infowindow || !map || !b.lat || !b.lng) return;
+  const pos = new kakao.maps.LatLng(b.lat, b.lng);
+  infowindow.setContent(`<div style="padding:8px 12px;font-size:12px;color:#111;line-height:1.45;white-space:nowrap"><b>${escapeHtml(b.name)}</b><br><span style="color:#555">${escapeHtml(b.address||'')}</span></div>`);
+  infowindow.setPosition(pos); infowindow.open(map);
 }
 
 function renderTypeChart(){
-  const counts={}; const bsets={}; nonOurs().forEach(b=>{ if(!buildingMatchesFilter(b,activeMapFilter)) return; (b.tenants||[]).forEach(t=>{const ty=t.type||'기타'; counts[ty]=(counts[ty]||0)+1; (bsets[ty]||(bsets[ty]=new Set())).add(b.id);});});
-  const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...entries.map(e=>e[1]));
-  let h=`<div class="lease-pad"><div class="lease-section-title">업종별 임차인 수</div><div style="font-size:11px;color:var(--t3);margin-bottom:10px">막대를 클릭하면 해당 업종 건물만 지도와 목록에 표시됩니다.</div>`;
-  entries.forEach(([ty,c])=>{h+=`<div class="type-row" onclick="applyMapFilter('${escapeHtml(ty)}'); activeLeaseTab='buildings'; renderLeaseShell();"><div class="type-label">${escapeHtml(ty)}</div><div class="type-bar-bg"><div class="type-bar" style="width:${Math.max(10,c/max*100)}%">${c}</div></div><div class="type-buildings">${bsets[ty].size}개</div></div>`});
-  h+=`<div class="insight-box"><b>💡 인사이트</b><br>• 가장 많은 업종은 <b>${entries[0]?.[0]||'-'}</b>입니다.<br>• 현재 필터: <b>${activeMapFilter==='all'?'전체':activeMapFilter}</b></div></div>`;
-  leasePane().innerHTML=h;
+  const counts = {}, bsets = {};
+  visibleBuildings().forEach(b => (b.tenants||[]).forEach(t => {
+    const ty = t.type || normalizeType(t.rawType || '기타');
+    counts[ty] = (counts[ty]||0) + 1;
+    (bsets[ty]||(bsets[ty]=new Set())).add(b.id);
+  }));
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(1, ...entries.map(e=>e[1]));
+  let html = `<div class="lease-pad"><div class="lease-section-title">업종별 임차인 수</div><div class="type-hint">막대를 클릭하면 해당 업종 건물만 지도와 건물목록에 표시됩니다.</div>`;
+  if(!entries.length) html += `<div class="empty">업종 데이터가 없습니다.</div>`;
+  entries.forEach(([ty,c]) => {
+    const color = TYPES[ty] || '#3b7fff';
+    html += `<div class="type-row ${activeMapFilter===ty?'t-selected':''}" onclick="applyTypeFilter('${jsStr(ty)}')">
+      <div class="type-lbl">${escapeHtml(ty)}</div>
+      <div class="type-track"><div class="type-fill" style="width:${Math.max(8,c/max*100)}%;background:${color}"><span class="type-cnt">${c}</span></div></div>
+      <div class="type-bldg-num">${bsets[ty].size}개</div>
+    </div>`;
+  });
+  const top = entries[0];
+  html += `<div class="insight-box"><div class="insight-title">💡 업종 인사이트</div><ul><li>가장 많은 업종은 <b>${top?escapeHtml(top[0]):'-'}</b>입니다.</li><li>현재 상단 필터는 <b>${activeMapFilter==='all'?'전체':escapeHtml(activeMapFilter)}</b>입니다.</li><li>업종 막대를 누르면 지도 마커와 건물목록이 함께 좁혀집니다.</li></ul></div>`;
+  if(activeMapFilter !== 'all') html += `<div class="reset-filter" onclick="applyMapFilter('all')">전체 업종으로 되돌리기</div>`;
+  html += `</div>`;
+  leasePane().innerHTML = html;
 }
+function applyTypeFilter(ty){
+  activeMapFilter = ty;
+  selectedLeaseBuildingId = null;
+  renderTopLeaseFilters();
+  drawBldMarkersFiltered();
+  activeLeaseTab = 'buildings';
+  renderLeaseShell();
+}
+
 function renderAnalysisTab(){
-  const types=Object.keys(TYPES);
-  let h=`<div class="ana-panel"><div class="lease-section-title">필터 조건</div><div class="ana-label">업종 <span style="color:#4a5270;font-weight:400">복수 선택 가능</span></div><div class="ana-chips">`;
-  types.forEach(t=> h+=`<span class="ana-chip ${anaState.types.has(t)?'active':''}" onclick="anaToggleType('${escapeHtml(t)}')">${escapeHtml(t)}</span>`);
-  h+=`</div><div class="ana-label">면적 ${anaState.areaMin}~${anaState.areaMax}평</div><div class="ana-row"><span>이상</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMin}" oninput="anaState.areaMin=+this.value; renderAnalysisTab()"><span>평</span></div><div class="ana-row"><span>이하</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMax}" oninput="anaState.areaMax=+this.value; renderAnalysisTab()"><span>평</span></div><div class="ana-label">월 임대료 ${anaState.rentMin}~${anaState.rentMax}만원</div><div class="ana-row"><span>이상</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMin}" oninput="anaState.rentMin=+this.value; renderAnalysisTab()"><span>만원</span></div><div class="ana-row"><span>이하</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMax}" oninput="anaState.rentMax=+this.value; renderAnalysisTab()"><span>만원</span></div>`;
-  h+=`${anaToggleGroup('elev','승강기',[['','전체'],['있음','있음'],['없음','없음']])}${anaToggleGroup('park','주차',[['','전체'],['자주식','자주식'],['기계식','기계식'],['없음','없음']])}${anaToggleGroup('dist','우리 건물과의 거리',[['','전체'],['core','🔴 300m이내'],['mid','🟡 ~700m'],['far','⚪ 700m+']])}<button class="ana-reset" onclick="anaReset()">↺ 필터 초기화</button></div>`;
-  const res=analysisResultsV6(); const tenants=res.flatMap(b=>(b.tenants||[]).filter(t=>tenantPass(t,b)));
-  h+=`<div class="ana-kpis"><div class="ana-kpi"><strong>${res.length}</strong><span>건물</span></div><div class="ana-kpi"><strong>${tenants.length}</strong><span>임차인</span></div><div class="ana-kpi"><strong>${avgRent(tenants)}</strong><span>평균임대(만)</span></div><div class="ana-kpi"><strong>${tenants.filter(t=>(t.name||'').includes('공실')).length}</strong><span>공실·퇴거</span></div></div><div class="ana-summary">${res.length}개 건물, ${tenants.length}개 임차인이 조건을 충족합니다. 가장 많은 업종은 <b>${topType(tenants)}</b>입니다.</div><div>`;
-  res.forEach(b=> h+=leaseBuildingCard(b)); h+='</div>'; leasePane().innerHTML=h;
+  const types = Object.keys(TYPES);
+  let html = `<div class="ana-panel"><div class="lease-section-title">상권 분석 필터</div>
+    <div class="ana-label">업종 <span>복수 선택</span></div><div class="ana-chips">`;
+  types.forEach(t => html += `<button class="ana-chip ${anaState.types.has(t)?'active':''}" onclick="anaToggleType('${jsStr(t)}')">${escapeHtml(t)}</button>`);
+  html += `</div>
+    <div class="ana-label">면적 ${anaState.areaMin}~${anaState.areaMax}평</div>
+    <div class="ana-row"><span>이상</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMin}" oninput="anaState.areaMin=+this.value; renderAnalysisTab();"><span>평</span></div>
+    <div class="ana-row"><span>이하</span><input type="range" min="0" max="300" step="5" value="${anaState.areaMax}" oninput="anaState.areaMax=+this.value; renderAnalysisTab();"><span>평</span></div>
+    <div class="ana-label">월 임대료 ${anaState.rentMin}~${anaState.rentMax}만원</div>
+    <div class="ana-row"><span>이상</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMin}" oninput="anaState.rentMin=+this.value; renderAnalysisTab();"><span>만</span></div>
+    <div class="ana-row"><span>이하</span><input type="range" min="0" max="5000" step="50" value="${anaState.rentMax}" oninput="anaState.rentMax=+this.value; renderAnalysisTab();"><span>만</span></div>
+    ${anaToggleGroup('dist','우리 건물과의 거리',[['','전체'],['core','300m 이내'],['mid','300~700m'],['far','700m+']])}
+    ${anaToggleGroup('elev','승강기',[['','전체'],['있음','있음'],['없음','없음']])}
+    ${anaToggleGroup('park','주차',[['','전체'],['자주식','자주식'],['기계식','기계식'],['없음','없음']])}
+    <button class="ana-reset" onclick="anaReset()">↺ 필터 초기화</button></div>`;
+  const res = analysisResults();
+  const tenants = res.flatMap(b => (b.tenants||[]).filter(t => tenantPass(t,b)));
+  html += `<div class="ana-kpis"><div class="ana-kpi"><strong>${res.length}</strong><span>건물</span></div><div class="ana-kpi"><strong>${tenants.length}</strong><span>임차인</span></div><div class="ana-kpi"><strong>${avgRent(tenants)}</strong><span>평균임대</span></div><div class="ana-kpi"><strong>${tenants.filter(t=>/공실|퇴거/i.test(t.name||'')).length}</strong><span>공실</span></div></div>`;
+  html += `<div class="ana-summary">조건에 맞는 건물은 <b>${res.length}개</b>, 임차인은 <b>${tenants.length}개</b>입니다. 주요 업종은 <b>${topType(tenants)}</b>입니다.</div><div class="ana-result-list">`;
+  res.forEach(b => html += leaseBuildingCard(b,false));
+  html += `</div>`;
+  leasePane().innerHTML = html;
 }
-function analysisResultsV6(){
-  return nonOurs().filter(b=>buildingMatchesFilter(b,activeMapFilter)).filter(b=>{
-    if(anaState.dist && b.distance!==anaState.dist) return false;
-    if(anaState.elev && !String(b.elevator||b.elev||'').includes(anaState.elev)) return false;
+function anaToggleGroup(key,label,opts){
+  let h = `<div class="ana-label">${label}</div><div class="ana-chips">`;
+  opts.forEach(([v,l]) => h += `<button class="ana-chip ${anaState[key]===v?'active':''}" onclick="anaState['${key}']='${jsStr(v)}'; renderAnalysisTab();">${escapeHtml(l)}</button>`);
+  return h + `</div>`;
+}
+function anaToggleType(t){ anaState.types.has(t) ? anaState.types.delete(t) : anaState.types.add(t); renderAnalysisTab(); }
+function anaReset(){ anaState = { types:new Set(), areaMin:0, areaMax:300, rentMin:0, rentMax:5000, elev:'', park:'', dist:'' }; renderAnalysisTab(); }
+function analysisResults(){
+  return visibleBuildings().filter(b => {
+    if(anaState.dist && b.distance !== anaState.dist) return false;
+    if(anaState.elev && !String(b.elevator||'').includes(anaState.elev)) return false;
     if(anaState.park && !String(b.parking||'').includes(anaState.park)) return false;
-    return (b.tenants||[]).some(t=>tenantPass(t,b));
+    return (b.tenants||[]).some(t => tenantPass(t,b));
   });
 }
+function tenantPass(t,b){
+  const ty = t.type || normalizeType(t.rawType || '기타');
+  if(anaState.types.size && !anaState.types.has(ty)) return false;
+  const area = Number(t.areaPy || t.area || 0);
+  const rent = Number(t.rent || 0);
+  if(area && (area < anaState.areaMin || area > anaState.areaMax)) return false;
+  if(rent && (rent < anaState.rentMin || rent > anaState.rentMax)) return false;
+  return true;
+}
+function avgRent(ts){ const vals=ts.map(t=>Number(t.rent||0)).filter(Boolean); return vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length).toLocaleString() : '-'; }
+function topType(ts){ const c={}; ts.forEach(t=>{const ty=t.type||normalizeType(t.rawType||'기타'); c[ty]=(c[ty]||0)+1;}); const e=Object.entries(c).sort((a,b)=>b[1]-a[1])[0]; return e?e[0]:'-'; }
 
-function openBldPopup(bld) {
-  document.getElementById('popupName').textContent = bld.name;
-  document.getElementById('popupAddr').textContent = [bld.address, bld.dong, bld.distanceLabel || ''].filter(Boolean).join(' · ');
-  const body = document.getElementById('popupBody');
-  const floors = (bld.floors || []).slice().sort((a,b)=>toNumber(String(b.floor).replace('B','-'))-toNumber(String(a.floor).replace('B','-')));
-  let html = `<div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border);margin:-14px -18px 14px"><div style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px;color:var(--blue)">${escapeHtml(bld.price||'-')}</b><br><span style="font-size:10px;color:var(--t3)">매매가</span></div><div style="padding:14px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border)"><b style="font-family:var(--mono);font-size:22px">${(bld.tenants||[]).length}</b><br><span style="font-size:10px;color:var(--t3)">임차인 수</span></div><div style="padding:14px;text-align:center"><b style="font-family:var(--mono);font-size:22px">${floors.length}</b><br><span style="font-size:10px;color:var(--t3)">총 수</span></div></div>`;
-  if (!floors.length) html += `<div style="color:var(--t3);font-size:12px;padding:12px 0">${bld.isOurs ? '기준 건물입니다.' : '층별 임차인 데이터 없음'}</div>`;
-  else html += floors.map(f => `<div class="floor-item"><div class="floor-num">${escapeHtml(formatFloor(f.floor))}</div><div class="floor-info" style="flex:1;min-width:0"><div class="floor-tenant">${escapeHtml(f.tenant || '공실')}</div><div class="floor-industry">${escapeHtml(f.industry || '')}${f.area ? ' · '+escapeHtml(f.area)+'평' : ''}</div></div><div class="floor-rent">${f.rent ? Number(f.rent).toLocaleString()+'만' : '-'}</div></div>`).join('');
-  const fileUrl = bld.fileUrl || bld.pdf || bld.url || bld.link || '';
-  html += `<div class="popup-actions"><button class="popup-action-btn" onclick="closeBldPopup()">닫기</button><button class="popup-action-btn primary" onclick="flyTo(${Number(bld.lat)||OUR_LAT},${Number(bld.lng)||OUR_LNG}); closeBldPopup();">🗺 지도에서 보기</button>${fileUrl?`<button class="popup-action-btn file" onclick="window.open('${String(fileUrl).replace(/'/g,"%27")}', '_blank')">📄 PDF 열기</button>`:`<button class="popup-action-btn file" disabled>📄 PDF 없음</button>`}</div>`;
-  body.innerHTML = html;
-  document.getElementById('popupOverlay').classList.remove('hidden'); document.getElementById('bldPopup').classList.remove('hidden');
+function renderLeaseLegend(){
+  let html = `<div class="lease-pad"><div class="lease-section-title">범례</div><div class="legend-grid2">`;
+  Object.entries(TYPES).forEach(([name,color]) => html += `<div class="legend-card"><span class="legend-dot2" style="background:${color}"></span><span>${escapeHtml(name)}</span></div>`);
+  html += `</div><div class="insight-box"><div class="insight-title">지도 표시 기준</div><ul><li>마커 색상은 해당 건물의 대표 업종을 기준으로 표시됩니다.</li><li>상단 필터를 선택하면 지도와 목록이 동시에 변경됩니다.</li><li>건물 마커를 클릭하면 상세 정보와 PDF 확인창이 열립니다.</li></ul></div></div>`;
+  leasePane().innerHTML = html;
 }
 
-const _v6RunPoiSearch = runPoiSearch;
-runPoiSearch = function(){ _v6RunPoiSearch(); setTimeout(renderInfraTopFilters, 800); };
+function openBldPopupById(id){ const b = buildings.find(x=>x.id===id); if(b){ if(b.lat&&b.lng) flyTo(b.lat,b.lng); openBldPopup(b); } }
+function openBldPopup(bld){
+  selectedLeaseBuildingId = bld.id;
+  drawBldMarkersFiltered();
+  const nameEl = document.getElementById('popupName'), addrEl = document.getElementById('popupAddr'), body = document.getElementById('popupBody');
+  if(!nameEl || !addrEl || !body) return;
+  nameEl.textContent = bld.name || '-';
+  addrEl.textContent = [bld.address, bld.dong, bld.price ? '매매가 '+bld.price : ''].filter(Boolean).join(' · ');
+  const floors = (bld.floors || []).slice().sort((a,b)=>floorSortVal(b.floor)-floorSortVal(a.floor));
+  let html = `<div class="popup-stat-grid"><div><b>${escapeHtml(bld.price||'-')}</b><span>매매가</span></div><div><b>${(bld.tenants||[]).length}</b><span>임차인</span></div><div><b>${floors.length}</b><span>층별 데이터</span></div></div>`;
+  if(!floors.length) html += `<div class="lease-empty-line">${bld.isOurs?'기준 건물입니다.':'층별 임차인 데이터가 없습니다.'}</div>`;
+  else floors.forEach(f => html += `<div class="floor-item"><div class="floor-num">${escapeHtml(formatFloor(f.floor))}</div><div style="flex:1;min-width:0"><div class="floor-tenant">${escapeHtml(f.tenant||'공실')}</div><div class="floor-industry">${escapeHtml(f.industry||'')}${f.area?' · '+escapeHtml(f.area)+'평':''}</div></div><div class="floor-rent">${f.rent?Number(f.rent).toLocaleString()+'만':'-'}</div></div>`);
+  const pdfUrl = getPdfUrl(bld);
+  html += `<div class="popup-actions"><button class="popup-action-btn" onclick="closeBldPopup()">닫기</button><button class="popup-action-btn primary" onclick="flyTo(${Number(bld.lat)||OUR_LAT},${Number(bld.lng)||OUR_LNG}); closeBldPopup();">🗺 지도에서 보기</button>${pdfUrl?`<button class="popup-action-btn file" onclick="window.open('${jsStr(pdfUrl)}','_blank')">📄 PDF 열기</button>`:`<button class="popup-action-btn file" disabled>📄 PDF 없음</button>`}</div>`;
+  body.innerHTML = html;
+  document.getElementById('popupOverlay')?.classList.remove('hidden');
+  document.getElementById('bldPopup')?.classList.remove('hidden');
+}
+function getPdfUrl(b){
+  if(b.fileUrl || b.pdf || b.url || b.link) return b.fileUrl || b.pdf || b.url || b.link;
+  if(b.fileId) return `https://drive.google.com/file/d/${encodeURIComponent(b.fileId)}/view`;
+  if(b.source) return `https://drive.google.com/drive/search?q=${encodeURIComponent(b.source)}`;
+  return '';
+}
+function floorSortVal(f){ const s=String(f||''); if(/B|지하/i.test(s)) return -toNumber(s); return toNumber(s); }
+function jsStr(s){ return String(s ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' '); }
+
+// 기존 데이터 로드 이후 렌더 함수 보강
+const _v9_loadBuildingData = loadBuildingData;
+loadBuildingData = async function(){
+  try{
+    const res = await fetch(MAP_SHEET_URL);
+    const text = await res.text();
+    buildings = parseBuildingCSV(text);
+    if(activeViewMode === 'lease') showLeaseMode();
+  }catch(e){ console.error('건물 데이터 로드 실패:', e); }
+};
+
+const _v9_setRadius = setRadius;
+setRadius = function(r){ _v9_setRadius(r); if(activeViewMode === 'lease') renderActiveLeaseTab(); };
+
+const _v9_runPoiSearch = runPoiSearch;
+runPoiSearch = function(){ _v9_runPoiSearch(); };
+
+// 초기 진입은 카카오맵 + 임대건물 모드
+setTimeout(function(){ if(window.kakao && map) showLeaseMode(); }, 300);
+
 
 </script>
 
