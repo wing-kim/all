@@ -325,12 +325,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 
 /* ── 마커 ── */
 .mk-wrap{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s}
-.mk-wrap:hover{transform:scale(1.12)}
+.mk-wrap:hover{transform:scale(1.08)}
 .mk-pin{display:flex;align-items:center;justify-content:center;width:16px;height:16px}
-.mk-circle{width:16px;height:16px;border-radius:4px 4px 4px 1px;background:#3b5bdb;border:1.5px solid rgba(255,255,255,.75);box-shadow:0 2px 6px rgba(0,0,0,.4);transform:rotate(-45deg);transition:box-shadow .2s;flex-shrink:0}
-.mk-label{margin-top:5px;background:rgba(10,12,20,.92);padding:1px 5px;border-radius:3px;font-size:8.5px;font-weight:700;color:#eef0f8;box-shadow:0 1px 4px rgba(0,0,0,.35);white-space:nowrap;max-width:64px;text-align:center;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
-.mk-wrap.ours-wrap .mk-pin{width:24px;height:24px}
-.mk-wrap.ours-wrap .mk-circle{width:24px;height:24px;border-radius:50%;transform:none;background:#f59e0b;border-color:#fcd34d;box-shadow:0 0 0 3px rgba(245,158,11,.35),0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:12px}
+.mk-circle{width:13px;height:13px;border-radius:50% 50% 50% 0;background:#3b7fff;border:1.5px solid rgba(255,255,255,.85);box-shadow:0 2px 5px rgba(0,0,0,.4);transform:rotate(-45deg);transition:box-shadow .2s;flex-shrink:0}
+.mk-label{margin-top:2px;background:rgba(10,12,20,.88);padding:0px 4px;border-radius:3px;font-size:7.5px;font-weight:700;color:#eef0f8;box-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap;max-width:52px;text-align:center;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+.mk-wrap.ours-wrap .mk-pin{width:20px;height:20px}
+.mk-wrap.ours-wrap .mk-circle{width:20px;height:20px;border-radius:50%;transform:none;background:#f59e0b;border-color:#fcd34d;box-shadow:0 0 0 3px rgba(245,158,11,.35),0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-size:11px}
 .mk-wrap.ours-wrap .mk-label{margin-top:3px}
 .mk-wrap.selected .mk-circle{box-shadow:0 0 0 3px rgba(59,127,255,.6),0 3px 10px rgba(0,0,0,.5)}
 .mk-wrap.dimmed{opacity:.15;transition:opacity .25s}
@@ -383,6 +383,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
 .bm-btn{flex:1;padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--sans)}
 .bm-btn-primary{background:#3b7fff;color:#fff}.bm-btn-primary:hover{background:#5591ff}
 .bm-btn-secondary{background:rgba(255,255,255,.05);border:1px solid #222636;color:#8890aa}
+.bm-btn-pdf{background:rgba(34,209,134,.12);border:1px solid rgba(34,209,134,.4);color:#22d186}.bm-btn-pdf:hover{background:rgba(34,209,134,.22)}
 
 /* ── 모바일 ── */
 @media(max-width:760px){
@@ -452,7 +453,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
   </div>
   <div class="map-tabs" id="subtabs"></div>
   <div class="panel-body" id="panelBody"></div>
-  <div class="panel-ver">0624_V205</div>
+  <div class="panel-ver">0624_V206</div>
 </div>
 
 <!-- ── 건물 상세 모달 ── -->
@@ -480,6 +481,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(
     </div>
     <div class="bm-footer">
       <button class="bm-btn bm-btn-secondary" onclick="closeBldgModal()">닫기</button>
+      <button class="bm-btn bm-btn-pdf" id="bm-pdf-btn" style="display:none" onclick="openBldgPDF()">📄 PDF 보기</button>
       <button class="bm-btn bm-btn-primary" id="bm-map-btn">🗺 지도에서 보기</button>
     </div>
   </div>
@@ -518,7 +520,8 @@ const REAL_CATS = [
 ];
 
 const MODES = {
-  lease:{label:'임대건물', tabs:['건물 목록','업종 분석','상권 분석','범례']},
+  lease:{label:'임대건물', tabs:['건물 목록','업종 분석','범례']},
+  analysis:{label:'상권분석', tabs:['상권 분석']},
   realtime:{label:'실시간상권', tabs:['장소검색','검색결과','요약']}
 };
 
@@ -802,6 +805,7 @@ function setMode(m) {
   activeMapFilter = 'all';
   renderModebar(); renderShell(); clearPoi();
   if (mode==='lease') { applyLeaseFilter(); drawBuildings(); updateFilterCounts(); renderLeaseFilter(); renderLeasePanel(); }
+  if (mode==='analysis') { applyLeaseFilter(); drawBuildings(); renderAnalysisPanel(); }
   if (mode==='realtime') { renderRealtimeFilter(); drawCircle(); renderRealtimePanel(); }
 }
 
@@ -815,6 +819,7 @@ function renderShell() {
 function setSubtab(i) {
   subtab = i; renderShell();
   if (mode==='lease') renderLeasePanel();
+  if (mode==='analysis') renderAnalysisPanel();
   if (mode==='realtime') renderRealtimePanel();
 }
 
@@ -931,7 +936,6 @@ function buildingMatchesFilter(b, filter) {
 function renderLeasePanel() {
   if (subtab===0) renderBuildingList();
   else if (subtab===1) renderChart();
-  else if (subtab===2) renderAnalysis();
   else renderLegend();
 }
 
@@ -1178,6 +1182,10 @@ var _anaFilter = {
   yearMin:1960, priceMax:3000, elev:'', park:'', dist:''
 };
 var _anaInited = false;
+
+function renderAnalysisPanel() {
+  renderAnalysis();
+}
 
 function renderAnalysis() {
   document.getElementById('panelBody').innerHTML = `
@@ -1523,9 +1531,30 @@ function openBldgModal(id) {
     </tr>`).join('');
   document.getElementById('bm-tbody').innerHTML = rows||`<tr><td colspan="3" class="bm-empty">임차인 정보 없음</td></tr>`;
   document.getElementById('bm-map-btn').onclick = () => { closeBldgModal(); flyToBuilding(id); };
+  // PDF 버튼: fileId 있을 때만 표시
+  const pdfBtn = document.getElementById('bm-pdf-btn');
+  if (b.fileId) {
+    pdfBtn.style.display = '';
+    pdfBtn.dataset.fid = b.fileId;
+  } else if (b.source) {
+    pdfBtn.style.display = '';
+    pdfBtn.dataset.fid = '';
+    pdfBtn.dataset.src = b.source;
+  } else {
+    pdfBtn.style.display = 'none';
+  }
   document.getElementById('bldg-modal-overlay').classList.add('open');
 }
 function closeBldgModal() { document.getElementById('bldg-modal-overlay').classList.remove('open'); }
+function openBldgPDF() {
+  const btn = document.getElementById('bm-pdf-btn');
+  const fid = btn.dataset.fid;
+  if (fid) {
+    window.open('https://drive.google.com/file/d/' + fid + '/view', '_blank');
+  } else if (btn.dataset.src) {
+    window.open('https://drive.google.com/drive/search?q=' + encodeURIComponent(btn.dataset.src), '_blank');
+  }
+}
 document.getElementById('bldg-modal-overlay').addEventListener('click', function(e){
   if(e.target===this) closeBldgModal();
 });
