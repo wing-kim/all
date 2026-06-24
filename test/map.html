@@ -1226,7 +1226,7 @@ function anaInit() {
   if (chipsEl && chipsEl.children.length === 0) {
     chipsEl.innerHTML = Object.keys(TYPES).map(function(t){
       var color = TYPES[t]||'#888';
-      return '<div class="ana-type-chip" data-type="'+t+'" onclick="anaToggleType(''+t+'')" style="--chip-color:'+color+'">'+t+'</div>';
+      return '<div class="ana-type-chip" data-type="'+t+'" onclick="anaToggleType(&quot;"+t+"&quot;)" style="--chip-color:'+color+'">'+t+'</div>';
     }).join('');
     // 기존 선택 상태 복원
     _anaFilter.types.forEach(function(t){
@@ -1353,7 +1353,7 @@ function anaRender() {
     var meta=[];
     if(b.price)meta.push('💰 '+b.price);
     if(b.distance){var dl={core:'🔴 300m이내',mid:'🟡 ~700m',far:'⚪ 700m+'};meta.push(dl[b.distance]||'');}
-    return '<div class="ana-bldg-card" onclick="flyToBuilding(''+b.id+'');openBldgModal(''+b.id+'')">'+
+    return '<div class="ana-bldg-card" onclick="flyToBuilding(&quot;'+b.id+'&quot;);openBldgModal(&quot;'+b.id+'&quot;)">'+
       '<div class="ana-bldg-head"><div class="ana-bldg-dot"></div><div class="ana-bldg-name">'+b.name+'</div><div class="ana-bldg-price">'+(b.price||'')+'</div></div>'+
       (meta.length?'<div class="ana-bldg-meta">'+meta.map(function(m){return '<span class="ana-bldg-meta-item">'+m+'</span>';}).join('')+'</div>':'')+
       '<div class="ana-tenant-rows">'+tenantRows+more+'</div></div>';
