@@ -2602,7 +2602,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 
 
 <!-- 버전 배지 -->
-<div id="ver-badge">v0625.0001</div>
+<div id="ver-badge">v0625.0300</div>
 
 <!-- ══ JavaScript ══ -->
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2a3ec83cc3ca9f434e295d2ded3f0eac&libraries=services&autoload=false"></script>
@@ -2807,31 +2807,30 @@ const SUBWAY_STATIONS = [
 let subwayMarkers = [];
 
 function addSubwayMarkers(map) {
-  subwayMarkers.forEach(m => map.removeLayer(m));
+  subwayMarkers.forEach(function(o) { o.setMap(null); });
   subwayMarkers = [];
-  // 줌 13 미만이면 주요 거점역만, 13 이상이면 전체 표시
-  const zoom = map.getZoom();
-  const CORE = new Set(['강남','역삼','신사','압구정','논현','강남구청','청담','선릉','삼성',
-                        '잠실','홍대입구','여의도','서울역','광화문','고속터미널','왕십리','성수',
-                        '건대입구','교대','공덕','이태원','신논현','언주']);
-
-  SUBWAY_STATIONS.forEach(st => {
-    if (zoom < 13 && !CORE.has(st.name)) return;
-    const html = `<div class="subway-marker">
-      <div class="subway-circle" style="background:${st.color}">${st.line}</div>
-      <div class="subway-name">${st.name}</div>
-    </div>`;
-    const icon = L.divIcon({
-      className: '', html,
-      iconSize: [56, 34], iconAnchor: [28, 9],
+  var level = map.getLevel();
+  var CORE = new Set(['강남','역삼','신사','압구정','논현','강남구청','청담','선릉','삼성',
+                      '잠실','홍대입구','여의도','서울역','광화문','고속터미널','왕십리','성수',
+                      '건대입구','교대','공덕','이태원','신논현','언주']);
+  SUBWAY_STATIONS.forEach(function(st) {
+    if (level > 5 && !CORE.has(st.name)) return;
+    var el = document.createElement('div');
+    el.className = 'subway-marker';
+    el.innerHTML = '<div class="subway-circle" style="background:' + st.color + '">' + st.line.charAt(0) + '</div><div class="subway-name">' + st.name + '</div>';
+    var overlay = new kakao.maps.CustomOverlay({
+      map: map, position: new kakao.maps.LatLng(st.lat, st.lng),
+      content: el, yAnchor: 0.5, zIndex: -1
     });
-    const m = L.marker([st.lat, st.lng], { icon, zIndexOffset: -200, interactive: false }).addTo(map);
-    subwayMarkers.push(m);
+    subwayMarkers.push(overlay);
   });
 }
 
 function setupSubwayZoomListener(map) {
-  map.on('zoomend', function() { addSubwayMarkers(map); });
+  kakao.maps.event.addListener(map, 'zoom_changed', function() {
+    var level = map.getLevel();
+    subwayMarkers.forEach(function(o) { o.setMap(level <= 5 ? map : null); });
+  });
 }
 
 // ══ 키워드 필터 ══
@@ -2892,11 +2891,11 @@ function applyMapFilter(filter, chipEl) {
     const marker = markersMap[b.id];
     if (marker && window.mapInstance) {
       if (show) {
-        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+        marker.setMap(window.rentalMap);
         const mkw = document.getElementById('mkw-' + b.id);
         if (mkw) mkw.classList.remove('dimmed', 'type-match');
       } else {
-        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+        marker.setMap(null);
       }
     }
 
@@ -2950,11 +2949,11 @@ function applyMapFilter(filter, chipEl) {
   if (filter !== 'all') {
     const matched = nonOurs.filter(b => buildingMatchesFilter(b, filter));
     if (matched.length > 0 && window.mapInstance) {
-      const bounds = L.latLngBounds(matched.map(b => [b.lat, b.lng]));
-      window.mapInstance.fitBounds(bounds, { padding:[80,80], maxZoom:17, animate:true });
+      var bounds = new kakao.maps.LatLngBounds(); matched.forEach(function(b){bounds.extend(new kakao.maps.LatLng(b.lat, b.lng));});
+      window.rentalMap.setBounds(bounds, 80, 80, 80, 80);
     }
   } else if (window.mapInstance) {
-    window.mapInstance.flyTo([37.5232, 127.0212], 14, { duration: 0.8 });
+    window.rentalMap.panTo(new kakao.maps.LatLng(37.5232, 127.0212));
   }
 }
 
@@ -3121,7 +3120,7 @@ function selectBuilding(id, noModal) {
 
   // 지도 이동
   const b = buildings.find(x=>x.id===id);
-  if (b) window.mapInstance.flyTo([b.lat, b.lng], Math.max(window.mapInstance.getZoom(), 16), { duration:0.7 });
+  if (b) window.rentalMap.panTo(new kakao.maps.LatLng(b.lat, b.lng)), 16), { duration:0.7 });
 
   // 상세 모달 오픈 (noModal=true이면 스킵)
   if (!noModal && typeof openBldgModal === 'function') {
@@ -3266,18 +3265,18 @@ function toggleDongGroup(dong) {
       const marker = markersMap[b.id];
       if (!marker || !window.mapInstance) return;
       if (isDong) {
-        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+        marker.setMap(window.rentalMap);
       } else {
-        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+        marker.setMap(null);
       }
     });
     // 지도 줌인 - 해당 동 건물들 범위로
     const dongBuildings = buildings.filter(b => !b.isOurs && b.dong === dong);
     if (dongBuildings.length === 1) {
-      window.mapInstance.flyTo([dongBuildings[0].lat, dongBuildings[0].lng], 17, { duration: 0.7 });
+      if (window.rentalMap) window.rentalMap.panTo(new kakao.maps.LatLng(dongBuildings[0].lat, dongBuildings[0].lng));
     } else if (dongBuildings.length > 1) {
-      const bounds = L.latLngBounds(dongBuildings.map(b => [b.lat, b.lng]));
-      window.mapInstance.fitBounds(bounds, { padding: [50, 50], maxZoom: 17, animate: true });
+      var bounds = new kakao.maps.LatLngBounds(); dongBuildings.forEach(function(b){bounds.extend(new kakao.maps.LatLng(b.lat, b.lng));});
+      window.rentalMap.setBounds(bounds, 80, 80, 80, 80);
     }
   } else {
     // ── 동 닫을 때: 현재 activeMapFilter 기준으로 전체 복원 ──
@@ -3287,9 +3286,9 @@ function toggleDongGroup(dong) {
       const marker = markersMap[b.id];
       if (!marker || !window.mapInstance) return;
       if (show) {
-        if (!window.mapInstance.hasLayer(marker)) marker.addTo(window.mapInstance);
+        marker.setMap(window.rentalMap);
       } else {
-        if (window.mapInstance.hasLayer(marker)) window.mapInstance.removeLayer(marker);
+        marker.setMap(null);
       }
     });
   }
@@ -3435,7 +3434,7 @@ function flyToBuilding(id) {
   if (mkw) mkw.classList.add('selected');
 
   // 지도 이동
-  window.mapInstance.flyTo([b.lat, b.lng], 17, { duration: 0.8 });
+  window.rentalMap.panTo(new kakao.maps.LatLng(b.lat, b.lng));
 }
 
 function selectBuildingFromType(id) {
@@ -3736,148 +3735,9 @@ function mapShowTab(name) {
       sidebar.style.minWidth = '';
     }
   }
-  if (window.mapInstance) window.mapInstance.invalidateSize();
+  if (window.rentalMap) kakao.maps.event.trigger(window.rentalMap, "resize");
 }
 
-// ══ 지도 초기화 (lazy) ══
-(function(){
-  let _ready = false;
-
-  function doRender() {
-    // ── 이미 지도 있으면 갱신만 ──
-    if (window.mapInstance) {
-      renderBuildingList(); renderChart(); renderReport(); renderLegend();
-      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
-      return;
-    }
-    // ── 지도 생성 ──
-    window.mapInstance = L.map('map', {
-      center: [37.5232, 127.0212], zoom: 14, zoomControl: true
-    });
-    // 네이버 지도 스타일 — 밝고 선명한 한국 지도
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd', maxZoom: 19
-    }).addTo(window.mapInstance);
-
-    // ── 주소 기반 좌표 보정 (좌표 없거나 이상한 건물만 geocoding) ──
-    var geocodeQueue = buildings.filter(function(b) {
-      return !b.isOurs && b.address && (b._needGeocode || b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng));
-    });
-    if (geocodeQueue.length > 0) {
-      console.log('[지오코딩] 대상:', geocodeQueue.length, '개 건물 순차 변환 시작');
-      geocodeBuildings(geocodeQueue, 0, function() {
-        createAllMarkers();
-        // 지오코딩 완료 후 목록/차트/리포트도 갱신 (좌표 반영)
-        renderBuildingList(); renderChart(); renderReport(); renderLegend();
-        updateFilterCounts();
-        console.log('[지오코딩] 전체 완료 → 마커/목록 갱신');
-      });
-    } else {
-      createAllMarkers();
-    }
-  }
-
-  // 주소 → 좌표는 Apps Script가 시트에 미리 저장 — 여기선 그냥 마커 생성
-  function geocodeBuildings(queue, idx, callback) {
-    callback(); // 즉시 완료 (지오코딩 불필요)
-  }
-
-  function createAllMarkers() {
-    // ── 마커 생성 ──
-    buildings.forEach(function(b, idx) {
-      if (!b.isOurs && (b.lat === 0 || b.lng === 0 || isNaN(b.lat) || isNaN(b.lng))) return; // 좌표 없으면 건너뜀
-      var color = getDominantColor(b);
-      var size  = getMarkerSize(b);
-      var inner = b.isOurs ? '⭐' : '';
-      var pinHtml = b.isOurs
-        ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
-        : '<div class="mk-pin"><div class="mk-circle"></div></div>';
-      var html =
-        '<div class="mk-wrap' + (b.isOurs?' ours-wrap':'') + '" id="mkw-' + b.id + '">' +
-        pinHtml +
-        '<div class="mk-label">' + b.short + '</div></div>';
-      var icon = L.divIcon({
-        className: '', html: html,
-        iconSize:   [60, 46],
-        iconAnchor: [30, 18],   /* 다이아몬드 핀 중심 */
-        popupAnchor:[0, -20]
-      });
-      var marker = L.marker([b.lat, b.lng], {icon: icon}).addTo(window.mapInstance);
-      marker.on('click', (function(bid){ return function(){ window.selectBuilding(bid); }; })(b.id));
-      markersMap[b.id] = marker;
-    });
-    // ── 렌더링 ──
-    renderBuildingList(); renderChart(); renderReport(); renderLegend();
-    // ── 지하철역 마커 ──
-    addSubwayMarkers(window.mapInstance);
-    setupSubwayZoomListener(window.mapInstance);
-    // ── 필터 카운트 업데이트 ──
-    updateFilterCounts();
-    // ── 사이드바 헤더 동적 업데이트 ──
-    const bCnt = buildings.filter(b=>!b.isOurs).length;
-    const hTitle = document.querySelector('.map-sidebar-header h1');
-    const hMeta  = document.querySelector('.map-sidebar-header p');
-    if (hTitle) hTitle.textContent = '📍 신사동 529 주변 건물 임차인 현황';
-    if (hMeta)  hMeta.textContent  = `강남구 신사동 일대 · 총 ${bCnt}개 건물 분석`;
-    // ── 크기 재계산 ──
-    setTimeout(function(){ window.mapInstance.invalidateSize(); }, 300);
-  }
-
-  window._initMapView = function() {
-    if (_ready) {
-      // 이미 초기화됨 → invalidateSize만
-      if (window.mapInstance) window.mapInstance.invalidateSize();
-      return;
-    }
-
-    // ── 1) 로더 표시 ──
-    var loader = document.getElementById('map-loader');
-    if (loader) loader.style.display = 'flex';
-
-    // ── 2) 8초 타임아웃 fetch ──
-    var fetchPromise = fetch(MAP_SHEET_URL);
-    var timeoutPromise = new Promise(function(_, reject) {
-      setTimeout(function(){ reject(new Error('fetch timeout')); }, 8000);
-    });
-
-    Promise.race([fetchPromise, timeoutPromise])
-      .then(function(res) {
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.text();
-      })
-      .then(function(text) {
-        var rows = parseMapCSV(text);
-        var all = rowsToBuildings(rows);
-        buildings = rows.length > 0 ? [OUR_BUILDING].concat(all) : [OUR_BUILDING];
-        console.log('✅ 지도데이터 로딩 완료, 건물:', all.length, '/ 지오코딩필요:', all.filter(function(b){return b._needGeocode;}).length);
-      })
-      .catch(function(e) {
-        console.warn('⚠️ 지도데이터 실패:', e.message);
-        buildings = [OUR_BUILDING];
-        // 에러 안내 (3초 후 자동 제거)
-        var errEl = document.getElementById('map-fetch-err');
-        if (!errEl) {
-          errEl = document.createElement('div');
-          errEl.id = 'map-fetch-err';
-          errEl.style.cssText = 'position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:9000;background:rgba(239,68,68,.9);color:#fff;padding:8px 18px;border-radius:8px;font-size:12px;font-family:var(--sans);white-space:nowrap;';
-          errEl.textContent = '상권 데이터 연동 실패 · 기본 건물만 표시합니다';
-          var mapEl = document.getElementById('map');
-          if (mapEl) mapEl.parentNode.insertBefore(errEl, mapEl);
-        }
-        setTimeout(function(){ if(errEl.parentNode) errEl.parentNode.removeChild(errEl); }, 3000);
-      })
-      .finally(function() {
-        // ── 3) 로더 숨김 ──
-        if (loader) loader.style.display = 'none';
-        // ── 4) 렌더링 실행 (성공/실패 무관) ──
-        doRender();
-        // ── 5) _ready: doRender 완료 후 설정 ──
-        _ready = true;
-        window._mapReady = true;
-      });
-  };
-})();
 
 // ══ inline onclick에서 접근하는 함수들을 window에 등록 ══
 window.mapShowTab       = mapShowTab;
@@ -4225,24 +4085,11 @@ function reloadMap() {
     // 지도 마커 재렌더링
     if(window.mapInstance){
       // 기존 마커 제거
-      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      Object.values(markersMap).forEach(function(m){ m.setMap(null); });
       markersMap = {};
-      buildings.forEach(function(b, idx){
-        var color = getDominantColor(b);
-        var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '';
-        var pinR = b.isOurs
-          ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
-          : '<div class="mk-pin"><div class="mk-circle"></div></div>';
-        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
-          +pinR+'<div class="mk-label">'+b.short+'</div></div>';
-        var icon = L.divIcon({className:'',html:html,iconSize:[60,46],iconAnchor:[30,18],popupAnchor:[0,-20]});
-        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
-        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
-        markersMap[b.id]=marker;
-      });
-      renderBuildingList(); renderChart(); renderReport(); renderLegend();
-      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+      createRentalMarkers();
+      renderBuildingList(); renderChart(); renderLegend();
+      if (window.rentalMap) setTimeout(function(){ kakao.maps.event.trigger(window.rentalMap, "resize"); }, 200);
     }
   }).catch(function(){
     if(btn) btn.classList.remove('spin');
@@ -4393,27 +4240,13 @@ async function runUpdatePipeline() {
 
     // 마커 재렌더링
     if (window.mapInstance) {
-      Object.values(markersMap).forEach(function(m){ window.mapInstance.removeLayer(m); });
+      Object.values(markersMap).forEach(function(m){ m.setMap(null); });
       markersMap = {};
-      buildings.forEach(function(b, idx){
-        var color = getDominantColor(b);
-        var size  = getMarkerSize(b);
-        var inner = b.isOurs ? '⭐' : '';
-        var pinU = b.isOurs
-          ? '<div class="mk-pin"><div class="mk-circle">⭐</div></div>'
-          : '<div class="mk-pin"><div class="mk-circle"></div></div>';
-        var html = '<div class="mk-wrap'+(b.isOurs?' ours-wrap':'')+'" id="mkw-'+b.id+'">'
-          +pinU+'<div class="mk-label">'+b.short+'</div></div>';
-        var icon = L.divIcon({className:'',html:html,iconSize:[60,46],iconAnchor:[30,18],popupAnchor:[0,-20]});
-        var marker = L.marker([b.lat,b.lng],{icon:icon}).addTo(window.mapInstance);
-        marker.on('click',(function(bid){return function(){window.selectBuilding(bid);};})(b.id));
-        markersMap[b.id] = marker;
-      });
-      renderBuildingList(); renderChart(); renderReport(); renderLegend();
-      addSubwayMarkers(window.mapInstance);
+      createRentalMarkers();
+      renderBuildingList(); renderChart(); renderLegend();
       updateFilterCounts();
       applyMapFilter('all', document.querySelector('.map-filter-chip[data-filter="all"]'));
-      setTimeout(function(){ window.mapInstance.invalidateSize(); }, 200);
+      if (window.rentalMap) setTimeout(function(){ kakao.maps.event.trigger(window.rentalMap, "resize"); }, 200);
     }
 
   } catch (err) {
