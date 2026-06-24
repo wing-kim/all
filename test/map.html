@@ -2203,7 +2203,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
   <div class="mode-panel active" id="panel-rental">
 <div id="sec-mapview" class="sec on">
   <div class="map-wrap" style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;">
-    <div id="map-loader" style="position:absolute;inset:0;z-index:900;background:rgba(8,9,13,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+    <div id="map-loader" style="position:absolute;inset:0;z-index:900;background:rgba(8,9,13,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
       <div style="width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px"></div>
       <div style="font-size:12px;color:var(--t2);">상권 데이터 로딩 중…</div>
     </div>
@@ -2602,7 +2602,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 
 
 <!-- 버전 배지 -->
-<div id="ver-badge">v0625.0300</div>
+<div id="ver-badge">v0625.0400</div>
 
 <!-- ══ JavaScript ══ -->
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2a3ec83cc3ca9f434e295d2ded3f0eac&libraries=services&autoload=false"></script>
@@ -2958,8 +2958,6 @@ function applyMapFilter(filter, chipEl) {
 }
 
 async function loadMapData(){
-  const el=document.getElementById('map-loader');
-  if(el) el.style.display='flex';
   try{
     const res=await fetch(MAP_SHEET_URL);
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -2967,13 +2965,11 @@ async function loadMapData(){
     const rows=parseMapCSV(text);
     const valid=rowsToBuildings(rows);
     buildings=rows.length>0?[OUR_BUILDING,...valid]:[OUR_BUILDING];
-    const needGeo=valid.filter(b=>b._needGeocode).length;
-    console.log('✅ 지도데이터:', valid.length, '개 건물 (주소→좌표변환 필요:', needGeo, '개)');
   }catch(e){
     console.warn('⚠️ 지도데이터 실패:', e.message);
     buildings=[OUR_BUILDING];
   }finally{
-    if(el) el.style.display='none';
+    document.getElementById('syncTime').textContent=new Date().toLocaleTimeString('ko-KR');
   }
 }
 
@@ -5090,7 +5086,6 @@ var rentalKakaoMarkers = {};
 
 function initRentalMap() {
   var loader = document.getElementById('map-loader');
-  if (loader) loader.style.display = 'flex';
   var container = document.getElementById('map');
   window.rentalMap = new kakao.maps.Map(container, {
     center: new kakao.maps.LatLng(37.5232, 127.0212), level: 4
