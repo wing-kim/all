@@ -272,9 +272,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .lease-tabs{display:grid;grid-template-columns:repeat(4,1fr);height:48px;min-height:48px;background:#090a10;border-bottom:1px solid var(--border);flex-shrink:0}
 .lease-tab{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--t3);border-right:1px solid rgba(255,255,255,.04);cursor:pointer;position:relative;transition:.15s}
 .lease-tab:last-child{border-right:none}.lease-tab:hover{color:var(--t2)}.lease-tab.active{color:var(--t1);background:rgba(255,255,255,.025)}.lease-tab.active:after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--blue)}
-.lease-pane{display:none}.lease-pane.active{display:block}.lease-pad{padding:14px 16px}.lease-section-title{font-size:12px;font-weight:800;color:var(--t2);margin:0 0 12px;display:flex;align-items:center;gap:7px}.lease-section-title:before{content:'';width:4px;height:16px;border-radius:3px;background:var(--blue)}
-.dong-group{border-bottom:1px solid rgba(255,255,255,.07)}.dong-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:#111320;border-left:4px solid var(--blue)}.dong-badge{padding:5px 12px;border:1px solid rgba(100,120,255,.55);border-radius:7px;color:var(--t1);font-size:12px;font-weight:800;background:rgba(59,127,255,.08)}.dong-meta{color:#7f89b5;font-size:12px;font-weight:700}.dong-arrow{margin-left:auto;color:#748ffc}.dong-body{display:none}.dong-group.open .dong-body{display:block}.dong-group.open .dong-arrow{transform:rotate(180deg)}
-.lease-bld-card{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:.12s;background:#0e101a}.lease-bld-card:hover{background:#151827}.lease-bld-card.ours{background:rgba(245,158,11,.08);border-left:4px solid #f59e0b}.lease-bld-top{display:flex;align-items:center;gap:8px}.lease-bld-name{font-size:13px;font-weight:900;color:var(--t1)}.lease-bld-price{margin-left:auto;color:#7090ff;font-family:var(--mono);font-size:11px}.lease-bld-meta{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.lease-tag{font-size:10px;color:var(--t3);background:#151827;border:1px solid var(--border);border-radius:5px;padding:3px 7px}.lease-floor-line{display:flex;align-items:center;gap:9px;margin-top:8px;font-size:11.5px;color:var(--t2)}.lease-floor-line .fl{width:34px;color:var(--t3);font-family:var(--mono)}.lease-floor-line .tt{font-weight:700;color:var(--t1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lease-type-pill{font-size:10px;font-weight:700;color:#fff;border-radius:5px;padding:2px 6px}.lease-rent{font-family:var(--mono);font-size:11px;color:var(--green)}
+.lease-pane{display:none}.lease-pane.active{display:block}.lease-bld-card.focused{outline:1px solid var(--blue);background:#151827}.lease-pad{padding:14px 16px}.lease-section-title{font-size:12px;font-weight:800;color:var(--t2);margin:0 0 12px;display:flex;align-items:center;gap:7px}.lease-section-title:before{content:'';width:4px;height:16px;border-radius:3px;background:var(--blue)}
+.dong-group{border-bottom:1px solid rgba(255,255,255,.07)}.dong-head{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:#111320;border-left:4px solid var(--blue)}.dong-head:hover{background:#151827}.dong-badge{padding:5px 12px;border:1px solid rgba(100,120,255,.55);border-radius:7px;color:var(--t1);font-size:12px;font-weight:800;background:rgba(59,127,255,.08)}.dong-meta{color:#7f89b5;font-size:12px;font-weight:700}.dong-arrow{margin-left:auto;color:#748ffc;transition:.15s}.dong-body{display:none}.dong-group.open .dong-body{display:block}.dong-group.open .dong-arrow{transform:rotate(180deg)}
+.lease-bld-card{padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;transition:.12s;background:#0e101a;border-left:4px solid var(--blue)}.lease-bld-card:hover{background:#151827}.lease-bld-card.ours{background:rgba(59,127,255,.08);border-left:4px solid var(--blue)}.lease-bld-top{display:flex;align-items:center;gap:8px}.lease-bld-name{font-size:13px;font-weight:900;color:var(--t1)}.lease-bld-price{margin-left:auto;color:#7090ff;font-family:var(--mono);font-size:11px}.lease-bld-meta{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.lease-tag{font-size:10px;color:var(--t3);background:#151827;border:1px solid var(--border);border-radius:5px;padding:3px 7px}.lease-floor-line{display:flex;align-items:center;gap:9px;margin-top:8px;font-size:11.5px;color:var(--t2)}.lease-floor-line .fl{width:34px;color:var(--t3);font-family:var(--mono)}.lease-floor-line .tt{font-weight:700;color:var(--t1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lease-type-pill{font-size:10px;font-weight:700;color:#dce3ff;border-radius:5px;padding:2px 6px;background:rgba(59,127,255,.22)!important;border:1px solid rgba(59,127,255,.28)}.lease-rent{font-family:var(--mono);font-size:11px;color:var(--green)}
 .type-row{display:grid;grid-template-columns:120px 1fr 76px;align-items:center;gap:10px;margin:10px 0;cursor:pointer}.type-label{font-size:12px;font-weight:800;color:var(--t2);text-align:right}.type-bar-bg{height:34px;border-radius:9px;background:#151821;overflow:hidden}.type-bar{height:100%;display:flex;align-items:center;padding:0 12px;color:white;font-family:var(--mono);font-size:15px;font-weight:900;min-width:42px;border-radius:9px}.type-buildings{text-align:right;font-size:11px;color:var(--t3);font-weight:700}.insight-box{margin-top:18px;border:1px solid rgba(245,188,48,.25);border-radius:12px;padding:14px 16px;background:rgba(245,188,48,.05);font-size:12px;line-height:1.8;color:var(--t2)}.insight-box b{color:var(--yellow)}
 .ana-panel{padding:14px 16px;border-bottom:1px solid var(--border);background:#0b0c13}.ana-label{font-size:11px;color:var(--t3);font-weight:800;margin:12px 0 7px}.ana-chips{display:flex;flex-wrap:wrap;gap:6px}.ana-chip{padding:5px 10px;border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--t2);cursor:pointer}.ana-chip.active{background:rgba(59,127,255,.16);border-color:var(--blue);color:var(--blue);font-weight:800}.ana-row{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:7px;margin:7px 0;color:var(--blue);font-size:11px;font-weight:800}.ana-row input{width:100%}.ana-reset{width:100%;margin-top:14px;padding:10px;border:1px solid var(--border);border-radius:8px;background:#151821;color:var(--t3);cursor:pointer}.ana-summary{margin:14px 16px;padding:12px;border:1px solid var(--border2);border-radius:8px;background:#101320;color:var(--t2);font-size:12px;line-height:1.6}.ana-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 16px}.ana-kpi{border:1px solid var(--border);border-radius:8px;background:#101320;padding:10px;text-align:center}.ana-kpi strong{display:block;font-family:var(--mono);font-size:20px;color:var(--blue)}.ana-kpi span{font-size:10px;color:var(--t3)}
 .legend-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.legend-card{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#111320}.legend-dot2{width:10px;height:10px;border-radius:50%}.legend-card span{font-size:11px;color:var(--t2)}
@@ -287,14 +287,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t1);font-
 .mode-btn{display:flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:8px;border:1px solid var(--border2);background:rgba(255,255,255,.04);color:var(--t3);font-size:11px;font-weight:800;cursor:pointer;transition:.16s;white-space:nowrap}
 .mode-btn:hover{color:var(--t1);border-color:rgba(59,127,255,.45);background:rgba(59,127,255,.08)}
 .mode-btn.on{color:var(--t1);border-color:var(--blue);background:rgba(59,127,255,.18);box-shadow:inset 0 -2px 0 var(--blue)}
-.top-lease-filter{position:fixed;top:52px;left:0;right:var(--panel-w);z-index:760;height:38px;display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;padding:0 8px;background:rgba(8,9,13,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(59,127,255,.14);scrollbar-width:none}
+.top-lease-filter{position:fixed;top:52px;left:0;right:0;z-index:760;height:38px;display:flex;align-items:center;gap:4px;overflow-x:auto;overflow-y:hidden;padding:0 8px;background:rgba(8,9,13,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(59,127,255,.14);scrollbar-width:none}
 .top-lease-filter::-webkit-scrollbar{display:none}.top-lease-filter.hidden{display:none}
 .top-lease-filter .lease-chip{height:25px;padding:4px 10px;font-size:10.5px;background:rgba(21,24,33,.92)}
 .top-lease-filter .lease-chip .cnt{font-size:9px;color:var(--t3);background:rgba(255,255,255,.06)}
 .top-lease-filter .lease-chip.active .cnt{color:var(--green)}
-.panel{top:62px}.layer-wrap{display:none}.panel-head{padding:13px 18px 11px}
+.panel{top:90px}.layer-wrap{display:none}.panel-head{padding:13px 18px 11px}
 .poi-mode .panel{top:62px}
-@media(max-width:640px){.top-lease-filter{right:0;top:52px}.panel{top:96px;max-height:52vh}.mode-btn{padding:0 9px;font-size:10px}.brand-sub{display:none}}
+@media(max-width:640px){.top-lease-filter{right:0;top:52px}.panel{top:96px;max-height:52vh}.poi-mode .panel{top:58px}.mode-btn{padding:0 9px;font-size:10px}.brand-sub{display:none}}
 
 </style>
 </head>
@@ -722,7 +722,7 @@ function clearBldMarkers() {
 // ══════════════════════════════════════════════
 function openBldPopupById(id) {
   const bld = buildings.find(b => b.id === id);
-  if (bld) openBldPopup(bld);
+  if (bld) { if(bld.lat&&bld.lng) flyTo(bld.lat,bld.lng); openBldPopup(bld); }
 }
 
 function openBldPopup(bld) {
@@ -1174,7 +1174,7 @@ function drawBldMarkersFiltered(){
   buildings.forEach(bld=>{
     if(!bld.isOurs && !buildingMatchesFilter(bld, activeMapFilter)) return;
     if(!bld.lat || !bld.lng) return;
-    const pos=new kakao.maps.LatLng(bld.lat,bld.lng); const color=getBldColor(bld); const size=bld.isOurs?24:18, height=bld.isOurs?34:26;
+    const pos=new kakao.maps.LatLng(bld.lat,bld.lng); const color=bld.isOurs?'#3b7fff':'#5878ff'; const size=bld.isOurs?24:18, height=bld.isOurs?34:26;
     const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${height}" viewBox="0 0 18 26"><path d="M9 0C4.029 0 0 4.029 0 9c0 6.75 9 17 9 17S18 15.75 18 9C18 4.029 13.971 0 9 0z" fill="${color}" stroke="white" stroke-width="1.6"/><circle cx="9" cy="9" r="3.5" fill="white" opacity="0.9"/></svg>`;
     const img=new kakao.maps.MarkerImage('data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg))), new kakao.maps.Size(size,height), {offset:new kakao.maps.Point(size/2,height)});
     const m=new kakao.maps.Marker({position:pos,image:img,map,zIndex:bld.isOurs?20:5,title:bld.name}); kakao.maps.event.addListener(m,'click',()=>openBldPopup(bld)); bldMarkers.push(m);
@@ -1189,22 +1189,29 @@ function renderBldList(){
   if(!arr.length) h+=`<div class="result-empty"><div class="e-ico">🏢</div><div>조건에 맞는 임대 건물이 없습니다</div></div>`;
   Object.entries(groups).sort((a,b)=>a[0].localeCompare(b[0],'ko')).forEach(([dong,list],idx)=>{
     const tc=list.reduce((s,b)=>s+(b.tenants||[]).length,0);
-    h+=`<div class="dong-group open"><div class="dong-head" onclick="this.parentElement.classList.toggle('open')"><span class="dong-badge">${escapeHtml(dong)}</span><span class="dong-meta">건물 ${list.length} · 임차인 ${tc}</span><span class="dong-arrow">▼</span></div><div class="dong-body">`;
+    h+=`<div class="dong-group"><div class="dong-head" onclick="this.parentElement.classList.toggle('open')"><span class="dong-badge">${escapeHtml(dong)}</span><span class="dong-meta">건물 ${list.length} · 임차인 ${tc}</span><span class="dong-arrow">▼</span></div><div class="dong-body">`;
     list.forEach(b=>{h+=leaseBuildingCard(b)}); h+=`</div></div>`;
   });
   leasePane().innerHTML=h;
 }
 function leaseBuildingCard(b){
   const floors=(b.floors||[]).slice(0,3); const d=Math.round(calcDist(OUR_LAT,OUR_LNG,b.lat,b.lng));
-  let h=`<div class="lease-bld-card" onclick="openBldPopupById('${escapeHtml(b.id)}')"><div class="lease-bld-top"><div class="lease-bld-name">◆ ${escapeHtml(b.name)}</div><div class="lease-bld-price">${escapeHtml(b.price||'')}</div></div><div class="lease-bld-meta"><span class="lease-tag">💰 ${escapeHtml(b.price||'-')}</span><span class="lease-tag">🏢 ${b.builtYear||'-'}년</span><span class="lease-tag">P ${escapeHtml(b.parking||'-')}</span><span class="lease-tag">${formatDist(d)}</span></div>`;
-  floors.forEach(f=>{const type=normalizeType(f.industry||'기타'), color=TYPES[type]||TYPES['기타']; h+=`<div class="lease-floor-line"><span class="fl">${escapeHtml(formatFloor(f.floor))}</span><span class="tt">${escapeHtml(f.tenant||'공실')}</span><span class="lease-type-pill" style="background:${color}">${escapeHtml(type)}</span><span class="lease-rent">${f.rent?Number(f.rent).toLocaleString()+'만':''}</span></div>`});
+  let h=`<div class="lease-bld-card" data-bid="${escapeHtml(b.id)}" onclick="focusLeaseBuilding('${escapeHtml(b.id)}')"><div class="lease-bld-top"><div class="lease-bld-name">◆ ${escapeHtml(b.name)}</div><div class="lease-bld-price">${escapeHtml(b.price||'')}</div></div><div class="lease-bld-meta"><span class="lease-tag">💰 ${escapeHtml(b.price||'-')}</span><span class="lease-tag">🏢 ${b.builtYear||'-'}년</span><span class="lease-tag">P ${escapeHtml(b.parking||'-')}</span><span class="lease-tag">${formatDist(d)}</span></div>`;
+  floors.forEach(f=>{const type=normalizeType(f.industry||'기타'); h+=`<div class="lease-floor-line"><span class="fl">${escapeHtml(formatFloor(f.floor))}</span><span class="tt">${escapeHtml(f.tenant||'공실')}</span><span class="lease-type-pill">${escapeHtml(type)}</span><span class="lease-rent">${f.rent?Number(f.rent).toLocaleString()+'만':''}</span></div>`});
   return h+`</div>`;
+}
+function focusLeaseBuilding(id){
+  const bld = buildings.find(b=>b.id===id);
+  if(!bld) return;
+  document.querySelectorAll('.lease-bld-card').forEach(el=>el.classList.toggle('focused', el.dataset.bid===id));
+  if(bld.lat && bld.lng){ flyTo(bld.lat,bld.lng); }
+  openBldPopup(bld);
 }
 function renderTypeChart(){
   const counts={}; const bsets={}; nonOurs().forEach(b=>{ if(!buildingMatchesFilter(b,activeMapFilter)) return; (b.tenants||[]).forEach(t=>{const ty=t.type||'기타'; counts[ty]=(counts[ty]||0)+1; (bsets[ty]||(bsets[ty]=new Set())).add(b.id);});});
   const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]); const max=Math.max(1,...entries.map(e=>e[1]));
   let h=`<div class="lease-pad"><div class="lease-section-title">업종별 임차인 수 (전체 건물 합산)</div>`;
-  entries.forEach(([ty,c])=>{const color=TYPES[ty]||TYPES['기타']; h+=`<div class="type-row" onclick="applyMapFilter('${escapeHtml(ty)}')"><div class="type-label">${escapeHtml(ty)}</div><div class="type-bar-bg"><div class="type-bar" style="width:${Math.max(12,c/max*100)}%;background:${color}">${c}</div></div><div class="type-buildings">${bsets[ty].size}개 건물</div></div>`});
+  entries.forEach(([ty,c])=>{const color=TYPES[ty]||TYPES['기타']; h+=`<div class="type-row" onclick="applyMapFilter('${escapeHtml(ty)}'); activeLeaseTab='buildings'; renderLeaseShell();"><div class="type-label">${escapeHtml(ty)}</div><div class="type-bar-bg"><div class="type-bar" style="width:${Math.max(12,c/max*100)}%;background:${color}">${c}</div></div><div class="type-buildings">${bsets[ty].size}개 건물</div></div>`});
   h+=`<div class="insight-box"><b>💡 주목할 인사이트</b><br>• <b>${entries[0]?.[0]||'-'}</b> 임차인이 가장 많은 업종입니다.<br>• 업종 막대를 클릭하면 해당 업종 건물만 지도와 목록에서 확인됩니다.<br>• 현재 필터: <b>${activeMapFilter==='all'?'전체':activeMapFilter}</b></div></div>`;
   leasePane().innerHTML=h;
 }
