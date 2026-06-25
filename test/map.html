@@ -323,7 +323,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
       <div class="panel" id="panel-filter" style="overflow-y:auto;">
         <div class="filter-panel">
           <div class="filter-section">
-            <div class="filter-section-title">📍 동 (지역)</div>
+            <div class="filter-section-title">📍 동 (지역) <span style="font-size:10px;color:var(--text-dim);font-weight:400;">중복 선택 가능</span></div>
             <div class="chip-group" id="ff-dong">
               <span class="fchip active" onclick="toggleDong(this,'')">전체</span>
               <span class="fchip" onclick="toggleDong(this,'역삼동')">역삼동</span>
@@ -339,56 +339,69 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
             </div>
           </div>
           <div class="filter-section">
-            <div class="filter-section-title">🏪 업종</div>
+            <div class="filter-section-title">🏪 업종 <span style="font-size:10px;color:var(--text-dim);font-weight:400;">해당 동의 업종 · 중복 선택 가능</span></div>
             <div class="chip-group" id="ff-type">
               <span class="fchip active" onclick="toggleType(this,'')">전체</span>
-              <span class="fchip" onclick="toggleType(this,'F&B/음식점')">🍽️ F&B</span>
-              <span class="fchip" onclick="toggleType(this,'카페')">☕ 카페</span>
-              <span class="fchip" onclick="toggleType(this,'사무실/기업')">🏗️ 사무실</span>
-              <span class="fchip" onclick="toggleType(this,'IT/테크')">💻 IT</span>
-              <span class="fchip" onclick="toggleType(this,'병원/의료')">🏥 병원</span>
-              <span class="fchip" onclick="toggleType(this,'뷰티/미용')">💇 뷰티</span>
-              <span class="fchip" onclick="toggleType(this,'학원/교육')">📚 교육</span>
-              <span class="fchip" onclick="toggleType(this,'스포츠/레저')">⚽ 스포츠</span>
-              <span class="fchip" onclick="toggleType(this,'패션/잡화')">👗 패션</span>
-              <span class="fchip" onclick="toggleType(this,'금융/은행')">🏦 금융</span>
-              <span class="fchip" onclick="toggleType(this,'주점/노래방')">🎤 주점</span>
-              <span class="fchip" onclick="toggleType(this,'편의점')">🏪 편의점</span>
-              <span class="fchip" onclick="toggleType(this,'약국')">💊 약국</span>
-              <span class="fchip" onclick="toggleType(this,'스튜디오/공간')">🎨 스튜디오</span>
-              <span class="fchip" onclick="toggleType(this,'기타')">📦 기타</span>
             </div>
           </div>
           <div class="filter-section">
-            <div class="filter-section-title">💰 매매가 (억)</div>
-            <div class="range-row">
-              <input type="number" class="range-inp" id="ff-price-min" placeholder="최소" min="0">
-              <span class="range-sep">~</span>
-              <input type="number" class="range-inp" id="ff-price-max" placeholder="최대" min="0">
+            <div class="filter-section-title">💰 매매가 (억) <span class="ff-range-val" id="ff-price-disp">전체</span></div>
+            <div class="ff-slider-block">
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최소</span>
+                <input type="range" class="ff-slider" id="ff-price-min" min="0" max="500" step="5" value="0" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-price-min-lbl">0억</span>
+              </div>
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최대</span>
+                <input type="range" class="ff-slider" id="ff-price-max" min="0" max="500" step="5" value="500" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-price-max-lbl">제한없음</span>
+              </div>
             </div>
           </div>
           <div class="filter-section">
-            <div class="filter-section-title">📆 임대료 (만원/월)</div>
-            <div class="range-row">
-              <input type="number" class="range-inp" id="ff-rent-min" placeholder="최소" min="0">
-              <span class="range-sep">~</span>
-              <input type="number" class="range-inp" id="ff-rent-max" placeholder="최대" min="0">
+            <div class="filter-section-title">📆 임대료 (만원/월) <span class="ff-range-val" id="ff-rent-disp">전체</span></div>
+            <div class="ff-slider-block">
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최소</span>
+                <input type="range" class="ff-slider" id="ff-rent-min" min="0" max="3000" step="50" value="0" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-rent-min-lbl">0만</span>
+              </div>
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최대</span>
+                <input type="range" class="ff-slider" id="ff-rent-max" min="0" max="3000" step="50" value="3000" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-rent-max-lbl">제한없음</span>
+              </div>
             </div>
           </div>
           <div class="filter-section">
-            <div class="filter-section-title">📐 면적 (평)</div>
-            <div class="range-row">
-              <input type="number" class="range-inp" id="ff-area-min" placeholder="최소" min="0">
-              <span class="range-sep">~</span>
-              <input type="number" class="range-inp" id="ff-area-max" placeholder="최대" min="0">
+            <div class="filter-section-title">📐 면적 (평) <span class="ff-range-val" id="ff-area-disp">전체</span></div>
+            <div class="ff-slider-block">
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최소</span>
+                <input type="range" class="ff-slider" id="ff-area-min" min="0" max="2000" step="10" value="0" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-area-min-lbl">0평</span>
+              </div>
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">최대</span>
+                <input type="range" class="ff-slider" id="ff-area-max" min="0" max="2000" step="10" value="2000" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-area-max-lbl">제한없음</span>
+              </div>
             </div>
           </div>
           <div class="filter-section">
-            <div class="filter-section-title">🏛️ 준공년도</div>
-            <div class="range-row">
-              <input type="number" class="range-inp" id="ff-year-min" placeholder="예: 2010" min="1900" max="2030">
-              <span class="range-sep">~</span>
-              <input type="number" class="range-inp" id="ff-year-max" placeholder="예: 2025" min="1900" max="2030">
+            <div class="filter-section-title">🏛️ 준공년도 <span class="ff-range-val" id="ff-year-disp">전체</span></div>
+            <div class="ff-slider-block">
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">from</span>
+                <input type="range" class="ff-slider" id="ff-year-min" min="1980" max="2030" step="1" value="1980" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-year-min-lbl">1980~</span>
+              </div>
+              <div class="ff-slider-row">
+                <span class="ff-slider-lbl">to</span>
+                <input type="range" class="ff-slider" id="ff-year-max" min="1980" max="2030" step="1" value="2030" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-year-max-lbl">~2030</span>
+              </div>
             </div>
           </div>
           <div class="filter-section">
@@ -410,12 +423,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
             </div>
           </div>
           <div class="filter-actions">
-            <button class="btn-apply" onclick="applyAdvancedFilter()">🔍 필터 적용</button>
-            <button class="btn-reset-dark" onclick="resetAdvancedFilter()">초기화</button>
+            <button class="btn-reset-dark" style="width:100%;" onclick="resetAdvancedFilter()">↺ 필터 초기화</button>
           </div>
         </div>
-        <!-- Filter results inline -->
-        <div id="filter-results-section" style="display:none;border-top:1px solid var(--border);padding:12px 14px;overflow-y:auto;max-height:50vh;">
+        <!-- 결과 배너 -->
+        <div class="ff-result-banner" id="ff-result-banner" style="display:none;">🔍 전체 건물 표시 중</div>
+        <!-- 결과 목록 -->
+        <div id="filter-results-section" style="border-top:1px solid var(--border);padding:12px 14px;">
           <div id="filter-results-count" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;"></div>
           <div id="filter-results-list"></div>
         </div>
@@ -942,16 +956,47 @@ function filterByType(type){
 // ════════════════════════════════════════
 // 상권분석 (advanced filter)
 // ════════════════════════════════════════
-let ffDong='', ffType='', ffParking='';
+let ffDong=new Set(), ffType=new Set(), ffParking='';
 
 function toggleDong(el,val){
-  document.querySelectorAll('#ff-dong .fchip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); ffDong=val;
+  if(!val){
+    // 전체 선택 → 모두 해제
+    ffDong.clear();
+    document.querySelectorAll('#ff-dong .fchip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    // 토글 선택
+    if(ffDong.has(val)){
+      ffDong.delete(val);
+      el.classList.remove('active');
+    } else {
+      ffDong.add(val);
+      el.classList.add('active');
+    }
+    // 전체 칩 상태 동기화
+    const allChip=document.querySelector('#ff-dong .fchip:first-child');
+    allChip.classList.toggle('active', ffDong.size===0);
+  }
+  // 선택된 동에 맞게 업종 칩 갱신
+  renderFilterTypeChips();
   applyAdvancedFilter();
 }
 function toggleType(el,val){
-  document.querySelectorAll('#ff-type .fchip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active'); ffType=val;
+  if(!val){
+    ffType.clear();
+    document.querySelectorAll('#ff-type .fchip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    if(ffType.has(val)){
+      ffType.delete(val);
+      el.classList.remove('active');
+    } else {
+      ffType.add(val);
+      el.classList.add('active');
+    }
+    const allChip=document.querySelector('#ff-type .fchip:first-child');
+    allChip.classList.toggle('active', ffType.size===0);
+  }
   applyAdvancedFilter();
 }
 function toggleParking(el,val){
@@ -967,7 +1012,13 @@ function toggleParking(el,val){
 const FF_TYPE_ORDER=['F&B/음식점','카페','사무실/기업','IT/테크','병원/의료','뷰티/미용','학원/교육','스포츠/레저','패션/잡화','금융/은행','주점/노래방','편의점','약국','스튜디오/공간','기타'];
 
 function renderFilterTypeChips(){
-  const buildings=groupByBuilding(CURRENT_DATA.filter(r=>!r._isOur));
+  // 선택된 동에 속한 건물만으로 업종 집계
+  const rows=CURRENT_DATA.filter(r=>{
+    if(r._isOur) return false;
+    if(ffDong.size>0&&!ffDong.has(r['동'])) return false;
+    return true;
+  });
+  const buildings=groupByBuilding(rows);
   const cnts={};
   buildings.forEach(b=>{
     const types=[...new Set(b.floors.map(f=>f['업종']))];
@@ -975,11 +1026,12 @@ function renderFilterTypeChips(){
   });
   const container=document.getElementById('ff-type');
   if(!container) return;
-  const cur=ffType;
-  container.innerHTML=`<span class="fchip ${!cur?'active':''}" onclick="toggleType(this,'')">전체</span>`+
+  const noType=ffType.size===0;
+  container.innerHTML=`<span class="fchip ${noType?'active':''}" onclick="toggleType(this,'')">전체</span>`+
     FF_TYPE_ORDER.filter(t=>cnts[t]).map(t=>{
       const c=tc(t);
-      return `<span class="fchip ${cur===t?'active':''}" onclick="toggleType(this,'${t.replace(/'/g,"\\'")}')">
+      const isActive=ffType.has(t);
+      return `<span class="fchip ${isActive?'active':''}" onclick="toggleType(this,'${t.replace(/'/g,"\\'")}')">
         ${c.emoji} ${t.split('/')[0]}<span class="ff-type-cnt">(${cnts[t]})</span>
       </span>`;
     }).join('');
@@ -1033,8 +1085,8 @@ function applyAdvancedFilter(){
 
   let filtered=CURRENT_DATA.filter(r=>{
     if(r._isOur) return true; // 케이프혼타워 항상 포함
-    if(ffDong&&r['동']!==ffDong) return false;
-    if(ffType&&r['업종']!==ffType) return false;
+    if(ffDong.size>0&&!ffDong.has(r['동'])) return false;
+    if(ffType.size>0&&!ffType.has(r['업종'])) return false;
     const price=parseFloat(r['매매가 (억)'])||0;
     if(priceMax<Infinity&&(price<priceMin||price>priceMax)) return false;
     if(priceMax===Infinity&&price<priceMin) return false;
@@ -1105,7 +1157,7 @@ function resetAdvancedFilter(){
   document.getElementById('ff-year-max').value=2030;
   document.getElementById('ff-vacancy').checked=true;
   document.getElementById('ff-exclude-est').checked=false;
-  ffDong=''; ffType=''; ffParking='';
+  ffDong=new Set(); ffType=new Set(); ffParking='';
   document.querySelectorAll('#ff-dong .fchip,#ff-parking .fchip').forEach(c=>c.classList.remove('active'));
   document.querySelectorAll('#ff-dong .fchip:first-child,#ff-parking .fchip:first-child').forEach(c=>c.classList.add('active'));
   activeTypeFilter=''; selectedBuildingIdx=-1;
@@ -1219,7 +1271,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-F
+  v2025-06-25-G
 </div>
 </body>
 </html>
