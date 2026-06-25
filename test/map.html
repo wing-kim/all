@@ -685,7 +685,7 @@ function clearMarkers(){
   centerMarker=null;
 }
 let selectedDongs=new Set(), selectedTypes=new Set();
-let realtimePlaces=[], activeRTCategories=new Set(), activeDongFilter='';
+let realtimePlaces=[], allRealtimePlaces=[], activeRTCategories=new Set(), activeDongFilter='';
 let selectedPlaceIdx=-1;
 let selectedBuildingIdx=-1;
 
@@ -847,7 +847,7 @@ function switchTab(tab){
   // 실시간 마커 및 상태 초기화
   placeMarkers.forEach(m=>{if(m.setMap)m.setMap(null);}); placeMarkers=[];
   selectedPlaceIdx=-1;
-  realtimePlaces=[];
+  realtimePlaces=[]; allRealtimePlaces=[];
   document.getElementById('rt-list').innerHTML='<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>주소를 검색하면<br>주변 상권이 표시됩니다</p></div>';
   document.getElementById('rt-stats-bar').style.display='none';
   document.getElementById('radius-badge').style.display='none';
@@ -1020,7 +1020,6 @@ function renderBuildingList(buildings){
     }).join('');
     return `<div class="dong-group">
       <div class="dong-header" onclick="toggleDongGroup(this)">
-        <div class="dong-color-bar"></div>
         <div class="dong-header-inner">
           <span class="dong-arrow">▶</span>
           <span class="dong-name">${dong}</span>
@@ -1132,7 +1131,7 @@ function renderTypeChart(rows){
     const eid=encodeURIComponent(type);
     return `<div class="type-bar-item" id="tbi-${eid}" onclick="filterByType('${type.replace(/'/g,"\\'")}')">
       <div style="display:flex;align-items:center;gap:4px;">
-        <span class="tbi-label" title="${type}">${cfg.emoji} ${type}</span>
+        <span class="tbi-label" title="${type}">${type}</span>
         <span style="margin-left:auto;font-size:10px;color:var(--text-dim);flex-shrink:0;" id="tbch-${eid}">▶</span>
       </div>
       <div class="tbi-track">
@@ -1473,8 +1472,9 @@ function toggleRTCategory(el,cat){
     if(activeRTCategories.has(cat)) activeRTCategories.delete(cat);
     else activeRTCategories.add(cat);
   }
-  renderRTCatChips(null);
-  if(centerMarker) searchNearby(centerMarker.getPosition());
+  // 카운트는 전체 결과 기준 유지, 선택 상태만 변경
+  renderRTCatChips(allRealtimePlaces.length>0 ? rtFullCounts() : null);
+  filterAndRenderRT();
 }
 
 function onRadiusChange(){if(centerMarker)searchNearby(centerMarker.getPosition());}
@@ -1491,12 +1491,27 @@ function setCenter(pos){
   searchNearby(pos);
 }
 
+function rtFullCounts(){
+  const counts={};
+  RT_CATS.forEach(c=>counts[c.id]=0);
+  allRealtimePlaces.forEach(p=>{if(p._catId) counts[p._catId]=(counts[p._catId]||0)+1;});
+  return counts;
+}
+
+function filterAndRenderRT(){
+  let display=allRealtimePlaces;
+  if(activeRTCategories.size>0){
+    display=allRealtimePlaces.filter(p=>activeRTCategories.has(p._catId));
+  }
+  renderPlaceMarkers(display);
+  renderPlaceList(display);
+}
+
 function searchNearby(pos){
   const r=parseInt(document.getElementById('f-radius').value);
   document.getElementById('rt-list').innerHTML='<div class="loading"><div class="spinner"></div> 검색 중...</div>';
-  const catsToSearch=activeRTCategories.size>0
-    ? RT_CATS.filter(c=>activeRTCategories.has(c.id))
-    : RT_CATS.filter(c=>c.type==='code');
+  // 항상 전체 카테고리 검색 (필터는 클라이언트에서)
+  const catsToSearch=RT_CATS.filter(c=>c.type==='code');
   realtimePlaces=[]; let done=0;
   const total=catsToSearch.length;
 
@@ -1504,12 +1519,9 @@ function searchNearby(pos){
     realtimePlaces.sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
     const seen=new Set();
     realtimePlaces=realtimePlaces.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
-    renderPlaceMarkers(realtimePlaces);
-    renderPlaceList(realtimePlaces);
-    const counts={};
-    RT_CATS.forEach(c=>counts[c.id]=0);
-    realtimePlaces.forEach(p=>{if(p._catId) counts[p._catId]=(counts[p._catId]||0)+1;});
-    renderRTCatChips(counts);
+    allRealtimePlaces=[...realtimePlaces]; // 전체 결과 보존
+    renderRTCatChips(rtFullCounts());    // 전체 카운트로 칩 렌더
+    filterAndRenderRT();                  // 선택된 카테고리로 지도/목록 필터
   }
 
   catsToSearch.forEach(cat=>{
@@ -1694,7 +1706,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-U
+  v2025-06-25-V
 </div>
 </body>
 </html>
