@@ -595,7 +595,7 @@ function showSheetError() {
 // ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
-window.addEventListener('load', async function() {
+window.addEventListener('load', async function loadApp() {
   // 1. 로딩 메시지 업데이트
   document.getElementById('panel-list').innerHTML =
     `<div class="loading"><div class="spinner"></div> 구글시트에서 데이터 불러오는 중...</div>`;
@@ -620,7 +620,7 @@ window.addEventListener('load', async function() {
   // 4. 데이터 렌더링
   CURRENT_DATA = sheetData;
   renderAll(CURRENT_DATA);
-};
+});
 
 // ════════════════════════════════════════
 // TAB SWITCH
@@ -1035,8 +1035,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-B
+  v2025-06-25-C
 </div>
 
-</body>
-</html>
+</body
