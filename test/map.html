@@ -123,15 +123,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 /* ── 상권분석 (filters) ── */
 .filter-panel{padding:12px 14px;flex:1;}
 .filter-section{margin-bottom:18px;}
-.filter-section-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.filter-section-title{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
 .chip-group{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
 .chip-group.col3{grid-template-columns:repeat(3,1fr);}
 #ff-dong{grid-template-columns:repeat(5,1fr);}
+#ff-type{grid-template-columns:repeat(3,1fr);}
 .rt-all-chip{grid-column:1/-1;font-weight:700;}
 .fchip{
   padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;
   border:1px solid var(--border);cursor:pointer;transition:all .12s;
-  background:var(--card2);color:var(--text-muted);
+  background:var(--card2);color:#c9d1d9;
   text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .fchip:hover{border-color:var(--primary);color:var(--primary);}
@@ -394,6 +395,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           <div class="type-filter-hint" style="margin-top:4px;">클릭하면 해당 업종만 지도에 표시</div>
         </div>
         <div class="type-bar-list" id="type-bar-list"></div>
+        <!-- 업종 클릭 시 매칭 건물 목록 -->
+        <div id="type-filter-results" style="display:none;border-top:1px solid var(--border);padding:10px 12px;background:var(--bg);">
+          <div id="type-filter-count" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;"></div>
+          <div id="type-filter-list"></div>
+        </div>
       </div>
 
       <!-- 상권분석 panel -->
@@ -780,6 +786,7 @@ function switchInner(tab){
   // 탭 전환 시 공통 초기화 (데이터 일관성 보장)
   activeTypeFilter=''; activeDongFilter=''; selectedBuildingIdx=-1;
   document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
+  const _tfr=document.getElementById('type-filter-results'); if(_tfr) _tfr.style.display='none';
   document.querySelectorAll('.dong-header.open').forEach(h=>h.classList.remove('open'));
   document.querySelectorAll('.building-card').forEach(c=>c.classList.remove('active'));
 
@@ -1031,10 +1038,15 @@ function renderTypeChart(rows){
 }
 
 function filterByType(type){
+  const resultsEl=document.getElementById('type-filter-results');
+  const countEl=document.getElementById('type-filter-count');
+  const listEl=document.getElementById('type-filter-list');
+
   if(activeTypeFilter===type){
     activeTypeFilter='';
     document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
     renderMarkers(filteredBuildings);
+    if(resultsEl) resultsEl.style.display='none';
   } else {
     activeTypeFilter=type;
     document.querySelectorAll('.type-bar-item').forEach(el=>{
@@ -1042,9 +1054,26 @@ function filterByType(type){
       el.classList.toggle('active-filter',isMatch);
       el.classList.toggle('dimmed',!isMatch);
     });
-    // 해당 업종 건물만 표시 (완전 숨김)
     const matching=filteredBuildings.filter(b=>b._isOur||b.floors.some(f=>f['업종']===type));
     renderMarkers(matching);
+
+    // 매칭 건물 목록 표시 (QA: 좌표 누락 건물도 확인 가능)
+    if(resultsEl && countEl && listEl){
+      const normalMatching=matching.filter(b=>!b._isOur);
+      countEl.textContent=`건물 ${normalMatching.length}개 해당`;
+      listEl.innerHTML=normalMatching.map(b=>{
+        const bIdx=filteredBuildings.indexOf(b);
+        const lat=parseFloat(b['위도']), lng=parseFloat(b['경도']);
+        const hasCoords=lat&&lng&&!isNaN(lat)&&!isNaN(lng);
+        const floorCnt=b.floors.filter(f=>f['업종']===type).length;
+        return `<div onclick="onCardClick(${bIdx})" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;margin-bottom:5px;cursor:pointer;background:var(--card2);display:flex;align-items:center;gap:6px;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--card2)'">
+          <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b['건물명']}</span>
+          ${!hasCoords?`<span style="font-size:10px;color:#f87171;flex-shrink:0;background:rgba(248,113,113,.12);padding:1px 5px;border-radius:3px;">⚠️좌표없음</span>`:''}
+          <span style="font-size:11px;color:var(--text-dim);flex-shrink:0;">${floorCnt}개층</span>
+        </div>`;
+      }).join('');
+      resultsEl.style.display='block';
+    }
   }
   // 이미 업종분석 탭에 있으므로 switchInner 호출 불필요
 }
@@ -1464,8 +1493,8 @@ function exportRTList(){
 </script>
 
 <!-- 버전 배지 -->
-<div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-L
+<div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
+  v2025-06-25-M
 </div>
 </body>
 </html>
