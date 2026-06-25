@@ -285,6 +285,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 }
 .rt-item:hover{background:var(--card2);}
 .rt-item:active{background:var(--primary-bg);}
+.rt-item.active{background:var(--primary-bg);border-left:2px solid var(--primary);}
 .rt-cat-dot{
   width:30px;height:30px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
@@ -465,8 +466,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
             <div class="ff-slider-block">
               <div class="ff-slider-row">
                 <span class="ff-slider-lbl">from</span>
-                <input type="range" class="ff-slider" id="ff-year-min" min="1980" max="2030" step="1" value="1980" oninput="onSlider()">
-                <span class="ff-slider-lbl right" id="ff-year-min-lbl">1980~</span>
+                <input type="range" class="ff-slider" id="ff-year-min" min="1950" max="2030" step="1" value="1950" oninput="onSlider()">
+                <span class="ff-slider-lbl right" id="ff-year-min-lbl">1950~</span>
               </div>
               <div class="ff-slider-row">
                 <span class="ff-slider-lbl">to</span>
@@ -535,17 +536,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           </select>
         </div>
       </div>
-      <!-- 카테고리 칩 -->
-      <div class="rt-cat-chips" id="cat-chips">
-        <span class="fchip active" onclick="filterCategory(this,'')">전체</span>
-        <span class="fchip" onclick="filterCategory(this,'FD6')">🍽️ 음식점</span>
-        <span class="fchip" onclick="filterCategory(this,'CE7')">☕ 카페</span>
-        <span class="fchip" onclick="filterCategory(this,'HP8')">🏥 병원</span>
-        <span class="fchip" onclick="filterCategory(this,'PM9')">💊 약국</span>
-        <span class="fchip" onclick="filterCategory(this,'BK9')">🏦 은행</span>
-        <span class="fchip" onclick="filterCategory(this,'MT1')">🛒 마트</span>
-        <span class="fchip" onclick="filterCategory(this,'CS2')">🏪 편의점</span>
-      </div>
+      <!-- 카테고리 칩 (JS renderRTCatChips() 동적 렌더) -->
+      <div class="rt-cat-chips" id="cat-chips"></div>
       <!-- 리스트 -->
       <div style="flex:1;overflow-y:auto;" id="rt-list">
         <div class="empty-state">
@@ -558,7 +550,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
         <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-total">0</div><div class="rt-stat-l">전체</div></div>
         <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-food" style="color:#fb923c;">0</div><div class="rt-stat-l">음식·카페</div></div>
         <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-health" style="color:#f87171;">0</div><div class="rt-stat-l">병원·약국</div></div>
-        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-life" style="color:#38bdf8;">0</div><div class="rt-stat-l">은행·마트</div></div>
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-life" style="color:#38bdf8;">0</div><div class="rt-stat-l">생활편의</div></div>
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-edu" style="color:#a78bfa;">0</div><div class="rt-stat-l">교육·기타</div></div>
       </div>
     </div>
   </div>
@@ -608,7 +601,8 @@ function clearMarkers(){
   centerMarker=null;
 }
 let selectedDongs=new Set(), selectedTypes=new Set();
-let realtimePlaces=[], activeRTCategory='', activeDongFilter='';
+let realtimePlaces=[], activeRTCategories=new Set(), activeDongFilter='';
+let selectedPlaceIdx=-1;
 let selectedBuildingIdx=-1;
 
 function groupByBuilding(rows){
@@ -712,6 +706,7 @@ function showSheetError() {
 // INIT
 // ════════════════════════════════════════
 window.addEventListener('load', async function loadApp() {
+  renderRTCatChips(null); // 실시간 탭 칩 초기화
   // 1. 로딩 메시지 업데이트
   document.getElementById('panel-list').innerHTML =
     `<div class="loading"><div class="spinner"></div> 구글시트에서 데이터 불러오는 중...</div>`;
@@ -1141,7 +1136,7 @@ function onSlider(){
   const yMax=parseInt(document.getElementById('ff-year-max').value);
   document.getElementById('ff-year-min-lbl').textContent=yMin+'~';
   document.getElementById('ff-year-max-lbl').textContent='~'+yMax;
-  document.getElementById('ff-year-disp').textContent=(yMin<=1980&&yMax>=2030)?'전체':`${yMin}~${yMax}`;
+  document.getElementById('ff-year-disp').textContent=(yMin<=1950&&yMax>=2030)?'전체':`${yMin}~${yMax}`;
 
   applyAdvancedFilter();
 }
@@ -1157,7 +1152,7 @@ function applyAdvancedFilter(){
   const areaMin=parseInt(document.getElementById('ff-area-min').value)||0;
   const areaMaxRaw=parseInt(document.getElementById('ff-area-max').value);
   const areaMax=areaMaxRaw>=2000?Infinity:areaMaxRaw;
-  const yearMin=parseInt(document.getElementById('ff-year-min').value)||1980;
+  const yearMin=parseInt(document.getElementById('ff-year-min').value)||1950;
   const yearMaxRaw=parseInt(document.getElementById('ff-year-max').value);
   const yearMax=yearMaxRaw>=2030?Infinity:yearMaxRaw;
   const incVacancy=document.getElementById('ff-vacancy').checked;
@@ -1233,7 +1228,7 @@ function resetAdvancedFilter(){
   document.getElementById('ff-rent-max').value=3000;
   document.getElementById('ff-area-min').value=0;
   document.getElementById('ff-area-max').value=2000;
-  document.getElementById('ff-year-min').value=1980;
+  document.getElementById('ff-year-min').value=1950;
   document.getElementById('ff-year-max').value=2030;
   document.getElementById('ff-vacancy').checked=true;
   document.getElementById('ff-exclude-est').checked=false;
@@ -1268,10 +1263,48 @@ function useMyLocation(){
   navigator.geolocation.getCurrentPosition(p=>setCenter(new kakao.maps.LatLng(p.coords.latitude,p.coords.longitude)),()=>alert('위치 정보를 가져올 수 없습니다.'));
 }
 
-function filterCategory(el, cat){
-  activeRTCategory=cat;
-  document.querySelectorAll('#cat-chips .fchip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
+// RT 카테고리 정의 (code=카카오 카테고리코드, keyword=키워드검색)
+const RT_CATS=[
+  {id:'FD6',type:'code',label:'음식점',emoji:'\uD83C\uDF7D\uFE0F',color:'#fb923c'},
+  {id:'CE7',type:'code',label:'카페',emoji:'\u2615',color:'#d97706'},
+  {id:'HP8',type:'code',label:'병원',emoji:'\uD83C\uDFE5',color:'#f87171'},
+  {id:'PM9',type:'code',label:'약국',emoji:'\uD83D\uDC8A',color:'#2dd4bf'},
+  {id:'BK9',type:'code',label:'은행',emoji:'\uD83C\uDFE6',color:'#38bdf8'},
+  {id:'MT1',type:'code',label:'마트',emoji:'\uD83D\uDED2',color:'#4ade80'},
+  {id:'CS2',type:'code',label:'편의점',emoji:'\uD83C\uDFEA',color:'#34d399'},
+  {id:'SC4',type:'code',label:'학교',emoji:'\uD83C\uDFEB',color:'#a78bfa'},
+  {id:'AC5',type:'code',label:'학원',emoji:'\uD83D\uDCDA',color:'#c084fc'},
+  {id:'AD5',type:'code',label:'숙박',emoji:'\uD83C\uDFE8',color:'#f59e0b'},
+  {id:'SW8',type:'code',label:'역',emoji:'\uD83D\uDE87',color:'#60a5fa'},
+  {id:'PO3',type:'code',label:'주민센터',emoji:'\uD83C\uDFDB\uFE0F',color:'#94a3b8'},
+  {id:'sport',type:'keyword',label:'스포츠',emoji:'\u26BD',color:'#4ade80',kw:'스포츠'},
+  {id:'religion',type:'keyword',label:'종교시설',emoji:'\u26EA',color:'#e879f9',kw:'교회'},
+  {id:'park',type:'keyword',label:'공원',emoji:'\uD83C\uDF33',color:'#22c55e',kw:'공원'},
+];
+function getRTCat(id){return RT_CATS.find(c=>c.id===id)||{label:id||'기타',emoji:'',color:'#94a3b8'};}
+
+function renderRTCatChips(counts){
+  const container=document.getElementById('cat-chips');
+  if(!container) return;
+  const all=activeRTCategories.size===0;
+  const totalCnt=counts?Object.values(counts).reduce((a,b)=>a+b,0):null;
+  container.innerHTML=
+    `<span class="fchip ${all?'active':''}" onclick="toggleRTCategory(this,'')">전체${totalCnt!==null?` <span style="font-size:9px;opacity:.65;">(${totalCnt})</span>`:''}</span>`+
+    RT_CATS.map(cat=>{
+      const cnt=counts?counts[cat.id]:null;
+      const isActive=activeRTCategories.has(cat.id);
+      return `<span class="fchip ${isActive?'active':''}" onclick="toggleRTCategory(this,'${cat.id}')">${cat.emoji} ${cat.label}${cnt!==null?` <span style="font-size:9px;opacity:.65;">(${cnt})</span>`:''}</span>`;
+    }).join('');
+}
+
+function toggleRTCategory(el,cat){
+  if(!cat){
+    activeRTCategories.clear();
+  } else {
+    if(activeRTCategories.has(cat)) activeRTCategories.delete(cat);
+    else activeRTCategories.add(cat);
+  }
+  renderRTCatChips(null);
   if(centerMarker) searchNearby(centerMarker.getPosition());
 }
 
@@ -1292,39 +1325,57 @@ function setCenter(pos){
 function searchNearby(pos){
   const r=parseInt(document.getElementById('f-radius').value);
   document.getElementById('rt-list').innerHTML='<div class="loading"><div class="spinner"></div> 검색 중...</div>';
-  const cats=activeRTCategory?[activeRTCategory]:['FD6','CE7','HP8','PM9','BK9','MT1','CS2'];
+  const catsToSearch=activeRTCategories.size>0
+    ? RT_CATS.filter(c=>activeRTCategories.has(c.id))
+    : RT_CATS.filter(c=>c.type==='code');
   realtimePlaces=[]; let done=0;
-  cats.forEach(cat=>{
-    places.categorySearch(cat,(data,status)=>{
-      if(status===kakao.maps.services.Status.OK) realtimePlaces=realtimePlaces.concat(data);
-      if(++done===cats.length){
+  const total=catsToSearch.length;
+  catsToSearch.forEach(cat=>{
+    const cb=(data,status)=>{
+      if(status===kakao.maps.services.Status.OK) data.forEach(p=>{p._catId=cat.id; realtimePlaces.push(p);});
+      if(++done===total){
         realtimePlaces.sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
         const seen=new Set();
         realtimePlaces=realtimePlaces.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
         renderPlaceMarkers(realtimePlaces);
         renderPlaceList(realtimePlaces);
+        const counts={};
+        RT_CATS.forEach(c=>counts[c.id]=0);
+        realtimePlaces.forEach(p=>{if(p._catId) counts[p._catId]=(counts[p._catId]||0)+1;});
+        renderRTCatChips(counts);
       }
-    },{location:pos,radius:r,sort:kakao.maps.services.SortBy.DISTANCE});
+    };
+    if(cat.type==='keyword'){
+      places.keywordSearch(cat.kw,cb,{location:pos,radius:r,sort:kakao.maps.services.SortBy.DISTANCE});
+    } else {
+      places.categorySearch(cat.id,cb,{location:pos,radius:r,sort:kakao.maps.services.SortBy.DISTANCE});
+    }
   });
 }
 
-const CAT_COLOR={FD6:'#fb923c',CE7:'#d97706',HP8:'#f87171',PM9:'#2dd4bf',BK9:'#38bdf8',MT1:'#4ade80',CS2:'#34d399'};
-const CAT_EMOJI={FD6:'\uD83C\uDF7D\uFE0F',CE7:'\u2615',HP8:'\uD83C\uDFE5',PM9:'\uD83D\uDC8A',BK9:'\uD83C\uDFE6',MT1:'\uD83D\uDED2',CS2:'\uD83C\uDFEA'};
-
 function renderPlaceMarkers(plist){
-  placeMarkers.forEach(m=>m.setMap(null)); placeMarkers=[];
+  placeMarkers.forEach(m=>{if(m.setMap)m.setMap(null);}); placeMarkers=[];
   plist.forEach((p,idx)=>{
-    const cat=p.category_group_code;
-    const color=CAT_COLOR[cat]||'#94a3b8';
-    const size=16, h=Math.ceil(size*1.55);
+    const isSelected=selectedPlaceIdx===idx;
+    const size=isSelected?22:16, h=Math.ceil(size*1.55);
+    const color=isSelected?'#ef4444':'#3b82f6';
     const svg=makePinSVG(color,size,false);
     const img=new kakao.maps.MarkerImage(
       'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg),
       new kakao.maps.Size(size,h),{offset:new kakao.maps.Point(size/2,h)}
     );
-    const marker=new kakao.maps.Marker({position:new kakao.maps.LatLng(p.y,p.x),image:img,map,zIndex:2});
-    kakao.maps.event.addListener(marker,'click',()=>{map.setCenter(new kakao.maps.LatLng(p.y,p.x));map.setLevel(3);});
+    const pos2=new kakao.maps.LatLng(p.y,p.x);
+    const marker=new kakao.maps.Marker({position:pos2,image:img,map,zIndex:isSelected?10:2});
+    const pIdx=idx;
+    kakao.maps.event.addListener(marker,'click',()=>onPlaceClick(pIdx));
     placeMarkers.push(marker);
+    // 명칭 라벨 (마커 아래)
+    const labelEl=document.createElement('div');
+    labelEl.style.cssText='font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,0.72);padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;margin-top:1px;max-width:80px;overflow:hidden;text-overflow:ellipsis;';
+    labelEl.textContent=p.place_name;
+    const label=new kakao.maps.CustomOverlay({position:pos2,content:labelEl,yAnchor:0,zIndex:isSelected?11:1});
+    label.setMap(map);
+    placeMarkers.push(label);
   });
 }
 
@@ -1336,44 +1387,64 @@ function renderPlaceList(plist){
     if(statsBar) statsBar.style.display='none';
     return;
   }
-  const CAT_LABEL={FD6:'음식점',CE7:'카페',HP8:'병원',PM9:'약국',BK9:'은행',MT1:'마트',CS2:'편의점'};
-  const food=plist.filter(p=>['FD6','CE7'].includes(p.category_group_code)).length;
-  const health=plist.filter(p=>['HP8','PM9'].includes(p.category_group_code)).length;
-  const life=plist.filter(p=>['BK9','MT1','CS2'].includes(p.category_group_code)).length;
+  const food=plist.filter(p=>['FD6','CE7'].includes(p._catId)).length;
+  const health=plist.filter(p=>['HP8','PM9'].includes(p._catId)).length;
+  const life=plist.filter(p=>['BK9','MT1','CS2','PO3'].includes(p._catId)).length;
+  const edu=plist.filter(p=>['SC4','AC5','AD5','SW8','sport','religion','park'].includes(p._catId)).length;
   if(statsBar){
     document.getElementById('rt-cnt-total').textContent=plist.length;
     document.getElementById('rt-cnt-food').textContent=food;
     document.getElementById('rt-cnt-health').textContent=health;
     document.getElementById('rt-cnt-life').textContent=life;
+    const eduEl=document.getElementById('rt-cnt-edu');
+    if(eduEl) eduEl.textContent=edu;
     statsBar.style.display='flex';
   }
   const sel=document.getElementById('f-radius');
   const radiusTxt=sel?sel.options[sel.selectedIndex].text:'';
-  const header=`<div class="rt-section-header"><span class="rt-section-title">주변 상권</span><span class="rt-section-count">${plist.length}개 · 반경 ${radiusTxt}</span></div>`;
-  el.innerHTML=header+plist.map(p=>{
-    const cat=p.category_group_code;
-    const color=CAT_COLOR[cat]||'#94a3b8';
-    const emoji=CAT_EMOJI[cat]||'📍';
-    const label=CAT_LABEL[cat]||cat;
+  const header=`<div class="rt-section-header"><span class="rt-section-title">주변 상권 ${plist.length}개 · ${radiusTxt}</span><button onclick="exportRTList()" style="font-size:11px;padding:3px 8px;background:var(--card2);border:1px solid var(--border);border-radius:5px;color:var(--primary);cursor:pointer;">&#128229; 추출</button></div>`;
+  el.innerHTML=header+plist.map((p,idx)=>{
+    const cat=getRTCat(p._catId);
+    const color=cat.color||'#94a3b8';
+    const label=cat.label||p.category_group_name||'';
     const dm=parseInt(p.distance||0);
     const dist=dm>=1000?`${(dm/1000).toFixed(1)}km`:dm?`${dm}m`:'';
-    return `<div class="rt-item" onclick="map.setCenter(new kakao.maps.LatLng(${p.y},${p.x}));map.setLevel(3);">
-      <div class="rt-cat-dot" style="background:${color}22;border:1.5px solid ${color}55;">${emoji}</div>
-      <div class="rt-item-body">
-        <div class="rt-item-name">${p.place_name}</div>
-        <div class="rt-item-meta">
-          <span class="rt-cat-badge" style="background:${color}22;color:${color};">${label}</span>
-          ${dist?`<span class="rt-dist">${dist}</span>`:''}
-        </div>
+    return `<div class="rt-item" id="rt-item-${idx}" onclick="onPlaceClick(${idx})">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;">
+        <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.place_name}</span>
+        <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${color}22;color:${color};white-space:nowrap;flex-shrink:0;">${label}</span>
+        ${dist?`<span style="font-size:11px;color:var(--text-dim);flex-shrink:0;">${dist}</span>`:''}
       </div>
     </div>`;
   }).join('');
 }
+
+function onPlaceClick(idx){
+  const p=realtimePlaces[idx];
+  if(!p) return;
+  selectedPlaceIdx=idx;
+  renderPlaceMarkers(realtimePlaces);
+  map.setCenter(new kakao.maps.LatLng(p.y,p.x)); map.setLevel(3);
+  document.querySelectorAll('.rt-item').forEach((el,i)=>el.classList.toggle('active',i===idx));
+}
+
+function exportRTList(){
+  if(!realtimePlaces.length) return;
+  const header='장소명,카테고리,거리(m),주소,전화번호,x,y';
+  const rows=realtimePlaces.map(p=>{
+    const cat=getRTCat(p._catId);
+    return [`"${p.place_name}"`,`"${cat.label||''}"`,p.distance||'',[`"${p.road_address_name||p.address_name||''}"`,`"${p.phone||''}"`,p.x,p.y].join(',')].join(',');
+  });
+  const csv=header+'\n'+rows.join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='상권분석_결과.csv'; a.click();
+}
 </script>
 
 <!-- 버전 배지 -->
-<div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-I
+<div id="version-badge" style="position:fixed;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
+  v2025-06-25-J
 </div>
 </body>
 </html>
