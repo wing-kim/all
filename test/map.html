@@ -126,6 +126,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .filter-section-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
 .chip-group{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
 .chip-group.col3{grid-template-columns:repeat(3,1fr);}
+#ff-dong{grid-template-columns:repeat(5,1fr);}
+.rt-all-chip{grid-column:1/-1;font-weight:700;}
 .fchip{
   padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;
   border:1px solid var(--border);cursor:pointer;transition:all .12s;
@@ -415,7 +417,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           </div>
           <div class="filter-section">
             <div class="filter-section-title">🏪 업종 <span style="font-size:10px;color:var(--text-dim);font-weight:400;">해당 동의 업종 · 중복 선택 가능</span></div>
-            <div class="chip-group col3" id="ff-type">
+            <div class="chip-group" id="ff-type">
               <span class="fchip active" onclick="toggleType(this,'')">전체</span>
             </div>
           </div>
@@ -1044,7 +1046,7 @@ function filterByType(type){
     const matching=filteredBuildings.filter(b=>b._isOur||b.floors.some(f=>f['업종']===type));
     renderMarkers(matching);
   }
-  switchInner('type');
+  // 이미 업종분석 탭에 있으므로 switchInner 호출 불필요
 }
 
 // ════════════════════════════════════════
@@ -1308,7 +1310,7 @@ function renderRTCatChips(counts){
   const all=activeRTCategories.size===0;
   const totalCnt=counts?Object.values(counts).reduce((a,b)=>a+b,0):null;
   container.innerHTML=
-    `<span class="fchip ${all?'active':''}" onclick="toggleRTCategory(this,'')">전체${totalCnt!==null?` <span style="font-size:9px;opacity:.65;">(${totalCnt})</span>`:''}</span>`+
+    `<span class="fchip rt-all-chip ${all?'active':''}" onclick="toggleRTCategory(this,'')">전체${totalCnt!==null?` <span style="font-size:9px;opacity:.65;">(${totalCnt})</span>`:''}</span>`+
     RT_CATS.map(cat=>{
       const cnt=counts?counts[cat.id]:null;
       const isActive=activeRTCategories.has(cat.id);
@@ -1462,8 +1464,8 @@ function exportRTList(){
 </script>
 
 <!-- 버전 배지 -->
-<div id="version-badge" style="position:fixed;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-K
+<div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
+  v2025-06-25-L
 </div>
 </body>
 </html>
