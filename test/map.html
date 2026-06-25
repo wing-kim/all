@@ -592,6 +592,42 @@ const BTYPE = {
 };
 function tc(t){return BTYPE[t]||{color:'#94a3b8',bg:'rgba(148,163,184,.12)',emoji:'📍'};}
 
+// 시트 입력값 → BTYPE 정규화 (대소문자·축약·오타 허용)
+const TYPE_ALIAS = {
+  // F&B/음식점
+  'F&B':'F&B/음식점','음식점':'F&B/음식점','식당':'F&B/음식점','레스토랑':'F&B/음식점',
+  // IT/테크
+  'IT':'IT/테크','it':'IT/테크','테크':'IT/테크','tech':'IT/테크',
+  // 금융/은행
+  '금융':'금융/은행','은행':'금융/은행',
+  // 병원/의료
+  '병원':'병원/의료','의료':'병원/의료','의원':'병원/의료','클리닉':'병원/의료','한의원':'병원/의료',
+  // 뷰티/미용
+  '뷰티':'뷰티/미용','미용':'뷰티/미용','뷰티샵':'뷰티/미용','헤어':'뷰티/미용','네일':'뷰티/미용',
+  // 사무실/기업
+  '사무실':'사무실/기업','기업':'사무실/기업','오피스':'사무실/기업','office':'사무실/기업',
+  // 스튜디오/공간
+  '스튜디오':'스튜디오/공간','공간':'스튜디오/공간','studio':'스튜디오/공간',
+  // 스포츠/레저
+  '스포츠':'스포츠/레저','레저':'스포츠/레저','헬스':'스포츠/레저','피트니스':'스포츠/레저',
+  // 주점/노래방
+  '주점':'주점/노래방','노래방':'주점/노래방','바':'주점/노래방','술집':'주점/노래방',
+  // 패션/잡화
+  '패션':'패션/잡화','잡화':'패션/잡화','의류':'패션/잡화','쇼핑':'패션/잡화',
+  // 학원/교육
+  '학원':'학원/교육','교육':'학원/교육',
+  // 단독 카테고리 (이미 정확한 값이지만 혹시 모를 변형 포함)
+  '약국':'약국','카페':'카페','커피숍':'카페','커피':'카페',
+  '편의점':'편의점','자동차':'자동차','기타':'기타',
+};
+function normalizeType(t){
+  if(!t||!t.trim()) return '기타';
+  const v=t.trim();
+  if(BTYPE[v]) return v;           // 정확히 일치하면 그대로
+  return TYPE_ALIAS[v] || '기타';  // 매핑 있으면 변환, 없으면 기타
+}
+
+
 // ════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════
@@ -660,6 +696,7 @@ function parseSheetCSV(csv) {
     const cols = parseCSVLine(line);
     const obj = {};
     headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
+    if (obj['업종']) obj['업종'] = normalizeType(obj['업종']); // 업종값 정규화
     if (obj['건물명']) rows.push(obj); // 좌표 없는 행도 포함 (지도 표시는 renderMarkers에서 처리)
   }
   return rows;
@@ -1535,18 +1572,11 @@ function checkData(){
     console.groupEnd();
   }
 
-  // 3. 업종값 비정상 (BTYPE에 없는 값)
-  const badType=[];
-  rows.forEach(r=>{
-    const t=r['업종']||'';
-    if(t&&!VALID_TYPES.includes(t)) badType.push({건물명:r['건물명'],업종:t});
-  });
-  if(badType.length){
-    ok=false;
-    console.group(`⚠️ 정의되지 않은 업종값 (${badType.length}개 행) → 업종분석 색상/필터 불일치`);
-    const grouped={};
-    badType.forEach(x=>{grouped[x.업종]=(grouped[x.업종]||[]);grouped[x.업종].push(x.건물명);});
-    Object.entries(grouped).forEach(([t,names])=>console.log(`  '${t}' → ${[...new Set(names)].join(', ')}`));
+  // 3. '기타'로 떨어진 업종 (정규화 후에도 매핑 안 된 값)
+  const gotGita=Object.entries(byName).filter(([,v])=>v.rows.some(r=>r['업종']==='기타'));
+  if(gotGita.length){
+    console.group(`ℹ️ 기타로 분류된 건물 (${gotGita.length}개) → 시트 업종값 확인 권장`);
+    gotGita.forEach(([n])=>console.log(`  ${n}`));
     console.groupEnd();
   }
 
@@ -1582,7 +1612,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-N
+  v2025-06-25-O
 </div>
 </body>
 </html>
