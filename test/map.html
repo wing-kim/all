@@ -104,52 +104,62 @@ body::before{content:'';position:fixed;inset:0;
 .panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
 /* ── 건물목록 (accordion) ── */
-.dong-group{border-bottom:1px solid var(--border);}
+.dong-group{border-bottom:2px solid rgba(255,255,255,.06);transition:border-color .2s;}
+.dong-group.open{border-bottom:2px solid rgba(59,91,219,.45);}
 .dong-header{
-  display:flex;align-items:center;padding:12px 14px;
-  cursor:pointer;transition:background .12s;gap:8px;
-  background:var(--card);
+  display:flex;align-items:stretch;padding:0;
+  cursor:pointer;transition:background .15s;
+  background:#0f1120;border-bottom:1px solid rgba(255,255,255,.07);
+  position:sticky;top:0;z-index:10;user-select:none;
 }
-.dong-header:hover{background:var(--card2);}
+.dong-header:hover{background:rgba(22,26,50,.7);}
+.dong-header.open{background:rgba(24,29,56,.6);border-bottom:1px solid rgba(59,91,219,.3);}
+.dong-color-bar{width:3px;align-self:stretch;flex-shrink:0;background:var(--primary);}
+.dong-header-inner{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:10px 12px;}
 .dong-arrow{font-size:10px;color:var(--text-dim);transition:transform .2s;flex-shrink:0;}
 .dong-header.open .dong-arrow{transform:rotate(90deg);}
 .dong-name{font-weight:700;font-size:13px;color:var(--text);flex:1;}
-.dong-count{font-size:11px;color:var(--text-muted);background:var(--s3);padding:2px 7px;border-radius:99px;border:1px solid var(--border2);}
+.dong-count{font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-bg);padding:2px 8px;border-radius:99px;border:1px solid rgba(59,127,255,.25);}
 .dong-buildings{display:none;background:var(--bg);}
 .dong-header.open + .dong-buildings{display:block;}
 
 .building-card{
-  padding:12px 14px 12px 22px;border-bottom:1px solid var(--border);
-  cursor:pointer;transition:background .1s;
+  display:flex;align-items:stretch;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .12s;
 }
-.building-card:hover{background:var(--card2);}
-.building-card.active{background:var(--primary-bg);border-left:2px solid var(--primary);}
-.bc-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px;}
-.bc-name{font-size:13px;font-weight:700;color:var(--text);}
-.bc-price{font-size:12px;font-weight:700;color:var(--primary);white-space:nowrap;margin-left:8px;}
-.bc-addr{font-size:11px;color:var(--text-muted);margin-bottom:5px;}
-.bc-tags{display:flex;flex-wrap:wrap;gap:4px;}
-.bc-tag{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:500;border:1px solid transparent;}
+.building-card:hover{background:var(--card);}
+.building-card.active{background:var(--primary-bg);}
+.bc-accent{width:2px;align-self:stretch;flex-shrink:0;background:transparent;transition:background .15s;}
+.building-card.active .bc-accent{background:var(--primary);}
+.bc-body{flex:1;min-width:0;padding:9px 12px;}
+.bc-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+.bc-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bc-price{font-size:11px;font-weight:700;color:var(--primary);white-space:nowrap;margin-left:6px;flex-shrink:0;}
+.bc-meta{display:flex;gap:6px;align-items:center;}
+.bc-floors{font-size:10px;color:var(--text-dim);}
+.bc-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+.bc-tag{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:500;border:1px solid transparent;}
 
 /* ── 업종분석 ── */
-.type-stats-header{padding:14px 14px 8px;border-bottom:1px solid var(--border2);}
-.type-stats-total{font-size:12px;color:var(--text-muted);margin-bottom:2px;}
+.type-stats-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);}
+.type-stats-total{font-size:11px;color:var(--text-muted);margin-bottom:2px;font-family:var(--mono);}
 .type-stats-title{font-size:14px;font-weight:700;}
-.type-filter-hint{font-size:11px;color:var(--text-dim);margin-top:4px;}
-.type-bar-list{padding:10px 0;}
+.type-filter-hint{font-size:10px;color:var(--text-dim);margin-top:4px;}
+.type-bar-list{padding:8px 10px;}
 .type-bar-item{
-  padding:8px 14px;cursor:pointer;transition:background .1s;
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:8px;padding:5px 6px;
+  border-radius:8px;cursor:pointer;transition:background .15s;
 }
 .type-bar-item:hover{background:var(--card2);}
 .type-bar-item.active-filter{background:var(--primary-bg);}
 .type-bar-item.dimmed{opacity:.35;}
-.tbi-emoji{font-size:14px;width:22px;text-align:center;flex-shrink:0;}
-.tbi-label{font-size:12px;font-weight:600;color:var(--text);width:90px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tbi-track{flex:1;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;}
-.tbi-fill{height:100%;border-radius:4px;transition:width .4s ease;}
-.tbi-count{font-size:11px;color:var(--text-muted);width:32px;text-align:right;flex-shrink:0;}
-.tbi-pct{font-size:10px;color:var(--text-dim);width:30px;text-align:right;flex-shrink:0;}
+.tbi-emoji{font-size:13px;width:20px;text-align:center;flex-shrink:0;}
+.tbi-label{font-size:11px;font-weight:600;color:var(--text-muted);width:76px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;}
+.tbi-track{flex:1;background:var(--card2);border-radius:6px;height:28px;overflow:hidden;position:relative;}
+.tbi-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;min-width:36px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+.tbi-count{font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap;}
+.tbi-pct{font-size:10px;color:rgba(255,255,255,.6);margin-left:3px;}
 
 /* ── 상권분석 (filters) ── */
 .filter-panel{padding:12px 14px;flex:1;}
@@ -398,7 +408,7 @@ body::before{content:'';position:fixed;inset:0;
   <div class="header-right">
     <button class="hd-btn" onclick="location.reload()">↺ 새로고침</button>
     <a class="hd-btn" href="../construction.html">🏗 신축관리</a>
-    <a class="hd-btn primary" href="../report.html">📋 시장리포트</a>
+    <a class="hd-btn" href="../report.html">📋 시장리포트</a>
   </div>
 </div>
 
@@ -994,19 +1004,29 @@ function renderBuildingList(buildings){
     const bCards=blist.map(b=>{
       const bIdx=filteredBuildings.indexOf(b);
       const price=b['매매가 (억)'];
-      return `<div class="building-card" id="bc-${bIdx}" onclick="onCardClick(${bIdx})" style="padding:8px 14px 8px 22px;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b['건물명']}</span>
-          <span style="font-size:11px;color:var(--text-dim);flex-shrink:0;">${b.floors.length}개층</span>
-          <span style="font-size:12px;font-weight:700;color:var(--primary);flex-shrink:0;">${price}억</span>
+      const floorCnt=b.floors.length;
+      return `<div class="building-card" id="bc-${bIdx}" onclick="onCardClick(${bIdx})">
+        <div class="bc-accent"></div>
+        <div class="bc-body">
+          <div class="bc-row1">
+            <span class="bc-name">${b['건물명']}</span>
+            <span class="bc-price">${price}억</span>
+          </div>
+          <div class="bc-meta">
+            <span class="bc-floors">${floorCnt}개층</span>
+            ${b['동']?`<span style="font-size:10px;color:var(--text-dim);">· ${b['동']}</span>`:''}
+          </div>
         </div>
       </div>`;
     }).join('');
     return `<div class="dong-group">
       <div class="dong-header" onclick="toggleDongGroup(this)">
-        <span class="dong-arrow">▶</span>
-        <span class="dong-name">${dong}</span>
-        <span class="dong-count">${blist.length}개</span>
+        <div class="dong-color-bar"></div>
+        <div class="dong-header-inner">
+          <span class="dong-arrow">▶</span>
+          <span class="dong-name">${dong}</span>
+          <span class="dong-count">${blist.length}</span>
+        </div>
       </div>
       <div class="dong-buildings">${bCards}</div>
     </div>`;
@@ -1019,8 +1039,12 @@ function toggleDongGroup(el){
   const dong=el.querySelector('.dong-name').textContent;
   const willOpen=!el.classList.contains('open');
   // 다른 동 닫기
-  document.querySelectorAll('.dong-header.open').forEach(h=>{if(h!==el)h.classList.remove('open');});
+  document.querySelectorAll('.dong-header.open').forEach(h=>{
+    h.classList.remove('open');
+    h.closest('.dong-group')?.classList.remove('open');
+  });
   el.classList.toggle('open',willOpen);
+  el.closest('.dong-group')?.classList.toggle('open',willOpen);
   activeDongFilter=willOpen ? dong : '';
   // 지도 마커 필터링
   const visible=filteredBuildings.filter(b=>b._isOur||!activeDongFilter||b['동']===activeDongFilter);
@@ -1110,12 +1134,15 @@ function renderTypeChart(rows){
     return `<div class="type-bar-item" id="tbi-${eid}" onclick="filterByType('${type.replace(/'/g,"\\'")}')">
       <span class="tbi-emoji">${cfg.emoji}</span>
       <span class="tbi-label" title="${type}">${type}</span>
-      <div class="tbi-track"><div class="tbi-fill" style="width:${w}%;background:${cfg.color}"></div></div>
-      <span class="tbi-count">${count}</span>
-      <span class="tbi-pct">${pct}%</span>
+      <div class="tbi-track">
+        <div class="tbi-fill" style="width:${w}%;background:${cfg.color}">
+          <span class="tbi-count">${count}</span>
+          <span class="tbi-pct">${pct}%</span>
+        </div>
+      </div>
       <span class="tbi-chevron" id="tbch-${eid}" style="font-size:9px;color:var(--text-dim);margin-left:2px;transition:transform .2s;">▶</span>
     </div>
-    <div class="type-bar-results" id="tbr-${eid}" style="display:none;background:var(--bg);padding:6px 12px 8px;border-bottom:1px solid var(--border2);"></div>`;
+    <div class="type-bar-results" id="tbr-${eid}" style="display:none;background:var(--bg);padding:6px 12px 8px;border-bottom:1px solid var(--border);"></div>`;
   }).join('');
 }
 
@@ -1667,7 +1694,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-S
+  v2025-06-25-T
 </div>
 </body>
 </html>
