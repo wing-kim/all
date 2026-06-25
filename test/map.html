@@ -268,6 +268,77 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 /* ── 결과 카운트 배너 ── */
 .ff-result-banner{padding:8px 14px;background:var(--primary-bg);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--primary);display:none;}
 
+
+/* ── 실시간 상권 아이템 ── */
+.rt-section-header{
+  padding:10px 14px 6px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.rt-section-title{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;}
+.rt-section-count{font-size:11px;color:var(--text-dim);}
+.rt-item{
+  padding:9px 14px;
+  border-bottom:1px solid var(--border2);
+  cursor:pointer;
+  transition:background .12s;
+  display:flex;align-items:center;gap:10px;
+}
+.rt-item:hover{background:var(--card2);}
+.rt-item:active{background:var(--primary-bg);}
+.rt-cat-dot{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;
+}
+.rt-item-body{flex:1;min-width:0;}
+.rt-item-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rt-item-meta{font-size:11px;color:var(--text-muted);margin-top:2px;display:flex;gap:6px;align-items:center;}
+.rt-cat-badge{font-size:10px;padding:1px 6px;border-radius:3px;font-weight:600;}
+.rt-dist{font-size:11px;color:var(--text-dim);}
+.rt-stats-bar{
+  display:flex;gap:0;border-top:1px solid var(--border2);
+  background:var(--card2);flex-shrink:0;
+}
+.rt-stat{flex:1;text-align:center;padding:8px 4px;border-right:1px solid var(--border2);}
+.rt-stat:last-child{border-right:none;}
+.rt-stat-n{font-size:14px;font-weight:800;color:var(--primary);}
+.rt-stat-l{font-size:10px;color:var(--text-dim);margin-top:1px;}
+.rt-search-header{
+  padding:12px 14px 10px;
+  border-bottom:1px solid var(--border2);
+  background:var(--card);
+  flex-shrink:0;
+}
+.rt-search-row{display:flex;gap:6px;margin-bottom:8px;}
+.rt-input{
+  flex:1;height:36px;padding:0 12px;background:var(--card2);
+  border:1px solid var(--border);border-radius:8px;color:var(--text);
+  font-size:13px;outline:none;transition:border-color .15s;
+}
+.rt-input:focus{border-color:var(--primary);}
+.btn-search{
+  height:36px;padding:0 16px;background:var(--primary);color:#fff;
+  border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;
+}
+.btn-myloc{
+  height:36px;padding:0 10px;background:var(--card2);color:var(--text-muted);
+  border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap;
+  display:flex;align-items:center;gap:4px;
+}
+.rt-radius-row{display:flex;align-items:center;gap:8px;}
+.rt-radius-label{font-size:11px;color:var(--text-muted);font-weight:600;}
+.fselect{
+  flex:1;height:30px;padding:0 8px;background:var(--card2);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:12px;outline:none;
+}
+.rt-cat-chips{
+  display:flex;flex-wrap:wrap;gap:5px;
+  padding:10px 14px;
+  border-bottom:1px solid var(--border2);
+  background:var(--card);
+  flex-shrink:0;
+}
+
 </style>
 </head>
 <body>
@@ -447,14 +518,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 
     <!-- ── REALTIME SIDEBAR ── -->
     <div id="sidebar-realtime" style="display:none;flex-direction:column;height:100%;">
-      <div class="rt-search-area">
-        <input class="rt-input" id="addr-input" type="text" placeholder="주소 또는 장소명 입력" onkeydown="if(event.key==='Enter')searchAddress()">
-        <div class="rt-btns">
+      <!-- 검색 헤더 -->
+      <div class="rt-search-header">
+        <div class="rt-search-row">
+          <input class="rt-input" id="addr-input" type="text" placeholder="주소 또는 장소명 검색" onkeydown="if(event.key==='Enter')searchAddress()">
           <button class="btn-search" onclick="searchAddress()">검색</button>
-          <button class="btn-myloc" onclick="useMyLocation()">📍 내 위치</button>
+          <button class="btn-myloc" onclick="useMyLocation()">📍</button>
         </div>
-        <div class="radius-row">
-          <span class="radius-label-txt">반경</span>
+        <div class="rt-radius-row">
+          <span class="rt-radius-label">반경</span>
           <select class="fselect" id="f-radius" onchange="onRadiusChange()">
             <option value="200">200m</option>
             <option value="500" selected>500m</option>
@@ -463,7 +535,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           </select>
         </div>
       </div>
-      <div class="cat-chips" id="cat-chips">
+      <!-- 카테고리 칩 -->
+      <div class="rt-cat-chips" id="cat-chips">
         <span class="fchip active" onclick="filterCategory(this,'')">전체</span>
         <span class="fchip" onclick="filterCategory(this,'FD6')">🍽️ 음식점</span>
         <span class="fchip" onclick="filterCategory(this,'CE7')">☕ 카페</span>
@@ -473,13 +546,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
         <span class="fchip" onclick="filterCategory(this,'MT1')">🛒 마트</span>
         <span class="fchip" onclick="filterCategory(this,'CS2')">🏪 편의점</span>
       </div>
+      <!-- 리스트 -->
       <div style="flex:1;overflow-y:auto;" id="rt-list">
         <div class="empty-state">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <p>주소를 검색하면<br>주변 상권이 표시됩니다</p>
         </div>
       </div>
-      <div style="padding:8px 14px;border-top:1px solid var(--border2);font-size:12px;color:var(--text-dim);" id="rt-count">0건</div>
+      <!-- 하단 통계 바 -->
+      <div class="rt-stats-bar" id="rt-stats-bar" style="display:none;">
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-total">0</div><div class="rt-stat-l">전체</div></div>
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-food" style="color:#fb923c;">0</div><div class="rt-stat-l">음식·카페</div></div>
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-health" style="color:#f87171;">0</div><div class="rt-stat-l">병원·약국</div></div>
+        <div class="rt-stat"><div class="rt-stat-n" id="rt-cnt-life" style="color:#38bdf8;">0</div><div class="rt-stat-l">은행·마트</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1271,7 +1351,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-G
+  v2025-06-25-H
 </div>
 </body>
 </html>
