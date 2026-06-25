@@ -146,20 +146,19 @@ body::before{content:'';position:fixed;inset:0;
 .type-stats-total{font-size:11px;color:var(--text-muted);margin-bottom:2px;font-family:var(--mono);}
 .type-stats-title{font-size:14px;font-weight:700;}
 .type-filter-hint{font-size:10px;color:var(--text-dim);margin-top:4px;}
-.type-bar-list{padding:8px 10px;}
+.type-bar-list{padding:6px 10px;}
 .type-bar-item{
-  display:flex;align-items:center;gap:8px;padding:5px 6px;
+  display:flex;flex-direction:column;gap:3px;padding:6px 6px;
   border-radius:8px;cursor:pointer;transition:background .15s;
 }
 .type-bar-item:hover{background:var(--card2);}
 .type-bar-item.active-filter{background:var(--primary-bg);}
 .type-bar-item.dimmed{opacity:.35;}
-.tbi-emoji{font-size:13px;width:20px;text-align:center;flex-shrink:0;}
-.tbi-label{font-size:11px;font-weight:600;color:var(--text-muted);width:76px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;}
-.tbi-track{flex:1;background:var(--card2);border-radius:6px;height:28px;overflow:hidden;position:relative;}
-.tbi-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;min-width:36px;transition:width .7s cubic-bezier(.22,1,.36,1);}
+.tbi-label{font-size:11px;font-weight:600;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}
+.tbi-track{width:100%;background:var(--card2);border-radius:6px;height:26px;overflow:hidden;position:relative;}
+.tbi-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;min-width:40px;transition:width .7s cubic-bezier(.22,1,.36,1);}
 .tbi-count{font-size:13px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap;}
-.tbi-pct{font-size:10px;color:rgba(255,255,255,.6);margin-left:3px;}
+.tbi-pct{font-size:10px;color:rgba(255,255,255,.65);margin-left:3px;}
 
 /* ── 상권분석 (filters) ── */
 .filter-panel{padding:12px 14px;flex:1;}
@@ -1132,15 +1131,16 @@ function renderTypeChart(rows){
     const w=Math.round(count/max*100);
     const eid=encodeURIComponent(type);
     return `<div class="type-bar-item" id="tbi-${eid}" onclick="filterByType('${type.replace(/'/g,"\\'")}')">
-      <span class="tbi-emoji">${cfg.emoji}</span>
-      <span class="tbi-label" title="${type}">${type}</span>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span class="tbi-label" title="${type}">${cfg.emoji} ${type}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text-dim);flex-shrink:0;" id="tbch-${eid}">▶</span>
+      </div>
       <div class="tbi-track">
         <div class="tbi-fill" style="width:${w}%;background:${cfg.color}">
           <span class="tbi-count">${count}</span>
           <span class="tbi-pct">${pct}%</span>
         </div>
       </div>
-      <span class="tbi-chevron" id="tbch-${eid}" style="font-size:9px;color:var(--text-dim);margin-left:2px;transition:transform .2s;">▶</span>
     </div>
     <div class="type-bar-results" id="tbr-${eid}" style="display:none;background:var(--bg);padding:6px 12px 8px;border-bottom:1px solid var(--border);"></div>`;
   }).join('');
@@ -1694,7 +1694,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-T
+  v2025-06-25-U
 </div>
 </body>
 </html>
