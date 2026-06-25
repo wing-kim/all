@@ -47,9 +47,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .tab-btn{padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;background:transparent;color:var(--text-muted);}
 .tab-btn.active{background:var(--card2);color:#eef0f8;box-shadow:0 0 0 1px rgba(59,127,255,0.3);}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
-.map-stat{display:flex;gap:12px;font-size:12px;color:var(--text-muted);padding-right:8px;border-right:1px solid var(--border);}
-.map-stat b{color:#3b7fff;font-weight:700;}
-.hd-clock{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;padding-right:6px;border-right:1px solid var(--border);}
+.panel-stat-bar{padding:7px 14px;border-bottom:1px solid var(--border2);background:var(--bg);display:flex;gap:14px;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+.panel-stat-bar b{color:var(--primary);font-weight:700;}
 .hd-btn{
   display:flex;align-items:center;gap:5px;padding:5px 11px;
   background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
@@ -66,7 +65,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 
 /* ── SIDEBAR ── */
 #sidebar{
-  width:var(--sidebar-w);background:var(--card);
+  width:var(--sidebar-w);background:var(--bg);
   border-left:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;
   z-index:10;
@@ -83,7 +82,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
   border-bottom:2px solid transparent;transition:all .15s;border-radius:4px 4px 0 0;
 }
 .inner-tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-bg);}
-.inner-tab-btn:hover:not(.active){color:var(--text);background:var(--card2);}
+.inner-tab-btn:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.05);}
 
 /* Panel containers */
 .panel{display:none;flex:1;overflow-y:auto;flex-direction:column;}
@@ -96,13 +95,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .dong-header{
   display:flex;align-items:center;padding:12px 14px;
   cursor:pointer;transition:background .12s;gap:8px;
-  background:var(--card);
+  background:var(--bg);
 }
-.dong-header:hover{background:var(--card2);}
+.dong-header:hover{background:rgba(255,255,255,0.04);}
 .dong-arrow{font-size:10px;color:var(--text-dim);transition:transform .2s;flex-shrink:0;}
 .dong-header.open .dong-arrow{transform:rotate(90deg);}
 .dong-name{font-weight:700;font-size:13px;color:var(--text);flex:1;}
-.dong-count{font-size:11px;color:var(--text-muted);background:var(--card2);padding:2px 7px;border-radius:99px;border:1px solid var(--border);}
+.dong-count{font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 7px;border-radius:99px;border:1px solid var(--border);}
 .dong-buildings{display:none;background:var(--bg);}
 .dong-header.open + .dong-buildings{display:block;}
 
@@ -110,7 +109,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
   padding:12px 14px 12px 22px;border-bottom:1px solid var(--border2);
   cursor:pointer;transition:background .1s;
 }
-.building-card:hover{background:var(--card2);}
+.building-card:hover{background:rgba(255,255,255,0.04);}
 .building-card.active{background:var(--primary-bg);border-left:2px solid var(--primary);}
 .bc-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px;}
 .bc-name{font-size:13px;font-weight:700;color:var(--text);}
@@ -382,13 +381,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
     <button class="tab-btn active" id="tab-rental" onclick="switchTab('rental')">🏢 임대건물</button>
     <button class="tab-btn" id="tab-realtime" onclick="switchTab('realtime')">🔍 실시간 상권</button>
   </div>
-  <!-- 오른쪽: 통계 + 시계 + 네비 버튼 -->
+  <!-- 오른쪽: 네비 버튼 -->
   <div class="header-right">
-    <div class="map-stat" id="map-stat">
-      <span><b id="stat-b">–</b> 건물</span>
-      <span><b id="stat-u">–</b> 호실</span>
-    </div>
-    <span class="hd-clock" id="hd-clock"></span>
     <button class="hd-btn" onclick="location.reload()">↺ 새로고침</button>
     <a class="hd-btn" href="../construction.html">🏗 신축관리</a>
     <a class="hd-btn primary" href="../report.html">📋 시장리포트</a>
@@ -407,6 +401,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
         <button class="inner-tab-btn active" id="itab-list" onclick="switchInner('list')">📋 건물목록</button>
         <button class="inner-tab-btn" id="itab-type" onclick="switchInner('type')">📊 업종분석</button>
         <button class="inner-tab-btn" id="itab-filter" onclick="switchInner('filter')">⚙️ 상권분석</button>
+      </div>
+      <!-- 건물목록 통계 (건물목록 탭일 때만 표시) -->
+      <div class="panel-stat-bar" id="panel-stat-bar">
+        <span>🏢 건물 <b id="stat-b">–</b></span>
+        <span>🔑 호실 <b id="stat-u">–</b></span>
       </div>
 
       <!-- 건물목록 panel -->
@@ -827,7 +826,6 @@ function switchTab(tab){
   document.getElementById('tab-realtime').classList.toggle('active',tab==='realtime');
   document.getElementById('sidebar-rental').style.display=tab==='rental'?'flex':'none';
   document.getElementById('sidebar-realtime').style.display=tab==='realtime'?'flex':'none';
-  document.getElementById('map-stat').style.display=tab==='rental'?'flex':'none';
   document.getElementById('radius-badge').style.display='none';
   clearMarkers();
   // 실시간 마커 및 상태 초기화
@@ -847,6 +845,9 @@ function switchInner(tab){
     document.getElementById('itab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
   });
+  // 통계바 건물목록 탭일 때만 표시
+  const sb=document.getElementById('panel-stat-bar');
+  if(sb) sb.style.display=tab==='list'?'flex':'none';
   // 탭 전환 시 공통 초기화 (데이터 일관성 보장)
   activeTypeFilter=''; activeDongFilter=''; selectedBuildingIdx=-1;
   document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
@@ -1636,18 +1637,6 @@ function checkData(){
   console.groupEnd();
 }
 
-// ── 실시간 시계 ──
-(function clock(){
-  const el=document.getElementById('hd-clock');
-  if(!el) return;
-  const tick=()=>{
-    const now=new Date();
-    const h=now.getHours(), m=now.getMinutes(), s=now.getSeconds();
-    const ampm=h<12?'오전':'오후';
-    el.textContent=`${ampm} ${h%12||12}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  };
-  tick(); setInterval(tick,1000);
-})();
 
 function exportRTList(){
   if(!realtimePlaces.length) return;
@@ -1665,7 +1654,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-Q
+  v2025-06-25-R
 </div>
 </body>
 </html>
