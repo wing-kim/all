@@ -4,26 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>통합상권지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=2a3ec83cc3ca9f434e295d2ded3f0eac&libraries=services,clusterer"></script>
 <style>
 :root {
   --bg: #08090d;
-  --card: #0f1118;
-  --card2: #151821;
-  --border: rgba(255,255,255,0.07);
-  --border2: rgba(255,255,255,0.04);
+  --card: #0f1118;   /* = --s1 */
+  --card2: #151821;  /* = --s2 */
+  --s3: #1c2030;
+  --border: #222636;
+  --border2: #2a3050;
   --text: #eef0f8;
   --text-muted: #8890aa;
-  --text-dim: #5a6272;
+  --text-dim: #4a5270;
   --primary: #3b7fff;
   --primary-bg: rgba(59,127,255,0.12);
   --primary-hover: rgba(59,127,255,0.2);
   --green: #22d186;
+  --blue-g: linear-gradient(135deg,#3b7fff,#6c48f5);
+  --display: 'Bebas Neue', sans-serif;
+  --sans: 'Noto Sans KR', sans-serif;
+  --mono: 'DM Mono', monospace;
   --sidebar-w: 360px;
   --header-h: 60px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(59,127,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,127,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;}
 
 /* ── HEADER ── */
 #header{
@@ -40,15 +52,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 }
 .hd-back:hover{background:rgba(255,255,255,0.09);color:var(--text);}
 .hd-sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
-.hd-title{display:flex;align-items:baseline;gap:8px;flex-shrink:0;}
-.hd-title-main{font-size:24px;font-weight:800;color:#eef0f8;letter-spacing:-.6px;line-height:1;}
-.hd-title-sub{font-size:12px;font-weight:600;color:#3b7fff;letter-spacing:.1px;}
+.hd-title{display:flex;align-items:baseline;gap:10px;flex-shrink:0;}
+.hd-title-main{
+  font-family:var(--display);font-size:28px;letter-spacing:2px;line-height:1;
+  background:var(--blue-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hd-title-sub{font-size:11px;color:var(--text-dim);letter-spacing:3px;text-transform:uppercase;}
 .tabs{display:flex;gap:2px;background:rgba(0,0,0,.4);border-radius:8px;padding:3px;margin-left:4px;}
 .tab-btn{padding:5px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;background:transparent;color:var(--text-muted);}
 .tab-btn.active{background:var(--card2);color:#eef0f8;box-shadow:0 0 0 1px rgba(59,127,255,0.3);}
 .header-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
-.panel-stat-bar{padding:7px 14px;border-bottom:1px solid var(--border2);background:var(--bg);display:flex;gap:14px;font-size:11px;color:var(--text-muted);flex-shrink:0;}
-.panel-stat-bar b{color:var(--primary);font-weight:700;}
 .hd-btn{
   display:flex;align-items:center;gap:5px;padding:5px 11px;
   background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
@@ -60,7 +73,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .hd-btn.primary:hover{background:rgba(59,127,255,0.22);}
 
 /* ── LAYOUT ── */
-#body{display:flex;height:calc(100vh - var(--header-h));}
+#body{display:flex;height:calc(100vh - var(--header-h));position:relative;z-index:1;}
 #map{flex:1;}
 
 /* ── SIDEBAR ── */
@@ -68,12 +81,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
   width:var(--sidebar-w);background:var(--bg);
   border-left:1px solid var(--border);
   display:flex;flex-direction:column;overflow:hidden;
-  z-index:10;
+  z-index:10;position:relative;
 }
 
 /* Inner tabs (건물목록/업종분석/상권분석) */
 .inner-tab-bar{
-  display:flex;background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;background:var(--card);border-bottom:1px solid var(--border);
   padding:6px 8px 0;gap:2px;flex-shrink:0;
 }
 .inner-tab-btn{
@@ -82,7 +95,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
   border-bottom:2px solid transparent;transition:all .15s;border-radius:4px 4px 0 0;
 }
 .inner-tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-bg);}
-.inner-tab-btn:hover:not(.active){color:var(--text);background:rgba(255,255,255,0.05);}
+.inner-tab-btn:hover:not(.active){color:var(--text);background:var(--s3);}
 
 /* Panel containers */
 .panel{display:none;flex:1;overflow-y:auto;flex-direction:column;}
@@ -91,25 +104,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
 /* ── 건물목록 (accordion) ── */
-.dong-group{border-bottom:1px solid var(--border2);}
+.dong-group{border-bottom:1px solid var(--border);}
 .dong-header{
   display:flex;align-items:center;padding:12px 14px;
   cursor:pointer;transition:background .12s;gap:8px;
-  background:var(--bg);
+  background:var(--card);
 }
-.dong-header:hover{background:rgba(255,255,255,0.04);}
+.dong-header:hover{background:var(--card2);}
 .dong-arrow{font-size:10px;color:var(--text-dim);transition:transform .2s;flex-shrink:0;}
 .dong-header.open .dong-arrow{transform:rotate(90deg);}
 .dong-name{font-weight:700;font-size:13px;color:var(--text);flex:1;}
-.dong-count{font-size:11px;color:var(--text-muted);background:rgba(255,255,255,0.05);padding:2px 7px;border-radius:99px;border:1px solid var(--border);}
+.dong-count{font-size:11px;color:var(--text-muted);background:var(--s3);padding:2px 7px;border-radius:99px;border:1px solid var(--border2);}
 .dong-buildings{display:none;background:var(--bg);}
 .dong-header.open + .dong-buildings{display:block;}
 
 .building-card{
-  padding:12px 14px 12px 22px;border-bottom:1px solid var(--border2);
+  padding:12px 14px 12px 22px;border-bottom:1px solid var(--border);
   cursor:pointer;transition:background .1s;
 }
-.building-card:hover{background:rgba(255,255,255,0.04);}
+.building-card:hover{background:var(--card2);}
 .building-card.active{background:var(--primary-bg);border-left:2px solid var(--primary);}
 .bc-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:3px;}
 .bc-name{font-size:13px;font-weight:700;color:var(--text);}
@@ -402,12 +415,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
         <button class="inner-tab-btn" id="itab-type" onclick="switchInner('type')">📊 업종분석</button>
         <button class="inner-tab-btn" id="itab-filter" onclick="switchInner('filter')">⚙️ 상권분석</button>
       </div>
-      <!-- 건물목록 통계 (건물목록 탭일 때만 표시) -->
-      <div class="panel-stat-bar" id="panel-stat-bar">
-        <span>🏢 건물 <b id="stat-b">–</b></span>
-        <span>🔑 호실 <b id="stat-u">–</b></span>
-      </div>
-
       <!-- 건물목록 panel -->
       <div class="panel active" id="panel-list" style="overflow-y:auto;">
         <div class="loading"><div class="spinner"></div> 로딩 중...</div>
@@ -845,9 +852,6 @@ function switchInner(tab){
     document.getElementById('itab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
   });
-  // 통계바 건물목록 탭일 때만 표시
-  const sb=document.getElementById('panel-stat-bar');
-  if(sb) sb.style.display=tab==='list'?'flex':'none';
   // 탭 전환 시 공통 초기화 (데이터 일관성 보장)
   activeTypeFilter=''; activeDongFilter=''; selectedBuildingIdx=-1;
   document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
@@ -966,7 +970,7 @@ function renderBuildingList(buildings){
   const sortedDongs=dongOrder.filter(d=>byDong[d]).concat(Object.keys(byDong).filter(d=>!dongOrder.includes(d)));
 
   // OUR_BUILDING 상단 고정 카드
-  const ourCard=ourBuilding ? `<div style="padding:9px 14px;background:rgba(245,158,11,0.12);border-bottom:2px solid rgba(245,158,11,0.4);cursor:pointer;" onclick="map.setCenter(new kakao.maps.LatLng(37.526,127.0275));map.setLevel(3);">
+  const ourCard=ourBuilding ? `<div style="padding:9px 14px;background:rgba(245,158,11,0.1);border-bottom:2px solid rgba(245,158,11,0.35);cursor:pointer;" onclick="map.setCenter(new kakao.maps.LatLng(37.526,127.0275));map.setLevel(3);">
     <div style="display:flex;align-items:center;gap:6px;">
       <span style="font-size:12px;">⭐</span>
       <span style="font-size:13px;font-weight:800;color:#f59e0b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">케이프혼타워</span>
@@ -974,6 +978,15 @@ function renderBuildingList(buildings){
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:2px;padding-left:18px;">서울시 강남구 압구정로 112</div>
   </div>` : '';
+
+  // 케이프혼타워 아래 통계 구분선
+  const statBar=`<div style="padding:7px 14px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;gap:14px;font-size:11px;color:var(--text-muted);">
+      <span>🏢 건물 <b id="stat-b" style="color:var(--primary);font-weight:700;">–</b></span>
+      <span>🔑 호실 <b id="stat-u" style="color:var(--primary);font-weight:700;">–</b></span>
+    </div>
+    <span style="font-size:10px;color:var(--text-dim);">임대 현황</span>
+  </div>`;
 
   // 동별 아코디언 (한줄 카드)
   const dongHtml=sortedDongs.map(dong=>{
@@ -999,7 +1012,7 @@ function renderBuildingList(buildings){
     </div>`;
   }).join('');
 
-  panel.innerHTML=ourCard+dongHtml;
+  panel.innerHTML=ourCard+statBar+dongHtml;
 }
 
 function toggleDongGroup(el){
@@ -1654,7 +1667,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-R
+  v2025-06-25-S
 </div>
 </body>
 </html>
