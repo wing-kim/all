@@ -1316,32 +1316,54 @@ function renderPlaceMarkers(plist){
   plist.forEach((p,idx)=>{
     const cat=p.category_group_code;
     const color=CAT_COLOR[cat]||'#94a3b8';
-    const emoji=CAT_EMOJI[cat]||'\uD83D\uDCCD';
-    const el=document.createElement('div');
-    el.style.cssText=`background:${color};color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.4);border:2px solid #fff;`;
-    el.textContent=emoji;
-    el.title=p.place_name;
-    const ov=new kakao.maps.CustomOverlay({position:new kakao.maps.LatLng(p.y,p.x),content:el,yAnchor:1});
-    ov.setMap(map);
-    placeMarkers.push(ov);
+    const size=16, h=Math.ceil(size*1.55);
+    const svg=makePinSVG(color,size,false);
+    const img=new kakao.maps.MarkerImage(
+      'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg),
+      new kakao.maps.Size(size,h),{offset:new kakao.maps.Point(size/2,h)}
+    );
+    const marker=new kakao.maps.Marker({position:new kakao.maps.LatLng(p.y,p.x),image:img,map,zIndex:2});
+    kakao.maps.event.addListener(marker,'click',()=>{map.setCenter(new kakao.maps.LatLng(p.y,p.x));map.setLevel(3);});
+    placeMarkers.push(marker);
   });
 }
 
 function renderPlaceList(plist){
   const el=document.getElementById('rt-list');
-  if(!plist.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">검색 결과 없음</div>';return;}
+  const statsBar=document.getElementById('rt-stats-bar');
+  if(!plist.length){
+    el.innerHTML='<div class="empty-state"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>검색 결과가 없습니다</p></div>';
+    if(statsBar) statsBar.style.display='none';
+    return;
+  }
   const CAT_LABEL={FD6:'음식점',CE7:'카페',HP8:'병원',PM9:'약국',BK9:'은행',MT1:'마트',CS2:'편의점'};
-  el.innerHTML=plist.map((p,i)=>{
+  const food=plist.filter(p=>['FD6','CE7'].includes(p.category_group_code)).length;
+  const health=plist.filter(p=>['HP8','PM9'].includes(p.category_group_code)).length;
+  const life=plist.filter(p=>['BK9','MT1','CS2'].includes(p.category_group_code)).length;
+  if(statsBar){
+    document.getElementById('rt-cnt-total').textContent=plist.length;
+    document.getElementById('rt-cnt-food').textContent=food;
+    document.getElementById('rt-cnt-health').textContent=health;
+    document.getElementById('rt-cnt-life').textContent=life;
+    statsBar.style.display='flex';
+  }
+  const sel=document.getElementById('f-radius');
+  const radiusTxt=sel?sel.options[sel.selectedIndex].text:'';
+  const header=`<div class="rt-section-header"><span class="rt-section-title">주변 상권</span><span class="rt-section-count">${plist.length}개 · 반경 ${radiusTxt}</span></div>`;
+  el.innerHTML=header+plist.map(p=>{
     const cat=p.category_group_code;
     const color=CAT_COLOR[cat]||'#94a3b8';
-    const emoji=CAT_EMOJI[cat]||'\uD83D\uDCCD';
-    const dist=p.distance?`${p.distance}m`:'';
-    return `<div style="padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="map.setCenter(new kakao.maps.LatLng(${p.y},${p.x}));map.setLevel(3);">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="background:${color};color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">${emoji}</span>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.place_name}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${CAT_LABEL[cat]||cat}${dist?' · '+dist:''}</div>
+    const emoji=CAT_EMOJI[cat]||'📍';
+    const label=CAT_LABEL[cat]||cat;
+    const dm=parseInt(p.distance||0);
+    const dist=dm>=1000?`${(dm/1000).toFixed(1)}km`:dm?`${dm}m`:'';
+    return `<div class="rt-item" onclick="map.setCenter(new kakao.maps.LatLng(${p.y},${p.x}));map.setLevel(3);">
+      <div class="rt-cat-dot" style="background:${color}22;border:1.5px solid ${color}55;">${emoji}</div>
+      <div class="rt-item-body">
+        <div class="rt-item-name">${p.place_name}</div>
+        <div class="rt-item-meta">
+          <span class="rt-cat-badge" style="background:${color}22;color:${color};">${label}</span>
+          ${dist?`<span class="rt-dist">${dist}</span>`:''}
         </div>
       </div>
     </div>`;
@@ -1351,7 +1373,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-H
+  v2025-06-25-I
 </div>
 </body>
 </html>
