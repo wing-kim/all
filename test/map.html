@@ -492,6 +492,13 @@ let map, geocoder, places;
 let currentTab='rental', currentInner='list';
 let allMarkers=[], placeMarkers=[], currentCircle=null, centerMarker=null;
 let filteredBuildings=[], activeTypeFilter='', activeParkingFilter='';
+
+function clearMarkers(){
+  allMarkers.forEach(m=>{ if(m.setMap) m.setMap(null); });
+  allMarkers=[];
+  if(currentCircle){ currentCircle.setMap(null); currentCircle=null; }
+  centerMarker=null;
+}
 let selectedDongs=new Set(), selectedTypes=new Set();
 let realtimePlaces=[], activeRTCategory='';
 let selectedBuildingIdx=-1;
@@ -1035,7 +1042,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-C
+  v2025-06-25-D
 </div>
 
 </body
