@@ -124,11 +124,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 .filter-panel{padding:12px 14px;flex:1;}
 .filter-section{margin-bottom:18px;}
 .filter-section-title{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
-.chip-group{display:flex;flex-wrap:wrap;gap:5px;}
+.chip-group{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.chip-group.col3{grid-template-columns:repeat(3,1fr);}
 .fchip{
   padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;
   border:1px solid var(--border);cursor:pointer;transition:all .12s;
   background:var(--card2);color:var(--text-muted);
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .fchip:hover{border-color:var(--primary);color:var(--primary);}
 .fchip.active{background:var(--primary-bg);border-color:var(--primary);color:var(--primary);}
@@ -333,8 +335,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
   border-radius:6px;color:var(--text);font-size:12px;outline:none;
 }
 .rt-cat-chips{
-  display:flex;flex-wrap:wrap;gap:5px;
-  padding:10px 14px;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  padding:8px 14px;
   border-bottom:1px solid var(--border2);
   background:var(--card);
   flex-shrink:0;
@@ -412,7 +415,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           </div>
           <div class="filter-section">
             <div class="filter-section-title">🏪 업종 <span style="font-size:10px;color:var(--text-dim);font-weight:400;">해당 동의 업종 · 중복 선택 가능</span></div>
-            <div class="chip-group" id="ff-type">
+            <div class="chip-group col3" id="ff-type">
               <span class="fchip active" onclick="toggleType(this,'')">전체</span>
             </div>
           </div>
@@ -755,6 +758,14 @@ function switchTab(tab){
   document.getElementById('map-stat').style.display=tab==='rental'?'flex':'none';
   document.getElementById('radius-badge').style.display='none';
   clearMarkers();
+  // 실시간 마커 및 상태 초기화
+  placeMarkers.forEach(m=>{if(m.setMap)m.setMap(null);}); placeMarkers=[];
+  selectedPlaceIdx=-1;
+  realtimePlaces=[];
+  document.getElementById('rt-list').innerHTML='<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>주소를 검색하면<br>주변 상권이 표시됩니다</p></div>';
+  document.getElementById('rt-stats-bar').style.display='none';
+  document.getElementById('radius-badge').style.display='none';
+  renderRTCatChips(null);
   if(tab==='rental') renderAll(CURRENT_DATA);
 }
 
@@ -764,15 +775,23 @@ function switchInner(tab){
     document.getElementById('itab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
   });
+  // 탭 전환 시 공통 초기화 (데이터 일관성 보장)
+  activeTypeFilter=''; activeDongFilter=''; selectedBuildingIdx=-1;
+  document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
+  document.querySelectorAll('.dong-header.open').forEach(h=>h.classList.remove('open'));
+  document.querySelectorAll('.building-card').forEach(c=>c.classList.remove('active'));
+
   if(tab==='filter'){
-    // 건물목록/업종분석 필터 초기화
-    activeTypeFilter='';
-    activeDongFilter='';
-    document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
-    document.querySelectorAll('.dong-header.open').forEach(h=>h.classList.remove('open'));
-    renderMarkers(filteredBuildings);
-    // 상권분석 즉시 적용
-    applyAdvancedFilter();
+    // 상권분석 필터 칩 초기화
+    ffDong=new Set(); ffType=new Set(); ffParking='';
+    document.querySelectorAll('#ff-dong .fchip,#ff-parking .fchip').forEach(c=>c.classList.remove('active'));
+    document.querySelectorAll('#ff-dong .fchip:first-child,#ff-parking .fchip:first-child').forEach(c=>c.classList.add('active'));
+    renderAll(CURRENT_DATA);
+    renderFilterTypeChips();
+    onSlider();
+  } else {
+    // 건물목록/업종분석: 전체 데이터로 복원
+    renderAll(CURRENT_DATA);
   }
 }
 
@@ -1444,7 +1463,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-J
+  v2025-06-25-K
 </div>
 </body>
 </html>
