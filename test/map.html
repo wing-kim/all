@@ -685,7 +685,7 @@ function clearMarkers(){
   centerMarker=null;
 }
 let selectedDongs=new Set(), selectedTypes=new Set();
-let realtimePlaces=[], allRealtimePlaces=[], activeRTCategories=new Set(), activeDongFilter='';
+let realtimePlaces=[], allRealtimePlaces=[], currentDisplayPlaces=[], activeRTCategories=new Set(), activeDongFilter='';
 let selectedPlaceIdx=-1;
 let selectedBuildingIdx=-1;
 
@@ -1503,6 +1503,7 @@ function filterAndRenderRT(){
   if(activeRTCategories.size>0){
     display=allRealtimePlaces.filter(p=>activeRTCategories.has(p._catId));
   }
+  currentDisplayPlaces=display; // 현재 필터 상태 보존
   renderPlaceMarkers(display);
   renderPlaceList(display);
 }
@@ -1614,10 +1615,11 @@ function renderPlaceList(plist){
 }
 
 function onPlaceClick(idx){
-  const p=realtimePlaces[idx];
+  const list=currentDisplayPlaces.length?currentDisplayPlaces:allRealtimePlaces;
+  const p=list[idx];
   if(!p) return;
   selectedPlaceIdx=idx;
-  renderPlaceMarkers(realtimePlaces);
+  renderPlaceMarkers(list); // 필터 상태 유지
   map.setCenter(new kakao.maps.LatLng(p.y,p.x)); map.setLevel(3);
   document.querySelectorAll('.rt-item').forEach((el,i)=>el.classList.toggle('active',i===idx));
 }
