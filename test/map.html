@@ -545,27 +545,36 @@ function parseSheetCSV(csv) {
 }
 
 async function loadSheetData() {
-  // export URL: 공개 시트라면 항상 최신 CSV 반환
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
-  try {
-    const res = await fetch(url, {signal: controller.signal});
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const csv = await res.text();
-    const rows = parseSheetCSV(csv);
-    if (rows.length > 0) {
-      const bCount = [...new Set(rows.map(r => r['건물명']))].length;
-      console.log(`✅ 구글시트 연동 완료: ${rows.length}개 레코드, ${bCount}개 건물`);
-      return rows;
+  // 두 URL 순서대로 시도 (fallback 포함)
+  const urls = [
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`,
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
+  ];
+
+  for (const url of urls) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      console.log('⏳ 시트 로드 시도:', url);
+      const res = await fetch(url, {signal: controller.signal, mode: 'cors'});
+      clearTimeout(timer);
+      console.log('📡 응답 상태:', res.status, res.ok);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const csv = await res.text();
+      console.log('📄 CSV 길이:', csv.length, '첫100자:', csv.substring(0, 100));
+      const rows = parseSheetCSV(csv);
+      if (rows.length > 0) {
+        const bCount = [...new Set(rows.map(r => r['건물명']))].length;
+        console.log(`✅ 구글시트 연동 완료: ${rows.length}개 레코드, ${bCount}개 건물`);
+        return rows;
+      }
+      console.warn('⚠️ 파싱된 행 없음, 다음 URL 시도');
+    } catch(e) {
+      clearTimeout(timer);
+      console.error(`❌ 실패 (${url.includes('gviz') ? 'gviz' : 'export'}):`, e.message);
     }
-    throw new Error('유효한 데이터 없음');
-  } catch(e) {
-    clearTimeout(timer);
-    console.error('❌ 시트 로드 실패:', e.message);
-    return null;
   }
+  return null;
 }
 
 function showSheetError() {
