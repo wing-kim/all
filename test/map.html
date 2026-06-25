@@ -395,11 +395,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
           <div class="type-filter-hint" style="margin-top:4px;">클릭하면 해당 업종만 지도에 표시</div>
         </div>
         <div class="type-bar-list" id="type-bar-list"></div>
-        <!-- 업종 클릭 시 매칭 건물 목록 -->
-        <div id="type-filter-results" style="display:none;border-top:1px solid var(--border);padding:10px 12px;background:var(--bg);">
-          <div id="type-filter-count" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;"></div>
-          <div id="type-filter-list"></div>
-        </div>
       </div>
 
       <!-- 상권분석 panel -->
@@ -619,9 +614,14 @@ let selectedBuildingIdx=-1;
 function groupByBuilding(rows){
   const m={};
   rows.forEach(r=>{
-    const k=r['건물명']+'|'+r['위도'];
+    const k=r['건물명']; // 건물명만으로 묶기 (좌표 유무 무관)
     if(!m[k]) m[k]={...r,floors:[]};
     if(r._isOur) m[k]._isOur=true;
+    // 좌표가 없으면 다른 행의 좌표로 보완
+    if((!m[k]['위도']||!m[k]['경도'])&&r['위도']&&r['경도']){
+      m[k]['위도']=r['위도'];
+      m[k]['경도']=r['경도'];
+    }
     m[k].floors.push(r);
   });
   return Object.values(m);
@@ -660,7 +660,7 @@ function parseSheetCSV(csv) {
     const cols = parseCSVLine(line);
     const obj = {};
     headers.forEach((h, idx) => { obj[h] = (cols[idx] || '').trim(); });
-    if (obj['건물명'] && obj['위도'] && obj['경도']) rows.push(obj);
+    if (obj['건물명']) rows.push(obj); // 좌표 없는 행도 포함 (지도 표시는 renderMarkers에서 처리)
   }
   return rows;
 }
@@ -786,7 +786,8 @@ function switchInner(tab){
   // 탭 전환 시 공통 초기화 (데이터 일관성 보장)
   activeTypeFilter=''; activeDongFilter=''; selectedBuildingIdx=-1;
   document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
-  const _tfr=document.getElementById('type-filter-results'); if(_tfr) _tfr.style.display='none';
+  document.querySelectorAll('.type-bar-results').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.tbi-chevron').forEach(el=>{el.style.transform='';el.textContent='▶';});
   document.querySelectorAll('.dong-header.open').forEach(h=>h.classList.remove('open'));
   document.querySelectorAll('.building-card').forEach(c=>c.classList.remove('active'));
 
@@ -1027,55 +1028,68 @@ function renderTypeChart(rows){
     const cfg=tc(type);
     const pct=Math.round(count/total*100);
     const w=Math.round(count/max*100);
-    return `<div class="type-bar-item" id="tbi-${encodeURIComponent(type)}" onclick="filterByType('${type.replace(/'/g,"\\'")}')">
+    const eid=encodeURIComponent(type);
+    return `<div class="type-bar-item" id="tbi-${eid}" onclick="filterByType('${type.replace(/'/g,"\\'")}')">
       <span class="tbi-emoji">${cfg.emoji}</span>
       <span class="tbi-label" title="${type}">${type}</span>
       <div class="tbi-track"><div class="tbi-fill" style="width:${w}%;background:${cfg.color}"></div></div>
       <span class="tbi-count">${count}</span>
       <span class="tbi-pct">${pct}%</span>
-    </div>`;
+      <span class="tbi-chevron" id="tbch-${eid}" style="font-size:9px;color:var(--text-dim);margin-left:2px;transition:transform .2s;">▶</span>
+    </div>
+    <div class="type-bar-results" id="tbr-${eid}" style="display:none;background:var(--bg);padding:6px 12px 8px;border-bottom:1px solid var(--border2);"></div>`;
   }).join('');
 }
 
 function filterByType(type){
-  const resultsEl=document.getElementById('type-filter-results');
-  const countEl=document.getElementById('type-filter-count');
-  const listEl=document.getElementById('type-filter-list');
+  const eid=encodeURIComponent(type);
+
+  // 모든 결과창·chevron 초기화
+  document.querySelectorAll('.type-bar-results').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.tbi-chevron').forEach(el=>{el.style.transform='';el.textContent='▶';});
 
   if(activeTypeFilter===type){
+    // 토글 OFF
     activeTypeFilter='';
     document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
     renderMarkers(filteredBuildings);
-    if(resultsEl) resultsEl.style.display='none';
   } else {
+    // 토글 ON
     activeTypeFilter=type;
     document.querySelectorAll('.type-bar-item').forEach(el=>{
-      const isMatch=el.id===`tbi-${encodeURIComponent(type)}`;
+      const isMatch=el.id===`tbi-${eid}`;
       el.classList.toggle('active-filter',isMatch);
       el.classList.toggle('dimmed',!isMatch);
     });
     const matching=filteredBuildings.filter(b=>b._isOur||b.floors.some(f=>f['업종']===type));
     renderMarkers(matching);
 
-    // 매칭 건물 목록 표시 (QA: 좌표 누락 건물도 확인 가능)
-    if(resultsEl && countEl && listEl){
+    // 클릭한 항목 바로 아래에 결과 표시 (아코디언)
+    const resultsEl=document.getElementById(`tbr-${eid}`);
+    const chevron=document.getElementById(`tbch-${eid}`);
+    if(chevron){chevron.style.transform='rotate(90deg)';chevron.textContent='▼';}
+    if(resultsEl){
       const normalMatching=matching.filter(b=>!b._isOur);
-      countEl.textContent=`건물 ${normalMatching.length}개 해당`;
-      listEl.innerHTML=normalMatching.map(b=>{
-        const bIdx=filteredBuildings.indexOf(b);
-        const lat=parseFloat(b['위도']), lng=parseFloat(b['경도']);
-        const hasCoords=lat&&lng&&!isNaN(lat)&&!isNaN(lng);
-        const floorCnt=b.floors.filter(f=>f['업종']===type).length;
-        return `<div onclick="onCardClick(${bIdx})" style="padding:7px 10px;border:1px solid var(--border2);border-radius:7px;margin-bottom:5px;cursor:pointer;background:var(--card2);display:flex;align-items:center;gap:6px;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--card2)'">
-          <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b['건물명']}</span>
-          ${!hasCoords?`<span style="font-size:10px;color:#f87171;flex-shrink:0;background:rgba(248,113,113,.12);padding:1px 5px;border-radius:3px;">⚠️좌표없음</span>`:''}
-          <span style="font-size:11px;color:var(--text-dim);flex-shrink:0;">${floorCnt}개층</span>
-        </div>`;
-      }).join('');
+      if(normalMatching.length===0){
+        resultsEl.innerHTML=`<div style="font-size:11px;color:var(--text-dim);padding:4px 0;">해당 건물 없음</div>`;
+      } else {
+        const header=`<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">건물 ${normalMatching.length}개</div>`;
+        const items=normalMatching.map(b=>{
+          const bIdx=filteredBuildings.indexOf(b);
+          const lat=parseFloat(b['위도']), lng=parseFloat(b['경도']);
+          const hasCoords=lat&&lng&&!isNaN(lat)&&!isNaN(lng);
+          const floorCnt=b.floors.filter(f=>f['업종']===type).length;
+          return `<div onclick="onCardClick(${bIdx})" style="padding:6px 9px;border:1px solid var(--border2);border-radius:6px;margin-bottom:4px;cursor:pointer;background:var(--card2);display:flex;align-items:center;gap:6px;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--card2)'">
+            <span style="font-size:12px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b['건물명']}</span>
+            ${!hasCoords?`<span style="font-size:9px;color:#f87171;flex-shrink:0;background:rgba(248,113,113,.12);padding:1px 4px;border-radius:3px;">⚠️지도없음</span>`:''}
+            <span style="font-size:10px;color:var(--text-dim);flex-shrink:0;">${floorCnt}층</span>
+          </div>`;
+        }).join('');
+        resultsEl.innerHTML=header+items;
+      }
       resultsEl.style.display='block';
     }
   }
-  // 이미 업종분석 탭에 있으므로 switchInner 호출 불필요
 }
 
 // ════════════════════════════════════════
@@ -1478,6 +1492,80 @@ function onPlaceClick(idx){
   document.querySelectorAll('.rt-item').forEach((el,i)=>el.classList.toggle('active',i===idx));
 }
 
+// ════════════════════════════════════════
+// 데이터 품질 전수검사 (브라우저 콘솔에서 checkData() 호출)
+// ════════════════════════════════════════
+function checkData(){
+  if(!CURRENT_DATA||!CURRENT_DATA.length){console.warn('데이터 미로드');return;}
+  const rows=CURRENT_DATA.filter(r=>!r._isOur);
+  const VALID_TYPES=Object.keys(BTYPE);
+
+  // 건물별 집계
+  const byName={};
+  rows.forEach(r=>{
+    const n=r['건물명'];
+    if(!byName[n]) byName[n]={rows:[],lats:new Set(),lngs:new Set()};
+    byName[n].rows.push(r);
+    if(r['위도']) byName[n].lats.add(r['위도']);
+    if(r['경도']) byName[n].lngs.add(r['경도']);
+  });
+
+  let ok=true;
+  console.group('📊 데이터 전수검사 리포트');
+  console.log(`총 행: ${rows.length} | 건물: ${Object.keys(byName).length}개`);
+
+  // 1. 좌표 누락
+  const noCoord=Object.entries(byName).filter(([,v])=>v.lats.size===0||v.lngs.size===0);
+  if(noCoord.length){
+    ok=false;
+    console.group(`⚠️ 좌표 누락 건물 (${noCoord.length}개) → 지도에 안 나옴`);
+    noCoord.forEach(([n,v])=>{
+      const types=[...new Set(v.rows.map(r=>r['업종']))];
+      console.log(`  ${n} | 업종: ${types.join(', ')}`);
+    });
+    console.groupEnd();
+  }
+
+  // 2. 위도값 2종 이상 (groupByBuilding 분리 위험 - 구버전 코드용)
+  const splitRisk=Object.entries(byName).filter(([,v])=>v.lats.size>1);
+  if(splitRisk.length){
+    ok=false;
+    console.group(`⚠️ 위도 혼재 건물 (${splitRisk.length}개) → 구버전에서 그룹 분리됐을 수 있음`);
+    splitRisk.forEach(([n,v])=>console.log(`  ${n} | 위도값: ${[...v.lats].join(', ')}`));
+    console.groupEnd();
+  }
+
+  // 3. 업종값 비정상 (BTYPE에 없는 값)
+  const badType=[];
+  rows.forEach(r=>{
+    const t=r['업종']||'';
+    if(t&&!VALID_TYPES.includes(t)) badType.push({건물명:r['건물명'],업종:t});
+  });
+  if(badType.length){
+    ok=false;
+    console.group(`⚠️ 정의되지 않은 업종값 (${badType.length}개 행) → 업종분석 색상/필터 불일치`);
+    const grouped={};
+    badType.forEach(x=>{grouped[x.업종]=(grouped[x.업종]||[]);grouped[x.업종].push(x.건물명);});
+    Object.entries(grouped).forEach(([t,names])=>console.log(`  '${t}' → ${[...new Set(names)].join(', ')}`));
+    console.groupEnd();
+  }
+
+  // 4. 업종분석 필터 vs 실제 데이터 건물 수 비교
+  console.group('✅ 업종별 건물 수 (필터 클릭 시 나와야 할 수)');
+  const typeCnt={};
+  Object.entries(byName).forEach(([name,v])=>{
+    const types=[...new Set(v.rows.map(r=>r['업종']||'기타'))];
+    types.forEach(t=>{typeCnt[t]=(typeCnt[t]||[]);typeCnt[t].push(name);});
+  });
+  Object.entries(typeCnt).sort((a,b)=>b[1].length-a[1].length).forEach(([t,names])=>{
+    console.log(`  ${t}: ${names.length}개 건물 → [${names.join(', ')}]`);
+  });
+  console.groupEnd();
+
+  if(ok) console.log('✅ 문제 없음');
+  console.groupEnd();
+}
+
 function exportRTList(){
   if(!realtimePlaces.length) return;
   const header='장소명,카테고리,거리(m),주소,전화번호,x,y';
@@ -1494,7 +1582,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-M
+  v2025-06-25-N
 </div>
 </body>
 </html>
