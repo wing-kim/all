@@ -46,7 +46,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
 
 /* ── 카드 그리드 ── */
 .grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:24px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:24px;
 }
 .card{
   background:var(--s1);border:1px solid var(--border);border-radius:16px;
@@ -248,41 +248,22 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
         <span class="card-arr">→</span>
       </div>
     </a>
-    <a class="card card-orange" href="market.html">
+    <a class="card card-orange" href="map.html">
       <div class="card-top">
         <span class="card-icon">🗺️</span>
-        <span class="card-name">임대상권</span>
+        <span class="card-name">통합상권지도</span>
       </div>
       <div class="card-body-m">
-        <div class="card-desc">신사동 주변 건물 임차인 현황, 업종 분석, 동별 임대 리포트</div>
+        <div class="card-desc">임대건물, 상권분석, 실시간상권을 하나의 카카오맵에서 통합 조회</div>
         <div class="card-tags">
-          <span class="tag">임대상권</span>
-          <span class="tag">업종분석</span>
-          <span class="tag">임차인현황</span>
-          <span class="tag">동별리포트</span>
-        </div>
-      </div>
-      <div class="card-foot">
-        <span class="card-meta">시트 + PDF 연동</span>
-        <span class="card-arr">→</span>
-      </div>
-    </a>
-    <a class="card card-purple" href="sangwon.html">
-      <div class="card-top">
-        <span class="card-icon">📈</span>
-        <span class="card-name">상권분석</span>
-      </div>
-      <div class="card-body-m">
-        <div class="card-desc">압구정·신사 일대 업체 현황, 업종 분포, 업체 목록, 상세 분석</div>
-        <div class="card-tags">
+          <span class="tag">임대건물</span>
           <span class="tag">상권분석</span>
-          <span class="tag">업체분포</span>
-          <span class="tag">업체목록</span>
-          <span class="tag">상세현황</span>
+          <span class="tag">실시간상권</span>
+          <span class="tag">Kakao Map</span>
         </div>
       </div>
       <div class="card-foot">
-        <span class="card-meta">지도 + 업체 데이터</span>
+        <span class="card-meta">map.html 단일 운영</span>
         <span class="card-arr">→</span>
       </div>
     </a>
@@ -294,8 +275,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
     <div class="foot-links">
       <a href="construction.html">신축관리</a>
       <a href="report.html">시장리포트</a>
-      <a href="market.html">임대상권</a>
-      <a href="sangwon.html">상권분석</a>
+      <a href="map.html">통합상권지도</a>
     </div>
   </div>
 
@@ -305,7 +285,7 @@ body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100
 /* 버전 배지 */
 document.addEventListener('DOMContentLoaded',function(){
   var el=document.getElementById('ver-num');
-  if(el) el.textContent='0618.명칭정리';
+  if(el) el.textContent='0624.통합상권정리';
 });
 
 function tick(){
