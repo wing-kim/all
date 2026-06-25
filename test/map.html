@@ -254,6 +254,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Pretendard',sans-s
 *::-webkit-scrollbar{width:4px;height:4px;}
 *::-webkit-scrollbar-track{background:transparent;}
 *::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── 범위 슬라이더 ── */
+.ff-slider-block{padding:4px 0 8px;}
+.ff-slider-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.ff-slider-lbl{font-size:10px;color:var(--text-muted);width:28px;flex-shrink:0;}
+.ff-slider-lbl.right{text-align:right;}
+.ff-slider{-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:2px;background:var(--border2);outline:none;cursor:pointer;}
+.ff-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--primary);cursor:pointer;border:2px solid var(--card);}
+.ff-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--primary);cursor:pointer;border:2px solid var(--card);}
+.ff-range-val{float:right;font-size:11px;font-weight:700;color:var(--primary);background:var(--primary-bg);border-radius:4px;padding:1px 6px;}
+.ff-type-cnt{font-size:9px;opacity:.65;margin-left:2px;}
+/* ── 결과 카운트 배너 ── */
+.ff-result-banner{padding:8px 14px;background:var(--primary-bg);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--primary);display:none;}
+
 </style>
 </head>
 <body>
@@ -637,6 +651,7 @@ window.addEventListener('load', async function loadApp() {
   };
   CURRENT_DATA = [OUR_ROW, ...sheetData];
   renderAll(CURRENT_DATA);
+  renderFilterTypeChips();
 });
 
 // ════════════════════════════════════════
@@ -660,6 +675,16 @@ function switchInner(tab){
     document.getElementById('itab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
   });
+  if(tab==='filter'){
+    // 건물목록/업종분석 필터 초기화
+    activeTypeFilter='';
+    activeDongFilter='';
+    document.querySelectorAll('.type-bar-item').forEach(el=>el.classList.remove('active-filter','dimmed'));
+    document.querySelectorAll('.dong-header.open').forEach(h=>h.classList.remove('open'));
+    renderMarkers(filteredBuildings);
+    // 상권분석 즉시 적용
+    applyAdvancedFilter();
+  }
 }
 
 // ════════════════════════════════════════
@@ -671,8 +696,10 @@ function renderAll(rows){
   if(map) renderMarkers(buildings); // 지도가 초기화된 경우에만
   renderBuildingList(buildings);
   renderTypeChart(rows);
-  document.getElementById('stat-b').textContent=buildings.length;
-  document.getElementById('stat-u').textContent=rows.length;
+  const normalCount=buildings.filter(b=>!b._isOur).length;
+  const normalRows=rows.filter(r=>!r._isOur);
+  document.getElementById('stat-b').textContent=normalCount;
+  document.getElementById('stat-u').textContent=normalRows.length;
 }
 
 // ════════════════════════════════════════
@@ -699,7 +726,7 @@ function renderMarkers(buildings){
     const isSelected=selectedBuildingIdx>=0 && filteredBuildings[selectedBuildingIdx]===b;
     const size = b._isOur ? 28 : isSelected ? 26 : 20;
     const h = Math.ceil(size*1.55);
-    const color = b._isOur ? '#f59e0b' : isSelected ? '#2563eb' : '#3b82f6';
+    const color = b._isOur ? '#f59e0b' : isSelected ? '#ef4444' : '#3b82f6';
     const svg = makePinSVG(color, size, b._isOur);
     const img = new kakao.maps.MarkerImage(
       'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg),
@@ -718,6 +745,13 @@ function renderMarkers(buildings){
       showDetail(bRef);
     });
     allMarkers.push(marker);
+    // 건물명 라벨 (마커 아래)
+    const labelEl=document.createElement('div');
+    labelEl.style.cssText='font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,0.72);padding:1px 5px;border-radius:3px;white-space:nowrap;pointer-events:none;margin-top:1px;';
+    labelEl.textContent=b['건물명'];
+    const label=new kakao.maps.CustomOverlay({position:pos,content:labelEl,yAnchor:0,zIndex:b._isOur?21:isSelected?16:4});
+    label.setMap(map);
+    allMarkers.push(label);
   });
   if(buildings.filter(b=>!b._isOur).length>0 && selectedBuildingIdx===-1){
     try{map.setBounds(bounds,80);}catch(e){}
@@ -913,39 +947,105 @@ let ffDong='', ffType='', ffParking='';
 function toggleDong(el,val){
   document.querySelectorAll('#ff-dong .fchip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active'); ffDong=val;
+  applyAdvancedFilter();
 }
 function toggleType(el,val){
   document.querySelectorAll('#ff-type .fchip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active'); ffType=val;
+  applyAdvancedFilter();
 }
 function toggleParking(el,val){
   document.querySelectorAll('#ff-parking .fchip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active'); ffParking=val;
+  applyAdvancedFilter();
+}
+
+
+// ════════════════════════════════════════
+// 상권분석 업종 칩 (건물 수 포함)
+// ════════════════════════════════════════
+const FF_TYPE_ORDER=['F&B/음식점','카페','사무실/기업','IT/테크','병원/의료','뷰티/미용','학원/교육','스포츠/레저','패션/잡화','금융/은행','주점/노래방','편의점','약국','스튜디오/공간','기타'];
+
+function renderFilterTypeChips(){
+  const buildings=groupByBuilding(CURRENT_DATA.filter(r=>!r._isOur));
+  const cnts={};
+  buildings.forEach(b=>{
+    const types=[...new Set(b.floors.map(f=>f['업종']))];
+    types.forEach(t=>{cnts[t]=(cnts[t]||0)+1;});
+  });
+  const container=document.getElementById('ff-type');
+  if(!container) return;
+  const cur=ffType;
+  container.innerHTML=`<span class="fchip ${!cur?'active':''}" onclick="toggleType(this,'')">전체</span>`+
+    FF_TYPE_ORDER.filter(t=>cnts[t]).map(t=>{
+      const c=tc(t);
+      return `<span class="fchip ${cur===t?'active':''}" onclick="toggleType(this,'${t.replace(/'/g,"\\'")}')">
+        ${c.emoji} ${t.split('/')[0]}<span class="ff-type-cnt">(${cnts[t]})</span>
+      </span>`;
+    }).join('');
+}
+
+function onSlider(){
+  // 슬라이더 라벨 업데이트
+  const pMin=parseInt(document.getElementById('ff-price-min').value);
+  const pMax=parseInt(document.getElementById('ff-price-max').value);
+  document.getElementById('ff-price-min-lbl').textContent=pMin+'억';
+  document.getElementById('ff-price-max-lbl').textContent=pMax>=500?'제한없음':pMax+'억';
+  document.getElementById('ff-price-disp').textContent=(pMin===0&&pMax>=500)?'전체':`${pMin}~${pMax>=500?'∞':pMax}억`;
+
+  const rMin=parseInt(document.getElementById('ff-rent-min').value);
+  const rMax=parseInt(document.getElementById('ff-rent-max').value);
+  document.getElementById('ff-rent-min-lbl').textContent=rMin+'만';
+  document.getElementById('ff-rent-max-lbl').textContent=rMax>=3000?'제한없음':rMax+'만';
+  document.getElementById('ff-rent-disp').textContent=(rMin===0&&rMax>=3000)?'전체':`${rMin}~${rMax>=3000?'∞':rMax}만`;
+
+  const aMin=parseInt(document.getElementById('ff-area-min').value);
+  const aMax=parseInt(document.getElementById('ff-area-max').value);
+  document.getElementById('ff-area-min-lbl').textContent=aMin+'평';
+  document.getElementById('ff-area-max-lbl').textContent=aMax>=2000?'제한없음':aMax+'평';
+  document.getElementById('ff-area-disp').textContent=(aMin===0&&aMax>=2000)?'전체':`${aMin}~${aMax>=2000?'∞':aMax}평`;
+
+  const yMin=parseInt(document.getElementById('ff-year-min').value);
+  const yMax=parseInt(document.getElementById('ff-year-max').value);
+  document.getElementById('ff-year-min-lbl').textContent=yMin+'~';
+  document.getElementById('ff-year-max-lbl').textContent='~'+yMax;
+  document.getElementById('ff-year-disp').textContent=(yMin<=1980&&yMax>=2030)?'전체':`${yMin}~${yMax}`;
+
+  applyAdvancedFilter();
 }
 
 function applyAdvancedFilter(){
-  const priceMin=parseFloat(document.getElementById('ff-price-min').value)||0;
-  const priceMax=parseFloat(document.getElementById('ff-price-max').value)||Infinity;
-  const rentMin=parseFloat(document.getElementById('ff-rent-min').value)||0;
-  const rentMax=parseFloat(document.getElementById('ff-rent-max').value)||Infinity;
-  const areaMin=parseFloat(document.getElementById('ff-area-min').value)||0;
-  const areaMax=parseFloat(document.getElementById('ff-area-max').value)||Infinity;
-  const yearMin=parseFloat(document.getElementById('ff-year-min').value)||0;
-  const yearMax=parseFloat(document.getElementById('ff-year-max').value)||Infinity;
+  if(!CURRENT_DATA||!CURRENT_DATA.length) return;
+  const priceMin=parseInt(document.getElementById('ff-price-min').value)||0;
+  const priceMaxRaw=parseInt(document.getElementById('ff-price-max').value);
+  const priceMax=priceMaxRaw>=500?Infinity:priceMaxRaw;
+  const rentMin=parseInt(document.getElementById('ff-rent-min').value)||0;
+  const rentMaxRaw=parseInt(document.getElementById('ff-rent-max').value);
+  const rentMax=rentMaxRaw>=3000?Infinity:rentMaxRaw;
+  const areaMin=parseInt(document.getElementById('ff-area-min').value)||0;
+  const areaMaxRaw=parseInt(document.getElementById('ff-area-max').value);
+  const areaMax=areaMaxRaw>=2000?Infinity:areaMaxRaw;
+  const yearMin=parseInt(document.getElementById('ff-year-min').value)||1980;
+  const yearMaxRaw=parseInt(document.getElementById('ff-year-max').value);
+  const yearMax=yearMaxRaw>=2030?Infinity:yearMaxRaw;
   const incVacancy=document.getElementById('ff-vacancy').checked;
   const excEst=document.getElementById('ff-exclude-est').checked;
 
   let filtered=CURRENT_DATA.filter(r=>{
+    if(r._isOur) return true; // 케이프혼타워 항상 포함
     if(ffDong&&r['동']!==ffDong) return false;
     if(ffType&&r['업종']!==ffType) return false;
     const price=parseFloat(r['매매가 (억)'])||0;
-    if(price<priceMin||price>priceMax) return false;
+    if(priceMax<Infinity&&(price<priceMin||price>priceMax)) return false;
+    if(priceMax===Infinity&&price<priceMin) return false;
     const rent=parseFloat(r['임대료(만원)'])||0;
-    if(rent>0&&(rent<rentMin||rent>rentMax)) return false;
+    if(rent>0&&rentMax<Infinity&&(rent<rentMin||rent>rentMax)) return false;
+    if(rent>0&&rentMax===Infinity&&rent<rentMin) return false;
     const area=parseFloat(r['면적(평)'])||0;
-    if(area&&(area<areaMin||area>areaMax)) return false;
+    if(area>0&&areaMax<Infinity&&(area<areaMin||area>areaMax)) return false;
+    if(area>0&&areaMax===Infinity&&area<areaMin) return false;
     const year=parseFloat(r['준공년도'])||0;
-    if(year&&(year<yearMin||year>yearMax)) return false;
+    if(year>0&&(year<yearMin||(yearMax<Infinity&&year>yearMax))) return false;
     if(!incVacancy&&(r['임차인']||'').includes('공실')) return false;
     if(excEst&&(r['임차인']||'').includes('예상임대료')) return false;
     if(ffParking==='y'&&(!r['주차대수']||r['주차대수']==='-')) return false;
@@ -954,25 +1054,30 @@ function applyAdvancedFilter(){
   });
 
   renderAll(filtered);
-  // filteredBuildings는 renderAll()에서 이미 갱신됨
-  const sec=document.getElementById('filter-results-section');
+  // 결과 배너 업데이트
+  const normalBuildings=filteredBuildings.filter(b=>!b._isOur);
+  const filteredRows=filtered.filter(r=>!r._isOur);
+  const banner=document.getElementById('ff-result-banner');
+  banner.style.display='block';
+  banner.textContent=`🔍 ${normalBuildings.length}개 건물 · ${filteredRows.length}개 호실 해당`;
+
+  // 결과 목록
   const cnt=document.getElementById('filter-results-count');
   const lst=document.getElementById('filter-results-list');
-  sec.style.display='block';
-  const normalBuildings=filteredBuildings.filter(b=>!b._isOur);
-  cnt.textContent=`결과 ${normalBuildings.length}개 건물 / ${filtered.length}개 호실`;
+  cnt.textContent=`건물 목록 (${normalBuildings.length}개)`;
   if(normalBuildings.length===0){
     lst.innerHTML='<div class="empty-state" style="padding:24px 0;"><p>조건에 맞는 건물이 없습니다</p></div>';
   } else {
-    lst.innerHTML=normalBuildings.map((b,i)=>{
+    lst.innerHTML=normalBuildings.map(b=>{
       const bIdx=filteredBuildings.indexOf(b);
-      const types=[...new Set(b.floors.map(f=>f['업종']))].slice(0,2).map(t=>{const c=tc(t);return `<span style="font-size:10px;color:${c.color}">${c.emoji} ${t}</span>`;}).join(' ');
+      const types=[...new Set(b.floors.map(f=>f['업종']))].slice(0,3).map(t=>{const c=tc(t);return `<span style="font-size:10px;color:${c.color}">${c.emoji} ${t}</span>`;}).join(' ');
       return `<div onclick="onFilterResultClick(${bIdx})" style="padding:9px 12px;border:1px solid var(--border2);border-radius:8px;margin-bottom:6px;cursor:pointer;background:var(--card2);transition:background .1s;" onmouseover="this.style.background='var(--primary-bg)'" onmouseout="this.style.background='var(--card2)'">
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b['건물명']}</span>
+          <span style="font-size:11px;color:var(--text-dim);flex-shrink:0;">${b.floors.length}층</span>
           <span style="font-size:12px;font-weight:700;color:var(--primary);flex-shrink:0;">${b['매매가 (억)']}억</span>
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${b['동']} · ${b.floors.length}개층 &nbsp;|&nbsp; ${types}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${b['동']} &nbsp;|&nbsp; ${types}</div>
       </div>`;
     }).join('');
   }
@@ -990,16 +1095,22 @@ function onFilterResultClick(idx){
 }
 
 function resetAdvancedFilter(){
-  ['ff-price-min','ff-price-max','ff-rent-min','ff-rent-max','ff-area-min','ff-area-max','ff-year-min','ff-year-max'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ff-price-min').value=0;
+  document.getElementById('ff-price-max').value=500;
+  document.getElementById('ff-rent-min').value=0;
+  document.getElementById('ff-rent-max').value=3000;
+  document.getElementById('ff-area-min').value=0;
+  document.getElementById('ff-area-max').value=2000;
+  document.getElementById('ff-year-min').value=1980;
+  document.getElementById('ff-year-max').value=2030;
   document.getElementById('ff-vacancy').checked=true;
   document.getElementById('ff-exclude-est').checked=false;
   ffDong=''; ffType=''; ffParking='';
-  document.querySelectorAll('#ff-dong .fchip,#ff-type .fchip,#ff-parking .fchip').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('#ff-dong .fchip:first-child,#ff-type .fchip:first-child,#ff-parking .fchip:first-child').forEach(c=>c.classList.add('active'));
-  activeTypeFilter='';
-  selectedBuildingIdx=-1;
-  document.getElementById('filter-results-section').style.display='none';
-  renderAll(CURRENT_DATA);
+  document.querySelectorAll('#ff-dong .fchip,#ff-parking .fchip').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('#ff-dong .fchip:first-child,#ff-parking .fchip:first-child').forEach(c=>c.classList.add('active'));
+  activeTypeFilter=''; selectedBuildingIdx=-1;
+  onSlider();
+  renderFilterTypeChips();
 }
 
 // ════════════════════════════════════════
@@ -1108,7 +1219,7 @@ function renderPlaceList(plist){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:8px;background:rgba(0,0,0,.55);color:#8b949e;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;">
-  v2025-06-25-E
+  v2025-06-25-F
 </div>
 </body>
 </html>
