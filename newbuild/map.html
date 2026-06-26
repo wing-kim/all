@@ -256,6 +256,20 @@ body::before{content:'';position:fixed;inset:0;
 .dp-kv{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;}
 .dp-k{font-size:11px;color:var(--text-muted);margin-bottom:3px;}
 .dp-v{font-size:13px;font-weight:600;color:var(--text);}
+.dp-thumb{
+  width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;
+  margin-bottom:12px;border:1px solid var(--border2);background:var(--card2);
+  display:block;
+}
+.dp-thumb-wrap{position:relative;margin-bottom:12px;}
+.dp-thumb-wrap a.dp-thumb-link{display:block;border-radius:10px;overflow:hidden;}
+.dp-thumb-wrap a.dp-thumb-link img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;transition:opacity .15s;}
+.dp-thumb-wrap a.dp-thumb-link:hover img{opacity:.85;}
+.dp-thumb-wrap .dp-thumb-hint{
+  position:absolute;bottom:8px;right:8px;
+  background:rgba(0,0,0,.6);color:#fff;font-size:10px;
+  padding:3px 7px;border-radius:4px;pointer-events:none;
+}
 .dp-pdf-btn{
   display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;
   padding:8px 14px;background:var(--primary-bg);color:var(--primary);
@@ -385,6 +399,13 @@ body::before{content:'';position:fixed;inset:0;
   background:var(--card);
   flex-shrink:0;
 }
+/* ── Sub-category chips ── */
+.rt-sub-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 14px 8px;border-bottom:1px solid var(--border2);background:var(--card);flex-shrink:0;}
+.rt-sub-chips.hidden{display:none;}
+.sub-chip-label{grid-column:1/-1;font-size:10px;color:var(--text-dim);font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding-bottom:2px;}
+.sub-chip{padding:4px 6px;border-radius:5px;font-size:11px;font-weight:500;border:1px solid var(--border);cursor:pointer;transition:all .12s;background:var(--card2);color:var(--text-muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sub-chip:hover{border-color:var(--primary);color:var(--primary);}
+.sub-chip.active{background:rgba(59,127,255,.15);border-color:var(--primary);color:var(--primary);}
 
 </style>
 </head>
@@ -586,6 +607,8 @@ body::before{content:'';position:fixed;inset:0;
       </div>
       <!-- 카테고리 칩 (JS renderRTCatChips() 동적 렌더) -->
       <div class="rt-cat-chips" id="cat-chips"></div>
+      <!-- 세부 카테고리 칩 (단일 카테고리 선택 시 동적 렌더) -->
+      <div class="rt-sub-chips hidden" id="sub-chips"></div>
       <!-- 리스트 -->
       <div style="flex:1;overflow-y:auto;" id="rt-list">
         <div class="empty-state">
@@ -685,7 +708,7 @@ function clearMarkers(){
   centerMarker=null;
 }
 let selectedDongs=new Set(), selectedTypes=new Set();
-let realtimePlaces=[], allRealtimePlaces=[], currentDisplayPlaces=[], activeRTCategories=new Set(), activeDongFilter='';
+let realtimePlaces=[], allRealtimePlaces=[], currentDisplayPlaces=[], activeRTCategories=new Set(), activeDongFilter='', activeRTSubCat='';
 let selectedPlaceIdx=-1;
 let selectedBuildingIdx=-1;
 
@@ -847,11 +870,12 @@ function switchTab(tab){
   // 실시간 마커 및 상태 초기화
   placeMarkers.forEach(m=>{if(m.setMap)m.setMap(null);}); placeMarkers=[];
   selectedPlaceIdx=-1;
-  realtimePlaces=[]; allRealtimePlaces=[];
+  realtimePlaces=[]; allRealtimePlaces=[]; activeRTSubCat='';
   document.getElementById('rt-list').innerHTML='<div class="empty-state"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><p>주소를 검색하면<br>주변 상권이 표시됩니다</p></div>';
   document.getElementById('rt-stats-bar').style.display='none';
   document.getElementById('radius-badge').style.display='none';
   renderRTCatChips(null);
+  const sc=document.getElementById('sub-chips'); if(sc){sc.classList.add('hidden');sc.innerHTML='';}
   if(tab==='rental') renderAll(CURRENT_DATA);
 }
 
@@ -1078,7 +1102,18 @@ function showDetail(b){
   document.getElementById('dp-title').textContent=b['건물명'];
   const body=document.getElementById('dp-body');
   const fileUrl=`https://drive.google.com/file/d/${b['파일ID']}/view`;
+  const _thumbId=b['이미지ID']||b['파일ID'];
+  const thumbHtml=_thumbId?`
+    <div class="dp-thumb-wrap">
+      <a class="dp-thumb-link" href="${fileUrl}" target="_blank">
+        <img src="https://drive.google.com/thumbnail?id=${_thumbId}&sz=w800"
+             alt="${b['건물명']}"
+             onerror="this.closest('.dp-thumb-wrap').style.display='none'">
+        <span class="dp-thumb-hint">📄 PDF 열기</span>
+      </a>
+    </div>`:'';
   body.innerHTML=`
+    ${thumbHtml}
     <div class="dp-info-grid">
       <div class="dp-kv" style="grid-column:1/-1"><div class="dp-k">주소</div><div class="dp-v" style="font-size:12px">${b['주소']}</div></div>
       <div class="dp-kv"><div class="dp-k">매매가</div><div class="dp-v" style="color:#58a6ff">${b['매매가 (억)']}억</div></div>
@@ -1451,6 +1486,55 @@ const RT_CATS=[
 ];
 function getRTCat(id){return RT_CATS.find(c=>c.id===id)||{label:id||'기타',emoji:'',color:'#94a3b8'};}
 
+// ── 세부 카테고리 헬퍼 ──
+function extractSubCat(p){
+  if(!p.category_name) return '기타';
+  const parts=p.category_name.split('>').map(s=>s.trim()).filter(Boolean);
+  // 마지막 세그먼트가 상위 카테고리 레이블과 동일하면 두 번째부터, 없으면 마지막
+  return parts.length>=2 ? parts[parts.length-1] : parts[0]||'기타';
+}
+
+function renderRTSubChips(){
+  const container=document.getElementById('sub-chips');
+  if(!container) return;
+  // 단일 카테고리만 선택된 경우에만 표시
+  if(activeRTCategories.size!==1){
+    container.classList.add('hidden');
+    container.innerHTML='';
+    return;
+  }
+  const catId=[...activeRTCategories][0];
+  const catPlaces=allRealtimePlaces.filter(p=>p._catId===catId);
+  if(!catPlaces.length){container.classList.add('hidden');container.innerHTML='';return;}
+
+  // 하위 업종 집계
+  const counts={};
+  catPlaces.forEach(p=>{
+    const sub=extractSubCat(p);
+    counts[sub]=(counts[sub]||0)+1;
+  });
+  const subs=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+
+  // 하위 업종이 1개뿐(= 세분화 불필요)면 숨김
+  if(subs.length<=1){container.classList.add('hidden');container.innerHTML='';return;}
+
+  const cat=getRTCat(catId);
+  container.classList.remove('hidden');
+  container.innerHTML=
+    `<span class="sub-chip-label" style="color:${cat.color};">${cat.emoji} 세부</span>`+
+    `<span class="sub-chip ${!activeRTSubCat?'active':''}" onclick="toggleRTSubCat(this,'')">전체</span>`+
+    subs.map(([sub,cnt])=>
+      `<span class="sub-chip ${activeRTSubCat===sub?'active':''}" onclick="toggleRTSubCat(this,'${sub.replace(/'/g,"\\'")}')">${sub} <span style="font-size:9px;opacity:.6;">(${cnt})</span></span>`
+    ).join('');
+}
+
+function toggleRTSubCat(el,val){
+  activeRTSubCat=val;
+  document.querySelectorAll('#sub-chips .sub-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  filterAndRenderRT();
+}
+
 function renderRTCatChips(counts){
   const container=document.getElementById('cat-chips');
   if(!container) return;
@@ -1472,8 +1556,11 @@ function toggleRTCategory(el,cat){
     if(activeRTCategories.has(cat)) activeRTCategories.delete(cat);
     else activeRTCategories.add(cat);
   }
+  // 카테고리 변경 시 세부 필터 초기화
+  activeRTSubCat='';
   // 카운트는 전체 결과 기준 유지, 선택 상태만 변경
   renderRTCatChips(allRealtimePlaces.length>0 ? rtFullCounts() : null);
+  renderRTSubChips();
   filterAndRenderRT();
 }
 
@@ -1503,6 +1590,9 @@ function filterAndRenderRT(){
   if(activeRTCategories.size>0){
     display=allRealtimePlaces.filter(p=>activeRTCategories.has(p._catId));
   }
+  if(activeRTSubCat){
+    display=display.filter(p=>extractSubCat(p)===activeRTSubCat);
+  }
   currentDisplayPlaces=display; // 현재 필터 상태 보존
   renderPlaceMarkers(display);
   renderPlaceList(display);
@@ -1522,6 +1612,7 @@ function searchNearby(pos){
     realtimePlaces=realtimePlaces.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
     allRealtimePlaces=[...realtimePlaces]; // 전체 결과 보존
     renderRTCatChips(rtFullCounts());    // 전체 카운트로 칩 렌더
+    renderRTSubChips();                   // 단일 카테고리 선택 시 세부 칩 렌더
     filterAndRenderRT();                  // 선택된 카테고리로 지도/목록 필터
   }
 
@@ -1708,7 +1799,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-X
+  v2025-06-26-B
 </div>
 </body>
 </html>
