@@ -1102,10 +1102,11 @@ function showDetail(b){
   document.getElementById('dp-title').textContent=b['건물명'];
   const body=document.getElementById('dp-body');
   const fileUrl=`https://drive.google.com/file/d/${b['파일ID']}/view`;
-  const thumbHtml=b['파일ID']?`
+  const _thumbId=b['이미지ID']||b['파일ID'];
+  const thumbHtml=_thumbId?`
     <div class="dp-thumb-wrap">
       <a class="dp-thumb-link" href="${fileUrl}" target="_blank">
-        <img src="https://drive.google.com/thumbnail?id=${b['파일ID']}&sz=w800"
+        <img src="https://drive.google.com/thumbnail?id=${_thumbId}&sz=w800"
              alt="${b['건물명']}"
              onerror="this.closest('.dp-thumb-wrap').style.display='none'">
         <span class="dp-thumb-hint">📄 PDF 열기</span>
@@ -1798,7 +1799,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-26-A
+  v2025-06-26-B
 </div>
 </body>
 </html>
