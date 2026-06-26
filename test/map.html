@@ -256,6 +256,20 @@ body::before{content:'';position:fixed;inset:0;
 .dp-kv{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;}
 .dp-k{font-size:11px;color:var(--text-muted);margin-bottom:3px;}
 .dp-v{font-size:13px;font-weight:600;color:var(--text);}
+.dp-thumb{
+  width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;
+  margin-bottom:12px;border:1px solid var(--border2);background:var(--card2);
+  display:block;
+}
+.dp-thumb-wrap{position:relative;margin-bottom:12px;}
+.dp-thumb-wrap a.dp-thumb-link{display:block;border-radius:10px;overflow:hidden;}
+.dp-thumb-wrap a.dp-thumb-link img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;transition:opacity .15s;}
+.dp-thumb-wrap a.dp-thumb-link:hover img{opacity:.85;}
+.dp-thumb-wrap .dp-thumb-hint{
+  position:absolute;bottom:8px;right:8px;
+  background:rgba(0,0,0,.6);color:#fff;font-size:10px;
+  padding:3px 7px;border-radius:4px;pointer-events:none;
+}
 .dp-pdf-btn{
   display:inline-flex;align-items:center;gap:6px;margin-bottom:14px;
   padding:8px 14px;background:var(--primary-bg);color:var(--primary);
@@ -386,10 +400,10 @@ body::before{content:'';position:fixed;inset:0;
   flex-shrink:0;
 }
 /* ── Sub-category chips ── */
-.rt-sub-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 14px 8px;border-bottom:1px solid var(--border2);background:var(--card);flex-shrink:0;}
+.rt-sub-chips{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px 14px 8px;border-bottom:1px solid var(--border2);background:var(--card);flex-shrink:0;}
 .rt-sub-chips.hidden{display:none;}
-.sub-chip-label{font-size:10px;color:var(--text-dim);font-weight:700;letter-spacing:.6px;text-transform:uppercase;align-self:center;margin-right:2px;white-space:nowrap;flex-shrink:0;}
-.sub-chip{padding:3px 8px;border-radius:5px;font-size:11px;font-weight:500;border:1px solid var(--border);cursor:pointer;transition:all .12s;background:var(--card2);color:var(--text-muted);white-space:nowrap;}
+.sub-chip-label{grid-column:1/-1;font-size:10px;color:var(--text-dim);font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding-bottom:2px;}
+.sub-chip{padding:4px 6px;border-radius:5px;font-size:11px;font-weight:500;border:1px solid var(--border);cursor:pointer;transition:all .12s;background:var(--card2);color:var(--text-muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sub-chip:hover{border-color:var(--primary);color:var(--primary);}
 .sub-chip.active{background:rgba(59,127,255,.15);border-color:var(--primary);color:var(--primary);}
 
@@ -1088,7 +1102,17 @@ function showDetail(b){
   document.getElementById('dp-title').textContent=b['건물명'];
   const body=document.getElementById('dp-body');
   const fileUrl=`https://drive.google.com/file/d/${b['파일ID']}/view`;
+  const thumbHtml=b['파일ID']?`
+    <div class="dp-thumb-wrap">
+      <a class="dp-thumb-link" href="${fileUrl}" target="_blank">
+        <img src="https://drive.google.com/thumbnail?id=${b['파일ID']}&sz=w800"
+             alt="${b['건물명']}"
+             onerror="this.closest('.dp-thumb-wrap').style.display='none'">
+        <span class="dp-thumb-hint">📄 PDF 열기</span>
+      </a>
+    </div>`:'';
   body.innerHTML=`
+    ${thumbHtml}
     <div class="dp-info-grid">
       <div class="dp-kv" style="grid-column:1/-1"><div class="dp-k">주소</div><div class="dp-v" style="font-size:12px">${b['주소']}</div></div>
       <div class="dp-kv"><div class="dp-k">매매가</div><div class="dp-v" style="color:#58a6ff">${b['매매가 (억)']}억</div></div>
@@ -1774,7 +1798,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-25-Y
+  v2025-06-26-A
 </div>
 </body>
 </html>
