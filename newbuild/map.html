@@ -1551,12 +1551,15 @@ function renderRTCatChips(counts){
   if(!container) return;
   const all=activeRTCategories.size===0;
   const totalCnt=counts?Object.values(counts).reduce((a,b)=>a+b,0):null;
+  const hasCap=counts?Object.values(counts).some(v=>v>=45):false;
+  const totalStr=totalCnt!==null?(hasCap?`${totalCnt}+`:String(totalCnt)):null;
   container.innerHTML=
-    `<span class="fchip rt-all-chip ${all?'active':''}" onclick="toggleRTCategory(this,'')">전체${totalCnt!==null?` <span style="font-size:9px;opacity:.65;">(${totalCnt})</span>`:''}</span>`+
+    `<span class="fchip rt-all-chip ${all?'active':''}" onclick="toggleRTCategory(this,'')">전체${totalStr!==null?` <span style="font-size:9px;opacity:.65;">(${totalStr})</span>`:''}</span>`+
     RT_CATS.map(cat=>{
       const cnt=counts?counts[cat.id]:null;
       const isActive=activeRTCategories.has(cat.id);
-      return `<span class="fchip ${isActive?'active':''}" onclick="toggleRTCategory(this,'${cat.id}')">${cat.emoji} ${cat.label}${cnt!==null?` <span style="font-size:9px;opacity:.65;">(${cnt})</span>`:''}</span>`;
+      const cntStr=cnt!==null?(cnt>=45?'45+':String(cnt)):null;
+      return `<span class="fchip ${isActive?'active':''}" onclick="toggleRTCategory(this,'${cat.id}')">${cat.emoji} ${cat.label}${cntStr!==null?` <span style="font-size:9px;opacity:.65;">(${cntStr})</span>`:''}</span>`;
     }).join('');
 }
 
@@ -1826,7 +1829,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-26-C
+  v2025-06-26-D
 </div>
 </body>
 </html>
