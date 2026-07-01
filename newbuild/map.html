@@ -711,6 +711,7 @@ let selectedDongs=new Set(), selectedTypes=new Set();
 let realtimePlaces=[], allRealtimePlaces=[], currentDisplayPlaces=[], activeRTCategories=new Set(), activeDongFilter='', activeRTSubCat='';
 let selectedPlaceIdx=-1;
 let selectedBuildingIdx=-1;
+let searchGeneration=0; // 반경 변경 시 이전 검색 콜백 무효화용
 
 function groupByBuilding(rows){
   const m={};
@@ -834,18 +835,28 @@ window.addEventListener('load', async function loadApp() {
       '<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;color:#8b949e;"><div style="font-size:36px">⚠️</div><div style="font-weight:700;color:#e6edf3">카카오맵 로드 실패</div><div style="font-size:13px;text-align:center;line-height:1.8;">localhost로 실행해주세요:<br><code style="background:#161b22;padding:4px 8px;border-radius:4px;">python -m http.server 8080</code></div></div>';
   }
 
-  // 3. 구글시트에서 데이터 로드 (항상 시트가 소스)
-  const sheetData = await loadSheetData();
+  // 3. 구글시트 + 케이프혼타워 좌표 병렬 로드
+  const [sheetData, geoResult] = await Promise.all([
+    loadSheetData(),
+    new Promise(resolve => {
+      if (!geocoder) { resolve(null); return; }
+      geocoder.addressSearch('서울시 강남구 압구정로 112', (res, status) => {
+        resolve(status === kakao.maps.services.Status.OK && res.length > 0 ? res[0] : null);
+      });
+    })
+  ]);
+
   if (!sheetData || sheetData.length === 0) {
     showSheetError();
     return;
   }
 
-  // 4. 케이프혼타워(신축예정) 하드코딩 삽입
+  // 4. 케이프혼타워(신축예정) 삽입 — 좌표는 카카오 지오코딩 우선, fallback 포함
   const OUR_ROW = {
     '건물명':'케이프혼타워','동':'신사동',
     '주소':'서울시 강남구 압구정로 112',
-    '위도':'37.5260','경도':'127.0275',
+    '위도': geoResult ? geoResult.y : '37.5248',
+    '경도': geoResult ? geoResult.x : '127.0275',
     '매매가 (억)':'신축예정','준공년도':'2026예정',
     '층':'신축','임차인':'케이프혼타워 (신축예정)','업종':'기타',
     '면적(평)':'-','임대료(만원)':'0','보증금(만원)':'0','관리비(만원)':'0',
@@ -1003,7 +1014,7 @@ function renderBuildingList(buildings){
   const sortedDongs=dongOrder.filter(d=>byDong[d]).concat(Object.keys(byDong).filter(d=>!dongOrder.includes(d)));
 
   // OUR_BUILDING 상단 고정 카드
-  const ourCard=ourBuilding ? `<div style="padding:9px 14px;background:rgba(245,158,11,0.1);border-bottom:2px solid rgba(245,158,11,0.35);cursor:pointer;" onclick="map.setCenter(new kakao.maps.LatLng(37.526,127.0275));map.setLevel(3);">
+  const ourCard=ourBuilding ? `<div style="padding:9px 14px;background:rgba(245,158,11,0.1);border-bottom:2px solid rgba(245,158,11,0.35);cursor:pointer;" onclick="map.setCenter(new kakao.maps.LatLng(${parseFloat(ourBuilding['위도'])},${parseFloat(ourBuilding['경도'])}));map.setLevel(3);">
     <div style="display:flex;align-items:center;gap:6px;">
       <span style="font-size:12px;">⭐</span>
       <span style="font-size:13px;font-weight:800;color:#f59e0b;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">케이프혼타워</span>
@@ -1564,7 +1575,19 @@ function toggleRTCategory(el,cat){
   filterAndRenderRT();
 }
 
-function onRadiusChange(){if(centerMarker)searchNearby(centerMarker.getPosition());}
+function onRadiusChange(){
+  if(!centerMarker) return;
+  const pos=centerMarker.getPosition();
+  const r=parseInt(document.getElementById('f-radius').value);
+  // 지도 원 반경 즉시 업데이트
+  if(currentCircle){currentCircle.setMap(null);currentCircle=null;}
+  currentCircle=new kakao.maps.Circle({center:pos,radius:r,strokeWeight:2,strokeColor:'#58a6ff',strokeOpacity:.6,fillColor:'#58a6ff',fillOpacity:.07,map});
+  document.getElementById('radius-label').textContent=r>=1000?`${r/1000}km`:`${r}m`;
+  // 칩 카운트 즉시 초기화 → 검색 완료 후 자동 갱신
+  allRealtimePlaces=[];
+  renderRTCatChips(null);
+  searchNearby(pos);
+}
 
 function setCenter(pos){
   clearMarkers();
@@ -1600,17 +1623,20 @@ function filterAndRenderRT(){
 
 function searchNearby(pos){
   const r=parseInt(document.getElementById('f-radius').value);
+  const myGen=++searchGeneration; // 이 검색의 고유 세대번호 (반경 변경 시 이전 콜백 무효화)
   document.getElementById('rt-list').innerHTML='<div class="loading"><div class="spinner"></div> 검색 중...</div>';
   // 항상 전체 카테고리 검색 (필터는 클라이언트에서)
   const catsToSearch=RT_CATS.filter(c=>c.type==='code');
-  realtimePlaces=[]; let done=0;
+  const localPlaces=[]; let done=0; // 이 검색만의 로컬 버퍼 (공유 배열 오염 방지)
   const total=catsToSearch.length;
 
   function finalize(){
-    realtimePlaces.sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
+    if(myGen!==searchGeneration) return; // 더 최신 검색이 있으면 무시
+    localPlaces.sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
     const seen=new Set();
-    realtimePlaces=realtimePlaces.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
-    allRealtimePlaces=[...realtimePlaces]; // 전체 결과 보존
+    const deduped=localPlaces.filter(p=>{if(seen.has(p.id))return false;seen.add(p.id);return true;});
+    realtimePlaces=deduped;
+    allRealtimePlaces=[...deduped]; // 전체 결과 보존
     renderRTCatChips(rtFullCounts());    // 전체 카운트로 칩 렌더
     renderRTSubChips();                   // 단일 카테고리 선택 시 세부 칩 렌더
     filterAndRenderRT();                  // 선택된 카테고리로 지도/목록 필터
@@ -1620,6 +1646,7 @@ function searchNearby(pos){
     const catBuf=[];
     // 페이지네이션: 카카오 API는 페이지당 15개, 최대 3페이지(45개)
     const cb=(data,status,pagination)=>{
+      if(myGen!==searchGeneration) return; // 이전 세대 콜백이면 무시
       if(status===kakao.maps.services.Status.OK){
         data.forEach(p=>{p._catId=cat.id; catBuf.push(p);});
         if(pagination&&pagination.hasNextPage){
@@ -1628,7 +1655,7 @@ function searchNearby(pos){
         }
       }
       // 마지막 페이지 또는 오류 → 완료 처리
-      catBuf.forEach(p=>realtimePlaces.push(p));
+      catBuf.forEach(p=>localPlaces.push(p));
       if(++done===total) finalize();
     };
     if(cat.type==='keyword'){
@@ -1799,7 +1826,7 @@ function exportRTList(){
 
 <!-- 버전 배지 -->
 <div id="version-badge" style="position:fixed;bottom:8px;right:calc(var(--sidebar-w) + 8px);background:rgba(0,0,0,.78);color:#c9d1d9;font-size:10px;padding:3px 8px;border-radius:4px;z-index:9999;pointer-events:none;border:1px solid rgba(255,255,255,.08);">
-  v2025-06-26-B
+  v2025-06-26-C
 </div>
 </body>
 </html>
