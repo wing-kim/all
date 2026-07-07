@@ -1066,6 +1066,17 @@ function go(k,btn){
   if(!LOADED.has(k)){LOADED.add(k);load(k);}
 }
 
+/* ── reloadAll — 헤더 새로고침 버튼 핸들러 (누락되어 있던 함수) ── */
+function reloadAll(){
+  const btn = document.getElementById('btnRef');
+  if(btn) btn.classList.add('spin');
+  if(CUR==='market') _marketFetching=false;
+  LOADED.delete(CUR);
+  Promise.resolve(load(CUR)).finally(()=>{
+    if(btn) btn.classList.remove('spin');
+  });
+}
+
 
 
 /* ================================
@@ -1386,15 +1397,10 @@ load('market');
 /* 15분마다 현재 탭 자동 갱신 — 구글 시트 변경사항 자동 반영 */
 setInterval(()=>{LOADED.delete(CUR);load(CUR);},15*60*1000);
 
-/* ══ INIT ══════════════════════════════════════════════════ */
-LOADED.add('market');
-load('market');
-setInterval(()=>{LOADED.delete('market');load('market');},15*60*1000);
-
   /* ── 버전 배지 ── */
   document.addEventListener('DOMContentLoaded', function(){
     var el = document.getElementById('ver-num');
-    if(el) el.textContent = '0605.1630';
+    if(el) el.textContent = '0707.1555';
   });
 </script>
 <div id="ver-badge">v<span id="ver-num"></span></div>
