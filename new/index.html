@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>케이프혼타워 신축 진행 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08090d; --s1:#0f1118; --s2:#151821; --s3:#1c2030;
+  --border:#222636; --border2:#2a3050;
+  --blue:#3b7fff; --blue-g:linear-gradient(135deg,#3b7fff,#6c48f5);
+  --green:#22d186; --yellow:#f5bc30; --orange:#f07830;
+  --red:#f03860; --purple:#9060f0;
+  --t1:#eef0f8; --t2:#8890aa; --t3:#4a5270; --t4:#2a3050;
+  --mono:'DM Mono',monospace; --sans:'Noto Sans KR',sans-serif;
+  --display:'Bebas Neue',sans-serif;
+  --r:10px; --r2:6px; --sh:0 4px 32px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(59,127,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,127,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+.page{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 28px 80px}
+
+header{display:flex;align-items:center;justify-content:space-between;
+  padding:24px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.brand{display:flex;flex-direction:column;gap:4px}
+.brand-name{font-family:var(--display);font-size:30px;letter-spacing:2px;
+  background:var(--blue-g);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:11px;color:var(--t3);letter-spacing:3px;text-transform:uppercase}
+.header-r{display:flex;align-items:center;gap:12px}
+.sync-badge{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--t3)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);animation:blink 2.2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-link{display:flex;align-items:center;gap:6px;background:var(--s2);
+  border:1px solid var(--border2);color:var(--t2);padding:7px 14px;text-decoration:none;
+  border-radius:var(--r2);font-family:var(--sans);font-size:12px;transition:all .18s}
+.btn-link:hover{background:var(--s3);color:var(--t1);border-color:var(--blue)}
+
+/* progress strip */
+.hist{display:flex;align-items:center;gap:0;background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px 22px;margin-bottom:14px;overflow-x:auto}
+.hist-step{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:118px;position:relative}
+.hist-step:not(:last-child)::after{content:'';position:absolute;top:9px;left:calc(50% + 20px);
+  width:calc(100% - 20px);height:2px;background:var(--border2)}
+.hist-step.done:not(:last-child)::after{background:var(--green)}
+.hist-dot{width:18px;height:18px;border-radius:50%;background:var(--s2);border:2px solid var(--t4);
+  display:flex;align-items:center;justify-content:center;font-size:10px;z-index:1}
+.hist-step.done .hist-dot{border-color:var(--green);background:rgba(34,209,134,.15);color:var(--green)}
+.hist-step.next .hist-dot{border-color:var(--blue);background:rgba(59,127,255,.15);color:var(--blue);
+  box-shadow:0 0 0 4px rgba(59,127,255,.12)}
+.hist-date{font-family:var(--mono);font-size:10.5px;color:var(--t3)}
+.hist-label{font-size:12px;color:var(--t1);font-weight:600;text-align:center}
+.hist-sub{font-size:10.5px;color:var(--t2);text-align:center}
+
+.deadline{display:flex;align-items:center;gap:14px;background:var(--s1);
+  border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;margin-bottom:22px;flex-wrap:wrap;row-gap:8px}
+.deadline .lbl{font-size:11px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.deadline .val{font-family:var(--mono);font-size:15px;color:var(--yellow);font-weight:500;white-space:nowrap}
+.deadline .sep{width:1px;height:16px;background:var(--border2)}
+.deadline .note{font-size:12px;color:var(--t2)}
+
+/* progress bars */
+.progress-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
+@media(max-width:720px){.progress-row{grid-template-columns:1fr}}
+.pbox{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px}
+.pbox-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.pbox-title{font-size:12px;color:var(--t2);letter-spacing:.3px}
+.pbox-pct{font-family:var(--mono);font-size:19px;font-weight:500}
+.pbox-pct.blue{color:var(--blue)}
+.pbox-pct.yellow{color:var(--yellow)}
+.pbar{height:8px;border-radius:5px;background:var(--s3);overflow:hidden;position:relative}
+.pbar-fill{height:100%;border-radius:5px;transition:width .4s ease}
+.pbar-fill.blue{background:var(--blue-g)}
+.pbar-fill.yellow{background:linear-gradient(135deg,#f5bc30,#f07830)}
+.pbox-sub{font-size:11px;color:var(--t3);margin-top:8px;font-family:var(--mono)}
+
+.tabs{display:flex;gap:2px;margin-bottom:24px;padding:4px;
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow-x:auto}
+.tab{flex-shrink:0;display:flex;align-items:center;gap:7px;padding:9px 18px;
+  border-radius:7px;border:none;background:transparent;color:var(--t3);
+  font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab:hover{color:var(--t2);background:var(--s2)}
+.tab.on{color:var(--t1);background:var(--s3);box-shadow:0 1px 8px rgba(0,0,0,.4)}
+.pip{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+.sec{display:none}
+.sec.on{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:20px 22px;margin-bottom:16px;box-shadow:var(--sh)}
+.card h3{font-size:14px;color:var(--t1);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h3 .n{font-family:var(--mono);color:var(--t3);font-size:12px;font-weight:400}
+
+.tl{position:relative;padding-left:28px}
+.tl::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:var(--border2)}
+.tl-item{position:relative;padding-bottom:26px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-28px;top:2px;width:18px;height:18px;border-radius:50%;
+  background:var(--s2);border:2px solid var(--t4);display:flex;align-items:center;justify-content:center;font-size:10px}
+.tl-item.done .tl-dot{border-color:var(--green);background:rgba(34,209,134,.12);color:var(--green)}
+.tl-item.active .tl-dot{border-color:var(--blue);background:rgba(59,127,255,.15);color:var(--blue);
+  box-shadow:0 0 0 4px rgba(59,127,255,.12)}
+.tl-item.todo .tl-dot{color:var(--t3)}
+.tl-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.tl-title{font-size:14.5px;font-weight:600;color:var(--t1)}
+.tl-date{font-family:var(--mono);font-size:11.5px;color:var(--t3)}
+.badge{font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.3px}
+.badge.done{background:rgba(34,209,134,.13);color:var(--green)}
+.badge.active{background:rgba(59,127,255,.15);color:var(--blue)}
+.badge.todo{background:rgba(136,144,170,.1);color:var(--t3)}
+.badge.risk{background:rgba(240,56,96,.13);color:var(--red)}
+.tl-desc{font-size:13px;color:var(--t2);line-height:1.6}
+
+.log-item{border:1px solid var(--border);border-radius:var(--r2);margin-bottom:10px;background:var(--s2);overflow:hidden}
+.log-item:last-child{margin-bottom:0}
+.log-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:15px 18px;cursor:pointer;user-select:none;transition:background .15s}
+.log-head:hover{background:var(--s3)}
+.log-head-l{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.log-chev{font-size:11px;color:var(--t3);transition:transform .2s ease;flex-shrink:0}
+.log-item.open .log-chev{transform:rotate(90deg);color:var(--blue)}
+.log-title{font-size:14px;font-weight:600;color:var(--t1)}
+.log-meta{font-family:var(--mono);font-size:11px;color:var(--t3);display:flex;gap:10px;flex-wrap:wrap}
+.log-preview{font-size:12px;color:var(--t3);margin-left:auto;padding-left:12px;
+  max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-item.open .log-preview{display:none}
+.log-body{font-size:13px;color:var(--t2);line-height:1.7;white-space:pre-line;
+  max-height:0;padding:0 18px;transition:all .2s ease;border-top:1px solid transparent}
+.log-item.open .log-body{max-height:600px;padding:2px 18px 18px;border-top:1px dashed var(--border2)}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.stat{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.stat .k{font-size:11px;color:var(--t3);letter-spacing:.5px;margin-bottom:6px}
+.stat .v{font-family:var(--mono);font-size:17px;color:var(--t1);font-weight:500}
+.stat .v.pending{color:var(--t3);font-size:13px;font-family:var(--sans)}
+.stat .sub{font-size:11.5px;color:var(--t3);margin-top:4px}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead tr{background:var(--s2);border-bottom:1px solid var(--border2)}
+th{padding:9px 12px;text-align:left;font-size:10.5px;font-weight:600;color:var(--t3);
+  letter-spacing:.5px;text-transform:uppercase}
+th.r{text-align:right}
+td{padding:11px 12px;border-bottom:1px solid rgba(34,38,54,.5);color:var(--t2);vertical-align:top}
+td.r{text-align:right;font-family:var(--mono)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(59,127,255,.03)}
+tr.sum-row td{background:rgba(22,26,40,.8);border-top:1px solid var(--border2);color:var(--t1);font-weight:600}
+td.tt{color:var(--t1);font-weight:500}
+.pill{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:20px;font-weight:600}
+.pill.open{background:rgba(240,56,96,.13);color:var(--red)}
+.pill.review{background:rgba(245,188,48,.14);color:var(--yellow)}
+.pill.closed{background:rgba(34,209,134,.13);color:var(--green)}
+.pill.done{background:rgba(34,209,134,.13);color:var(--green)}
+
+.empty{color:var(--t3);font-size:13px;padding:20px;text-align:center}
+.folder-strip{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.folder-strip a{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);
+  background:var(--s2);border:1px solid var(--border2);padding:6px 12px;border-radius:20px;text-decoration:none}
+.folder-strip a:hover{color:var(--t1);border-color:var(--blue)}
+.parties{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:640px){.parties{grid-template-columns:1fr}}
+.party{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:16px 18px}
+.party .role{font-size:10.5px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.party .name{font-size:15px;color:var(--t1);font-weight:600;margin-bottom:2px}
+.party dl{margin-top:8px;font-size:12px;color:var(--t2);line-height:1.9}
+footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--t3);font-family:var(--mono);text-align:center}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <div class="brand">
+    <span class="brand-name">케이프혼타워 신축 진행</span>
+    <span class="brand-sub">신사동 529 외 2필지 · 설계 · 시공</span>
+  </div>
+  <div class="header-r">
+    <div class="sync-badge"><div class="dot"></div><span>마지막 업데이트 2026-08-18</span></div>
+    <a class="btn-link" href="https://drive.google.com/drive/folders/1ASC2qs-Pido8UkSga5pLu-Zh0iPxZKNK" target="_blank">📁 Drive 폴더 열기</a>
+  </div>
+</header>
+
+<div class="hist">
+  <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.04.29</div><div class="hist-label">최초 미팅</div><div class="hist-sub">플라건축 첫 미팅</div></div>
+  <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.08.14</div><div class="hist-label">설계 계약 체결</div><div class="hist-sub">BPK-2026-00006</div></div>
+  <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.08.25</div><div class="hist-label">계약금 1차 납부</div><div class="hist-sub">3,000만원 (10%)</div></div>
+  <div class="hist-step next"><div class="hist-dot">●</div><div class="hist-date">2026.09.01</div><div class="hist-label">공식 킥오프</div><div class="hist-sub">설계 대가기간 개시</div></div>
+  <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2027.04.01</div><div class="hist-label">계획안 승인 기한</div><div class="hist-sub">건축심의 접수용</div></div>
+  <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2028.05.18</div><div class="hist-label">허가 데드라인</div><div class="hist-sub">용적률 300% 조건</div></div>
+  <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2031.09.30</div><div class="hist-label">설계 용역 완료</div><div class="hist-sub">계약상 대가기간 만료</div></div>
+</div>
+<div class="tl-desc" style="font-size:11.5px;color:var(--t3);margin:-6px 0 18px">
+  ※ 현재는 플라건축 설계 계약(BPK-2026-00006) 진행분까지 반영되어 있습니다. 착공~준공 등 시공 단계는 시공사 선정 후 이 대시보드에 이어서 확장 반영할 예정입니다.
+</div>
+
+<div class="deadline">
+  <span class="lbl">허가 데드라인</span>
+  <span class="val">2028.05.18</span>
+  <div class="sep"></div>
+  <span class="lbl">계획안 승인 기한</span>
+  <span class="val" style="color:var(--blue)">2027.04.01</span>
+  <div class="sep"></div>
+  <span class="note">계약 제2조③ · 용적률 300% 한시완화 적용을 위한 핵심 의무사항 (계약서상 명문화, 위반 시 설계자 손해배상 책임)</span>
+</div>
+
+<div class="progress-row">
+  <div class="pbox">
+    <div class="pbox-head">
+      <span class="pbox-title">계약 단계 진행률 <span style="color:var(--t3)">· 지급 스케줄 기준</span></span>
+      <span class="pbox-pct blue" id="stagePct">10%</span>
+    </div>
+    <div class="pbar"><div class="pbar-fill blue" id="stageBar" style="width:10%"></div></div>
+    <div class="pbox-sub" id="stageSub">완료: 계약 체결(10%) · 다음: 계획설계 완료 · 건축심의 접수(+20%)</div>
+  </div>
+  <div class="pbox">
+    <div class="pbox-head">
+      <span class="pbox-title">허가 데드라인 경과율 <span style="color:var(--t3)">· 2026.08.14 → 2028.05.18</span></span>
+      <span class="pbox-pct yellow" id="ddayPct">—</span>
+    </div>
+    <div class="pbar"><div class="pbar-fill yellow" id="ddayBar" style="width:0%"></div></div>
+    <div class="pbox-sub" id="ddaySub">계산 중…</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="go('timeline',this)"><span class="pip" style="background:#3b7fff"></span>설계일정 · 마일스톤</button>
+  <button class="tab" onclick="go('contract',this)"><span class="pip" style="background:#f5bc30"></span>계약조건 요약</button>
+  <button class="tab" onclick="go('meeting',this)"><span class="pip" style="background:#22d186"></span>회의록 아카이브</button>
+  <button class="tab" onclick="go('issue',this)"><span class="pip" style="background:#f03860"></span>이슈 · 의사결정 로그</button>
+</div>
+
+<!-- ══ TAB 1. 설계일정/마일스톤 ══ -->
+<div id="sec-timeline" class="sec on">
+  <div class="card">
+    <h3>설계 단계별 일정 <span class="n">기획 → 계획설계 → 중간설계 → 실시설계 → 인허가 → 준공</span></h3>
+    <div class="tl">
+      <div class="tl-item done">
+        <div class="tl-dot">✓</div>
+        <div class="tl-head"><span class="tl-title">설계사 선정 · 계약 체결</span><span class="badge done">완료</span></div>
+        <div class="tl-date">2026.04.29 최초 미팅 → 2026.08.14 계약 체결 → 2026.08.25 계약금 1차(10%) 납부</div>
+        <div class="tl-desc">9개사 제안 비교 후 플라건축사사무소(건축사 정준철) 최종 선정. 계약금액 3억원(VAT별도), 계약면적 3,991.64㎡ 기준.</div>
+      </div>
+      <div class="tl-item active">
+        <div class="tl-dot">●</div>
+        <div class="tl-head"><span class="tl-title">킥오프 · 계획설계 착수</span><span class="badge active">D-예정</span></div>
+        <div class="tl-date">2026.09.01 개시 (설계 대가기간 시작일)</div>
+        <div class="tl-desc">지하 3층·지상 6층(PH1, PH2) 기준 계획설계 착수. 특약 제3항에 따라 설계 착수 후 1개월 이내(2026.10.01까지) 허가 데드라인 역산 단계별 설계 일정표를 서면 제출받아야 함 — 트래킹 필요.</div>
+      </div>
+      <div class="tl-item todo">
+        <div class="tl-dot"></div>
+        <div class="tl-head"><span class="tl-title">계획설계 완료 · 건축심의 접수</span><span class="badge todo">지불 20%</span></div>
+        <div class="tl-date">2027.04.01 이전 (발주자 계획안 승인 기한)</div>
+        <div class="tl-desc">계획설계 완료 후 1개월 이내 목표 공사비를 시공사 2곳 이상 견적 비교로 서면 확정(특약 2-②). 25m 초과·PH층 등 강남구 건축심의 필요 요소는 설계자가 사전 서면고지 의무.</div>
+      </div>
+      <div class="tl-item todo">
+        <div class="tl-dot"></div>
+        <div class="tl-head"><span class="tl-title">중간설계 (건축심의 완료 → 건축허가 완료)</span><span class="badge todo">지불 30%</span></div>
+        <div class="tl-date">일정 미확정</div>
+        <div class="tl-desc">건축심의 완료 시 10%, 건축허가 완료 시 20% 지불. 목표 공사비 대비 시공사 입찰 견적 10% 초과 시 설계자는 무상으로 설계 변경 의무(특약 2-②).</div>
+      </div>
+      <div class="tl-item todo">
+        <div class="tl-dot"></div>
+        <div class="tl-head"><span class="tl-title">실시설계 완료 (공사용 도면 제출)</span><span class="badge todo">지불 30%</span></div>
+        <div class="tl-date">일정 미확정</div>
+        <div class="tl-desc">시공사 입찰용 도면·시방서·스펙북 완성.</div>
+      </div>
+      <div class="tl-item todo">
+        <div class="tl-dot"></div>
+        <div class="tl-head"><span class="tl-title">건축 허가 접수/완료</span><span class="badge risk">허가 데드라인</span></div>
+        <div class="tl-date">2028.05.18 이전 필수</div>
+        <div class="tl-desc">용적률 300% 한시완화 적용 위한 절대 기한. 미준수 시 설계자 손해배상 책임(배상한도: 설계비 총액의 1배).</div>
+      </div>
+      <div class="tl-item todo">
+        <div class="tl-dot"></div>
+        <div class="tl-head"><span class="tl-title">준공 · 사용승인</span><span class="badge todo">지불 10%</span></div>
+        <div class="tl-date">일정 미확정 (대가기간 만료 2031.09.30)</div>
+        <div class="tl-desc">사용승인일이 3개월 초과 시 준공 시 기성금 지불.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>자료 폴더</h3>
+    <div class="tl-desc" style="font-size:12.5px">
+      새 마일스톤, 회의 내용, 이슈사항을 채팅으로 전달하면 이 대시보드에 정리해 반영합니다. 원본 파일은 로컬 PC 폴더 또는 아래 Drive 폴더 중 편한 곳에 넣어주세요 (구조 동일).
+    </div>
+    <div class="folder-strip">
+      <a href="https://drive.google.com/drive/folders/1txPjptW3DMRCWYv9uDmWkOfy_F5IvhPN" target="_blank">📄 01. 계약서</a>
+      <a href="https://drive.google.com/drive/folders/1-8QvCChsXqrJkdSLfkC6LiXDO5PKDAyT" target="_blank">🗓 02. 일정표</a>
+      <a href="https://drive.google.com/drive/folders/1WEc-iNe_0zKbTjEElhNWJVYZ4HFayEvG" target="_blank">📐 03. 설계안</a>
+      <a href="https://drive.google.com/drive/folders/1ihTKoDf_8n-5ZX_djssfxIskfIVw2u3J" target="_blank">🗒 04. 회의록</a>
+      <a href="https://drive.google.com/drive/folders/1bnROpogZprvmCXdlFDT7uOXqwWXWWudT" target="_blank">🗂 05. 기타자료</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB 2. 계약조건 요약 ══ -->
+<div id="sec-contract" class="sec">
+  <div class="card">
+    <h3>계약 개요 <span class="n">BPK-2026-00006 · 2026.08.14 체결</span></h3>
+    <div class="grid2">
+      <div class="stat"><div class="k">계약금액 (설계비)</div><div class="v">300,000,000원</div><div class="sub">VAT 별도</div></div>
+      <div class="stat"><div class="k">계약면적</div><div class="v">3,991.64㎡</div><div class="sub">1,207.47평</div></div>
+      <div class="stat"><div class="k">건축면적</div><div class="v">374.46㎡</div><div class="sub">113.27평</div></div>
+      <div class="stat"><div class="k">규모</div><div class="v">B3 / 6F+PH2</div><div class="sub">지하 3층, 지상 6층, PH 1·2</div></div>
+      <div class="stat"><div class="k">설계 대가기간</div><div class="v" style="font-size:14px">2026.09.01 ~ 2031.09.30</div></div>
+      <div class="stat"><div class="k">구조</div><div class="v" style="font-size:14px">철근콘크리트조(RC)</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>지급 스케줄 <span class="n">청구 후 15일 이내 지급 (계약 제4조)</span></h3>
+    <table>
+      <thead><tr><th>지불 시기</th><th class="r">비율</th><th class="r">금액</th><th>비고</th><th>상태</th></tr></thead>
+      <tbody>
+        <tr><td class="tt">계약 시</td><td class="r">10%</td><td class="r">30,000,000원</td><td>계약 체결</td><td><span class="pill done">완료 (08.25 납부)</span></td></tr>
+        <tr><td class="tt">계획설계 완료 시</td><td class="r">20%</td><td class="r">60,000,000원</td><td>건축심의 접수</td><td><span class="pill">예정</span></td></tr>
+        <tr><td class="tt">중간설계 진행 시</td><td class="r">10%</td><td class="r">30,000,000원</td><td>건축심의 완료</td><td><span class="pill">예정</span></td></tr>
+        <tr><td class="tt">중간설계 완료 시</td><td class="r">20%</td><td class="r">60,000,000원</td><td>건축허가 완료</td><td><span class="pill">예정</span></td></tr>
+        <tr><td class="tt">실시설계 완료 시</td><td class="r">30%</td><td class="r">90,000,000원</td><td>공사용 도면 제출</td><td><span class="pill">예정</span></td></tr>
+        <tr><td class="tt">준공 시</td><td class="r">10%</td><td class="r">30,000,000원</td><td>사용승인서 수령</td><td><span class="pill">예정</span></td></tr>
+        <tr class="sum-row"><td>합계</td><td class="r">100%</td><td class="r">300,000,000원</td><td colspan="2">VAT 별도</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>계약 당사자</h3>
+    <div class="parties">
+      <div class="party">
+        <div class="role">발주자</div>
+        <div class="name">(주)블루피카</div>
+        <dl>대표: 이정웅<br>사업자번호: 588-88-00018<br>주소: 서울 강남구 압구정로8길 3, 5층</dl>
+      </div>
+      <div class="party">
+        <div class="role">설계자</div>
+        <div class="name">플라건축사사무소</div>
+        <dl>건축사: 정준철<br>사업자번호: 593-39-00628<br>주소: 서울 강남구 봉은사로72길 7, 301호(삼성동)</dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>핵심 특약사항 체크리스트</h3>
+    <table>
+      <thead><tr><th style="width:26%">항목</th><th>내용</th><th style="width:14%">확인</th></tr></thead>
+      <tbody>
+        <tr><td class="tt">허가 데드라인 보장</td><td>설계자는 2028.05.18까지 건축허가 접수/완료 책임. 미준수로 용적률 혜택 상실 시 설계자가 손해배상 (배상한도: 설계비 총액 1배)</td><td><span class="pill review">진행중</span></td></tr>
+        <tr><td class="tt">설계 일정표 제출</td><td>착수 후 1개월 이내(~2026.10.01) 데드라인 역산 단계별 일정표 서면 제출 의무. 미제출·3개월 이상 지연 시 발주자 해지권</td><td><span class="pill open">2026.10.01 확인 필요</span></td></tr>
+        <tr><td class="tt">지체상금</td><td>업무 지체 시 매 1일당 대가의 1/1,000 지급 (행정지연·발주자 귀책 등은 제외)</td><td><span class="pill review">모니터링</span></td></tr>
+        <tr><td class="tt">건축심의 사전고지</td><td>25m 초과, PH층·옥탑 추가 등 강남구 심의 필요 요소는 사전 서면으로 필요성·기간·비용·통과가능성 고지</td><td><span class="pill open">B3/PH2 해당 — 확인 필요</span></td></tr>
+        <tr><td class="tt">목표공사비 확정 및 초과 대응</td><td>계획설계 완료 후 1개월 내 목표공사비 서면 확정. 시공사 입찰가가 10% 초과 시 설계자 무상 설계변경 의무</td><td><span class="pill review">진행 전</span></td></tr>
+        <tr><td class="tt">저작권</td><td>설계도서 저작권은 설계자 귀속, 발주자는 사업 목적 범위 내 사용 가능</td><td><span class="pill closed">확인됨</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ TAB 3. 회의록 아카이브 ══ -->
+<div id="sec-meeting" class="sec">
+  <div class="card">
+    <h3>회의 로그 <span class="n">제목을 클릭하면 내용이 펼쳐집니다</span></h3>
+
+    <div class="log-item" onclick="this.classList.toggle('open')">
+      <div class="log-head">
+        <div class="log-head-l">
+          <span class="log-chev">▶</span>
+          <span class="log-title">2026년 4월 29일 — 최초 미팅</span>
+        </div>
+        <span class="log-preview">플라건축사사무소 첫 미팅</span>
+      </div>
+      <div class="log-body">플라건축사사무소와 첫 미팅 진행. 이후 약 3.5개월간 제안 검토를 거쳐 2026.08.14 설계 계약 체결, 2026.08.25 계약금 1차(3,000만원) 납부 완료.</div>
+    </div>
+
+    <div class="log-item" onclick="this.classList.toggle('open')">
+      <div class="log-head">
+        <div class="log-head-l">
+          <span class="log-chev">▶</span>
+          <span class="log-title">2026년 9월 1일 — 공식 킥오프 (예정)</span>
+        </div>
+        <span class="log-preview">설계 대가기간 개시일</span>
+      </div>
+      <div class="log-body">계약서상 설계 대가기간 시작일과 일치. 킥오프 미팅 진행 시 내용을 전달해주시면 이곳에 정리해 반영합니다.</div>
+    </div>
+
+    <div class="empty" style="margin-top:8px">그 외 회의록은 아직 등록되지 않았습니다. 회의 내용을 채팅으로 전달하면 날짜순으로 이곳에 추가됩니다.</div>
+  </div>
+</div>
+
+<!-- ══ TAB 4. 이슈 / 의사결정 로그 ══ -->
+<div id="sec-issue" class="sec">
+  <div class="card">
+    <h3>오픈 이슈 · 의사결정 대기</h3>
+    <table>
+      <thead><tr><th style="width:24%">이슈</th><th>내용</th><th style="width:12%">상태</th><th style="width:16%">기한/담당</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="tt">지하 3층 + PH 1·2 심의</td>
+          <td>계약 확정 규모(B3, 6층+PH1·PH2)는 기존 제안 대비 지하층·옥탑 구성이 확대됨. 25m 초과 및 PH층 추가로 강남구 건축심의 대상 — 설계자의 사전 서면고지(특약 4-①) 수령 여부 확인 필요.</td>
+          <td><span class="pill open">미확인</span></td>
+          <td>설계 전문가 검토</td>
+        </tr>
+        <tr>
+          <td class="tt">설계 일정표 제출</td>
+          <td>특약 3-③에 따라 설계자는 착수(2026.09.01) 후 1개월 이내 데드라인 역산 일정표를 서면 제출해야 함.</td>
+          <td><span class="pill open">D-Day 2026.10.01</span></td>
+          <td>PM</td>
+        </tr>
+        <tr>
+          <td class="tt">계획안 승인 기한 역산</td>
+          <td>발주자는 2027.04.01까지 건축심의 접수용 계획안을 승인해야 함 — 계획설계 검토·의사결정 일정 선확보 필요.</td>
+          <td><span class="pill review">검토중</span></td>
+          <td>건축주 · PM</td>
+        </tr>
+        <tr>
+          <td class="tt">목표 공사비 기준선 설정</td>
+          <td>계획설계 완료 후 1개월 내 시공사 2곳 이상 견적 비교로 목표공사비를 확정해야 함 — 시공사 후보 조기 물색 필요 여부 검토.</td>
+          <td><span class="pill review">검토중</span></td>
+          <td>시공 전문가</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h3>결정 완료 로그</h3>
+    <table>
+      <thead><tr><th style="width:16%">일자</th><th>결정 내용</th><th style="width:14%">근거</th></tr></thead>
+      <tbody>
+        <tr><td class="tt">2026.08.14</td><td>플라건축사사무소를 최종 설계사로 선정, 설계 계약(BPK-2026-00006) 체결 — 계약면적 3,991.64㎡, 계약금액 3억원(VAT별도)</td><td>설계 계약서</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<footer>CAPE HORN TOWER · 플라건축 설계진행 트래커 · 블루피카(주) 내부용</footer>
+</div>
+
+<script>
+function go(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('sec-'+id).classList.add('on');
+}
+
+/* ══ 진행률 계산 ══
+   1) 계약 단계 진행률: 계약서 지급 스케줄(10/20/10/20/30/10%) 기준.
+      새 단계가 완료될 때마다 STAGE_PCT / STAGE_LABEL 값만 수정하면 됨.
+   2) 허가 데드라인 경과율: 계약 체결일(2026.08.14) → 허가 데드라인(2028.05.18) 사이
+      오늘 날짜 기준 경과 비율을 자동 계산(페이지를 열 때마다 실시간 갱신). */
+(function(){
+  const STAGE_PCT = 10; // 완료된 누적 지급 비율(%) — 계약시 10%까지 완료
+  const STAGE_NEXT = '계획설계 완료 · 건축심의 접수(+20%)';
+  document.getElementById('stagePct').textContent = STAGE_PCT + '%';
+  document.getElementById('stageBar').style.width = STAGE_PCT + '%';
+  document.getElementById('stageSub').textContent = '완료: 계약 체결(10%) · 다음: ' + STAGE_NEXT;
+
+  const START = new Date('2026-08-14T00:00:00+09:00');
+  const DEADLINE = new Date('2028-05-18T00:00:00+09:00');
+  const now = new Date();
+  const totalMs = DEADLINE - START;
+  const elapsedMs = now - START;
+  const pct = Math.min(100, Math.max(0, (elapsedMs/totalMs)*100));
+  const dday = Math.ceil((DEADLINE - now)/(1000*60*60*24));
+  document.getElementById('ddayPct').textContent = pct.toFixed(1) + '%';
+  document.getElementById('ddayBar').style.width = pct.toFixed(1) + '%';
+  document.getElementById('ddaySub').textContent = `D-${dday} · 허가 데드라인까지 ${dday}일 남음`;
+})();
+</script>
+</body>
+</html>
