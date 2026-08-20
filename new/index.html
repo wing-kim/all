@@ -171,6 +171,18 @@ td.tt{color:var(--t1);font-weight:500}
 .party dl{margin-top:8px;font-size:12px;color:var(--t2);line-height:1.9}
 footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
   font-size:11px;color:var(--t3);font-family:var(--mono);text-align:center}
+.ver-badge{display:inline-flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--border2);
+  color:var(--t3);padding:5px 11px;border-radius:20px;font-family:var(--mono);font-size:11px;
+  cursor:pointer;transition:all .15s;margin-top:14px}
+.ver-badge:hover{color:var(--t1);border-color:var(--blue)}
+.ver-panel{display:none;max-width:640px;margin:14px auto 0;text-align:left;background:var(--s1);
+  border:1px solid var(--border);border-radius:var(--r);padding:16px 20px}
+.ver-panel.open{display:block}
+.ver-row{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid rgba(34,38,54,.5);align-items:baseline}
+.ver-row:last-child{border-bottom:none}
+.ver-tag{font-family:var(--mono);font-size:11px;color:var(--blue);flex-shrink:0;width:34px}
+.ver-date{font-family:var(--mono);font-size:10.5px;color:var(--t3);flex-shrink:0;width:80px}
+.ver-note{font-size:12px;color:var(--t2);line-height:1.6;font-family:var(--sans)}
 </style>
 </head>
 <body>
@@ -191,7 +203,7 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
   <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.04.29</div><div class="hist-label">최초 미팅</div><div class="hist-sub">플라건축 첫 미팅</div></div>
   <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.08.14</div><div class="hist-label">설계 계약 체결</div><div class="hist-sub">BPK-2026-00006</div></div>
   <div class="hist-step done"><div class="hist-dot">✓</div><div class="hist-date">2026.08.25</div><div class="hist-label">계약금 1차 납부</div><div class="hist-sub">3,000만원 (10%)</div></div>
-  <div class="hist-step next"><div class="hist-dot">●</div><div class="hist-date">2026.09.01</div><div class="hist-label">공식 킥오프</div><div class="hist-sub">설계 대가기간 개시</div></div>
+  <div class="hist-step next"><div class="hist-dot">●</div><div class="hist-date">2026.08.27</div><div class="hist-label">공식 킥오프</div><div class="hist-sub">오후 2:00 미팅</div></div>
   <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2027.04.01</div><div class="hist-label">계획안 승인 기한</div><div class="hist-sub">건축심의 접수용</div></div>
   <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2028.05.18</div><div class="hist-label">허가 데드라인</div><div class="hist-sub">용적률 300% 조건</div></div>
   <div class="hist-step"><div class="hist-dot"></div><div class="hist-date">2031.09.30</div><div class="hist-label">설계 용역 완료</div><div class="hist-sub">계약상 대가기간 만료</div></div>
@@ -250,7 +262,7 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
       <div class="tl-item active">
         <div class="tl-dot">●</div>
         <div class="tl-head"><span class="tl-title">킥오프 · 계획설계 착수</span><span class="badge active">D-예정</span></div>
-        <div class="tl-date">2026.09.01 개시 (설계 대가기간 시작일)</div>
+        <div class="tl-date">2026.08.27(목) 14:00 킥오프 미팅 · 계약상 설계 대가기간 개시일은 09.01</div>
         <div class="tl-desc">지하 3층·지상 6층(PH1, PH2) 기준 계획설계 착수. 특약 제3항에 따라 설계 착수 후 1개월 이내(2026.10.01까지) 허가 데드라인 역산 단계별 설계 일정표를 서면 제출받아야 함 — 트래킹 필요.</div>
       </div>
       <div class="tl-item todo">
@@ -382,11 +394,11 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
       <div class="log-head">
         <div class="log-head-l">
           <span class="log-chev">▶</span>
-          <span class="log-title">2026년 9월 1일 — 공식 킥오프 (예정)</span>
+          <span class="log-title">2026년 8월 27일 — 공식 킥오프 (예정)</span>
         </div>
-        <span class="log-preview">설계 대가기간 개시일</span>
+        <span class="log-preview">오후 2:00 · 일정 변경됨</span>
       </div>
-      <div class="log-body">계약서상 설계 대가기간 시작일과 일치. 킥오프 미팅 진행 시 내용을 전달해주시면 이곳에 정리해 반영합니다.</div>
+      <div class="log-body">플라건축과의 킥오프 미팅이 오후 2시로 확정. (기존 2026.09.01 → 2026.08.27로 일정 변경) 계약상 설계 대가기간 개시일(09.01)보다 앞서 진행. 미팅 진행 시 내용을 전달해주시면 이곳에 정리해 반영합니다.</div>
     </div>
 
     <div class="empty" style="margin-top:8px">그 외 회의록은 아직 등록되지 않았습니다. 회의 내용을 채팅으로 전달하면 날짜순으로 이곳에 추가됩니다.</div>
@@ -438,7 +450,22 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
   </div>
 </div>
 
-<footer>CAPE HORN TOWER · 플라건축 설계진행 트래커 · 블루피카(주) 내부용</footer>
+<footer>
+  CAPE HORN TOWER · 케이프혼타워 신축 진행 · 블루피카(주) 내부용
+  <br>
+  <span class="ver-badge" onclick="document.getElementById('verPanel').classList.toggle('open')">🕘 v9 · 버전 기록 보기</span>
+  <div class="ver-panel" id="verPanel">
+    <div class="ver-row"><span class="ver-tag">v9</span><span class="ver-date">2026-08-18</span><span class="ver-note">킥오프 미팅 일정 변경 반영 (09.01 → 08.27 14:00)</span></div>
+    <div class="ver-row"><span class="ver-tag">v8</span><span class="ver-date">2026-08-18</span><span class="ver-note">버전 기록(체인지로그) 패널 추가</span></div>
+    <div class="ver-row"><span class="ver-tag">v7</span><span class="ver-date">2026-08-18</span><span class="ver-note">제목을 "케이프혼타워 신축 진행"으로 변경 — 시공 단계 포함 예정 반영</span></div>
+    <div class="ver-row"><span class="ver-tag">v6</span><span class="ver-date">2026-08-18</span><span class="ver-note">히스토리 스트립에 계약 만료일(2031.09.30) 추가, 대시보드 범위 안내 문구 추가</span></div>
+    <div class="ver-row"><span class="ver-tag">v5</span><span class="ver-date">2026-08-18</span><span class="ver-note">회의록 아카이브 아코디언(클릭해서 펼치기) 방식으로 변경, "통화" 표현 제거, 항목 제목에 날짜 병기</span></div>
+    <div class="ver-row"><span class="ver-tag">v4</span><span class="ver-date">2026-08-18</span><span class="ver-note">진행률 2종 추가 — 계약 지급단계 진행률, 허가 데드라인 경과율(자동계산)</span></div>
+    <div class="ver-row"><span class="ver-tag">v3</span><span class="ver-date">2026-08-18</span><span class="ver-note">계약서 원문 반영 — 계약금액, 지급 스케줄, 규모(B3/6F+PH2), 특약사항, 실제 프로젝트 타임라인</span></div>
+    <div class="ver-row"><span class="ver-tag">v2</span><span class="ver-date">2026-08-18</span><span class="ver-note">Drive 폴더 구조를 로컬 PC 폴더와 동일하게 정리, 폴더 링크 반영</span></div>
+    <div class="ver-row"><span class="ver-tag">v1</span><span class="ver-date">2026-08-18</span><span class="ver-note">최초 생성 — 설계일정·회의록·계약조건·이슈 4개 탭 구조</span></div>
+  </div>
+</footer>
 </div>
 
 <script>
