@@ -419,17 +419,6 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
   <div class="card">
     <h3>회의 로그 <span class="n">제목을 클릭하면 내용이 펼쳐집니다</span></h3>
 
-    <div class="log-item" onclick="this.classList.toggle('open')">
-      <div class="log-head">
-        <div class="log-head-l">
-          <span class="log-chev">▶</span>
-          <span class="log-title">2026년 4월 29일 — 최초 미팅</span>
-        </div>
-        <span class="log-preview">플라건축사사무소 첫 미팅</span>
-      </div>
-      <div class="log-body">플라건축사사무소와 첫 미팅 진행. 이후 약 3.5개월간 제안 검토를 거쳐 2026.08.14 설계 계약 체결, 2026.08.25 계약금 1차(3,000만원) 납부 완료.</div>
-    </div>
-
     <div class="log-item open" onclick="this.classList.toggle('open')">
       <div class="log-head">
         <div class="log-head-l">
@@ -548,6 +537,17 @@ ALT-01(격자 프레임, AC호텔 참고사례, 마감재료 색상·성격) / A
 주차장 관련 사항 일체 — 기계식 주차 방식·위치, 장애인 주차 위치, 램프 폭·입구 회전반경, 지하1층 임대 여부, 필요 주차대수.</div>
     </div>
 
+    <div class="log-item" onclick="this.classList.toggle('open')">
+      <div class="log-head">
+        <div class="log-head-l">
+          <span class="log-chev">▶</span>
+          <span class="log-title">2026년 4월 29일 — 최초 미팅</span>
+        </div>
+        <span class="log-preview">플라건축사사무소 첫 미팅</span>
+      </div>
+      <div class="log-body">플라건축사사무소와 첫 미팅 진행. 이후 약 3.5개월간 제안 검토를 거쳐 2026.08.14 설계 계약 체결, 2026.08.25 계약금 1차(3,000만원) 납부 완료.</div>
+    </div>
+
     <div class="empty" style="margin-top:8px">그 외 회의록은 아직 등록되지 않았습니다. 회의 내용을 채팅으로 전달하면 날짜순으로 이곳에 추가됩니다.</div>
   </div>
 </div>
@@ -642,8 +642,9 @@ ALT-01(격자 프레임, AC호텔 참고사례, 마감재료 색상·성격) / A
 <footer>
   CAPE HORN TOWER · 케이프혼타워 신축 진행 · 블루피카(주) 내부용
   <br>
-  <span class="ver-badge" onclick="document.getElementById('verPanel').classList.toggle('open')">🕘 v15 · 버전 기록 보기</span>
+  <span class="ver-badge" onclick="document.getElementById('verPanel').classList.toggle('open')">🕘 v16 · 버전 기록 보기</span>
   <div class="ver-panel" id="verPanel">
+    <div class="ver-row"><span class="ver-tag">v16</span><span class="ver-date">2026-09-09</span><span class="ver-note">회의록 아카이브 정렬 수정 — 최신 회의가 항상 맨 위에 오도록 순서 변경(9/9 → 8/27 → 4/29). v15에서 새 항목을 맨 위(4/29 다음)에 잘못 삽입해 날짜 순서가 뒤섞였던 것을 바로잡음</span></div>
     <div class="ver-row"><span class="ver-tag">v15</span><span class="ver-date">2026-09-09</span><span class="ver-note">9/9 업무협의(기계식주차 검토) 반영 — 회의록 아카이브에 자주식·기계식ALT-01/02·스킵플로어 4안 비교, 기계식주차장 안전관리자 선임규정, 다음단계 검토사항, 견적서 접수 내용 추가. 설계일정 탭에 "외부 용역 견적 현황" 카드 신설(토목분야 77,000,000원, 지적측량 2,521,200원). 이슈 로그의 "주차 방식 확정" 항목을 비교결과 반영해 갱신, 결정완료 로그에 스킵플로어 배제·안전관리자 규정 확인 2건 추가</span></div>
     <div class="ver-row"><span class="ver-tag">v14</span><span class="ver-date">2026-09-01</span><span class="ver-note">8/27 킥오프 회의록을 건축주 작성본·설계사 작성본 대조 구조(2개 섹션)에서, 건축주도 함께 보는 문서 성격에 맞춰 하나의 통합 회의록(①~⑰, 주제별 재배열)으로 재정리 — "대조 결과" 등 출처 구분 표현 제거</span></div>
     <div class="ver-row"><span class="ver-tag">v13</span><span class="ver-date">2026-09-01</span><span class="ver-note">설계사(플라건축) 작성 정식 킥오프 회의록 수령·대조 반영 — 건축주 회의록과 겹치지 않는 내용만 회의록 아카이브에 14개 항목 추가(법규수치, 입면 3案, 진입마당, 주차경사로, 약국 위치, 설계일정 구체화, 시공사선정 시점, 정책변화 대응 등). "전체 프로젝트 일정 개요" 표도 새로 확인된 날짜(2027.01 계획안 1차승인, 2027.08 심의완료, 2028.02 실시설계완료, 2028년 봄 시공사선정 가능, 2029.09 명도시점)로 갱신</span></div>
