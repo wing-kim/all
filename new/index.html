@@ -246,6 +246,7 @@ footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--border);
   <button class="tab" onclick="go('contract',this)"><span class="pip" style="background:#f5bc30"></span>계약조건 요약</button>
   <button class="tab" onclick="go('meeting',this)"><span class="pip" style="background:#22d186"></span>회의록 아카이브</button>
   <button class="tab" onclick="go('issue',this)"><span class="pip" style="background:#f03860"></span>이슈 · 의사결정 로그</button>
+  <button class="tab" onclick="go('model',this)"><span class="pip" style="background:#9060f0"></span>3D 모델</button>
 </div>
 
 <!-- ══ TAB 1. 설계일정/마일스톤 ══ -->
@@ -709,11 +710,25 @@ ALT-01(격자 프레임, AC호텔 참고사례, 마감재료 색상·성격) / A
   </div>
 </div>
 
+<!-- ══ TAB 5. 3D 모델 (별도 파일 3d-model.html 연결 — 3D 수정 시 그 파일만 덮어쓰기) ══ -->
+<div id="sec-model" class="sec">
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <h3 style="margin:0">3D 모델 <span class="n">주차 방식 · 1층 안 · 외장 · 내부 보기 · 일조</span></h3>
+      <a class="btn-link" href="3d-model.html" target="_blank">↗ 새 창에서 전체화면</a>
+    </div>
+    <iframe id="modelFrame" data-src="3d-model.html" title="케이프혼타워 3D 모델"
+      style="width:100%;height:calc(100vh - 170px);min-height:560px;border:0;display:block;background:#e4e7e6"
+      allow="fullscreen"></iframe>
+  </div>
+</div>
+
 <footer>
   CAPE HORN TOWER · 케이프혼타워 신축 진행 · 블루피카(주) 내부용
   <br>
-  <span class="ver-badge" onclick="document.getElementById('verPanel').classList.toggle('open')">🕘 v17 · 버전 기록 보기</span>
+  <span class="ver-badge" onclick="document.getElementById('verPanel').classList.toggle('open')">🕘 v18 · 버전 기록 보기</span>
   <div class="ver-panel" id="verPanel">
+    <div class="ver-row"><span class="ver-tag">v18</span><span class="ver-date">2026-10-08</span><span class="ver-note">"3D 모델" 탭 추가 — 같은 폴더의 별도 파일(3d-model.html)을 탭 클릭 시에만 불러오는 연결 방식. 3D 수정 시 3d-model.html만 덮어쓰면 탭에 최신본 반영, 새 창 전체화면 링크 포함</span></div>
     <div class="ver-row"><span class="ver-tag">v17</span><span class="ver-date">2026-09-30</span><span class="ver-note">9/28 업무협의(기계주차 vs 엘리베이터+자주식 검토) 반영 — 회의록 아카이브 맨 위에 추가(주차 2안 압축·2단/3단 결정 요청·주차장법 §16의2 전면공지 기준, 경사로 4.8m, 선큰 위치 변경, 대지 단차, 측량·지반조사 소요기간, 1층 코너 디자인, 다음 회의 10/13 09:30). 이슈 로그 "주차 방식 최종 확정"·"토목·측량 용역" 갱신, "대지 단차 계획"·"선큰 위치·코너 평면" 신규, 결정완료 로그 2건 추가</span></div>
     <div class="ver-row"><span class="ver-tag">v16</span><span class="ver-date">2026-09-09</span><span class="ver-note">회의록 아카이브 정렬 수정 — 최신 회의가 항상 맨 위에 오도록 순서 변경(9/9 → 8/27 → 4/29). v15에서 새 항목을 맨 위(4/29 다음)에 잘못 삽입해 날짜 순서가 뒤섞였던 것을 바로잡음</span></div>
     <div class="ver-row"><span class="ver-tag">v15</span><span class="ver-date">2026-09-09</span><span class="ver-note">9/9 업무협의(기계식주차 검토) 반영 — 회의록 아카이브에 자주식·기계식ALT-01/02·스킵플로어 4안 비교, 기계식주차장 안전관리자 선임규정, 다음단계 검토사항, 견적서 접수 내용 추가. 설계일정 탭에 "외부 용역 견적 현황" 카드 신설(토목분야 77,000,000원, 지적측량 2,521,200원). 이슈 로그의 "주차 방식 확정" 항목을 비교결과 반영해 갱신, 결정완료 로그에 스킵플로어 배제·안전관리자 규정 확인 2건 추가</span></div>
@@ -741,6 +756,10 @@ function go(id,el){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
   el.classList.add('on');
   document.getElementById('sec-'+id).classList.add('on');
+  if(id==='model'){ // 3D는 무거우니 탭을 눌렀을 때만 불러오고, ?v= 로 GitHub 캐시를 피해 항상 최신본을 엶
+    const f=document.getElementById('modelFrame');
+    if(!f.getAttribute('src')) f.src=f.dataset.src+'?v='+Date.now();
+  }
 }
 
 /* ══ 진행률 계산 ══
