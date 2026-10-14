@@ -257,6 +257,7 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 .app.photo .compass,.app.photo .labels,.app.photo #mini,.app.photo .pad,.app.photo .ihud,.app.photo .uphud,.app.photo .hint,.app.photo .hqtag,.app.photo .intui,.app.photo #lblBtn{display:none!important}
 .app.photo .views{z-index:4}
 .app:not(.photo) .phonly,.phhide{display:none!important}
+.app:not(.photo) .phprep{display:none}.app.photo .phnone{opacity:.5}.phprep{margin-left:5px;font-size:10px;padding:0 5px;border-radius:8px;background:#8883;white-space:nowrap}
 .phonly small{margin-left:5px;font-size:10.5px;padding:0 5px;border-radius:8px;background:#f1c40f33;color:inherit;opacity:.9}
 .app.photo .views button:not([data-ph]){display:none}
 /* 실사 모드: 사진에 반영되지 않는 설정은 회색 비활성 */
@@ -6147,7 +6148,7 @@ function cornerLantern(g,poly,yF,r){const k=cornerOf(poly),C=poly[k],A=poly[(k-1
 const NORTH_DEG=36,NV=[-Math.cos(NORTH_DEG*Math.PI/180),-Math.sin(NORTH_DEG*Math.PI/180)],EV=[-NV[1],NV[0]];
 // ================= build =================
 const state={era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
-window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?e.parentElement.textContent.trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
+window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?[...e.parentElement.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
 const bld=new THREE.Group();scene.add(bld);
 const extG=new THREE.Group(),frG=new THREE.Group();
 let SCH=null,LEVELS=[],LG=[];
@@ -7638,7 +7639,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v86';
+  window.CH_VER='v87';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -7698,7 +7699,7 @@ let last=performance.now();
     const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';
     if(!M){T.textContent='실사';bar([],null,()=>{});empty('실사 사진 목록을 불러오지 못했습니다.<br>인터넷 연결 또는 사진 저장소(kapehorn-media)를 확인해 주세요.<br><button id="phTo3d">3D로 보기</button>');document.getElementById('phTo3d').onclick=()=>off3d();return}
     if(PH.mode==='ext'){const [g,k]=design(),d=M.ext[g]&&M.ext[g][k],nm=(PH.extra&&PH.extra[1]===k&&d&&d.name)||(window.CH.dname&&window.CH.dname())||(d&&d.name)||k;
-      if(!d||!Object.keys(d.img||{}).length){T.innerHTML=`${nm}<small>실사 준비 중</small>`;bar([],null,()=>{});empty(`'${nm}'은(는) 아직 실사 사진이 없습니다.<br><button id="phTo3d">3D로 보기</button>`);document.getElementById('phTo3d').onclick=()=>off3d();return}
+      if(!d||!Object.keys(d.img||{}).length){T.innerHTML=`${nm}<small>실사 준비 중</small>`;bar([],null,()=>{});empty(`'${nm}' — 360° 실사 사진 준비 중입니다.<br><button id="phTo3d">3D로 보기</button>`);document.getElementById('phTo3d').onclick=()=>off3d();return}
       empty('');const A=(d.alt&&d.alt[window.CH.state.scheme])||{},im=a=>A[String(a)]||d.img[String(a)],angs=[...new Set(Object.keys(d.img).concat(Object.keys(A)))].map(Number).sort((a,b)=>a-b);if(!angs.includes(PH.ang))PH.ang=angs.reduce((p,a)=>Math.abs(a-PH.ang)<Math.abs(p-PH.ang)?a:p,angs[0]);
       T.innerHTML=`${nm}<small>${d.r360?'360° · ':''}${ANG[PH.ang]||PH.ang+'°'}</small>`;
       show(im(PH.ang),nm);bar(angs.map(a=>[a,a+'°']),PH.ang,a=>{PH.ang=a;render()});angs.forEach(a=>{const i=new Image();i.src=src(im(a))})}
@@ -7736,7 +7737,10 @@ let last=performance.now();
         if(d.status==='hide'||!Object.keys(d.img||{}).length)return;
         const L=document.createElement('label');L.className='phonly';L.title='실사 사진만 있는 시안 (3D 형태는 아직 없음)';
         L.innerHTML=`<input type="radio" name="${nm}" value="${k}" data-phx="1"> ${d.name}<small>실사</small>`;seg.appendChild(L);
-        L.querySelector('input').addEventListener('change',()=>{PH.extra=[g,k];render()})})});
+        L.querySelector('input').addEventListener('change',()=>{PH.extra=[g,k];render()})});
+    // 360° 실사 사진이 아직 없는 시안: 실사 모드에서 흐리게 + '준비 중' 표시 (선택하면 준비 중 안내)
+      seg.querySelectorAll(`input[name=${nm}]`).forEach(r=>{const d=(M.ext[g]||{})[r.value],L=r.closest('label');
+        if((!d||!Object.keys(d.img||{}).length)&&!L.querySelector('.phprep')){L.classList.add('phnone');L.insertAdjacentHTML('beforeend','<small class="phprep">준비 중</small>')}})});
     document.addEventListener('change',e=>{const t=e.target;if(t.matches&&t.matches('input[name=dsg],input[name=cfin]')&&!t.dataset.phx)PH.extra=null},true)}
   loadMan().then(applyCat);
   PH.view=v=>{if(v==='int'){PH.mode='int';render();return true}if(VIEW2ANG[v]!=null){PH.mode='ext';PH.ang=VIEW2ANG[v];render();return true}return false};
