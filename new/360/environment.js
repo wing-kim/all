@@ -68,6 +68,25 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
   // Photographic 1.8 m granite sheet; preserve the context mass and window layout.
   const graniteColor=texture('facade-granite_color.jpg',1/1.8,true),graniteNormal=texture('facade-granite_normal.jpg',1/1.8),graniteRough=texture('facade-granite_rough.jpg',1/1.8);
+  // The original context describes a small white tiled facade. Rebuild a restrained
+  // ceramic finish at an illustrative 200 mm pitch, without adding mesh displacement.
+  function mosaicTextures(){
+    const size=1024,cells=8,pitch=size/cells,metres=1.6,pixelMetres=metres/size;
+    const height=(x,y)=>{const u=((x%pitch)+pitch)%pitch+.5,v=((y%pitch)+pitch)%pitch+.5;return .0008*Math.max(0,Math.min(1,(Math.min(u,pitch-u,v,pitch-v)-.8)/1.8));};
+    const canvases=Array.from({length:3},()=>Object.assign(document.createElement('canvas'),{width:size,height:size}));
+    const contexts=canvases.map(c=>c.getContext('2d')),images=contexts.map(c=>c.createImageData(size,size));
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+      const i=(y*size+x)*4,tileX=Math.floor(x/pitch),tileY=Math.floor(y/pitch),seed=(Math.imul(tileX+17,73856093)^Math.imul(tileY+29,19349663))>>>0;
+      const raised=height(x,y)/.0008,base=224+seed%9,grout=190;
+      const value=grout+(base-grout)*raised;
+      images[0].data.set([value,value,value-3,255],i);
+      const dx=(height(x+1,y)-height(x-1,y))/(2*pixelMetres),dy=(height(x,y+1)-height(x,y-1))/(2*pixelMetres),length=Math.hypot(dx,dy,1);
+      images[1].data.set([127.5-127.5*dx/length,127.5+127.5*dy/length,127.5+127.5/length,255],i);
+      const rough=raised?178+seed%17:240;images[2].data.set([rough,rough,rough,255],i);
+    }
+    return canvases.map((canvas,i)=>{contexts[i].putImageData(images[i],0,0);const t=new T.CanvasTexture(canvas);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1/metres,1/metres);t.anisotropy=4;if(i===0)t.encoding=T.sRGBEncoding;return t;});
+  }
+  const [mosaicColor,mosaicNormal,mosaicRough]=mosaicTextures();
   function metricWallUV(mesh){
     const g=mesh.geometry.clone(),p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
     // Extruded side vertices are separate from roof vertices. Project each planar wall
@@ -122,6 +141,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       metricWallUV(m);
       for(const mat of m.material.slice(1)){mat.map=graniteColor;mat.normalMap=graniteNormal;mat.normalScale.set(.22,.22);mat.roughnessMap=graniteRough;mat.roughness=.7;mat.color.setRGB(...(kind==='esm'?[1.25,1.5,1.8]:[2.3,2.65,3]));mat.name='Illustrative granite facade';}
       m.userData.contextStoneFinish={asset:'granite_tile_03',textureWidthMetres:1.8,estimatedTileMetres:[.6,.9]};
+    }
+    if(!keepFacade&&kind==='tile'&&Array.isArray(m.material)){
+      metricWallUV(m);
+      for(const mat of m.material.slice(1)){mat.map=mosaicColor;mat.normalMap=mosaicNormal;mat.normalScale.set(1,1);mat.roughnessMap=mosaicRough;mat.roughness=.8;mat.color.setRGB(1,1,1);mat.name='Illustrative white ceramic mosaic';}
+      m.userData.contextTileFinish={pitchMetres:.2,textureWidthMetres:1.6,reliefMetres:.0008,procedural:true};
     }
     let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
     const ribbon=!apartment&&['office','ribbon','band','wrib'].includes(kind),windowWidth=apartment?2.65:ribbon?2.98:kind==='esm'?1.1:kind==='tile'?1.6:2.14;

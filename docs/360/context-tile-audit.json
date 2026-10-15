@@ -1,0 +1,65 @@
+{
+  "material": [
+    {
+      "centerNormal": [
+        128,
+        128,
+        255,
+        255
+      ],
+      "edgeNormal": [
+        98,
+        128,
+        251,
+        255
+      ],
+      "edges": 36,
+      "finish": {
+        "pitchMetres": 0.2,
+        "procedural": true,
+        "reliefMetres": 0.0008,
+        "textureWidthMetres": 1.6
+      },
+      "kind": "tile",
+      "mapSize": [
+        1024,
+        1024
+      ],
+      "maxHorizontalUVError": 0.0000018524594018742848,
+      "repeat": [
+        0.625,
+        0.625
+      ]
+    }
+  ],
+  "render": {
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.622901264623862
+      }
+    }
+  },
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "camera": [
+    -32,
+    12,
+    46
+  ],
+  "target": [
+    -4,
+    8,
+    24
+  ]
+}
