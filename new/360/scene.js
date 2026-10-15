@@ -5,7 +5,14 @@
   const {THREE:T,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,P,inPoly}=C;
   const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});
   const style=document.createElement('style');style.textContent='.panel,.views,.tools,.compass,.hint,.labels,.hqtag{display:none!important}.viewer{width:100%}';document.head.appendChild(style);
-  state.scheme='alt4';C.build();C.setRender(true);C.hideGuides();
+  let initial={};
+  try{initial=JSON.parse(new URLSearchParams(location.hash.slice(1)).get('config')||'{}')}catch(error){console.warn('Invalid review configuration',error)}
+  if(initial.state){for(const key of Object.keys(state)){const value=initial.state[key];if(Object.prototype.hasOwnProperty.call(initial.state,key))state[key]=value;}}
+  else state.scheme='alt4';
+  if(['am','pm','sunset'].includes(initial.time))R3D.time=initial.time;
+  if(initial.season)R3D.season=initial.season;
+  C.build();C.setRender(true);C.hideGuides();
+  window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
   if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
   // Remove the drafting north marker only in the opt-in continuous viewer.
   C.site.children.filter(o=>o.children.some(c=>c.geometry?.type==='RingGeometry')).forEach(o=>o.visible=false);
@@ -202,6 +209,7 @@
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
   const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
   setQuality(compactTouch?'balanced':'high');view('corner');
+  if(initial.camera&&initial.target){flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
@@ -212,6 +220,7 @@
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
     view,quality:setQuality,
+    pose:(position,target)=>{flight=null;C.cancel();controls.minDistance=1;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
@@ -242,8 +251,9 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js');
+  await load('360/environment.js?v=review-6');
   await window.enhanceTowerEnvironment(C,extra,load);
+  if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
     const generator=new T.PMREMGenerator(renderer);const target=generator.fromEquirectangular(hdr);env=target.texture;hdr.dispose();generator.dispose();environmentStatus='HDRI 적용 · 현장 촬영 아님';finishLighting();
@@ -256,6 +266,6 @@
     const pmrem=new T.PMREMGenerator(renderer);env=pmrem.fromCubemap(cube.texture).texture;pmrem.dispose();cube.dispose();scene.remove(probe);
     bld.traverse(o=>{if(o.material&&!Array.isArray(o.material)&&o.material.envMap){o.material.envMap=env;o.material.envMapIntensity=.85;o.material.needsUpdate=true}});
     finishLighting();
-    if(new URLSearchParams(location.search).get('engine')==='cinema'){environmentStatus='정밀 조명 준비 중';try{const modern=await import('./modern.js');await modern.start(C)}catch(error){environmentStatus='정밀 렌더러 미지원 · 실시간 화면';console.warn(environmentStatus,error)}}
+    if(new URLSearchParams(location.search).get('engine')==='cinema'){environmentStatus='정밀 조명 준비 중';try{const modern=await import('./modern.js?v=review-6');await modern.start(C)}catch(error){environmentStatus='정밀 렌더러 미지원 · 실시간 화면';console.warn(environmentStatus,error)}}
   }catch(e){environmentStatus='HDRI 실패 · 기존 하늘 조명 사용';console.warn(environmentStatus,e)}
 })();

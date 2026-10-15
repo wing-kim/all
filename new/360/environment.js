@@ -5,18 +5,6 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   function texture(name,repeat,color){let done;pendingTextures.push(new Promise(resolve=>{done=resolve}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
   function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
   surface(RMAT.road,'asphalt_02',.2);surface(RMAT.ground,'asphalt_02',.2);RMAT.ground.color.set('#b4b8bb').convertSRGBToLinear();surface(RMAT.walk,'pavement_04',1/3.1);surface(RMAT.site,'pavement_04',1/3.1);
-  // Legacy sports graphics are drawn with CSS/sRGB colors. Tag only these existing
-  // horizontal canvases so the linear-light renderer does not treat them as linear albedo.
-  const sportsMaps=new Map();let sportsSurfaceCount=0;
-  C.city.traverse(o=>{
-    const m=o.material,t=m?.map,img=t?.image;
-    if(!o.isMesh||o.geometry?.type!=='PlaneGeometry'||o.position.y<.05||o.position.y>.07||!img)return;
-    if(!((img.width===320&&img.height===512)||(img.width===128&&img.height===96)))return;
-    if(!sportsMaps.has(t)){const copy=t.clone();copy.encoding=T.sRGBEncoding;copy.needsUpdate=true;sportsMaps.set(t,copy);}
-    o.material=m.isMeshBasicMaterial?new T.MeshStandardMaterial({color:m.color.clone(),roughness:.95,metalness:0}):m.clone();
-    o.material.map=sportsMaps.get(t);o.material.needsUpdate=true;o.receiveShadow=true;o.userData.sportsSurface=true;sportsSurfaceCount++;
-  });
-  extra.userData.sportsSurfaceAudit={count:sportsSurfaceCount,textureCount:sportsMaps.size};
   // A shared linear albedo correction also survives conversion to the path tracer.
   // The previous WebGL-only shader left the precision pavement brown and much darker.
   [RMAT.walk,RMAT.site].forEach(m=>{m.color.setRGB(1.65,1.85,2.15)});

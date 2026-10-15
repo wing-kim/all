@@ -48,9 +48,9 @@ export async function start(C){
   n.clearcoat=m.clearcoat||0;n.clearcoatRoughness=m.clearcoatRoughness||0;
   n.polygonOffset=!!m.polygonOffset;n.polygonOffsetFactor=m.polygonOffsetFactor||0;n.polygonOffsetUnits=m.polygonOffsetUnits||0;
   if(m.userData?.satinMetal){n.anisotropy=.32;n.clearcoat=.12;n.clearcoatRoughness=.28;}
-  if(glass){n.color.set('#f3f9fc');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.46;n.thickness=0;n.side=T.DoubleSide;}
-  // Appearance approximation for reflective facade glazing; not measured product optics.
-  if(m===C.M.glass){n.metalness=.26;n.roughness=.035;}
+  if(glass){n.color.set('#f3f9fc');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.52;n.thickness=0;n.side=T.DoubleSide;}
+  // Coating appearance study, not a measured glazing specification. Keep the base dielectric.
+  if(m===C.M.glass){n.metalness=0;n.ior=1.8;n.clearcoat=1;n.clearcoatRoughness=.03;n.roughness=.025;}
   if(glass)n.userData.glazingRole=m===C.M.glass?'facade':m===C.M.glass1?'ground':'clear';
   // Opaque painted backing with a glossy surface, preserving the authored spandrel geometry.
   if(m===C.FM?.spandrel){n.color.set('#41494d');n.opacity=1;n.transparent=false;n.metalness=.05;n.roughness=.35;n.clearcoat=1;n.clearcoatRoughness=.06;n.userData.spandrelFinish=true;}
@@ -72,9 +72,18 @@ export async function start(C){
   }
   for(const n of copies){for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld)n.userData.primary=true;}scene.add(n)}
  });
- const hdr=await new HDRLoader().loadAsync('360/assets/clear-noon-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=1;scene.backgroundIntensity=1.55;
+ const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.8;scene.backgroundIntensity=1.55;
  const daylightColor=()=>C.R3D.time==='sunset'?C.sun.color.getHex():C.R3D.time==='am'?0xfff4e6:0xfff3dd;
- const sun=new T.DirectionalLight(daylightColor(),C.R3D.time==='sunset'?2:3.7);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
+ const sun=new T.DirectionalLight(daylightColor(),C.R3D.time==='sunset'?2:1.2);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
+ // Measured brightest texel of this specific 2K HDR: azimuth .59672, elevation .83602 rad.
+ // Rotate the environment and visible sky together; align the daylight key to the HDR sun.
+ function alignDaylight(){
+  const azimuth=C.R3D.time==='am'?Math.atan2(-40,65):Math.atan2(70,-65);
+  const elevation=.8360195293976744,r=140,flat=Math.cos(elevation)*r;
+  scene.environmentRotation.y=scene.backgroundRotation.y=.5967185264875144-azimuth;
+  if(C.R3D.time!=='sunset')sun.position.set(sun.target.position.x+Math.cos(azimuth)*flat,sun.target.position.y+Math.sin(elevation)*r,sun.target.position.z+Math.sin(azimuth)*flat);
+ }
+ alignDaylight();
  // Keep moving-preview glass reflections tied to the actual surrounding scene.
  // Path tracing continues to use geometric reflections and the original lighting HDR.
  const probeTarget=new T.CubeRenderTarget(256,{type:T.HalfFloatType});
@@ -91,8 +100,8 @@ export async function start(C){
  // Protect the nearby architecture and leave the photographic sky untouched.
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  const hazeColor=new T.Color('#bdcbd5');
- const whiteBalance=uniform(new T.Vector3(.93,1.015,1.03));
- const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),1.12),node.a);
+ const whiteBalance=uniform(new T.Vector3(.97,1,1.025)),colorSaturation=uniform(1.03);
+ const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),colorSaturation),node.a);
  const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(previewPass.mul(filteredAO.r.mul(.65).add(.35))));
  const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=fxaa(atmospheric(previewPass));
  const precisionTexture=textureNode(new T.Texture());
@@ -113,13 +122,13 @@ export async function start(C){
    renderer.initTexture(t);transmissionRevision++;for(const m of previewGlass){m.customProgramCacheKey=()=>`tower-transmission-${transmissionRevision}`;m.needsUpdate=true;}
   }
  }
- function renderPreview(){
+ function renderPreview(moving=false){
   prepareTransmissionViewport();
   // Moving raster frames use an alpha approximation of thin glass. Screen-space
   // refraction through overlapping facade faces otherwise obscures the interiors.
   // Restore every original material before the path tracer or guide pass runs.
   for(const b of previewBindings)b.object.material=b.replacement;
-  try{if(previewHigh)previewPipeline.render();else balancedPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
+  try{if(previewHigh&&!moving)previewPipeline.render();else balancedPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
  }
  let presented=false,previewCached=false;
  // While the camera is still, keep a single exact preview frame above the tracer.
@@ -134,7 +143,8 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- window.TOWER_CINEMA={scene,camera,renderer,tracer,context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:3.7;tracer.updateLights()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);invalidatePresentation()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ window.TOWER_CINEMA={scene,camera,renderer,tracer,
+context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();tracer.updateLights();tracer.updateEnvironment()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);invalidatePresentation()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){invalidatePresentation();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer.updateCamera()}
   // Keep stochastic grain off screen during movement and convergence.
@@ -143,9 +153,13 @@ export async function start(C){
     if(gpuError)throw gpuError;
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200)tracer.renderSample();
-    if(performance.now()-lastMotion<=200)renderPreview();
+    if(performance.now()-lastMotion<=200)renderPreview(true);
     else if(!tracer._denoiser?.complete){if(!previewCached)cachePreview();}
-    else if(tracer._denoiser.texture){cachedPreview.style.display='none';if(precisionTexture.value!==tracer._denoiser.texture){precisionTexture.value=tracer._denoiser.texture;precisionPipeline.needsUpdate=true;}precisionPipeline.render();presented=true;}
+    else if(tracer._denoiser.texture){cachedPreview.style.display='none';if(precisionTexture.value!==tracer._denoiser.texture){precisionTexture.value=tracer._denoiser.texture;precisionPipeline.needsUpdate=true;}// The atmospheric depth node reuses previewPass. Keep its auxiliary raster
+      // render on the same non-transmissive preview materials as moving frames.
+      for(const b of previewBindings)b.object.material=b.replacement;
+      try{precisionPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
+      presented=true;}
   }catch(error){console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA_FAILURE_REASON=String(error?.message||error);window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
 
  }frame();
@@ -157,7 +171,7 @@ export function addInteriorLighting(state,C){
   // Distribute soft interior light across the glazed frontage, rather than
   // leaving one bright central patch per floor. Fixture positions remain inside the plan.
   const positions=[[-9.5,-7],[-9.5,0],[-9.5,6]].filter(([x,z])=>C.inPoly([x*41.6+914,z*41.6+770],l.poly));
-  for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?240:180)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);state.scene.add(light);}
+  for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?60:45)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);state.scene.add(light);}
  }
  state.tracer.updateLights();
 }
