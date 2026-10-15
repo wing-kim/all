@@ -242,6 +242,25 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     });
   }catch(error){console.warn('Vehicle asset unavailable',error)}
   await load('360/assets/BufferGeometryUtils.js');
+  await load('360/assets/RoundedBoxGeometry.js');
+  // Rendering-only edge finish: preserve the authored member and opening bounds.
+  // Real extrusion radii require a manufacturer profile; this is a 2.5 mm study.
+  const edgeAudit={count:0,maxBoundsDelta:0,maxRadius:0,addedTriangles:0};
+  function renderGeometry(o,root){
+    const source=o.geometry,m=o.material;
+    if(root!==C.bld||!m.userData.satinMetal||!source.parameters?.width)return source.clone();
+    source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),center=source.boundingBox.getCenter(new T.Vector3()),scale=o.getWorldScale(new T.Vector3());
+    if(Math.min(scale.x,scale.y,scale.z)<=0)return source.clone();
+    const physical=size.clone().multiply(scale),sorted=physical.toArray().sort((a,b)=>a-b);
+    if(sorted[0]<.015||sorted[1]>.35||sorted[2]<.5)return source.clone();
+    const radius=Math.min(.0025,sorted[0]*.06),geo=new T.RoundedBoxGeometry(physical.x,physical.y,physical.z,1,radius);
+    geo.scale(1/scale.x,1/scale.y,1/scale.z);geo.translate(center.x,center.y,center.z);geo.computeBoundingBox();
+    const oldBounds=source.boundingBox.clone().applyMatrix4(o.matrixWorld),newBounds=geo.boundingBox.clone().applyMatrix4(o.matrixWorld);
+    edgeAudit.count++;edgeAudit.maxRadius=Math.max(edgeAudit.maxRadius,radius);
+    edgeAudit.maxBoundsDelta=Math.max(edgeAudit.maxBoundsDelta,oldBounds.min.distanceTo(newBounds.min),oldBounds.max.distanceTo(newBounds.max));
+    edgeAudit.addedTriangles+=geo.attributes.position.count/3-(source.index?source.index.count:source.attributes.position.count)/3;
+    return geo;
+  }
   function batch(root){
     root.updateWorldMatrix(true,true);const inverse=root.matrixWorld.clone().invert(),groups=new Map();
     root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||Array.isArray(o.material)||o.material.transparent||o===root)return;
@@ -249,14 +268,14 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       const key=o.material.id+':'+o.castShadow+':'+Object.keys(o.geometry.attributes).sort().join(',');
       if(!groups.has(key))groups.set(key,[]);groups.get(key).push(o);
     });
-    groups.forEach(list=>{if(list.length<3)return;const parts=list.map(o=>o.geometry.clone().applyMatrix4(inverse.clone().multiply(o.matrixWorld)));
+    groups.forEach(list=>{if(list.length<3)return;const parts=list.map(o=>renderGeometry(o,root).applyMatrix4(inverse.clone().multiply(o.matrixWorld)));
       // Convert all to triangle soup so indexing differences do not prevent a safe merge.
       const geos=parts.map(g=>g.index?g.toNonIndexed():g),merged=T.BufferGeometryUtils.mergeBufferGeometries(geos);
       if(merged){const m=new T.Mesh(merged,list[0].material);m.name='Static material batch';m.castShadow=list[0].castShadow;m.receiveShadow=true;list.forEach(o=>{o.visible=false;o.userData.batched=true});root.add(m)}
       new Set([...parts,...geos]).forEach(g=>g.dispose());
     });
   }
-  masses.forEach(batch);batch(C.bld);batch(extra);
+  masses.forEach(batch);batch(C.bld);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;
   // Conversion to the precision renderer snapshots images: wait for every requested map.
   await Promise.all(pendingTextures);
 };

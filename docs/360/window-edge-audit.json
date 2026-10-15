@@ -1,0 +1,47 @@
+{
+  "active": true,
+  "camera": [
+    -44.9839958328112,
+    21.03807949993734,
+    45.342715499436096
+  ],
+  "edge": {
+    "addedTriangles": 48768,
+    "count": 508,
+    "maxBoundsDelta": 0,
+    "maxRadius": 0.0025
+  },
+  "failure": null,
+  "render": {
+    "materials": 1599,
+    "objects": 2751,
+    "samples": {
+      "avg": 63.89032454114501,
+      "max": 64,
+      "min": 48,
+      "samplesPerSecond": 5.363076012855285
+    }
+  },
+  "scheme": "alt4",
+  "target": [
+    -3,
+    16,
+    0
+  ],
+  "status": "정밀 광선 추적 · 64 샘플 · 노이즈 제거 완료",
+  "comparisonCamera": [
+    -19,
+    10,
+    5
+  ],
+  "comparisonTarget": [
+    -13,
+    9,
+    0
+  ],
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "vertices": 119173
+  }
+}

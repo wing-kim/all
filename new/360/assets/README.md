@@ -28,3 +28,5 @@
 - `facade-office_*.jpg`: ambientCG [Facade019A](https://ambientcg.com/a/Facade019A), Lennart Demes, CC0. Original 1K JPG color, OpenGL normal, roughness and metalness; illustrative distant office buildings only.
 
 - `interior-stone_*.jpg`: Poly Haven [Marble 01](https://polyhaven.com/a/marble_01), Rob Tuytel, CC0, original 1K color/OpenGL normal/roughness. Source dimensions 1.5 × 1.5 m. Interior finish study only; not an approved material specification.
+
+- `RoundedBoxGeometry.js`: Three.js r186 examples geometry, MIT (`THREE-MODERN-LICENSE.txt`). ES module import/export adapted to the existing THREE global; used for rendering-only 2.5 mm metal edge finish.
