@@ -98,15 +98,30 @@
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting()},
     telemetry:()=>({fps,quality,environment:environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
-    exportModel:async()=>{
+    exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
-      const model=bld.clone(true),materials=[];
+      await load('360/assets/BufferGeometryUtils.js');
+      const model=new T.Group(),materials=[],geometries=[],cache=new Map();
+      const sources=scope==='scene'?[bld,C.city,C.site,C.ctx,extra,R3D.street,R3D.props]:[bld];
+      sources.forEach(source=>model.add(source.clone(true)));
       model.traverse(o=>{o.userData={};if(!o.material)return;
-        const convert=m=>{const copy=new T.MeshStandardMaterial({color:m.color||0xaaaaaa,roughness:m.roughness??.7,metalness:m.metalness??0,opacity:m.opacity,transparent:m.transparent,side:m.side});materials.push(copy);return copy};
+        const convert=m=>{
+          if(cache.has(m))return cache.get(m);
+          const copy=new T.MeshStandardMaterial({color:m.color||0xaaaaaa,roughness:m.roughness??.7,metalness:m.metalness??0,opacity:m.opacity,transparent:m.transparent,side:m.side});
+          copy.name=Object.entries(M).find(([,v])=>v===m)?.[0]||m.name||'surface-'+m.id;
+          if(scope==='scene'){copy.map=m.map||null;copy.emissive.copy(m.emissive||new T.Color(0));copy.emissiveIntensity=m.emissiveIntensity||0}
+          materials.push(copy);cache.set(m,copy);return copy;
+        };
         o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);
+        if(o.isInstancedMesh){
+          const parts=[],matrix=new T.Matrix4();
+          for(let i=0;i<o.count;i++){o.getMatrixAt(i,matrix);parts.push(o.geometry.clone().applyMatrix4(matrix))}
+          const merged=T.BufferGeometryUtils.mergeBufferGeometries(parts);parts.forEach(g=>g.dispose());
+          if(merged){o.geometry=merged;o.isInstancedMesh=false;geometries.push(merged)}
+        }
       });
       try{return await new Promise((resolve,reject)=>{try{new T.GLTFExporter().parse(model,resolve,{binary:true,onlyVisible:true})}catch(e){reject(e)}})}
-      finally{materials.forEach(m=>m.dispose())}
+      finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
