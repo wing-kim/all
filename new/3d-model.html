@@ -7604,13 +7604,13 @@ buildContext();existBuilding();
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
 // Opt-in validation only. Ordinary v87 pages keep their original rendering path.
-if(new URLSearchParams(location.search).get('lab')==='360') {
+if(['360','verify'].includes(new URLSearchParams(location.search).get('lab'))) {
   window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,city,site,ctx,sun,hemi,P,inPoly,
-    levels:()=>LEVELS,build,setRender,applyTime,updateReflections,resizeR,
+    levels:()=>LEVELS,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,updateReflections,resizeR,
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  const script=document.createElement('script');script.src='360/scene.js';document.head.appendChild(script);
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){
@@ -7619,7 +7619,7 @@ let last=performance.now();
     step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
   if(I.on&&I.doll)step(dt);
   if(anim){let t=Math.min(1,(now-anim.s)/900);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-  controls.update();occl();drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
+  controls.update();occl();if(!window.TOWER_MODERN_ACTIVE)drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
 })(performance.now());
 })();
 </script>

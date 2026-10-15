@@ -6,6 +6,20 @@
   const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});
   const style=document.createElement('style');style.textContent='.panel,.views,.tools,.compass,.hint,.labels,.hqtag{display:none!important}.viewer{width:100%}';document.head.appendChild(style);
   state.scheme='alt4';C.build();C.setRender(true);C.hideGuides();
+  if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
+  // Remove the drafting north marker only in the opt-in continuous viewer.
+  C.site.children.filter(o=>o.children.some(c=>c.geometry?.type==='RingGeometry')).forEach(o=>o.visible=false);
+  // Separate ground strata physically; prevent coplanar asphalt intersections from fighting.
+  C.site.traverse(o=>{
+    if(!o.isMesh)return;
+    const m=o.material;
+    if(m===RMAT.ground)o.position.y-=.15;
+    if(m===RMAT.walk)o.position.y+=.12;
+    if(m===RMAT.site)o.position.y+=.08;
+    if(m===RMAT.road){m.polygonOffset=true;m.polygonOffsetFactor=-1;m.polygonOffsetUnits=-1;}
+    if(m?.isMeshBasicMaterial&&o.geometry?.type==='BufferGeometry'){o.position.y+=.045; m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;}
+  });
+  camera.fov=45;camera.near=2;camera.far=1800;camera.updateProjectionMatrix();
   controls.enablePan=false;controls.minDistance=28;controls.maxDistance=180;
   controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI*.485;controls.dampingFactor=.075;
   let flight=null;
@@ -45,7 +59,7 @@
       dummy.rotation.set(random()*Math.PI,random()*Math.PI,random()*Math.PI);dummy.scale.setScalar(.75+random()*.9);dummy.updateMatrix();leaves.setMatrixAt(n++,dummy.matrix);
     }
   }
-  [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);plant(x,0,z,4.8)});
+  [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);/* Replaced below by scanned tree assets. */});
   C.levels().filter(l=>l.kind==='upper').forEach(l=>{const [x,z]=P(445,480);box(extra,x,l.y+.62,z,.45,.5,.45,pot);plant(x,l.y+.9,z,1.1)});
   leaves.count=n;leaves.instanceMatrix.needsUpdate=true;extra.add(leaves);
   // Fine surface relief, rather than painting lighting into albedo.
@@ -53,18 +67,19 @@
   for(let i=0;i<pixels.data.length;i+=4){const v=115+random()*30;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;pixels.data[i+3]=255}ctx.putImageData(pixels,0,0);
   const relief=new T.CanvasTexture(canvas);relief.wrapS=relief.wrapT=T.RepeatWrapping;relief.repeat.set(2,2);
   [RMAT.road,RMAT.walk,RMAT.site].forEach(m=>{m.bumpMap=relief;m.bumpScale=m===RMAT.road?.035:.012;m.needsUpdate=true});
-  let env=null,environmentStatus='불러오는 중';
+  let env=null,skyTexture=null,environmentStatus='불러오는 중';
   function finishLighting(){
-    M.glass.color.set('#75929d').convertSRGBToLinear();M.glass.metalness=.08;M.glass.roughness=.085;M.glass.opacity=.72;M.glass.depthWrite=false;
-    M.glass1.color.copy(M.glass.color);M.glass1.metalness=.08;M.glass1.roughness=.1;M.glass1.opacity=.72;M.glass1.depthWrite=false;
-    if(env){scene.environment=env;[M.glass,M.glass1].forEach(m=>{m.envMap=env;m.envMapIntensity=.55;m.needsUpdate=true})}
+    M.glass.color.set('#698994').convertSRGBToLinear();M.glass.metalness=.38;M.glass.roughness=.085;M.glass.opacity=.38;M.glass.depthWrite=false;M.glass.side=T.FrontSide;M.glass1.side=T.FrontSide;
+    M.glass1.color.copy(M.glass.color);M.glass1.metalness=.38;M.glass1.roughness=.1;M.glass1.opacity=.38;M.glass1.depthWrite=false;
+    if(env){scene.environment=env;[M.glass,M.glass1].forEach(m=>{m.envMap=env;m.envMapIntensity=.9;m.needsUpdate=true})}
     R3D.grade.uniforms.vig.value=.08;R3D.grade.uniforms.sat.value=1;R3D.grade.uniforms.con.value=1.01;
-    renderer.toneMappingExposure=.8;renderer.outputEncoding=T.LinearEncoding;
+    renderer.toneMappingExposure=1.02;renderer.outputEncoding=T.LinearEncoding;
     // Tight receiver volume: the legacy city-wide shadow frustum caused banding at this scale.
     C.sun.position.set(...(R3D.time==='am'?[65,100,-40]:R3D.time==='sunset'?[-100,20,50]:[-65,105,70]));C.sun.target.position.set(-3,12,0);scene.add(C.sun.target);
     Object.assign(C.sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});
     C.sun.shadow.camera.updateProjectionMatrix();C.sun.shadow.bias=-.0003;C.sun.shadow.normalBias=.18;
-    C.sun.intensity=R3D.time==='sunset'?1.4:2.1;C.hemi.intensity=.24;
+    C.sun.intensity=R3D.time==='sunset'?1.4:1.65;C.hemi.intensity=.16;
+    if(skyTexture){scene.background=skyTexture;R3D.sky.visible=false;}
     R3D.sky.material.uniforms.turbidity.value=2;
     R3D.sky.material.uniforms.sunPosition.value.copy(C.sun.position).normalize();
     bld.traverse(o=>{if(o.material===M.glass||o.material===M.glass1)o.castShadow=false});
@@ -72,10 +87,10 @@
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
   function view(name){
-    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.16,-1],right:[0,.16,1],aerial:[-1,.7,1.1]};
+    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.16,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;
-    const distance=79*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
+    const distance=62*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
     cancel();
     const from=new T.Spherical().setFromVector3(camera.position.clone().sub(center));
     const to=new T.Spherical().setFromVector3(new T.Vector3(...a).normalize().multiplyScalar(distance));
@@ -84,8 +99,8 @@
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(center).add(new T.Vector3().setFromSpherical(to));controls.update()}
     else flight={from,to,start:performance.now()};
   }
-  function setQuality(value){quality=value;const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
-  setQuality('balanced');view('corner');
+  function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
+  setQuality(parent.innerWidth<=850?'balanced':'high');view('corner');
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
@@ -95,9 +110,10 @@
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
     view,quality:setQuality,
+    context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
-    light:value=>{R3D.time=value;C.applyTime();finishLighting()},
-    telemetry:()=>({fps,quality,environment:environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
+    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?'정밀 광선 추적 · '+Math.round(window.TOWER_CINEMA.tracer._lastSampleCounts.avg)+' 샘플'+(window.TOWER_CINEMA.tracer._denoiser?.complete?' · 노이즈 제거 완료':''):window.TOWER_CINEMA_FAILURE?'실시간 보기 · 정밀 렌더 자동 전환':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');
@@ -124,8 +140,20 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
+  await load('360/environment.js');
+  await window.enhanceTowerEnvironment(C,extra,load);
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
     const generator=new T.PMREMGenerator(renderer);const target=generator.fromEquirectangular(hdr);env=target.texture;hdr.dispose();generator.dispose();environmentStatus='HDRI 적용 · 현장 촬영 아님';finishLighting();
+    skyTexture=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/daylight-sky_2k.hdr',resolve,undefined,reject));
+    skyTexture.mapping=T.EquirectangularReflectionMapping;finishLighting();
+    // Capture the actual dressed 3D neighbourhood instead of an unrelated courtyard.
+    const cube=new T.WebGLCubeRenderTarget(512,{type:T.HalfFloatType,generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter});
+    const probe=new T.CubeCamera(1,1000,cube);probe.position.set(-3,18,0);scene.add(probe);
+    const visible=bld.visible;bld.visible=false;probe.update(renderer,scene);bld.visible=visible;
+    const pmrem=new T.PMREMGenerator(renderer);env=pmrem.fromCubemap(cube.texture).texture;pmrem.dispose();cube.dispose();scene.remove(probe);
+    bld.traverse(o=>{if(o.material&&!Array.isArray(o.material)&&o.material.envMap){o.material.envMap=env;o.material.envMapIntensity=.85;o.material.needsUpdate=true}});
+    finishLighting();
+    if(new URLSearchParams(location.search).get('engine')==='cinema'){environmentStatus='정밀 조명 준비 중';try{const modern=await import('./modern.js');await modern.start(C)}catch(error){environmentStatus='정밀 렌더러 미지원 · 실시간 화면';console.warn(environmentStatus,error)}}
   }catch(e){environmentStatus='HDRI 실패 · 기존 하늘 조명 사용';console.warn(environmentStatus,e)}
 })();

@@ -29,3 +29,9 @@ Validated with locally installed Blender 5.1.1; this script uses its `MULTIPLE_S
 ```
 
 Creates an editable `.blend` file and a Cycles 1280×800, 64-sample render. Glass transmission and small bevel/normal-detail changes are render studies, not approved material specifications. Uses a procedural sky/sun; generic web HDRI is not used by this offline benchmark. Geometry dimensions and opening positions are retained. Metal GPU is selected if available, otherwise CPU. First-run shader compilation can take several minutes.
+
+## WebGPU renderer revision
+
+Run `npm ci --ignore-scripts` and `npm run build` inside this directory. `modern-entry.js` is the editable source; the committed `../../new/360/modern.js` bundle runs on static hosting. The existing model remains the geometry authority. The renderer copies its buffers and matrices, uses the same camera, and displays a raster preview while the path tracer and local OIDN denoiser converge. WebGPU is optional; `?engine=realtime` keeps the legacy WebGL path.
+
+The Draco tree asset was prepared from Poly Haven Tree Small 02 (1K glTF and its listed dependencies). Reproduce with Blender: `blender -b --python prepare_tree.py -- /absolute/source/tree.gltf /absolute/output/tree-small-02.glb`. The source folder needs its original bin and textures. The script writes a UV-compatible glTF beside the source before importing it, retains deterministic complete leaf components, adjusts their silhouettes, reduces mesh detail and exports Draco.

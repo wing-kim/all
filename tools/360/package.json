@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "esbuild": "0.28.2",
+    "oidn-web": "0.4.0",
+    "three": "0.186.1",
+    "three-gpu-pathtracer": "0.0.27",
+    "three-mesh-bvh": "0.9.15"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild modern-entry.js --bundle --format=esm --minify --outfile=../../new/360/modern.js"
+  },
+  "name": "cape-horn-renderer",
+  "version": "1.0.0"
+}

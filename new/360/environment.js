@@ -1,0 +1,128 @@
+/* Appearance assets are illustrative surroundings, never surveyed building geometry. */
+window.enhanceTowerEnvironment=async function(C,extra,load){
+  const {THREE:T,RMAT,P,renderer}=C;
+  const loader=new T.TextureLoader();
+  function texture(name,repeat,color){const t=loader.load('360/assets/'+name);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
+  function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
+  surface(RMAT.road,'asphalt_02',.2);surface(RMAT.ground,'asphalt_02',.2);RMAT.ground.color.set('#b4b8bb').convertSRGBToLinear();surface(RMAT.walk,'pavement_04',1/3.1);surface(RMAT.site,'pavement_04',1/3.1);
+  [RMAT.walk,RMAT.site].forEach(m=>{m.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nfloat grey=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));diffuseColor.rgb=mix(vec3(grey),diffuseColor.rgb,.12);')};m.customProgramCacheKey=()=> 'neutral-paving-v1'});
+  const stone=new T.MeshStandardMaterial({color:0x8e8c86,roughness:.86,map:RMAT.walk.map,normalMap:RMAT.walk.normalMap,normalScale:new T.Vector2(.15,.15)});
+  const iron=new T.MeshStandardMaterial({color:0x303332,metalness:.75,roughness:.63});
+  const cube=new T.BoxGeometry(1,1,1);
+  function box(x,y,z,w,h,d,m){const o=new T.Mesh(cube,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;extra.add(o);return o}
+  C.R3D.street.children.forEach(o=>{if(o.isInstancedMesh&&o.geometry.parameters?.height<=.05)o.visible=false});
+  function walkStrip(x0,x1,offset){
+    const road=x=>1365-.3604*(x-230),a=P(x0,road(x0)+offset),b=P(x1,road(x1)+offset),u=new T.Vector2(b[0]-a[0],b[1]-a[1]).normalize(),n=new T.Vector2(-u.y,u.x),length=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    const geo=new T.BoxGeometry(length,.16,1.8),m=new T.Mesh(geo,RMAT.walk);m.position.set((a[0]+b[0])/2+n.x*.94,.08,(a[1]+b[1])/2+n.y*.94);m.rotation.y=-Math.atan2(u.y,u.x);m.receiveShadow=true;m.updateMatrixWorld();const pos=geo.attributes.position,uv=geo.attributes.uv,v=new T.Vector3();for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i).applyMatrix4(m.matrixWorld);uv.setXY(i,v.x,v.z)}extra.add(m);
+    for(let d=.5;d<length;d+=1.02){const o=box(a[0]+u.x*d,.13,a[1]+u.y*d,.99,.26,.24,stone);o.rotation.y=m.rotation.y;}
+  }
+  walkStrip(250,3300,266);
+  // Continuous granite curb with visible joints at real metre scale.
+  for(let z=-45;z<14;z+=1.02)box(-20.48,.13,z,.26,.26,.99,stone);
+  const a=P(230,1365),b=P(1598,872),length=Math.hypot(b[0]-a[0],b[1]-a[1]),angle=-Math.atan2(b[1]-a[1],b[0]-a[0]);
+  for(let d=.5;d<length;d+=1.02){const t=d/length,o=box(a[0]+(b[0]-a[0])*t,.13,a[1]+(b[1]-a[1])*t,.99,.26,.26,stone);o.rotation.y=angle}
+  for(let z=-35;z<12;z+=12){box(-20.78,.025,z,.48,.045,.8,iron);for(let k=0;k<8;k++)box(-20.78,.052,z-.35+k*.1,.43,.015,.028,stone)}
+  // Give the existing context facades depth at their existing window texture grid.
+  const contextGlasses=['#24343c','#485862','#809099','#4d5b63','#303c45','#77838a','#b0aaa0','#364f5b'].map((col,i)=>new T.MeshStandardMaterial({color:new T.Color(col).convertSRGBToLinear(),metalness:i===6?.05:.42,roughness:i===6?.65:.12+i*.025}));
+  const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
+  const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
+  const frameMat=new T.MeshStandardMaterial({color:0x464d50,metalness:.55,roughness:.4});
+  const copingMat=new T.MeshStandardMaterial({color:0x999b96,metalness:.2,roughness:.7});
+  const signMats=[0x293c42,0x4b514a,0x786851,0x3d485b].map(color=>new T.MeshStandardMaterial({color,roughness:.68}));
+  const masses=[];C.scene.traverse(o=>{if(o.isMesh&&o.userData.box&&o.geometry.parameters?.shapes)masses.push(o)});
+  masses.forEach(m=>{
+    const shape=m.geometry.parameters.shapes,h=m.geometry.parameters.options.depth;
+    if(h>40||h<5||m.userData.box.distanceToPoint(new T.Vector3(-3,0,0))>100)return;
+    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0)return v;const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(1.7,1.75,1.8);n.roughness=.86;return n})}
+    const pts=shape.getPoints().map(p=>new T.Vector2(p.x,-p.y));
+    function detail(x,y,z,w,height,depth,material,rotation=0){const o=new T.Mesh(cube,material);o.position.set(x,y,z);o.scale.set(w,height,depth);o.rotation.y=rotation;o.castShadow=o.receiveShadow=true;m.add(o);return o}
+    // Roof equipment and parapet caps add scale cues without changing the surveyed mass.
+    const center=pts.reduce((sum,p)=>sum.add(p),new T.Vector2()).multiplyScalar(1/pts.length);
+    detail(center.x,h+.42,center.y,2.6,.84,1.4,unitMat);
+    detail(center.x,h+.87,center.y,2.35,.08,1.15,grilleMat);
+    for(let k=0;k<5;k++)detail(center.x-.9+k*.45,h+.92,center.y,.04,.06,1.1,copingMat);
+    for(let i=0;i<pts.length-1;i++){
+      const a=pts[i],b=pts[i+1],len=a.distanceTo(b);if(len<2)continue;
+      const u=new T.Vector2().subVectors(b,a).normalize(),angle=-Math.atan2(u.y,u.x);
+      detail((a.x+b.x)/2,h+.12,(a.y+b.y)/2,len,.24,.36,copingMat,angle);
+      // Recessed storefront glazing, sign fascia and door mullions at pedestrian level.
+      for(let d=1.7;d<len-1.2;d+=3.5){
+        const x=a.x+u.x*d,z=a.y+u.y*d;
+        detail(x,1.55,z,2.85,2.65,.25,contextGlasses[(m.id+i)%5],angle);
+        detail(x,3.08,z,3.05,.45,.42,signMats[(m.id+i)%4],angle);
+        for(const dx of [-1.4,0,1.4])detail(x+u.x*dx,1.55,z+u.y*dx,.055,2.7,.3,frameMat,angle);
+        detail(x,.23,z,3,.15,.42,copingMat,angle);
+      }
+      for(let y=4.5;y<h-1.2;y+=3.4)for(let d=1.5;d<len-.8;d+=3.2){
+        const x=a.x+u.x*d,z=a.y+u.y*d;
+        const o=new T.Mesh(cube,frameMat);o.position.set(x,y,z);o.rotation.y=angle;o.scale.set(2.25,.09,.32);o.castShadow=o.receiveShadow=true;m.add(o);
+        const variation=Math.abs(Math.floor(Math.sin(d*8.4+y*1.2+m.id)*9999))%8;const pane=new T.Mesh(cube,contextGlasses[variation]);pane.position.set(x,y+.82,z);pane.rotation.y=angle;pane.scale.set(2.14,1.58,.24);m.add(pane);
+        if(variation===6){for(let k=0;k<9;k++){const slat=new T.Mesh(cube,frameMat);slat.position.set(x,y+.15+k*.16,z);slat.rotation.y=angle;slat.scale.set(2.08,.018,.26);m.add(slat)}}
+        if(variation===3&&y<14){const ac=new T.Mesh(cube,unitMat);ac.position.set(x+u.x*.6,y-.48,z+u.y*.6);ac.rotation.y=angle;ac.scale.set(.72,.45,.5);ac.castShadow=true;m.add(ac);const vent=ac.clone();vent.material=grilleMat;vent.scale.set(.52,.3,.515);m.add(vent)}
+        const sill=o.clone();sill.position.y=y+1.65;sill.scale.y=.12;m.add(sill);
+        for(const dx of [-1.08,0,1.08]){const bar=o.clone();bar.position.set(x+u.x*dx,y+.82,z+u.y*dx);bar.scale.set(.045,1.64,.32);m.add(bar)}
+      }
+    }
+  });
+  // Distant generic urban fabric: illustrative skyline, not claimed survey data.
+  const urbanCanvas=document.createElement('canvas');urbanCanvas.width=urbanCanvas.height=128;
+  const g=urbanCanvas.getContext('2d');g.fillStyle='#bdbbb4';g.fillRect(0,0,128,128);
+  const reflection=g.createLinearGradient(0,24,0,98);reflection.addColorStop(0,'#6e8390');reflection.addColorStop(.45,'#455a67');reflection.addColorStop(1,'#718089');g.fillStyle=reflection;g.fillRect(24,26,80,70);
+  g.fillStyle='#d7d6ce';g.fillRect(21,96,86,4);g.fillStyle='#929c9e';g.fillRect(63,26,2,70);g.fillStyle='#7a7f7c';g.fillRect(20,23,88,3);
+  const urbanTex=new T.CanvasTexture(urbanCanvas);urbanTex.encoding=T.sRGBEncoding;urbanTex.wrapS=urbanTex.wrapT=T.RepeatWrapping;urbanTex.anisotropy=4;
+  const types=[{h:10,repeat:[4,3],color:0xe3e0d7},{h:20,repeat:[5,6],color:0xc7c7c1},{h:38,repeat:[6,11],color:0xc5ced2}];
+  const roofMat=new T.MeshStandardMaterial({color:0xa5a49e,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,3000);let roofCount=0;C.city.add(roofUnits);
+  const cityLayers=types.map(t=>{const map=urbanTex.clone();map.repeat.set(...t.repeat);map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
+  const dummy=new T.Object3D();let seed=17;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+  const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
+  for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
+    const r=Math.hypot(x,z);if(r<110||r>620||Math.abs(x+35)<16||Math.abs(z+104)<12)continue;
+    const type=rnd()<.7?0:rnd()<.85?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.85+rnd()*.25),w=12+rnd()*5,d=11+rnd()*5;
+    const px=x+rnd()*3,pz=z+rnd()*3,bounds=new T.Box3(new T.Vector3(px-w/2-2,0,pz-d/2-2),new T.Vector3(px+w/2+2,h,pz+d/2+2));
+    if(occupied.some(b=>b.intersectsBox(bounds)))continue;
+    dummy.position.set(px,h/2,pz);dummy.scale.set(w,h,d);dummy.updateMatrix();layer.mesh.setMatrixAt(layer.count,dummy.matrix);layer.mesh.setColorAt(layer.count++,new T.Color(['#e7e4df','#c6c4bc','#d6cec0','#a2aaad','#817a70','#b6aaa0','#9d9690','#ddd8d1'][Math.floor(rnd()*8)]).convertSRGBToLinear());
+    dummy.position.y=h+.55;dummy.scale.set(w*.3,1.1,d*.25);dummy.updateMatrix();roofUnits.setMatrixAt(roofCount++,dummy.matrix);
+  }
+  roofUnits.count=roofCount;roofUnits.instanceMatrix.needsUpdate=true;
+  cityLayers.forEach(({mesh,count})=>{mesh.count=count;mesh.instanceMatrix.needsUpdate=true});
+  await load('360/assets/GLTFLoader.js');
+  await load('360/assets/DRACOLoader.js');
+  const draco=new T.DRACOLoader().setDecoderPath('360/assets/draco/');
+  const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
+  try{
+    const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/tree-small-02.glb',resolve,undefined,reject));
+    const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
+    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
+    const positions=[[120,240],[120,610],[120,1020],[520,1310],[1550,910],[85,-500],[85,-1000],[85,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-500],[2500,1600],[2400,2050],[2100,1140],[2700,930],[3100,790],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[85,-2000]];
+    positions.forEach((q,i)=>{const g=new T.Group(),tree=asset.scene.clone(true),s=(7.2+i%3*.8)/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g)});
+    const roof=C.levels().find(l=>l.kind==='roof');
+    if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
+  }catch(error){console.warn('Tree asset unavailable',error)}
+  // Reusable authored vehicle meshes; keep their original proportions.
+  try{
+    const car=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/concept-car.glb',resolve,undefined,reject));
+    const oldCars=[];C.R3D.props.traverse(o=>{if(o.userData.car)oldCars.push(o)});
+    const b=new T.Box3().setFromObject(car.scene),s=b.getSize(new T.Vector3()),c=b.getCenter(new T.Vector3()),scale=4.65/Math.max(s.x,s.z);
+    oldCars.forEach((old,i)=>{
+      const root=new T.Group(),model=car.scene.clone(true);model.scale.setScalar(scale);model.position.set(-c.x*scale,-b.min.y*scale,-c.z*scale);root.add(model);root.position.copy(old.position);root.rotation.copy(old.rotation);root.rotation.y+=i%2?Math.PI:0;
+      model.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material=o.material.clone();if(/paint|body/i.test(o.material.name)){o.material.color.set(['#b7b9b7','#22282e','#5d686c','#ece9df'][i%4]).convertSRGBToLinear();o.material.metalness=.65;o.material.roughness=.23;}if(o.material.transmission){o.material.transmission=0;o.material.color.set('#24383f');o.material.metalness=.25;o.material.roughness=.12;}}});
+      extra.add(root);old.visible=false;
+    });
+  }catch(error){console.warn('Vehicle asset unavailable',error)}
+  await load('360/assets/BufferGeometryUtils.js');
+  function batch(root){
+    root.updateWorldMatrix(true,true);const inverse=root.matrixWorld.clone().invert(),groups=new Map();
+    root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||Array.isArray(o.material)||o.material.transparent||o===root)return;
+      let visible=true;for(let p=o;p&&p!==root;p=p.parent)if(!p.visible||p.name==='CC0 Tree Small 02')visible=false;if(!visible)return;
+      const key=o.material.id+':'+o.castShadow+':'+Object.keys(o.geometry.attributes).sort().join(',');
+      if(!groups.has(key))groups.set(key,[]);groups.get(key).push(o);
+    });
+    groups.forEach(list=>{if(list.length<3)return;const parts=list.map(o=>o.geometry.clone().applyMatrix4(inverse.clone().multiply(o.matrixWorld)));
+      // Convert all to triangle soup so indexing differences do not prevent a safe merge.
+      const geos=parts.map(g=>g.index?g.toNonIndexed():g),merged=T.BufferGeometryUtils.mergeBufferGeometries(geos);
+      if(merged){const m=new T.Mesh(merged,list[0].material);m.name='Static material batch';m.castShadow=list[0].castShadow;m.receiveShadow=true;list.forEach(o=>{o.visible=false;o.userData.batched=true});root.add(m)}
+      new Set([...parts,...geos]).forEach(g=>g.dispose());
+    });
+  }
+  masses.forEach(batch);batch(C.bld);batch(extra);
+};
