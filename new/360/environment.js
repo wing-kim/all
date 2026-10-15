@@ -31,6 +31,21 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const repair=RMAT.road.clone();repair.color.setRGB(.73,.75,.76);repair.roughness=.98;
   const seal=new T.MeshStandardMaterial({color:0x292b2a,roughness:.9});
   C.scene.updateMatrixWorld(true);const roadMeshes=[];C.scene.traverse(o=>{if(o.isMesh&&o.material===RMAT.road)roadMeshes.push(o)});
+  // Keep thermoplastic markings 4 mm above their actual supporting road, not floating 57 mm.
+  const markingAudit={meshes:0,quads:0,unsupported:0,targetGap:.004};
+  C.site.traverse(o=>{
+    if(!o.isMesh||!o.material?.isMeshBasicMaterial||o.renderOrder!==1||o.geometry.type!=='BufferGeometry')return;
+    const g=o.geometry.clone(),p=g.attributes.position,indices=[],inverse=o.matrixWorld.clone().invert(),v=new T.Vector3();
+    for(let i=0;i+3<p.count;i+=4){
+      const center=new T.Vector3();for(let k=0;k<4;k++)center.add(v.fromBufferAttribute(p,i+k).applyMatrix4(o.matrixWorld));center.multiplyScalar(.25);
+      const hit=new T.Raycaster(new T.Vector3(center.x,5,center.z),new T.Vector3(0,-1,0)).intersectObjects(roadMeshes,false)[0];
+      if(!hit){markingAudit.unsupported++;continue;}
+      for(let k=0;k<4;k++){v.fromBufferAttribute(p,i+k).applyMatrix4(o.matrixWorld);v.y=hit.point.y+.004;v.applyMatrix4(inverse);p.setXYZ(i+k,v.x,v.y,v.z);}
+      indices.push(i,i+2,i+1,i,i+3,i+2);markingAudit.quads++;
+    }
+    g.setIndex(indices);p.needsUpdate=true;g.computeBoundingBox();g.computeBoundingSphere();o.geometry=g;o.userData.roadMarking=true;markingAudit.meshes++;
+  });
+  extra.userData.roadMarkingAudit=markingAudit;
   function roadPatch(px,py,width,depth,rotation=0){
     const [x,z]=P(px,py),ray=new T.Raycaster(new T.Vector3(x,5,z),new T.Vector3(0,-1,0)),hit=ray.intersectObjects(roadMeshes,false)[0],roadY=hit?.point.y??.02;
     const o=box(x,roadY+.001,z,width,.004,depth,repair);o.rotation.y=rotation;o.castShadow=false;o.name='Asphalt repair patch';o.userData.roadY=roadY;
