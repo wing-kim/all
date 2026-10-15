@@ -66,6 +66,18 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const contextBlindMats=['#bcc1bc','#c9c5b9'].map(color=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness:.78}));
   const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
   const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
+  // Photographic 1.8 m granite sheet; preserve the context mass and window layout.
+  const graniteColor=texture('facade-granite_color.jpg',1/1.8,true),graniteNormal=texture('facade-granite_normal.jpg',1/1.8),graniteRough=texture('facade-granite_rough.jpg',1/1.8);
+  function metricWallUV(mesh){
+    const g=mesh.geometry.clone(),p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
+    // Extruded side vertices are separate from roof vertices. Project each planar wall
+    // onto its unit horizontal tangent so diagonal facades retain the same tile scale.
+    for(const group of g.groups)if(group.materialIndex===1)for(let j=group.start;j<group.start+group.count;j++){
+      const i=g.index?g.index.getX(j):j,scale=Math.hypot(n.getX(i),n.getZ(i));if(scale<.5)continue;
+      uv.setXY(i,(p.getX(i)*n.getZ(i)-p.getZ(i)*n.getX(i))/scale,p.getY(i));
+    }
+    uv.needsUpdate=true;mesh.geometry=g;
+  }
   // Fine architectural finishes, with no change to the original member geometry.
   for(const key of ['core','corewall','col','slab']){const mat=C.M[key];if(!mat)continue;mat.normalMap=plasterNormal;mat.normalScale.set(key==='slab'?.035:.08,key==='slab'?.035:.08);mat.roughnessMap=plasterRough;mat.needsUpdate=true;}
   const grainCanvas=document.createElement('canvas');grainCanvas.width=grainCanvas.height=128;
@@ -106,6 +118,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const facadeTints=[[1.48,1.48,1.4],[1.62,1.67,1.68],[1.42,1.35,1.22],[1.58,1.55,1.45],[1.32,1.4,1.45],[1.55,1.47,1.34]];
     const facadeTint=({ribbon:[1.45,1.35,1.12],band:[1.62,1.64,1.6],grey:[1.45,1.46,1.42],wrib:[1.62,1.65,1.64],esm:[.82,.84,.87],tile:[1.65,1.65,1.59],apt:[1.60,1.62,1.60]})[kind]||facadeTints[facadeSeed%facadeTints.length];
     if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(...roofTints[facadeSeed%roofTints.length]);roof.map=roofColor;roof.normalMap=roofNormal;roof.normalScale?.set(.08,.08);roof.roughnessMap=roofRough;roof.roughness=.92;roof.name='Illustrative weathered roof';return roof}const n=v.clone();if(keepFacade){if(kind==='cw'){n.roughness=.18;n.metalness=.35;}return n}n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
+    if(!keepFacade&&['esm','grey'].includes(kind)&&Array.isArray(m.material)){
+      metricWallUV(m);
+      for(const mat of m.material.slice(1)){mat.map=graniteColor;mat.normalMap=graniteNormal;mat.normalScale.set(.22,.22);mat.roughnessMap=graniteRough;mat.roughness=.7;mat.color.setRGB(...(kind==='esm'?[1.25,1.5,1.8]:[2.3,2.65,3]));mat.name='Illustrative granite facade';}
+      m.userData.contextStoneFinish={asset:'granite_tile_03',textureWidthMetres:1.8,estimatedTileMetres:[.6,.9]};
+    }
     let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
     const ribbon=!apartment&&['office','ribbon','band','wrib'].includes(kind),windowWidth=apartment?2.65:ribbon?2.98:kind==='esm'?1.1:kind==='tile'?1.6:2.14;
     const storey=m.userData.contextStoreyHeight||(apartment?2.9:3.4);

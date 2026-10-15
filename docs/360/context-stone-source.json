@@ -1,0 +1,30 @@
+{
+  "asset": "granite_tile_03",
+  "source": "https://polyhaven.com/a/granite_tile_03",
+  "author": "Charlotte Baglioni",
+  "license": "CC0",
+  "physicalWidthMetres": 1.8,
+  "files": [
+    {
+      "path": "new/360/assets/facade-granite_color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/granite_tile_03/granite_tile_03_diff_1k.jpg",
+      "md5": "00d37a8ed649c60d5d9f3f6d740e3bfb",
+      "sourceMd5": "00d37a8ed649c60d5d9f3f6d740e3bfb",
+      "bytes": 1056664
+    },
+    {
+      "path": "new/360/assets/facade-granite_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/granite_tile_03/granite_tile_03_nor_gl_1k.jpg",
+      "md5": "446391b39eec599447a4ab8b9ca35eaf",
+      "sourceMd5": "446391b39eec599447a4ab8b9ca35eaf",
+      "bytes": 778769
+    },
+    {
+      "path": "new/360/assets/facade-granite_rough.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/granite_tile_03/granite_tile_03_rough_1k.jpg",
+      "md5": "7c5fc2113bea1833f2432138f620332e",
+      "sourceMd5": "7c5fc2113bea1833f2432138f620332e",
+      "bytes": 375664
+    }
+  ]
+}

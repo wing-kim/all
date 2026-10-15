@@ -1,0 +1,101 @@
+{
+  "uv": [
+    {
+      "edges": 24,
+      "finish": {
+        "asset": "granite_tile_03",
+        "estimatedTileMetres": [
+          0.6,
+          0.9
+        ],
+        "textureWidthMetres": 1.8
+      },
+      "kind": "grey",
+      "maps": [
+        {
+          "loaded": true,
+          "normalScale": [
+            0.22,
+            0.22
+          ],
+          "repeat": [
+            0.5555555555555556,
+            0.5555555555555556
+          ]
+        }
+      ],
+      "maxUVMetreError": 8.318426845121962e-7
+    },
+    {
+      "edges": 24,
+      "finish": {
+        "asset": "granite_tile_03",
+        "estimatedTileMetres": [
+          0.6,
+          0.9
+        ],
+        "textureWidthMetres": 1.8
+      },
+      "kind": "esm",
+      "maps": [
+        {
+          "loaded": true,
+          "normalScale": [
+            0.22,
+            0.22
+          ],
+          "repeat": [
+            0.5555555555555556,
+            0.5555555555555556
+          ]
+        }
+      ],
+      "maxUVMetreError": 0
+    }
+  ],
+  "plasterControl": {
+    "complete": true,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.786556540985941
+      }
+    }
+  },
+  "final": {
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.810317625695829
+      }
+    },
+    "temporaryComparison": false
+  },
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "camera": [
+    -37,
+    11,
+    -22
+  ],
+  "target": [
+    -5,
+    9,
+    -22
+  ],
+  "comparisonNote": "Material comparison on the same final metric UVs; before is not a full previous-commit replay."
+}

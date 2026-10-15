@@ -32,3 +32,5 @@
 - `RoundedBoxGeometry.js`: Three.js r186 examples geometry, MIT (`THREE-MODERN-LICENSE.txt`). ES module import/export adapted to the existing THREE global; used for rendering-only 2.5 mm metal edge finish.
 
 - `roof-concrete_*.jpg`: Poly Haven [Concrete Floor Worn 02](https://polyhaven.com/a/concrete_floor_worn_02), Dimitrios Savva, CC0. Original 1K diffuse/OpenGL normal/roughness, 2 × 2 m; tinted illustrative roof finish, not confirmed existing roof specifications. Download hashes recorded in `docs/360/roof-texture-source.json`.
+
+- `facade-granite_*.jpg`: Poly Haven [Granite Tile 03](https://polyhaven.com/a/granite_tile_03), Charlotte Baglioni, CC0. Original 1K diffuse/OpenGL normal/roughness, source width 1.8 m. Tinted illustrative finish on existing grey/ESMOD context masses; not a verified site material survey. Source URLs and checked MD5 hashes: `docs/360/context-stone-source.json`.
