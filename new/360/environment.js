@@ -139,11 +139,33 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/tree-small-02.glb',resolve,undefined,reject));
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
-    const positions=[[120,240],[120,610],[120,1020],[520,1310],[1550,910],[85,-500],[85,-1000],[85,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-500],[2500,1600],[2400,2050],[2100,1140],[2700,930],[3100,790],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[85,-2000]];
-    positions.forEach((q,i)=>{const g=new T.Group(),tree=asset.scene.clone(true),s=(7.2+i%3*.8)/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);box(x,.155,z,1.25,.05,1.25,soil);for(const side of [-1,1]){box(x+side*.65,.17,z,.09,.09,1.4,stone);box(x,.17,z+side*.65,1.4,.09,.09,stone)}});
+    // Keep root pits on the actual sidewalk; the old corner coordinates fell in the road.
+    const oppositeWalk=px=>1365-.3604*(px-230)+305;
+    const positions=[[120,240],[120,610],[120,1020],[120,1250],[1550,oppositeWalk(1550)],[120,-690],[120,-1000],[120,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-690],[1850,oppositeWalk(1850)],[2200,oppositeWalk(2200),.55],[2550,oppositeWalk(2550),.65],[3250,oppositeWalk(3250),.5],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[120,-2000]];
+    positions.forEach((q,i)=>{
+      const g=new T.Group(),tree=asset.scene.clone(true),s=(9.2+i%3*.8)/size.y,spread=q[2]||1;
+      tree.scale.set(s*spread,s,s*spread);tree.position.set(-center.x*s*spread,-bounds.min.y*s,-center.z*s*spread);g.add(tree);
+      const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);
+      const bed=new T.Group();bed.name='Street tree pit';bed.userData.streetTreePit=true;bed.position.set(x,0,z);
+      if(q[0]>230)bed.rotation.y=Math.atan(.3604);extra.add(bed);
+      const bedPart=(x,y,z,w,h,d,m)=>{const part=box(x,y,z,w,h,d,m);extra.remove(part);bed.add(part)};
+      bedPart(0,.155,0,1.25,.05,1.25,soil);
+      for(const side of [-1,1]){bedPart(side*.65,.17,0,.09,.09,1.4,stone);bedPart(0,.17,side*.65,1.4,.09,.09,stone)}
+    });
     const roof=C.levels().find(l=>l.kind==='roof');
     if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
   }catch(error){console.warn('Tree asset unavailable',error)}
+  // Correct illustrative street furniture that was placed inside the six-metre road.
+  const sideRoadY=px=>1365-.3604*(px-230);
+  for(const person of C.R3D.props.children){
+    if(!person.isGroup||person.children.length!==2||person.children[0].geometry?.type!=='CylinderGeometry'||person.children[1].geometry?.type!=='SphereGeometry')continue;
+    const px=person.position.x*41.6+914,py=person.position.z*41.6+770;
+    if(px>230&&py-sideRoadY(px)>-20&&py-sideRoadY(px)<286){person.position.z=P(px,sideRoadY(px)-38)[1];person.userData.sidewalkCorrected=true;}
+  }
+  const sideLampX=P(1480,0)[0];
+  for(const part of C.R3D.props.children){
+    if((part.isMesh||part.isPointLight)&&Math.abs(part.position.x-sideLampX)<.001&&part.position.y>3){part.position.z-=50/41.6;part.userData.sidewalkCorrected=true;}
+  }
   // Reusable authored vehicle meshes, adapted to road headings and passenger-car width.
   try{
     const car=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/concept-car.glb',resolve,undefined,reject));
@@ -167,7 +189,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
         root.userData.traffic={road:'side',laneOffsetPx:offset,heading:offset<133?'toward-main':'away-from-main'};
       }
       root.name='Road vehicle '+(i+1);
-      model.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material=o.material.clone();if(/paint|body/i.test(o.material.name)){o.material.color.set(['#b7b9b7','#22282e','#5d686c','#ece9df'][i%4]).convertSRGBToLinear();o.material.metalness=.65;o.material.roughness=.23;}if(o.material.transmission){o.material.transmission=0;o.material.color.set('#24383f');o.material.metalness=.25;o.material.roughness=.12;}}});
+      model.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material=o.material.clone();if(/paint|body/i.test(o.material.name)){o.material.color.set(['#b7b9b7','#22282e','#5d686c','#ece9df','#713536','#465e70'][i%6]).convertSRGBToLinear();o.material.metalness=.65;o.material.roughness=.23;}if(o.material.transmission){o.material.transmission=0;o.material.color.set('#24383f');o.material.metalness=.25;o.material.roughness=.12;}}});
       extra.add(root);old.visible=false;
     });
   }catch(error){console.warn('Vehicle asset unavailable',error)}
