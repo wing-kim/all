@@ -11,7 +11,7 @@
 - `tree-small-02.glb`: adapted from Poly Haven Tree Small 02, CC0, https://polyhaven.com/a/tree_small_02 . Reduced bark meshes, deterministic leaf-component sampling and planar simplification for browser display. Illustrative landscaping.
 - `concept-car.glb`: Car Concept, Eric Chadwick / Darmstadt Graphics Group GmbH, 2024, CC BY 4.0. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept . Runtime paint and glass adapted for this viewer. Khronos/3D Commerce marks belong to Khronos. No endorsement implied.
 - `GLTFLoader.js`: Three.js r128, MIT, same license file as the other Three.js extensions.
-- Urban background blocks and added facade relief are illustrative, not new measured architectural evidence. The primary tower geometry is unchanged; static batching changes only draw submission.
+- Urban background blocks and added facade relief are illustrative, not new measured architectural evidence. The primary tower source geometry is unchanged; rendering copies of narrow metal members receive the documented 2.5 mm edge finish within their original bounds.
 - `plaster_*.jpg`: Poly Haven Plastered Wall 04, CC0, https://polyhaven.com/a/plastered_wall_04 . Generic context facade finish.
 - `DRACOLoader.js`: Three.js r128 MIT. `draco/` decoder: Google Draco, Apache 2.0; included license and authors.
 - `modern.js`: bundled Three.js 0.186.1, three-gpu-pathtracer 0.0.27, three-mesh-bvh 0.9.15, oidn-web 0.4.0, and float16, MIT licenses included separately. Source and pinned build manifest are in `tools/360/`.
@@ -30,3 +30,5 @@
 - `interior-stone_*.jpg`: Poly Haven [Marble 01](https://polyhaven.com/a/marble_01), Rob Tuytel, CC0, original 1K color/OpenGL normal/roughness. Source dimensions 1.5 × 1.5 m. Interior finish study only; not an approved material specification.
 
 - `RoundedBoxGeometry.js`: Three.js r186 examples geometry, MIT (`THREE-MODERN-LICENSE.txt`). ES module import/export adapted to the existing THREE global; used for rendering-only 2.5 mm metal edge finish.
+
+- `roof-concrete_*.jpg`: Poly Haven [Concrete Floor Worn 02](https://polyhaven.com/a/concrete_floor_worn_02), Dimitrios Savva, CC0. Original 1K diffuse/OpenGL normal/roughness, 2 × 2 m; tinted illustrative roof finish, not confirmed existing roof specifications. Download hashes recorded in `docs/360/roof-texture-source.json`.

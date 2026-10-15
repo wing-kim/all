@@ -70,6 +70,9 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     if(!mullionFinishes.has(m)){const finish=m.clone();finish.color.set('#66737a').convertSRGBToLinear();finish.metalness=.72;finish.roughness=.3;finish.userData.satinMetal=true;mullionFinishes.set(m,finish)}
     o.material=mullionFinishes.get(m);
   });
+  // Weathered roof finish is illustrative; preserve every existing roof surface.
+  const roofColor=texture('roof-concrete_color.jpg',.5,true),roofNormal=texture('roof-concrete_normal.jpg',.5),roofRough=texture('roof-concrete_rough.jpg',.5);
+  const roofTints=[[.925,1.11,1.6],[.785,1,1.415],[.685,1.035,1.15],[1.06,1.225,1.715]];
   const frameMat=new T.MeshStandardMaterial({color:0x464d50,metalness:.55,roughness:.4});
   const copingMat=new T.MeshStandardMaterial({color:0x999b96,metalness:.2,roughness:.7});
   const signMats=[0x293c42,0x4b514a,0x786851,0x3d485b].map(color=>new T.MeshStandardMaterial({color,roughness:.68}));
@@ -84,11 +87,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const bounds=m.userData.box,facadeSeed=Math.abs(Math.round(bounds.min.x*17+bounds.min.z*31));
     const facadeTints=[[1.48,1.48,1.4],[1.62,1.67,1.68],[1.42,1.35,1.22],[1.58,1.55,1.45],[1.32,1.4,1.45],[1.55,1.47,1.34]];
     const facadeTint=({ribbon:[1.45,1.35,1.12],band:[1.62,1.64,1.6],grey:[1.45,1.46,1.42],wrib:[1.62,1.65,1.64],esm:[.82,.84,.87],tile:[1.65,1.65,1.59],apt:[1.60,1.62,1.60]})[kind]||facadeTints[facadeSeed%facadeTints.length];
-    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();if(keepFacade){if(kind==='cw'){n.roughness=.18;n.metalness=.35;}return n}n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
+    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(...roofTints[facadeSeed%roofTints.length]);roof.map=roofColor;roof.normalMap=roofNormal;roof.normalScale?.set(.08,.08);roof.roughnessMap=roofRough;roof.roughness=.92;roof.name='Illustrative weathered roof';return roof}const n=v.clone();if(keepFacade){if(kind==='cw'){n.roughness=.18;n.metalness=.35;}return n}n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
     let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
     const ribbon=!apartment&&['office','ribbon','band','wrib'].includes(kind),windowWidth=apartment?2.65:ribbon?2.98:kind==='esm'?1.1:kind==='tile'?1.6:2.14;
     const storey=m.userData.contextStoreyHeight||(apartment?2.9:3.4);
-    m.userData.environmentDressing={kind,keptFacade:!!keepFacade,existingParapet,existingRoofEquipment:roofEquipment.length,storey,windowWidth};
+    m.userData.environmentDressing={kind,keptFacade:!!keepFacade,existingParapet,existingRoofEquipment:roofEquipment.length,storey,windowWidth,roofVariant:facadeSeed%roofTints.length,roofTextureMetres:2};
     const pts=shape.getPoints().map(p=>new T.Vector2(p.x,-p.y));
     function detail(x,y,z,w,height,depth,material,rotation=0){const o=new T.Mesh(cube,material);o.position.set(x,y,z);o.scale.set(w,height,depth);o.rotation.y=rotation;o.castShadow=o.receiveShadow=true;m.add(o);return o}
     // Roof equipment and parapet caps add scale cues without changing the surveyed mass.
