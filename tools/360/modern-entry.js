@@ -1,3 +1,5 @@
+import { copyRoundedMullions } from './curtain-wall.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { copyGeometry } from './geometry-copy.js';
 import * as T from 'three/webgpu';
 import { pass, texture as textureNode, vec4, mix, saturation, uniform, viewportOpaqueMipTexture } from 'three/tsl';
@@ -50,7 +52,20 @@ export async function start(C){
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
- C.scene.traverse(o=>{for(let p=o;p;p=p.parent){if(!p.visible&&!p.userData.box)return;}if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;const m=Array.isArray(o.material)?o.material.map(material):material(o.material),g=geometry(o.geometry);let n;if(o.isInstancedMesh){n=new T.InstancedMesh(g,m,o.count);n.instanceMatrix.array.set(o.instanceMatrix.array.subarray(0,o.count*16));n.instanceMatrix.needsUpdate=true;if(o.instanceColor)n.instanceColor=new T.InstancedBufferAttribute(o.instanceColor.array.subarray(0,o.count*3),3)}else n=new T.Mesh(g,m);n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld)n.userData.primary=true;}scene.add(n)});
+ const roundedProfiles=new Map();
+ C.scene.traverse(o=>{
+  for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box)return;
+  if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;
+  const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
+  let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles):null;
+  if(!copies){
+   const g=geometry(o.geometry);let n;
+   if(o.isInstancedMesh){n=new T.InstancedMesh(g,m,o.count);n.instanceMatrix.array.set(o.instanceMatrix.array.subarray(0,o.count*16));n.instanceMatrix.needsUpdate=true;if(o.instanceColor)n.instanceColor=new T.InstancedBufferAttribute(o.instanceColor.array.subarray(0,o.count*3),3)}
+   else n=new T.Mesh(g,m);
+   n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
+  }
+  for(const n of copies){for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld)n.userData.primary=true;}scene.add(n)}
+ });
  const hdr=await new HDRLoader().loadAsync('360/assets/clear-noon-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.85;
  const sun=new T.DirectionalLight(0xfff3dd,3.7);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
  // Keep moving-preview glass reflections tied to the actual surrounding scene.

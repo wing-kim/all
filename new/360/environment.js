@@ -60,6 +60,8 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   grainContext.putImageData(grainPixels,0,0);const grain=new T.CanvasTexture(grainCanvas);grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,8);grain.anisotropy=4;
   const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
   for(const mat of facadeMetals){mat.roughnessMap=grain;mat.roughness=.34;mat.userData.satinMetal=true;mat.needsUpdate=true;}
+  for(const [mat,tint] of [[C.R3D.mullM,'#627078'],[C.R3D.mullD,'#56636a']]){mat.color.set(tint).convertSRGBToLinear();mat.roughness=.3;}
+  C.bld.traverse(o=>{if(o.isInstancedMesh&&(o.material===C.R3D.mullM||o.material===C.R3D.mullD))o.userData.roundedCurtainWall=true});
   // Appearance study: keep every mullion profile and opening in place, but use
   // a darker satin finish on the narrow vertical curtain-wall members only.
   const mullionFinishes=new Map();C.bld.updateMatrixWorld(true);
