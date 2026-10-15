@@ -185,17 +185,18 @@
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
   function view(name){
-    const directions={corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
+    const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;
-    const distance=62*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
+    const distance=(name==='reference'?66:62)*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
+    const viewCenter=center.clone();if(name==='reference')viewCenter.y=15;
+    const targetFrom=controls.target.clone();
     cancel();
-    const from=new T.Spherical().setFromVector3(camera.position.clone().sub(center));
+    const from=new T.Spherical().setFromVector3(camera.position.clone().sub(targetFrom));
     const to=new T.Spherical().setFromVector3(new T.Vector3(...a).normalize().multiplyScalar(distance));
     to.theta=from.theta+Math.atan2(Math.sin(to.theta-from.theta),Math.cos(to.theta-from.theta));
-    controls.target.copy(center);
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(center).add(new T.Vector3().setFromSpherical(to));controls.update()}
-    else flight={from,to,start:performance.now()};
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){controls.target.copy(viewCenter);camera.position.copy(viewCenter).add(new T.Vector3().setFromSpherical(to));controls.update()}
+    else flight={from,to,targetFrom,viewCenter,start:performance.now()};
   }
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
   const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
@@ -204,7 +205,8 @@
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
       const q=new T.Spherical(T.MathUtils.lerp(a.radius,b.radius,s),T.MathUtils.lerp(a.phi,b.phi,s),T.MathUtils.lerp(a.theta,b.theta,s));
-      camera.position.copy(center).add(new T.Vector3().setFromSpherical(q));controls.update();if(t===1)flight=null;
+      controls.target.lerpVectors(flight.targetFrom,flight.viewCenter,s);
+      camera.position.copy(controls.target).add(new T.Vector3().setFromSpherical(q));controls.update();if(t===1)flight=null;
     }
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={

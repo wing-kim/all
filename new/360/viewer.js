@@ -1,10 +1,10 @@
 'use strict';
 const frame=document.getElementById('scene'),status=document.getElementById('status');
-const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=v93-context-1';
+const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=v94-reference-1';
 const api=()=>frame.contentWindow?.TOWER360;
 const controls=[...document.querySelectorAll('nav button,.settings button,.settings select')];controls.forEach(e=>e.disabled=true);
 const reference=document.getElementById('reference'),label=document.getElementById('reference-label');
-const mapping={corner:['045','45° 코너'],street:['045','45° 코너 (카메라 높이 다름)'],aerial:['045','45° 코너 (조감 근사 비교)'],front:['000','0° 정면'],back:['180','180° 후면'],left:['270','270° 좌측'],right:['090','90° 우측']};
+const mapping={reference:['045','45° 코너 (구도 근사 비교)'],corner:['045','45° 코너'],street:['045','45° 코너 (카메라 높이 다름)'],aerial:['045','45° 코너 (조감 근사 비교)'],front:['000','0° 정면'],back:['180','180° 후면'],left:['270','270° 좌측'],right:['090','90° 우측']};
 const spin=document.getElementById('spin');
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{api()?.view(b.dataset.view);spin.setAttribute('aria-pressed','false');document.querySelectorAll('[data-view]').forEach(x=>x.setAttribute('aria-pressed',x===b));const [angle,name]=mapping[b.dataset.view];reference.src=`https://wing-kim.github.io/kapehorn-media/std/ext/glass/${angle}.webp`;label.textContent=name+' · AI 이미지';reference.alt='올 글라스 '+name+' 기존 실사 이미지'});
 spin.onclick=()=>{const on=spin.getAttribute('aria-pressed')!=='true';spin.setAttribute('aria-pressed',on);api()?.spin(on)};
