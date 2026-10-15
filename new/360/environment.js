@@ -1,8 +1,8 @@
 /* Appearance assets are illustrative surroundings, never surveyed building geometry. */
 window.enhanceTowerEnvironment=async function(C,extra,load){
   const {THREE:T,RMAT,P,renderer}=C;
-  const loader=new T.TextureLoader();
-  function texture(name,repeat,color){const t=loader.load('360/assets/'+name);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
+  const loader=new T.TextureLoader(),pendingTextures=[];
+  function texture(name,repeat,color){let done;pendingTextures.push(new Promise(resolve=>{done=resolve}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
   function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
   surface(RMAT.road,'asphalt_02',.2);surface(RMAT.ground,'asphalt_02',.2);RMAT.ground.color.set('#b4b8bb').convertSRGBToLinear();surface(RMAT.walk,'pavement_04',1/3.1);surface(RMAT.site,'pavement_04',1/3.1);
   // A shared linear albedo correction also survives conversion to the path tracer.
@@ -111,23 +111,40 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     }
   });
   // Distant generic urban fabric: illustrative skyline, not claimed survey data.
-  const urbanCanvas=document.createElement('canvas');urbanCanvas.width=urbanCanvas.height=128;
-  const g=urbanCanvas.getContext('2d');g.fillStyle='#bdbbb4';g.fillRect(0,0,128,128);
-  const reflection=g.createLinearGradient(0,24,0,98);reflection.addColorStop(0,'#6e8390');reflection.addColorStop(.45,'#455a67');reflection.addColorStop(1,'#718089');g.fillStyle=reflection;g.fillRect(24,26,80,70);
-  g.fillStyle='#d7d6ce';g.fillRect(21,96,86,4);g.fillStyle='#929c9e';g.fillRect(63,26,2,70);g.fillStyle='#7a7f7c';g.fillRect(20,23,88,3);
-  const urbanTex=new T.CanvasTexture(urbanCanvas);urbanTex.encoding=T.sRGBEncoding;urbanTex.wrapS=urbanTex.wrapT=T.RepeatWrapping;urbanTex.anisotropy=4;
-  const types=[{h:10,repeat:[4,3],color:0xe3e0d7},{h:20,repeat:[5,6],color:0xc7c7c1},{h:38,repeat:[6,11],color:0xc5ced2},{h:14,repeat:[5,4],color:0xffffff,brick:true}];
-  const roofMat=new T.MeshStandardMaterial({color:0xa5a49e,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,3000);let roofCount=0;C.city.add(roofUnits);
-  const cityLayers=types.map(t=>{const map=t.brick?texture('facade-brick_color.jpg',1,true):urbanTex.clone();map.repeat.set(...t.repeat.map(v=>t.brick?v/6:v));if(!t.brick)map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});if(t.brick){mat.normalMap=texture('facade-brick_normal.jpg',1);mat.roughnessMap=texture('facade-brick_rough.jpg',1);mat.metalnessMap=texture('facade-brick_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
+  // Whole-facade atlases break the repeated identical-window tile at skyline scale.
+  // These are deterministic illustrative elevations, not photographs of the site.
+  function urbanFacade(columns,rows,tone,variant){
+    const canvas=document.createElement('canvas');canvas.width=512;canvas.height=1024;
+    const g=canvas.getContext('2d'),cw=512/columns,ch=1024/rows;
+    let seed=613+variant*419;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+    g.fillStyle=tone;g.fillRect(0,0,512,1024);
+    for(let row=0;row<rows;row++)for(let col=0;col<columns;col++){
+      const x=col*cw+cw*.19,y=row*ch+ch*.19,w=cw*.62,h=ch*.6;
+      // Recess shadows and pale stone reveals stay subtle at distance.
+      g.fillStyle='rgba(37,46,49,.22)';g.fillRect(x-2,y-2,w+4,h+4);
+      const sky=g.createLinearGradient(0,y,0,y+h),v=Math.floor(random()*28);
+      sky.addColorStop(0,`rgb(${79+v},${100+v},${111+v})`);sky.addColorStop(.52,`rgb(${50+v},${66+v},${73+v})`);sky.addColorStop(1,`rgb(${91+v},${104+v},${109+v})`);
+      g.fillStyle=sky;g.fillRect(x,y,w,h);
+      if(random()<.38){const blind=h*(.2+random()*.75);g.fillStyle=random()<.5?'#babbb5':'#d0cabb';g.fillRect(x,y,w,blind);g.fillStyle='rgba(72,70,62,.15)';for(let yy=y+4;yy<y+blind;yy+=5)g.fillRect(x,yy,w,1);}
+      g.fillStyle='rgba(193,202,203,.75)';g.fillRect(x+w*.5,y,1.5,h);
+      g.fillStyle='rgba(235,234,224,.75)';g.fillRect(x-2,y+h,w+4,2);
+      const stain=g.createLinearGradient(0,y+h,0,y+h+ch*.2);stain.addColorStop(0,'rgba(72,66,54,.13)');stain.addColorStop(1,'rgba(72,66,54,0)');g.fillStyle=stain;g.fillRect(x,y+h+2,w,ch*.2);
+    }
+    const tex=new T.CanvasTexture(canvas);tex.encoding=T.sRGBEncoding;tex.anisotropy=4;return tex;
+  }
+  const types=[{h:10,columns:4,rows:3,tone:'#d8d5ca'},{h:23,columns:5,rows:7,tone:'#c8ccca',office:true},{h:42,columns:6,rows:13,tone:'#d3d8d6'},{h:14,columns:5,rows:4,tone:'#c9c2b5',brick:true},{h:76,columns:9,rows:24,tone:'#e0e2df',apartment:true}];
+  const roofMat=new T.MeshStandardMaterial({color:0x8e9590,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,6000);let roofCount=0;C.city.add(roofUnits);
+  const cityLayers=types.map((t,index)=>{const asset=t.office?'facade-office':'facade-brick',pbr=t.brick||t.office;const map=pbr?texture(asset+'_color.jpg',1,true):urbanFacade(t.columns,t.rows,t.tone,index);if(pbr)map.repeat.set(t.columns/6,t.rows/6);const mat=new T.MeshStandardMaterial({map,roughness:.8,color:0xffffff});if(pbr){mat.normalMap=texture(asset+'_normal.jpg',1);mat.roughnessMap=texture(asset+'_rough.jpg',1);mat.metalnessMap=texture(asset+'_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
   const dummy=new T.Object3D();let seed=17;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
   const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
   for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
     const r=Math.hypot(x,z);if(r<110||r>620||Math.abs(x+35)<16||Math.abs(z+104)<12)continue;
-    const type=rnd()<.22?3:rnd()<.7?0:rnd()<.85?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.85+rnd()*.25),w=12+rnd()*5,d=11+rnd()*5;
-    const px=x+rnd()*3,pz=z+rnd()*3,bounds=new T.Box3(new T.Vector3(px-w/2-2,0,pz-d/2-2),new T.Vector3(px+w/2+2,h,pz+d/2+2));
-    if(occupied.some(b=>b.intersectsBox(bounds)))continue;
+    const type=r>260&&rnd()<.055?4:rnd()<.22?3:rnd()<.62?0:rnd()<.72?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.75+rnd()*.45),w=t.apartment?24+rnd()*9:12+rnd()*5,d=t.apartment?9+rnd()*3:11+rnd()*5;
+    const px=x+rnd()*5,pz=z+rnd()*5,bounds=new T.Box3(new T.Vector3(px-w/2-2,0,pz-d/2-2),new T.Vector3(px+w/2+2,h,pz+d/2+2));
+    if(occupied.some(b=>b.intersectsBox(bounds)))continue;occupied.push(bounds);
     dummy.position.set(px,h/2,pz);dummy.scale.set(w,h,d);dummy.updateMatrix();layer.mesh.setMatrixAt(layer.count,dummy.matrix);layer.mesh.setColorAt(layer.count++,new T.Color(['#e7e4df','#c6c4bc','#d6cec0','#a2aaad','#817a70','#b6aaa0','#9d9690','#ddd8d1'][Math.floor(rnd()*8)]).convertSRGBToLinear());
     dummy.position.y=h+.55;dummy.scale.set(w*.3,1.1,d*.25);dummy.updateMatrix();roofUnits.setMatrixAt(roofCount++,dummy.matrix);
+    if(type!==0){dummy.position.set(px+w*.25,h+.3,pz-d*.23);dummy.scale.set(1.8,.6,2.4);dummy.updateMatrix();roofUnits.setMatrixAt(roofCount++,dummy.matrix);}
   }
   roofUnits.count=roofCount;roofUnits.instanceMatrix.needsUpdate=true;
   cityLayers.forEach(({mesh,count})=>{mesh.count=count;mesh.instanceMatrix.needsUpdate=true});
@@ -219,4 +236,6 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     });
   }
   masses.forEach(batch);batch(C.bld);batch(extra);
+  // Conversion to the precision renderer snapshots images: wait for every requested map.
+  await Promise.all(pendingTextures);
 };

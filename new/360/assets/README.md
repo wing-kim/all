@@ -24,3 +24,5 @@
 - `clear-noon-sky_2k.hdr`: Poly Haven [Kloppenheim 05 (Pure Sky)](https://polyhaven.com/a/kloppenheim_05_puresky), Greg Zaal / Jarod Guest, CC0, 2K HDR. Clear daytime sky and lighting; not site photography.
 
 - `modern-arm-chair/`: Poly Haven [Modern Arm Chair 01](https://polyhaven.com/a/modern_arm_chair_01), Vibrant Nordic, CC0. Original glTF geometry with 1K wood/leather PBR maps, scaled for illustrative lounge furnishings. Not an approved interior specification.
+
+- `facade-office_*.jpg`: ambientCG [Facade019A](https://ambientcg.com/a/Facade019A), Lennart Demes, CC0. Original 1K JPG color, OpenGL normal, roughness and metalness; illustrative distant office buildings only.
