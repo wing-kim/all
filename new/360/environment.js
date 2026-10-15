@@ -155,6 +155,16 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const roof=C.levels().find(l=>l.kind==='roof');
     if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
   }catch(error){console.warn('Tree asset unavailable',error)}
+  try{
+    const chair=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/modern-arm-chair/modern-arm-chair.gltf',resolve,undefined,reject));
+    const b=new T.Box3().setFromObject(chair.scene),size=b.getSize(new T.Vector3()),center=b.getCenter(new T.Vector3()),scale=.76/size.x;
+    chair.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;}});
+    for(const fallback of extra.children.slice()){
+      const a=fallback.userData.loungeAnchor;if(!a)continue;
+      for(const dx of [-.47,.47]){const root=new T.Group(),model=chair.scene.clone(true);model.scale.setScalar(scale);model.position.set(-center.x*scale,-b.min.y*scale,-center.z*scale);root.add(model);root.position.set(a.x+dx,a.y,a.z);root.rotation.y=dx<0?.12:-.12;root.name='CC0 lounge armchair';root.userData.illustrativeFurniture=true;extra.add(root)}
+      fallback.visible=false;
+    }
+  }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
   // Correct illustrative street furniture that was placed inside the six-metre road.
   const sideRoadY=px=>1365-.3604*(px-230);
   for(const person of C.R3D.props.children){

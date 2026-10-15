@@ -44,7 +44,8 @@
   function box(parent,x,y,z,w,h,d,m){const o=new T.Mesh(boxGeo,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
   // Interior furnishings are illustrative. Architecture and opening locations remain from the model.
   C.levels().filter(l=>l.kind==='upper'||l.kind==='ground').forEach((l,li)=>{
-    const y=l.y+.45;
+    // Match the original finished floor: ground +70 mm, upper floors +15 mm.
+    const y=l.y+(l.kind==='ground'?.07:.015)+.003;
     for(let x=450;x<900;x+=145)for(let z=360;z<1100;z+=170){
       if(![[x-45,z-40],[x+45,z-40],[x-45,z+40],[x+45,z+40]].every(q=>inPoly(q,l.poly)))continue;
       // Keep the rear core clear; only dress the glazed street frontage.
@@ -53,10 +54,12 @@
       const cloth=upholstery[bay%upholstery.length];
       if(bay%4===0){
         // Low lounge seating gives each floor readable depth through the glazing.
-        box(extra,a,y+.26,b,1.65,.24,.76,dark);
-        for(const dx of [-.4,.4])box(extra,a+dx,y+.43,b,.76,.18,.68,cloth);
-        box(extra,a,y+.73,b-.32,1.65,.62,.16,cloth);
-        for(const dx of [-.77,.77])box(extra,a+dx,y+.56,b,.15,.38,.78,cloth);
+        const seating=new T.Group();seating.userData.loungeAnchor={x:a,y,z:b};extra.add(seating);
+        for(const dx of [-.65,.65])for(const dz of [-.25,.25])box(seating,a+dx,y+.07,b+dz,.06,.14,.06,dark);
+        box(seating,a,y+.26,b,1.65,.24,.76,dark);
+        for(const dx of [-.4,.4])box(seating,a+dx,y+.43,b,.76,.18,.68,cloth);
+        box(seating,a,y+.73,b-.32,1.65,.62,.16,cloth);
+        for(const dx of [-.77,.77])box(seating,a+dx,y+.56,b,.15,.38,.78,cloth);
         box(extra,a,y+.32,b+.98,1.1,.065,.48,timber);
         for(const dx of [-.43,.43])box(extra,a+dx,y+.16,b+.98,.035,.3,.38,dark);
       }else{
@@ -66,7 +69,7 @@
         box(extra,a,y+.23,b+.85,.04,.42,.04,dark);box(extra,a,y+.035,b+.85,.5,.04,.5,dark);
         if(bay%3===0){box(extra,a,y+1.08,b-.18,.57,.34,.035,screen);box(extra,a,y+.86,b-.18,.035,.18,.035,dark);box(extra,a,y+.813,b+.16,.46,.015,.15,dark);}
       }
-      if(bay%3!==1)box(extra,a,y+l.h-.65,b,1.5,.035,.08,lit);
+      if(bay%3!==1)box(extra,a,l.y+l.h-.45,b,1.5,.035,.08,lit);
     }
   });
   // Instanced leaves, fixed seed: stable shapes from every camera and no per-frame reconstruction.
@@ -83,7 +86,7 @@
     }
   }
   [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);/* Replaced below by scanned tree assets. */});
-  C.levels().filter(l=>l.kind==='upper').forEach(l=>{const [x,z]=P(445,480);box(extra,x,l.y+.62,z,.45,.5,.45,pot);plant(x,l.y+.9,z,1.1)});
+  C.levels().filter(l=>l.kind==='upper').forEach(l=>{const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1)});
   leaves.count=n;leaves.instanceMatrix.needsUpdate=true;extra.add(leaves);
   // Fine surface relief, rather than painting lighting into albedo.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
