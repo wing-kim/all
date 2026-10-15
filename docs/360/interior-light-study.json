@@ -1,0 +1,14 @@
+{
+  "crop": [
+    49,
+    271,
+    786,
+    731
+  ],
+  "meanAbsoluteRGBDifference": [
+    0.575,
+    0.948,
+    1.517
+  ],
+  "note": "Not a perceptual quality score; stochastic sampling can contribute to differences."
+}
