@@ -1,0 +1,76 @@
+{
+  "runtime": {
+    "camera": [
+      -8,
+      16,
+      -2.5
+    ],
+    "complete": true,
+    "failure": null,
+    "rows": [
+      {
+        "encoding": 3001,
+        "material": "MeshStandardMaterial",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "shadow": true,
+        "size": [
+          320,
+          512
+        ]
+      },
+      {
+        "encoding": 3001,
+        "material": "MeshStandardMaterial",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "shadow": true,
+        "size": [
+          128,
+          96
+        ]
+      },
+      {
+        "encoding": 3001,
+        "material": "MeshStandardMaterial",
+        "normal": [
+          0,
+          0,
+          1
+        ],
+        "shadow": true,
+        "size": [
+          320,
+          512
+        ]
+      }
+    ],
+    "status": {
+      "materials": 1616,
+      "objects": 2788,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.2493742416070295
+      }
+    },
+    "target": [
+      -11.15,
+      14.7,
+      -5.77
+    ]
+  },
+  "geometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  }
+}
