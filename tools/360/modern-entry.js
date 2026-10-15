@@ -1,5 +1,5 @@
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix, saturation, uniform } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation, uniform, viewportOpaqueMipTexture } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -7,12 +7,22 @@ import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTextu
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { WebGPUPathTracer, OIDNDenoiser } from 'three-gpu-pathtracer/webgpu';
 import { initUNetFromURL } from 'oidn-web';
-// Guide buffers contain albedo and normals, so refraction passes are unnecessary here.
-// Disable them for this pass to avoid stale transmission targets after viewport resizing.
+// For thin clear glazing, guide the denoiser with the first opaque surface behind it.
+// Opaque-glass guides flatten every interior edge to the curtain wall and smear furniture.
+// This only affects auxiliary albedo/normal buffers; beauty rays still see all glazing.
 class StableGuideDenoiser extends OIDNDenoiser {
+ _copyOutputToTexture(output,width,height){super._copyOutputToTexture(output,width,height);if(this._rawTexture)this._rawTexture.label=`tower-denoised-${width}x${height}`;}
  _renderAuxiliaryBuffers(width,height){
-  const saved=new Map();this.scene.traverse(o=>{for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[]){if(m.transmission>0&&!saved.has(m)){saved.set(m,m.transmission);m.transmission=0;m.needsUpdate=true;}}});
-  try{return super._renderAuxiliaryBuffers(width,height)}finally{for(const [m,value] of saved){m.transmission=value;m.needsUpdate=true}}
+  const materials=new Map(),visibility=new Map();
+  this.scene.traverse(o=>{
+   const list=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];
+   if(list.length&&list.every(m=>(materials.get(m)??m.transmission)>.9&&m.thickness===0)){visibility.set(o,o.visible);o.visible=false;}
+   for(const m of list)if(m.transmission>0&&!materials.has(m)){materials.set(m,m.transmission);m.transmission=0;m.needsUpdate=true;}
+  });
+  try{return super._renderAuxiliaryBuffers(width,height)}finally{
+   for(const [m,value] of materials){m.transmission=value;m.needsUpdate=true;}
+   for(const [o,visible] of visibility)o.visible=visible;
+  }
  }
 }
 export async function start(C){
@@ -51,6 +61,7 @@ export async function start(C){
  finally {primary.forEach(o=>o.visible=true);}
  const tracer=new WebGPUPathTracer(renderer);tracer.maxBounces=8;tracer.maxTransparentBounces=12;tracer.frameBudget=150000;tracer.lowResScale=.25;tracer.renderDelay=350;tracer.maxSamples=compactTouch?32:64;tracer.renderScale=compactTouch?.8:1;addInteriorLighting({scene,tracer},C);tracer.setScene(scene,camera);tracer.setDenoiser(new StableGuideDenoiser({initUNetFromURL,auxWeightsUrl:compactTouch?"360/assets/rt_hdr_alb_nrm_small.tza":"360/assets/rt_hdr_alb_nrm.tza",maxTileSize:256}));
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
+ previewPass.renderTarget.texture.name='tower-preview-color';
  previewAO.resolutionScale=.5;previewAO.radius.value=1;previewAO.thickness.value=.4;
  const filteredAO=denoise(previewAO.getTextureNode(),previewPass.getTextureNode('depth'),null,camera);
  // Depth-based aerial perspective, shared by moving and converged frames.
@@ -65,7 +76,19 @@ export async function start(C){
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
  let previewHigh=!compactTouch;
  const previewGlass=new Map([...materials.values()].filter(m=>m.transmission>0).map(m=>[m,m.color.clone()]));
+ const transmissionViewport=viewportOpaqueMipTexture(),previewSize=new T.Vector2();let transmissionRevision=0;
+ function prepareTransmissionViewport(){
+  renderer.getDrawingBufferSize(previewSize);previewPass.setSize(previewSize.x,previewSize.y);
+  const target=previewPass.renderTarget,t=transmissionViewport.getTextureForReference(target);
+  t.name='tower-transmission-front';
+  if(t.image.width!==target.width||t.image.height!==target.height){
+   t.dispose();t.image.width=target.width;t.image.height=target.height;t.type=target.texture.type;t.generateMipmaps=true;t.needsUpdate=true;
+   // Allocate before encoding the scene; resizing during transmission otherwise invalidates bindings.
+   renderer.initTexture(t);transmissionRevision++;for(const m of previewGlass.keys()){m.customProgramCacheKey=()=>`tower-transmission-${transmissionRevision}`;m.needsUpdate=true;}
+  }
+ }
  function renderPreview(){
+  prepareTransmissionViewport();
   // Raster refraction lacks the interior light loss computed by path tracing.
   // Compensate only during this draw; authored and traced materials stay unchanged.
   for(const [m,color] of previewGlass)m.color.copy(color).multiplyScalar(.55);
@@ -95,8 +118,8 @@ export async function start(C){
     if(performance.now()-lastMotion>200)tracer.renderSample();
     if(performance.now()-lastMotion<=200)renderPreview();
     else if(!tracer._denoiser?.complete){if(!previewCached)cachePreview();}
-    else if(tracer._denoiser.texture){cachedPreview.style.display='none';precisionTexture.value=tracer._denoiser.texture;precisionPipeline.render();presented=true;}
-  }catch(error){console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
+    else if(tracer._denoiser.texture){cachedPreview.style.display='none';if(precisionTexture.value!==tracer._denoiser.texture){precisionTexture.value=tracer._denoiser.texture;precisionPipeline.needsUpdate=true;}precisionPipeline.render();presented=true;}
+  }catch(error){console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA_FAILURE_REASON=String(error?.message||error);window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
 
  }frame();
  const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}tracer.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;

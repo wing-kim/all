@@ -39,9 +39,33 @@
     for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
     timber.map=color;timber.normalMap=normal;timber.normalScale.set(.14,.14);timber.roughnessMap=rough;timber.color.setRGB(1,1,1);timber.roughness=.72;
   }catch(error){console.warn('Interior wood texture unavailable',error)}
+  try{
+    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/interior-stone_'+name+'.jpg')));
+    color.encoding=T.sRGBEncoding;
+    for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.setScalar(1/1.5);map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
+    for(const m of [M.floorUp,M.stone]){m.map=color;m.normalMap=normal;m.normalScale.set(.065,.065);m.roughnessMap=rough;m.roughness=.55;m.color.setRGB(1,1.05,1.15);m.needsUpdate=true;}
+    bld.updateMatrixWorld(true);const v=new T.Vector3();bld.traverse(o=>{if(!o.isMesh||![M.floorUp,M.stone].includes(o.material))return;
+      const p=o.geometry.attributes.position,uv=new Float32Array(p.count*2);for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);uv[i*2]=v.x;uv[i*2+1]=v.z}o.geometry.setAttribute('uv',new T.BufferAttribute(uv,2));});
+  }catch(error){console.warn('Interior stone texture unavailable',error)}
   const lit=new T.MeshStandardMaterial({color:0xffe8cc,emissive:0xffce91,emissiveIntensity:.8});
   const boxGeo=new T.BoxGeometry(1,1,1);
   function box(parent,x,y,z,w,h,d,m){const o=new T.Mesh(boxGeo,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
+  const chairMetal=material('#737c80',.3);chairMetal.metalness=.78;
+  const casterMat=material('#292d2d',.8);
+  function padGeometry(w,h,d){const shape=new T.Shape();shape.moveTo(-w/2,-h/2);shape.lineTo(w/2,-h/2);shape.lineTo(w/2,h/2);shape.lineTo(-w/2,h/2);shape.closePath();const g=new T.ExtrudeGeometry(shape,{depth:d,bevelEnabled:true,bevelSize:.025,bevelThickness:.018,bevelSegments:3,steps:1});g.translate(0,0,-d/2);return g}
+  const seatGeometry=padGeometry(.46,.43,.045);seatGeometry.rotateX(-Math.PI/2);
+  const backGeometry=padGeometry(.44,.43,.04),liftGeometry=new T.CylinderGeometry(.027,.035,.31,12),armGeometry=new T.CylinderGeometry(.019,.027,1,8),wheelGeometry=new T.CylinderGeometry(.045,.045,.028,12);
+  function deskChair(x,y,z,cloth){
+    const root=new T.Group();root.position.set(x,y,z);root.name='Detailed task chair';root.userData.illustrativeFurniture=true;extra.add(root);
+    function part(g,m,px,py,pz){const o=new T.Mesh(g,m);o.position.set(px,py,pz);o.castShadow=o.receiveShadow=true;root.add(o);return o}
+    part(seatGeometry,cloth,0,.445,0);const back=part(backGeometry,cloth,0,.735,.225);back.rotation.x=.12;
+    part(liftGeometry,chairMetal,0,.265,0);
+    function rod(a,b,r=1){const A=new T.Vector3(...a),B=new T.Vector3(...b),o=part(armGeometry,chairMetal,...A.clone().add(B).multiplyScalar(.5).toArray());o.scale.set(r,A.distanceTo(B),r);o.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),B.sub(A).normalize());}
+    rod([0,.40,.17],[0,.73,.265]);
+    for(const side of [-1,1]){rod([side*.245,.43,.08],[side*.245,.65,.08],.75);box(root,side*.245,.66,0,.055,.035,.28,dark);}
+    for(let k=0;k<5;k++){const a=k*Math.PI*2/5,dx=Math.sin(a)*.29,dz=Math.cos(a)*.29;rod([0,.13,0],[dx,.10,dz]);
+      for(const side of [-1,1]){const wheel=part(wheelGeometry,casterMat,dx+Math.cos(a)*side*.022,.046,dz-Math.sin(a)*side*.022);wheel.rotation.set(0,a,Math.PI/2);}}
+  }
   // Interior furnishings are illustrative. Architecture and opening locations remain from the model.
   C.levels().filter(l=>l.kind==='upper'||l.kind==='ground').forEach((l,li)=>{
     // Match the original finished floor: ground +70 mm, upper floors +15 mm.
@@ -65,8 +89,7 @@
       }else{
         box(extra,a,y+.76,b,1.65,.08,.85,timber);
         [-.65,.65].forEach(dx=>[-.3,.3].forEach(dz=>box(extra,a+dx,y+.37,b+dz,.045,.74,.045,dark)));
-        box(extra,a,y+.46,b+.85,.55,.12,.55,cloth);box(extra,a,y+.8,b+1.08,.55,.64,.08,cloth);
-        box(extra,a,y+.23,b+.85,.04,.42,.04,dark);box(extra,a,y+.035,b+.85,.5,.04,.5,dark);
+        deskChair(a,y,b+.85,cloth);
         if(bay%3===0){box(extra,a,y+1.08,b-.18,.57,.34,.035,screen);box(extra,a,y+.86,b-.18,.035,.18,.035,dark);box(extra,a,y+.813,b+.16,.46,.015,.15,dark);}
       }
       if(bay%3!==1)box(extra,a,l.y+l.h-.45,b,1.5,.035,.08,lit);
@@ -140,7 +163,7 @@
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
-    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?'정밀 광선 추적 · '+Math.round(window.TOWER_CINEMA.tracer._lastSampleCounts.avg)+' 샘플'+(window.TOWER_CINEMA.tracer._denoiser?.complete?' · 노이즈 제거 완료':''):window.TOWER_CINEMA_FAILURE?'실시간 보기 · 정밀 렌더 자동 전환':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?'정밀 광선 추적 · '+Math.round(window.TOWER_CINEMA.tracer._lastSampleCounts.avg)+' 샘플'+(window.TOWER_CINEMA.tracer._denoiser?.complete?' · 노이즈 제거 완료':''):window.TOWER_CINEMA_FAILURE?'정밀 렌더 중단 · 실시간 보기로 전환':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');

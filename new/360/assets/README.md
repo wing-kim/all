@@ -26,3 +26,5 @@
 - `modern-arm-chair/`: Poly Haven [Modern Arm Chair 01](https://polyhaven.com/a/modern_arm_chair_01), Vibrant Nordic, CC0. Original glTF geometry with 1K wood/leather PBR maps, scaled for illustrative lounge furnishings. Not an approved interior specification.
 
 - `facade-office_*.jpg`: ambientCG [Facade019A](https://ambientcg.com/a/Facade019A), Lennart Demes, CC0. Original 1K JPG color, OpenGL normal, roughness and metalness; illustrative distant office buildings only.
+
+- `interior-stone_*.jpg`: Poly Haven [Marble 01](https://polyhaven.com/a/marble_01), Rob Tuytel, CC0, original 1K color/OpenGL normal/roughness. Source dimensions 1.5 × 1.5 m. Interior finish study only; not an approved material specification.
