@@ -2,7 +2,10 @@ import bpy,bmesh,random,json
 from pathlib import Path
 import argparse,sys
 parser=argparse.ArgumentParser();parser.add_argument('source');parser.add_argument('output')
+parser.add_argument('--leaf-retention',type=float,default=1)
+parser.add_argument('--leaf-scale',type=float,default=1)
 args=parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+if not 0 < args.leaf_retention <= 1 or args.leaf_scale <= 0:parser.error('leaf retention must be in (0,1] and scale must be positive')
 source=Path(args.source).resolve()
 j=json.loads(source.read_text())
 for mesh in j['meshes']:
@@ -37,9 +40,9 @@ for o in list(bpy.context.scene.objects):
      if y not in seen:seen.add(y);stack.append(y)
    parts.append(part)
    center=sum((v.co for v in part),__import__('mathutils').Vector())/len(part)
-   for v in part:v.co=center+(v.co-center)*1.4
+   for v in part:v.co=center+(v.co-center)*args.leaf_scale
   print('Leaf components',len(parts),'sizes',sorted(map(len,parts))[:8],flush=True)
-  random.seed(42);remove=[v for p in parts if random.random()>.68 for v in p];bmesh.ops.delete(bm,geom=remove,context='VERTS');bm.to_mesh(o.data);bm.free()
+  random.seed(42);remove=[v for p in parts if random.random()>args.leaf_retention for v in p];bmesh.ops.delete(bm,geom=remove,context='VERTS');bm.to_mesh(o.data);bm.free()
   mod=o.modifiers.new('Preserve leaf silhouettes','DECIMATE');mod.ratio=.2
  else:
   mod=o.modifiers.new('Web bark reduction','DECIMATE');mod.ratio=min(1,16000/len(o.data.polygons))

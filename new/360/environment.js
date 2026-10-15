@@ -185,14 +185,21 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   try{
     const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/tree-small-02.glb',resolve,undefined,reject));
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
+    // Anchor the trunk foot, not the asymmetric canopy bounding-box centre.
+    asset.scene.updateMatrixWorld(true);const trunkPoints=[];
+    asset.scene.traverse(o=>{if(!o.isMesh||!/trunk/.test(o.material?.name))return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++)trunkPoints.push(new T.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld));});
+    const trunkMin=trunkPoints.length?Math.min(...trunkPoints.map(p=>p.y)):bounds.min.y,footBox=new T.Box3();
+    for(const p of trunkPoints)if(p.y<=trunkMin+.015)footBox.expandByPoint(p);
+    const foot=footBox.isEmpty()?center.clone():footBox.getCenter(new T.Vector3());foot.y=trunkMin;
+
     asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
     // Keep root pits on the actual sidewalk; the old corner coordinates fell in the road.
     const oppositeWalk=px=>1365-.3604*(px-230)+305;
     const positions=[[120,240],[120,610],[120,1020],[120,1250],[1550,oppositeWalk(1550)],[120,-690],[120,-1000],[120,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-690],[1850,oppositeWalk(1850)],[2200,oppositeWalk(2200),.55],[2550,oppositeWalk(2550),.65],[3250,oppositeWalk(3250),.5],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[120,-2000]];
     positions.forEach((q,i)=>{
       const g=new T.Group(),tree=asset.scene.clone(true),s=(9.2+i%3*.8)/size.y,spread=q[2]||1;
-      tree.scale.set(s*spread,s,s*spread);tree.position.set(-center.x*s*spread,-bounds.min.y*s,-center.z*s*spread);g.add(tree);
-      const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);
+      tree.scale.set(s*spread,s,s*spread);tree.position.set(-foot.x*s*spread,-foot.y*s,-foot.z*s*spread);g.add(tree);
+      const [x,z]=P(...q);g.position.set(x,.18,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);
       const bed=new T.Group();bed.name='Street tree pit';bed.userData.streetTreePit=true;bed.position.set(x,0,z);
       if(q[0]>230)bed.rotation.y=Math.atan(.3604);extra.add(bed);
       const bedPart=(x,y,z,w,h,d,m)=>{const part=box(x,y,z,w,h,d,m);extra.remove(part);bed.add(part)};
@@ -200,7 +207,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       for(const side of [-1,1]){bedPart(side*.65,.17,0,.09,.09,1.4,stone);bedPart(0,.17,side*.65,1.4,.09,.09,stone)}
     });
     const roof=C.levels().find(l=>l.kind==='roof');
-    if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
+    if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-foot.x*s,-foot.y*s,-foot.z*s);g.add(tree);g.position.set(x,roof.y+.53,z);g.name='CC0 Tree Small 02';extra.add(g)}
   }catch(error){console.warn('Tree asset unavailable',error)}
   try{
     const chair=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/modern-arm-chair/modern-arm-chair.gltf',resolve,undefined,reject));

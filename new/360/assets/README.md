@@ -8,7 +8,7 @@
 
 - `daylight-sky_2k.hdr`: Poly Haven, Kloofendal 48d Partly Cloudy (Pure Sky), CC0, https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky . Generic sky, not site photography.
 - `asphalt_02_*.jpg`, `pavement_04_*.jpg`: Poly Haven CC0 PBR texture sets, https://polyhaven.com/a/asphalt_02 and https://polyhaven.com/a/pavement_04 . 1K color/normal/roughness; downloaded from dl.polyhaven.org.
-- `tree-small-02.glb`: adapted from Poly Haven Tree Small 02, CC0, https://polyhaven.com/a/tree_small_02 . Reduced bark meshes, deterministic leaf-component sampling and planar simplification for browser display. Illustrative landscaping.
+- `tree-small-02.glb`: adapted from Poly Haven Tree Small 02, CC0, https://polyhaven.com/a/tree_small_02 . Reduced bark meshes and planar leaf simplification for browser display; all source leaf components are retained at their original scale. Trunk-foot anchoring aligns street trees with their planting pits. Illustrative landscaping.
 - `concept-car.glb`: Car Concept, Eric Chadwick / Darmstadt Graphics Group GmbH, 2024, CC BY 4.0. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept . Runtime paint and glass adapted for this viewer. Khronos/3D Commerce marks belong to Khronos. No endorsement implied.
 - `GLTFLoader.js`: Three.js r128, MIT, same license file as the other Three.js extensions.
 - Urban background blocks and added facade relief are illustrative, not new measured architectural evidence. The primary tower source geometry is unchanged; rendering copies of narrow metal members receive the documented 2.5 mm edge finish within their original bounds.
