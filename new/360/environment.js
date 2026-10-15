@@ -223,12 +223,19 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const foot=footBox.isEmpty()?center.clone():footBox.getCenter(new T.Vector3());foot.y=trunkMin;
 
     asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
+    // Illustrative early-autumn variation; share a small material palette, never duplicate foliage geometry.
+    const leafTints=C.R3D.season==='autumn'?[[1.1,1,.88],[1.5,1.08,.7],[1.85,1.05,.6],[1.28,1.02,.78]]:[[1,1,1]],leafMaterials=new Map();
+    function dressLeaves(tree,index){
+      tree.traverse(o=>{if(!o.isMesh||!/leaves/.test(o.material?.name))return;const source=o.material,tint=index%leafTints.length;let variants=leafMaterials.get(source);if(!variants){variants=[];leafMaterials.set(source,variants)}
+        if(!variants[tint]){const m=source.clone();m.color.setRGB(...leafTints[tint]);m.emissive.set('#6d682f').convertSRGBToLinear();m.emissiveIntensity=.12;m.userData.leafTint=tint;variants[tint]=m;}o.material=variants[tint];
+      });
+    }
     // Keep root pits on the actual sidewalk; the old corner coordinates fell in the road.
     const oppositeWalk=px=>1365-.3604*(px-230)+305;
     const positions=[[120,240],[120,610],[120,1020],[120,1250],[1550,oppositeWalk(1550)],[120,-690],[120,-1000],[120,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-690],[1850,oppositeWalk(1850)],[2200,oppositeWalk(2200),.55],[2550,oppositeWalk(2550),.65],[3250,oppositeWalk(3250),.5],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[120,-2000]];
     positions.forEach((q,i)=>{
       const g=new T.Group(),tree=asset.scene.clone(true),s=(9.2+i%3*.8)/size.y,spread=q[2]||1;
-      tree.scale.set(s*spread,s,s*spread);tree.position.set(-foot.x*s*spread,-foot.y*s,-foot.z*s*spread);g.add(tree);
+      dressLeaves(tree,i);tree.scale.set(s*spread,s,s*spread);tree.position.set(-foot.x*s*spread,-foot.y*s,-foot.z*s*spread);g.add(tree);
       const [x,z]=P(...q);g.position.set(x,.18,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);
       const bed=new T.Group();bed.name='Street tree pit';bed.userData.streetTreePit=true;bed.position.set(x,0,z);
       if(q[0]>230)bed.rotation.y=Math.atan(.3604);extra.add(bed);
@@ -249,13 +256,13 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       fallback.visible=false;
     }
   }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
-  // Correct illustrative street furniture that was placed inside the six-metre road.
-  const sideRoadY=px=>1365-.3604*(px-230);
+  // Omit abstract scale figures from the photoreal view; keep the authored scene intact.
   for(const person of C.R3D.props.children){
     if(!person.isGroup||person.children.length!==2||person.children[0].geometry?.type!=='CylinderGeometry'||person.children[1].geometry?.type!=='SphereGeometry')continue;
-    const px=person.position.x*41.6+914,py=person.position.z*41.6+770;
-    if(px>230&&py-sideRoadY(px)>-20&&py-sideRoadY(px)<286){person.position.z=P(px,sideRoadY(px)-38)[1];person.userData.sidewalkCorrected=true;}
+    // Preserve the schematic people in the original page, but omit these scale markers here.
+    person.visible=false;person.userData.schematicPersonHidden=true;
   }
+  // Keep the side-street lamp on the pavement.
   const sideLampX=P(1480,0)[0];
   for(const part of C.R3D.props.children){
     if((part.isMesh||part.isPointLight)&&Math.abs(part.position.x-sideLampX)<.001&&part.position.y>3){part.position.z-=50/41.6;part.userData.sidewalkCorrected=true;}
