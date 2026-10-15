@@ -47,3 +47,5 @@
 기술 근거: [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer), [Poly Haven 라이선스](https://docs.polyhaven.com/en/faq), [Car Concept](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept), [OIDN 가중치](https://github.com/RenderKit/oidn-weights). 이미지 기반 재구성을 선택하지 않은 이유는 초기 보고서의 다중 시점 일관성 검토를 따른다.
 
 GitHub 변경은 `codex/tower-360-validation` 전용 브랜치와 초안 PR #1에서 관리한다. `main` 직접 수정이나 병합은 수행하지 않았다.
+
+추가 표면 개선: 주변 건물의 위치에서 결정되는 고정 색상 변주를 적용해 모든 외벽이 같은 흰색으로 보이는 문제를 줄였다. 도로 보수 포장 3곳과 맨홀 4곳을 별도 높이로 추가했다. 보수 포장 상단은 0.012m, 맨홀 상단은 0.022m로 기존 차선(0.045m)보다 낮다. 실제 위치를 측량한 시설물은 아니며 주변 환경의 예시 디테일이다. 754px 실제 창 크기에서 32샘플 수렴과 노이즈 제거 완료 화면을 확인했다. 본 건물 생성 코드는 이 변경에서 수정하지 않았다.

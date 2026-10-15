@@ -25,6 +25,19 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const a=P(230,1365),b=P(1598,872),length=Math.hypot(b[0]-a[0],b[1]-a[1]),angle=-Math.atan2(b[1]-a[1],b[0]-a[0]);
   for(let d=.5;d<length;d+=1.02){const t=d/length,o=box(a[0]+(b[0]-a[0])*t,.13,a[1]+(b[1]-a[1])*t,.99,.26,.26,stone);o.rotation.y=angle}
   for(let z=-35;z<12;z+=12){box(-20.78,.025,z,.48,.045,.8,iron);for(let k=0;k<8;k++)box(-20.78,.052,z-.35+k*.1,.43,.015,.028,stone)}
+  // Road maintenance details sit above asphalt but below lane paint (no coplanar decals).
+  const repair=RMAT.road.clone();repair.color.setRGB(.73,.75,.76);repair.roughness=.98;
+  const seal=new T.MeshStandardMaterial({color:0x292b2a,roughness:.9});
+  function roadPatch(px,py,width,depth,rotation=0){const [x,z]=P(px,py),o=box(x,.006,z,width,.012,depth,repair);o.rotation.y=rotation;o.castShadow=false;
+    return o;
+  }
+  roadPatch(-300,-750,2.7,4.6);roadPatch(-800,450,2.1,3.4);roadPatch(2050,1365-.3604*(2050-230)+140,3.2,1.65,angle);
+  const lidGeometry=new T.CylinderGeometry(.32,.32,.018,32),rimGeometry=new T.TorusGeometry(.345,.022,6,32);
+  for(const [px,py] of [[-420,-100],[-420,870],[1400,1080],[2850,565]]){
+    const [x,z]=P(px,py),lid=new T.Mesh(lidGeometry,iron);lid.position.set(x,.013,z);lid.receiveShadow=true;extra.add(lid);
+    const rim=new T.Mesh(rimGeometry,seal);rim.rotation.x=Math.PI/2;rim.position.set(x,.012,z);extra.add(rim);
+    for(let k=-2;k<=2;k++){const length=2*Math.sqrt(.27*.27-(k*.09)**2);box(x,.024,z+k*.09,length,.007,.018,seal).castShadow=false;}
+  }
   // Give the existing context facades depth at their existing window texture grid.
   const contextGlasses=['#24343c','#485862','#809099','#4d5b63','#303c45','#77838a','#b0aaa0','#364f5b'].map((col,i)=>new T.MeshStandardMaterial({color:new T.Color(col).convertSRGBToLinear(),metalness:i===6?.05:.42,roughness:i===6?.65:.12+i*.025}));
   const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
@@ -36,7 +49,10 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   masses.forEach(m=>{
     const shape=m.geometry.parameters.shapes,h=m.geometry.parameters.options.depth;
     if(h>55||h<5||m.userData.box.distanceToPoint(new T.Vector3(-3,0,0))>100)return;
-    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(1.7,1.75,1.8);n.roughness=.86;return n})}
+    const bounds=m.userData.box,facadeSeed=Math.abs(Math.round(bounds.min.x*17+bounds.min.z*31));
+    const facadeTints=[[1.48,1.48,1.4],[1.62,1.67,1.68],[1.42,1.35,1.22],[1.58,1.55,1.45],[1.32,1.4,1.45],[1.55,1.47,1.34]];
+    const facadeTint=facadeTints[facadeSeed%facadeTints.length];
+    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
     let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
     const pts=shape.getPoints().map(p=>new T.Vector2(p.x,-p.y));
     function detail(x,y,z,w,height,depth,material,rotation=0){const o=new T.Mesh(cube,material);o.position.set(x,y,z);o.scale.set(w,height,depth);o.rotation.y=rotation;o.castShadow=o.receiveShadow=true;m.add(o);return o}
@@ -76,7 +92,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const urbanTex=new T.CanvasTexture(urbanCanvas);urbanTex.encoding=T.sRGBEncoding;urbanTex.wrapS=urbanTex.wrapT=T.RepeatWrapping;urbanTex.anisotropy=4;
   const types=[{h:10,repeat:[4,3],color:0xe3e0d7},{h:20,repeat:[5,6],color:0xc7c7c1},{h:38,repeat:[6,11],color:0xc5ced2},{h:14,repeat:[5,4],color:0xffffff,brick:true}];
   const roofMat=new T.MeshStandardMaterial({color:0xa5a49e,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,3000);let roofCount=0;C.city.add(roofUnits);
-  const cityLayers=types.map(t=>{const map=t.brick?texture('facade-brick_color.jpg',1,true):urbanTex.clone();map.repeat.set(...t.repeat.map(v=>t.brick?v/6:v));map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});if(t.brick){mat.normalMap=texture('facade-brick_normal.jpg',1);mat.roughnessMap=texture('facade-brick_rough.jpg',1);mat.metalnessMap=texture('facade-brick_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
+  const cityLayers=types.map(t=>{const map=t.brick?texture('facade-brick_color.jpg',1,true):urbanTex.clone();map.repeat.set(...t.repeat.map(v=>t.brick?v/6:v));if(!t.brick)map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});if(t.brick){mat.normalMap=texture('facade-brick_normal.jpg',1);mat.roughnessMap=texture('facade-brick_rough.jpg',1);mat.metalnessMap=texture('facade-brick_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
   const dummy=new T.Object3D();let seed=17;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
   const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
   for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
