@@ -173,7 +173,7 @@
     R3D.grade.uniforms.vig.value=.08;R3D.grade.uniforms.sat.value=1;R3D.grade.uniforms.con.value=1.01;
     renderer.toneMappingExposure=1.02;renderer.outputEncoding=T.LinearEncoding;
     // Tight receiver volume: the legacy city-wide shadow frustum caused banding at this scale.
-    C.sun.position.set(...(R3D.time==='am'?[65,100,-40]:R3D.time==='sunset'?[-100,20,50]:[-65,105,70]));C.sun.target.position.set(-3,12,0);scene.add(C.sun.target);
+    C.sun.position.set(...(R3D.time==='am'?[65,100,-40]:R3D.time==='sunset'?[-100,20,50]:[-65,90,-70]));C.sun.target.position.set(-3,12,0);scene.add(C.sun.target);
     Object.assign(C.sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});
     C.sun.shadow.camera.updateProjectionMatrix();C.sun.shadow.bias=-.0003;C.sun.shadow.normalBias=.18;
     C.sun.intensity=R3D.time==='sunset'?1.4:1.65;C.hemi.intensity=.16;
