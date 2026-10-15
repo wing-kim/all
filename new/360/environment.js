@@ -8,8 +8,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   [RMAT.walk,RMAT.site].forEach(m=>{m.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nfloat grey=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));diffuseColor.rgb=mix(vec3(grey),diffuseColor.rgb,.12);')};m.customProgramCacheKey=()=> 'neutral-paving-v1'});
   const stone=new T.MeshStandardMaterial({color:0x8e8c86,roughness:.86,map:RMAT.walk.map,normalMap:RMAT.walk.normalMap,normalScale:new T.Vector2(.15,.15)});
   const iron=new T.MeshStandardMaterial({color:0x303332,metalness:.75,roughness:.63});
+  const soil=new T.MeshStandardMaterial({color:0x3b3020,roughness:1,map:RMAT.road.map,normalMap:RMAT.road.normalMap,normalScale:new T.Vector2(.6,.6)});
   const cube=new T.BoxGeometry(1,1,1);
-  function box(x,y,z,w,h,d,m){const o=new T.Mesh(cube,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;extra.add(o);return o}
+  const curbShape=new T.Shape();curbShape.moveTo(-.48,-.48);curbShape.lineTo(.48,-.48);curbShape.lineTo(.48,.48);curbShape.lineTo(-.48,.48);curbShape.closePath();
+  const curbGeometry=new T.ExtrudeGeometry(curbShape,{depth:.96,bevelEnabled:true,bevelThickness:.02,bevelSize:.02,bevelSegments:1,steps:1});curbGeometry.translate(0,0,-.48);
+  function box(x,y,z,w,h,d,m){const o=new T.Mesh(m===stone?curbGeometry:cube,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;extra.add(o);return o}
   C.R3D.street.children.forEach(o=>{if(o.isInstancedMesh&&o.geometry.parameters?.height<=.05)o.visible=false});
   function walkStrip(x0,x1,offset){
     const road=x=>1365-.3604*(x-230),a=P(x0,road(x0)+offset),b=P(x1,road(x1)+offset),u=new T.Vector2(b[0]-a[0],b[1]-a[1]).normalize(),n=new T.Vector2(-u.y,u.x),length=Math.hypot(b[0]-a[0],b[1]-a[1]);
@@ -32,8 +35,9 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const masses=[];C.scene.traverse(o=>{if(o.isMesh&&o.userData.box&&o.geometry.parameters?.shapes)masses.push(o)});
   masses.forEach(m=>{
     const shape=m.geometry.parameters.shapes,h=m.geometry.parameters.options.depth;
-    if(h>40||h<5||m.userData.box.distanceToPoint(new T.Vector3(-3,0,0))>100)return;
-    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0)return v;const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(1.7,1.75,1.8);n.roughness=.86;return n})}
+    if(h>55||h<5||m.userData.box.distanceToPoint(new T.Vector3(-3,0,0))>100)return;
+    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(1.7,1.75,1.8);n.roughness=.86;return n})}
+    let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
     const pts=shape.getPoints().map(p=>new T.Vector2(p.x,-p.y));
     function detail(x,y,z,w,height,depth,material,rotation=0){const o=new T.Mesh(cube,material);o.position.set(x,y,z);o.scale.set(w,height,depth);o.rotation.y=rotation;o.castShadow=o.receiveShadow=true;m.add(o);return o}
     // Roof equipment and parapet caps add scale cues without changing the surveyed mass.
@@ -46,14 +50,14 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       const u=new T.Vector2().subVectors(b,a).normalize(),angle=-Math.atan2(u.y,u.x);
       detail((a.x+b.x)/2,h+.12,(a.y+b.y)/2,len,.24,.36,copingMat,angle);
       // Recessed storefront glazing, sign fascia and door mullions at pedestrian level.
-      for(let d=1.7;d<len-1.2;d+=3.5){
+      if(!apartment)for(let d=1.7;d<len-1.2;d+=3.5){
         const x=a.x+u.x*d,z=a.y+u.y*d;
         detail(x,1.55,z,2.85,2.65,.25,contextGlasses[(m.id+i)%5],angle);
         detail(x,3.08,z,3.05,.45,.42,signMats[(m.id+i)%4],angle);
         for(const dx of [-1.4,0,1.4])detail(x+u.x*dx,1.55,z+u.y*dx,.055,2.7,.3,frameMat,angle);
         detail(x,.23,z,3,.15,.42,copingMat,angle);
       }
-      for(let y=4.5;y<h-1.2;y+=3.4)for(let d=1.5;d<len-.8;d+=3.2){
+      for(let y=4.5;y<h-1.2;y+=apartment?2.95:3.4)for(let d=1.5;d<len-.8;d+=3.2){
         const x=a.x+u.x*d,z=a.y+u.y*d;
         const o=new T.Mesh(cube,frameMat);o.position.set(x,y,z);o.rotation.y=angle;o.scale.set(2.25,.09,.32);o.castShadow=o.receiveShadow=true;m.add(o);
         const variation=Math.abs(Math.floor(Math.sin(d*8.4+y*1.2+m.id)*9999))%8;const pane=new T.Mesh(cube,contextGlasses[variation]);pane.position.set(x,y+.82,z);pane.rotation.y=angle;pane.scale.set(2.14,1.58,.24);m.add(pane);
@@ -70,14 +74,14 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const reflection=g.createLinearGradient(0,24,0,98);reflection.addColorStop(0,'#6e8390');reflection.addColorStop(.45,'#455a67');reflection.addColorStop(1,'#718089');g.fillStyle=reflection;g.fillRect(24,26,80,70);
   g.fillStyle='#d7d6ce';g.fillRect(21,96,86,4);g.fillStyle='#929c9e';g.fillRect(63,26,2,70);g.fillStyle='#7a7f7c';g.fillRect(20,23,88,3);
   const urbanTex=new T.CanvasTexture(urbanCanvas);urbanTex.encoding=T.sRGBEncoding;urbanTex.wrapS=urbanTex.wrapT=T.RepeatWrapping;urbanTex.anisotropy=4;
-  const types=[{h:10,repeat:[4,3],color:0xe3e0d7},{h:20,repeat:[5,6],color:0xc7c7c1},{h:38,repeat:[6,11],color:0xc5ced2}];
+  const types=[{h:10,repeat:[4,3],color:0xe3e0d7},{h:20,repeat:[5,6],color:0xc7c7c1},{h:38,repeat:[6,11],color:0xc5ced2},{h:14,repeat:[5,4],color:0xffffff,brick:true}];
   const roofMat=new T.MeshStandardMaterial({color:0xa5a49e,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,3000);let roofCount=0;C.city.add(roofUnits);
-  const cityLayers=types.map(t=>{const map=urbanTex.clone();map.repeat.set(...t.repeat);map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
+  const cityLayers=types.map(t=>{const map=t.brick?texture('facade-brick_color.jpg',1,true):urbanTex.clone();map.repeat.set(...t.repeat.map(v=>t.brick?v/6:v));map.needsUpdate=true;const mat=new T.MeshStandardMaterial({map,roughness:.8,color:t.color});if(t.brick){mat.normalMap=texture('facade-brick_normal.jpg',1);mat.roughnessMap=texture('facade-brick_rough.jpg',1);mat.metalnessMap=texture('facade-brick_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0}});
   const dummy=new T.Object3D();let seed=17;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
   const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
   for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
     const r=Math.hypot(x,z);if(r<110||r>620||Math.abs(x+35)<16||Math.abs(z+104)<12)continue;
-    const type=rnd()<.7?0:rnd()<.85?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.85+rnd()*.25),w=12+rnd()*5,d=11+rnd()*5;
+    const type=rnd()<.22?3:rnd()<.7?0:rnd()<.85?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.85+rnd()*.25),w=12+rnd()*5,d=11+rnd()*5;
     const px=x+rnd()*3,pz=z+rnd()*3,bounds=new T.Box3(new T.Vector3(px-w/2-2,0,pz-d/2-2),new T.Vector3(px+w/2+2,h,pz+d/2+2));
     if(occupied.some(b=>b.intersectsBox(bounds)))continue;
     dummy.position.set(px,h/2,pz);dummy.scale.set(w,h,d);dummy.updateMatrix();layer.mesh.setMatrixAt(layer.count,dummy.matrix);layer.mesh.setColorAt(layer.count++,new T.Color(['#e7e4df','#c6c4bc','#d6cec0','#a2aaad','#817a70','#b6aaa0','#9d9690','#ddd8d1'][Math.floor(rnd()*8)]).convertSRGBToLinear());
@@ -94,7 +98,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
     const positions=[[120,240],[120,610],[120,1020],[520,1310],[1550,910],[85,-500],[85,-1000],[85,-1500],[-1240,200],[-1240,650],[-1240,1050],[-1240,-500],[2500,1600],[2400,2050],[2100,1140],[2700,930],[3100,790],[-1240,1550],[-1240,2050],[-1240,-1000],[-1240,-1500],[85,-2000]];
-    positions.forEach((q,i)=>{const g=new T.Group(),tree=asset.scene.clone(true),s=(7.2+i%3*.8)/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g)});
+    positions.forEach((q,i)=>{const g=new T.Group(),tree=asset.scene.clone(true),s=(7.2+i%3*.8)/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);const [x,z]=P(...q);g.position.set(x,.16,z);g.rotation.y=i*2.399;g.name='CC0 Tree Small 02';extra.add(g);box(x,.155,z,1.25,.05,1.25,soil);for(const side of [-1,1]){box(x+side*.65,.17,z,.09,.09,1.4,stone);box(x,.17,z+side*.65,1.4,.09,.09,stone)}});
     const roof=C.levels().find(l=>l.kind==='roof');
     if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
   }catch(error){console.warn('Tree asset unavailable',error)}

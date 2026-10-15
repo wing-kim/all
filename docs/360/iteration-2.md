@@ -28,6 +28,10 @@
 
 화면 크기 변경 검사에서 노이즈 제거용 보조 렌더의 굴절 버퍼가 이전 크기를 참조하는 오류를 발견했다. 알베도·법선 가이드 버퍼를 계산할 때 불필요한 굴절 패스를 끄도록 수정했다. 1440px 검사 화면에서 실제 창 크기로 돌아간 뒤에도 48샘플 수렴·노이즈 제거가 다시 완료됐고, 새 GPU 오류가 없었다.
 
+원경에는 ambientCG Facade 018 A(CC0)의 벽돌·유리 PBR 재질을 추가했다. 가로수 식재 경계, 모서리를 깎은 연석, 주변 건물 옥상 표면도 보완했다. 주광과 환경광 비율은 화면 비교 후 조정했으며, 넓은 화면에서는 OIDN 정식 크기 가중치(1.84MB), 좁은 화면에서는 소형 가중치를 사용한다. 정식 크기 가중치로도 48샘플 수렴과 노이즈 제거 완료를 확인했다.
+
+이동 중 실시간 표시에는 깊이 기반 GTAO, 공간 노이즈 제거와 FXAA를 적용했다. 굴절 유리의 이동 화면과 정지 화면 사이 밝기 차이를 줄이기 위해 실시간 드로우에서만 유리 색을 보정하며, 원형 재질과 광선 추적 재질은 유지한다. 주변 현황 아파트에도 창 프레임과 옥상 재질을 추가하되 상가 디테일은 적용하지 않는다. [후면 비교](evidence/cinema-back.png)에서 48샘플 및 노이즈 제거 완료를 확인했다. 원본 AI 이미지의 고층 재건축 배경과 달리 현황 아파트를 표시한다.
+
 ## 시각적 판단과 남은 작업
 
 [정밀 코너 비교](evidence/cinema-corner.png)는 초기 화면보다 하늘, 유리, 간접광, 접촉 그림자, 포장, 차량과 수목이 개선됐음을 보여준다. 원본 실사와 동등한 수준이라고 판정하지 않는다. 근거리 도시의 창호·상가 디테일, 원경의 다양성, 지면의 자연스러운 사용 흔적이 여전히 부족하다. AI 원본의 잘못된 면이나 부재 위치를 복제해 차이를 줄이지 않는다.
@@ -41,3 +45,5 @@
 렌더러 빌드: `tools/360/`에서 `npm ci --ignore-scripts`, `npm run build`. 정적 번들은 `new/360/modern.js`이며 Pages에서 실행에 Node 서버가 필요하지 않다. 수목 가공 스크립트는 `tools/360/prepare_tree.py`이며 Blender에 `-- 원본.gltf 출력.glb` 인자를 전달한다.
 
 기술 근거: [three-gpu-pathtracer](https://github.com/gkjohnson/three-gpu-pathtracer), [Poly Haven 라이선스](https://docs.polyhaven.com/en/faq), [Car Concept](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept), [OIDN 가중치](https://github.com/RenderKit/oidn-weights). 이미지 기반 재구성을 선택하지 않은 이유는 초기 보고서의 다중 시점 일관성 검토를 따른다.
+
+GitHub 변경은 `codex/tower-360-validation` 전용 브랜치와 초안 PR #1에서 관리한다. `main` 직접 수정이나 병합은 수행하지 않았다.

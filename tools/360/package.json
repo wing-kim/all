@@ -9,7 +9,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild modern-entry.js --bundle --format=esm --minify --outfile=../../new/360/modern.js"
+    "build": "node build.mjs"
   },
   "name": "cape-horn-renderer",
   "version": "1.0.0"
