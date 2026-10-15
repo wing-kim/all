@@ -34,13 +34,13 @@ export async function start(C){
   ['map','normalMap','roughnessMap','metalnessMap','bumpMap','emissiveMap','alphaMap','clearcoatMap','clearcoatRoughnessMap','clearcoatNormalMap'].forEach(k=>n[k]=texture(m[k]));if(m.normalScale)n.normalScale.copy(m.normalScale);n.bumpScale=m.bumpScale||.01;if(m.emissive)n.emissive.copy(m.emissive);n.emissiveIntensity=m.emissiveIntensity||0;
   n.clearcoat=m.clearcoat||0;n.clearcoatRoughness=m.clearcoatRoughness||0;
   if(m.userData?.satinMetal){n.anisotropy=.32;n.clearcoat=.12;n.clearcoatRoughness=.28;}
-  if(glass){n.color.set('#e2edef');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.46;n.thickness=0;n.side=T.DoubleSide;}
+  if(glass){n.color.set('#f3f9fc');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.46;n.thickness=0;n.side=T.DoubleSide;}
   materials.set(m,n);return n;
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=new T.BufferGeometry();for(const k of ['position','normal','uv','uv2','color']){const a=g.attributes[k];if(a&&!a.isInterleavedBufferAttribute)n.setAttribute(k==='uv2'?'uv1':k,new T.BufferAttribute(a.array,a.itemSize,a.normalized));}if(g.index)n.setIndex(new T.BufferAttribute(g.index.array,1));n.groups=g.groups.map(x=>({...x}));geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
  C.scene.traverse(o=>{for(let p=o;p;p=p.parent){if(!p.visible&&!p.userData.box)return;}if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;const m=Array.isArray(o.material)?o.material.map(material):material(o.material),g=geometry(o.geometry);let n;if(o.isInstancedMesh){n=new T.InstancedMesh(g,m,o.count);n.instanceMatrix.array.set(o.instanceMatrix.array.subarray(0,o.count*16));n.instanceMatrix.needsUpdate=true;if(o.instanceColor)n.instanceColor=new T.InstancedBufferAttribute(o.instanceColor.array.subarray(0,o.count*3),3)}else n=new T.Mesh(g,m);n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld)n.userData.primary=true;}scene.add(n)});
- const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.65;
+ const hdr=await new HDRLoader().loadAsync('360/assets/clear-noon-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.85;
  const sun=new T.DirectionalLight(0xfff3dd,3.7);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
  // Keep moving-preview glass reflections tied to the actual surrounding scene.
  // Path tracing continues to use geometric reflections and the original lighting HDR.
@@ -55,7 +55,7 @@ export async function start(C){
  const filteredAO=denoise(previewAO.getTextureNode(),previewPass.getTextureNode('depth'),null,camera);
  // Depth-based aerial perspective, shared by moving and converged frames.
  // Protect the nearby architecture and leave the photographic sky untouched.
- const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0012).exp().oneMinus().min(.55).mul(previewPass.getTextureNode('depth').lessThan(.999999));
+ const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  const hazeColor=new T.Color('#bdcbd5');
  const atmospheric=node=>vec4(mix(node.rgb,hazeColor,haze),node.a);
  const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(previewPass.mul(filteredAO.r.mul(.65).add(.35))));

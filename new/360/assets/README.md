@@ -20,3 +20,5 @@
 - `facade-brick_*.jpg`: ambientCG Facade 018 A by Lennart Demes, CC0, https://ambientcg.com/view?id=Facade018A . Procedural PBR facade with brick, glazing roughness and normals; used only for illustrative distant blocks.
 
 - `wood-floor_{color,normal,rough}.jpg`: Poly Haven [Wood Floor](https://polyhaven.com/a/wood_floor), Dimitrios Savva, CC0, 1K JPG diffuse / OpenGL normal / roughness; used for illustrative interior furniture.
+
+- `clear-noon-sky_2k.hdr`: Poly Haven [Kloppenheim 05 (Pure Sky)](https://polyhaven.com/a/kloppenheim_05_puresky), Greg Zaal / Jarod Guest, CC0, 2K HDR. Clear daytime sky and lighting; not site photography.

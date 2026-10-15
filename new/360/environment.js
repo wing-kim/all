@@ -5,7 +5,9 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   function texture(name,repeat,color){const t=loader.load('360/assets/'+name);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
   function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
   surface(RMAT.road,'asphalt_02',.2);surface(RMAT.ground,'asphalt_02',.2);RMAT.ground.color.set('#b4b8bb').convertSRGBToLinear();surface(RMAT.walk,'pavement_04',1/3.1);surface(RMAT.site,'pavement_04',1/3.1);
-  [RMAT.walk,RMAT.site].forEach(m=>{m.onBeforeCompile=shader=>{shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nfloat grey=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));diffuseColor.rgb=mix(vec3(grey),diffuseColor.rgb,.12);')};m.customProgramCacheKey=()=> 'neutral-paving-v1'});
+  // A shared linear albedo correction also survives conversion to the path tracer.
+  // The previous WebGL-only shader left the precision pavement brown and much darker.
+  [RMAT.walk,RMAT.site].forEach(m=>{m.color.setRGB(1.65,1.85,2.15)});
   const stone=new T.MeshStandardMaterial({color:0x8e8c86,roughness:.86,map:RMAT.walk.map,normalMap:RMAT.walk.normalMap,normalScale:new T.Vector2(.15,.15)});
   const iron=new T.MeshStandardMaterial({color:0x303332,metalness:.75,roughness:.63});
   const soil=new T.MeshStandardMaterial({color:0x3b3020,roughness:1,map:RMAT.road.map,normalMap:RMAT.road.normalMap,normalScale:new T.Vector2(.6,.6)});
@@ -138,7 +140,23 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const oldCars=[];C.R3D.props.traverse(o=>{if(o.userData.car)oldCars.push(o)});
     const b=new T.Box3().setFromObject(car.scene),s=b.getSize(new T.Vector3()),c=b.getCenter(new T.Vector3()),scale=4.65/Math.max(s.x,s.z);
     oldCars.forEach((old,i)=>{
-      const root=new T.Group(),model=car.scene.clone(true);model.scale.setScalar(scale);model.position.set(-c.x*scale,-b.min.y*scale,-c.z*scale);root.add(model);root.position.copy(old.position);root.rotation.copy(old.rotation);root.rotation.y+=i%2?Math.PI:0;
+      const root=new T.Group(),aligned=new T.Group(),model=car.scene.clone(true);
+      // Adapt this unusually wide concept body to a plausible 2.1 m passenger-car envelope.
+      const widthScale=2.1/s.x;model.scale.set(widthScale,scale,scale);model.position.set(-c.x*widthScale,-b.min.y*scale,-c.z*scale);
+      // This glTF faces +Z; the legacy car faces +X. Normalize before road headings.
+      aligned.rotation.y=Math.PI/2;aligned.add(model);root.add(aligned);
+      if(i<9){
+        const lanes=[342.5,68.5,-205.5,205.5,-68.5,-342.5],lane=lanes[i%lanes.length];
+        root.position.set(P(-564+lane,770)[0],.012,[-69,-49,-38,-16,2,21,40,61,79][i]);
+        root.rotation.y=lane>0?Math.PI/2:-Math.PI/2;
+        root.userData.traffic={road:'main',laneOffsetPx:lane,heading:lane>0?'-Z':'+Z'};
+      }else{
+        const k=i-9,px=[850,1400,2250][k],offset=[70,196,70][k];
+        const [x,z]=P(px,1365-.3604*(px-230)+offset);root.position.set(x,.022,z);
+        root.rotation.y=Math.atan(.3604)+(offset<133?Math.PI:0);
+        root.userData.traffic={road:'side',laneOffsetPx:offset,heading:offset<133?'toward-main':'away-from-main'};
+      }
+      root.name='Road vehicle '+(i+1);
       model.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material=o.material.clone();if(/paint|body/i.test(o.material.name)){o.material.color.set(['#b7b9b7','#22282e','#5d686c','#ece9df'][i%4]).convertSRGBToLinear();o.material.metalness=.65;o.material.roughness=.23;}if(o.material.transmission){o.material.transmission=0;o.material.color.set('#24383f');o.material.metalness=.25;o.material.roughness=.12;}}});
       extra.add(root);old.visible=false;
     });

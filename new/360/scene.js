@@ -169,7 +169,7 @@
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
     const generator=new T.PMREMGenerator(renderer);const target=generator.fromEquirectangular(hdr);env=target.texture;hdr.dispose();generator.dispose();environmentStatus='HDRI 적용 · 현장 촬영 아님';finishLighting();
-    skyTexture=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/daylight-sky_2k.hdr',resolve,undefined,reject));
+    skyTexture=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/clear-noon-sky_2k.hdr',resolve,undefined,reject));
     skyTexture.mapping=T.EquirectangularReflectionMapping;finishLighting();
     // Capture the actual dressed 3D neighbourhood instead of an unrelated courtyard.
     const cube=new T.WebGLCubeRenderTarget(512,{type:T.HalfFloatType,generateMipmaps:true,minFilter:T.LinearMipmapLinearFilter});
