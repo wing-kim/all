@@ -340,8 +340,29 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   // Rendering-only edge finish: preserve the authored member and opening bounds.
   // Real extrusion radii require a manufacturer profile; this is a 2.5 mm study.
   const edgeAudit={count:0,maxBoundsDelta:0,maxRadius:0,addedTriangles:0};
+  const furnitureEdgeAudit={count:0,maxBoundsDelta:0,radiusMetres:.006,textureWidthMetres:1.8,addedTriangles:0};
   function renderGeometry(o,root){
     const source=o.geometry,m=o.material;
+    if(root===extra&&m.userData.illustrativeTimber&&source.parameters?.width){
+      source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),center=source.boundingBox.getCenter(new T.Vector3()),scale=o.getWorldScale(new T.Vector3());
+      if(Math.min(scale.x,scale.y,scale.z)>0){
+        const physical=size.clone().multiply(scale),radius=Math.min(.006,Math.min(physical.x,physical.y,physical.z)/4),g=new T.RoundedBoxGeometry(physical.x,physical.y,physical.z,2,radius);
+        const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
+        // Veneer runs along the long X edge; project in metres rather than stretching
+        // one flooring image independently over every face of a unit box.
+        for(let i=0;i<p.count;i++){
+          const ax=Math.abs(n.getX(i)),ay=Math.abs(n.getY(i)),az=Math.abs(n.getZ(i));
+          if(ay>=ax&&ay>=az)uv.setXY(i,p.getZ(i)/1.8,p.getX(i)/1.8);
+          else if(az>=ax)uv.setXY(i,p.getY(i)/1.8,p.getX(i)/1.8);
+          else uv.setXY(i,p.getZ(i)/1.8,p.getY(i)/1.8);
+        }
+        g.scale(1/scale.x,1/scale.y,1/scale.z);g.translate(center.x,center.y,center.z);g.computeBoundingBox();
+        const before=source.boundingBox.clone().applyMatrix4(o.matrixWorld),after=g.boundingBox.clone().applyMatrix4(o.matrixWorld);
+        furnitureEdgeAudit.count++;furnitureEdgeAudit.maxBoundsDelta=Math.max(furnitureEdgeAudit.maxBoundsDelta,before.min.distanceTo(after.min),before.max.distanceTo(after.max));
+        furnitureEdgeAudit.addedTriangles+=g.attributes.position.count/3-(source.index?source.index.count:source.attributes.position.count)/3;
+        return g;
+      }
+    }
     if(root!==C.bld||!m.userData.satinMetal||!source.parameters?.width)return source.clone();
     source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),center=source.boundingBox.getCenter(new T.Vector3()),scale=o.getWorldScale(new T.Vector3());
     if(Math.min(scale.x,scale.y,scale.z)<=0)return source.clone();
@@ -369,7 +390,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       new Set([...parts,...geos]).forEach(g=>g.dispose());
     });
   }
-  masses.forEach(batch);batch(C.bld);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;
+  masses.forEach(batch);batch(C.bld);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;extra.userData.furnitureEdgeAudit=furnitureEdgeAudit;
   // Conversion to the precision renderer snapshots images: wait for every requested map.
   await Promise.all(pendingTextures);
 };

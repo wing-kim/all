@@ -47,10 +47,10 @@
   const screen=new T.MeshStandardMaterial({color:0x151c20,roughness:.24,metalness:.25});
   const textureLoader=new T.TextureLoader();
   try{
-    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/wood-floor_'+name+'.jpg')));
+    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/furniture-veneer_'+name+'.jpg')));
     color.encoding=T.sRGBEncoding;
     for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
-    timber.map=color;timber.normalMap=normal;timber.normalScale.set(.14,.14);timber.roughnessMap=rough;timber.color.setRGB(1,1,1);timber.roughness=.72;
+    timber.map=color;timber.normalMap=normal;timber.normalScale.set(.06,.06);timber.roughnessMap=rough;timber.color.setRGB(1,1,1);timber.roughness=.55;timber.userData.illustrativeTimber=true;
   }catch(error){console.warn('Interior wood texture unavailable',error)}
   try{
     const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/interior-stone_'+name+'.jpg')));

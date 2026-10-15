@@ -1,0 +1,30 @@
+{
+  "asset": "oak_veneer_01",
+  "source": "https://polyhaven.com/a/oak_veneer_01",
+  "author": "Jenelle van Heerden",
+  "license": "CC0",
+  "physicalWidthMetres": 1.8,
+  "files": [
+    {
+      "path": "new/360/assets/furniture-veneer_color.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_diff_1k.jpg",
+      "md5": "39a99df4e328d62d74f3122722a64a95",
+      "sourceMd5": "39a99df4e328d62d74f3122722a64a95",
+      "bytes": 641756
+    },
+    {
+      "path": "new/360/assets/furniture-veneer_normal.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_nor_gl_1k.jpg",
+      "md5": "d05406f5fdaf51f0d7b115b35d9af1b7",
+      "sourceMd5": "d05406f5fdaf51f0d7b115b35d9af1b7",
+      "bytes": 484844
+    },
+    {
+      "path": "new/360/assets/furniture-veneer_rough.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_rough_1k.jpg",
+      "md5": "a19b44176a078b9ae93314133848c9aa",
+      "sourceMd5": "a19b44176a078b9ae93314133848c9aa",
+      "bytes": 865194
+    }
+  ]
+}
