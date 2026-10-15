@@ -1,6 +1,6 @@
 'use strict';
 const frame=document.getElementById('scene'),status=document.getElementById('status');
-const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=v89-skyline-1';
+const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=v90-glazing-1';
 const api=()=>frame.contentWindow?.TOWER360;
 const controls=[...document.querySelectorAll('nav button,.settings button,.settings select')];controls.forEach(e=>e.disabled=true);
 const reference=document.getElementById('reference'),label=document.getElementById('reference-label');

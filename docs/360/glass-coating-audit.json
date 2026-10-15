@@ -1,0 +1,35 @@
+{
+  "active": true,
+  "complete": true,
+  "failure": null,
+  "roles": {
+    "clear": {
+      "count": 39,
+      "metalness": 0,
+      "roughness": 0.045,
+      "transmission": 1
+    },
+    "facade": {
+      "count": 8,
+      "metalness": 0.26,
+      "roughness": 0.035,
+      "transmission": 1
+    },
+    "ground": {
+      "count": 2,
+      "metalness": 0,
+      "roughness": 0.045,
+      "transmission": 1
+    }
+  },
+  "status": {
+    "materials": 1601,
+    "objects": 2754,
+    "samples": {
+      "avg": 64,
+      "max": 64,
+      "min": 64,
+      "samplesPerSecond": 3.8694074969770256
+    }
+  }
+}
