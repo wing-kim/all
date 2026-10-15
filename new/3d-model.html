@@ -7603,6 +7603,15 @@ buildContext();existBuilding();
   document.getElementById('t-cmpapt').addEventListener('change',e=>{CMP.apt=e.target.checked;applyCmp()});
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
+// Opt-in validation only. Ordinary v87 pages keep their original rendering path.
+if(new URLSearchParams(location.search).get('lab')==='360') {
+  window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,city,sun,hemi,P,inPoly,
+    levels:()=>LEVELS,build,setRender,applyTime,updateReflections,resizeR,
+    hideGuides:()=>{limits.visible=false;setLabels(false)},
+    transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
+    cancel:()=>{anim=null}};
+  const script=document.createElement('script');script.src='360/scene.js';document.head.appendChild(script);
+}
 let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;

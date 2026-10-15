@@ -1,0 +1,116 @@
+/* Opt-in extension to the existing model. No image switching in this viewport. */
+(async function () {
+  'use strict';
+  const C=window.TOWER_LAB_CONTEXT;
+  const {THREE:T,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,P,inPoly}=C;
+  const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});
+  const style=document.createElement('style');style.textContent='.panel,.views,.tools,.compass,.hint,.labels,.hqtag{display:none!important}.viewer{width:100%}';document.head.appendChild(style);
+  state.scheme='alt4';C.build();C.setRender(true);C.hideGuides();
+  controls.enablePan=false;controls.minDistance=28;controls.maxDistance=180;
+  controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI*.485;controls.dampingFactor=.075;
+  let flight=null;
+  const cancel=()=>{flight=null;C.cancel()};
+  controls.addEventListener('start',cancel);
+  R3D.hq=false;HQ.on=false;
+  const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);
+  let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
+  const material=(color,roughness=.7)=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness});
+  const timber=material('#b39570'),fabric=material('#d5c9b5'),dark=material('#373b3c'),pot=material('#aaa394');
+  const lit=new T.MeshStandardMaterial({color:0xffe8cc,emissive:0xffce91,emissiveIntensity:.8});
+  const boxGeo=new T.BoxGeometry(1,1,1);
+  function box(parent,x,y,z,w,h,d,m){const o=new T.Mesh(boxGeo,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
+  // Interior furnishings are illustrative. Architecture and opening locations remain from the model.
+  C.levels().filter(l=>l.kind==='upper'||l.kind==='ground').forEach((l,li)=>{
+    const y=l.y+.45;
+    for(let x=450;x<900;x+=145)for(let z=360;z<1100;z+=170){
+      if(![[x-45,z-40],[x+45,z-40],[x-45,z+40],[x+45,z+40]].every(q=>inPoly(q,l.poly)))continue;
+      // Keep the rear core clear; only dress the glazed street frontage.
+      if(x>640&&z<820)continue;
+      const [a,b]=P(x,z);box(extra,a,y+.76,b,1.65,.08,.85,timber);
+      [-.65,.65].forEach(dx=>[-.3,.3].forEach(dz=>box(extra,a+dx,y+.37,b+dz,.045,.74,.045,dark)));
+      box(extra,a,y+.46,b+.85,.55,.12,.55,fabric);box(extra,a,y+.8,b+1.08,.55,.64,.08,fabric);
+      box(extra,a,y+l.h-.65,b,2.2,.035,.08,lit);
+    }
+  });
+  // Instanced leaves, fixed seed: stable shapes from every camera and no per-frame reconstruction.
+  const leafGeo=new T.SphereGeometry(1,4,3);leafGeo.scale(.15,.035,.065);
+  const leaves=new T.InstancedMesh(leafGeo,material('#607646'),12000);leaves.castShadow=true;leaves.receiveShadow=true;
+  let n=0;const dummy=new T.Object3D();
+  function plant(x,y,z,size){
+    box(extra,x,y+size*.42,z,.10*size,size*.84,.10*size,timber);
+    const count=Math.round(size*400);
+    for(let i=0;i<count&&n<12000;i++){
+      const a=random()*Math.PI*2,r=Math.sqrt(random())*size*.52,h=(random()-.5)*size*.7;
+      dummy.position.set(x+Math.cos(a)*r,y+size*.82+h,z+Math.sin(a)*r);
+      dummy.rotation.set(random()*Math.PI,random()*Math.PI,random()*Math.PI);dummy.scale.setScalar(.75+random()*.9);dummy.updateMatrix();leaves.setMatrixAt(n++,dummy.matrix);
+    }
+  }
+  [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);plant(x,0,z,4.8)});
+  C.levels().filter(l=>l.kind==='upper').forEach(l=>{const [x,z]=P(445,480);box(extra,x,l.y+.62,z,.45,.5,.45,pot);plant(x,l.y+.9,z,1.1)});
+  leaves.count=n;leaves.instanceMatrix.needsUpdate=true;extra.add(leaves);
+  // Fine surface relief, rather than painting lighting into albedo.
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
+  for(let i=0;i<pixels.data.length;i+=4){const v=115+random()*30;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;pixels.data[i+3]=255}ctx.putImageData(pixels,0,0);
+  const relief=new T.CanvasTexture(canvas);relief.wrapS=relief.wrapT=T.RepeatWrapping;relief.repeat.set(2,2);
+  [RMAT.road,RMAT.walk,RMAT.site].forEach(m=>{m.bumpMap=relief;m.bumpScale=m===RMAT.road?.035:.012;m.needsUpdate=true});
+  let env=null,environmentStatus='불러오는 중';
+  function finishLighting(){
+    M.glass.color.set('#75929d').convertSRGBToLinear();M.glass.metalness=.08;M.glass.roughness=.085;M.glass.opacity=.72;M.glass.depthWrite=false;
+    M.glass1.color.copy(M.glass.color);M.glass1.metalness=.08;M.glass1.roughness=.1;M.glass1.opacity=.72;M.glass1.depthWrite=false;
+    if(env){scene.environment=env;[M.glass,M.glass1].forEach(m=>{m.envMap=env;m.envMapIntensity=.55;m.needsUpdate=true})}
+    R3D.grade.uniforms.vig.value=.08;R3D.grade.uniforms.sat.value=1;R3D.grade.uniforms.con.value=1.01;
+    renderer.toneMappingExposure=.8;renderer.outputEncoding=T.LinearEncoding;
+    // Tight receiver volume: the legacy city-wide shadow frustum caused banding at this scale.
+    C.sun.position.set(...(R3D.time==='am'?[65,100,-40]:R3D.time==='sunset'?[-100,20,50]:[-65,105,70]));C.sun.target.position.set(-3,12,0);scene.add(C.sun.target);
+    Object.assign(C.sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});
+    C.sun.shadow.camera.updateProjectionMatrix();C.sun.shadow.bias=-.0003;C.sun.shadow.normalBias=.18;
+    C.sun.intensity=R3D.time==='sunset'?1.4:2.1;C.hemi.intensity=.24;
+    R3D.sky.material.uniforms.turbidity.value=2;
+    R3D.sky.material.uniforms.sunPosition.value.copy(C.sun.position).normalize();
+    bld.traverse(o=>{if(o.material===M.glass||o.material===M.glass1)o.castShadow=false});
+  }
+  finishLighting();
+  const center=new T.Vector3(-3,16,0);let quality='balanced';
+  function view(name){
+    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.16,-1],right:[0,.16,1],aerial:[-1,.7,1.1]};
+    const a=directions[name];if(!a)return;
+    controls.autoRotate=false;
+    const distance=79*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
+    cancel();
+    const from=new T.Spherical().setFromVector3(camera.position.clone().sub(center));
+    const to=new T.Spherical().setFromVector3(new T.Vector3(...a).normalize().multiplyScalar(distance));
+    to.theta=from.theta+Math.atan2(Math.sin(to.theta-from.theta),Math.cos(to.theta-from.theta));
+    controls.target.copy(center);
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(center).add(new T.Vector3().setFromSpherical(to));controls.update()}
+    else flight={from,to,start:performance.now()};
+  }
+  function setQuality(value){quality=value;const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
+  setQuality('balanced');view('corner');
+  let frames=0,start=performance.now(),fps=0;
+  function stats(now){
+    if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
+      const q=new T.Spherical(T.MathUtils.lerp(a.radius,b.radius,s),T.MathUtils.lerp(a.phi,b.phi,s),T.MathUtils.lerp(a.theta,b.theta,s));
+      camera.position.copy(center).add(new T.Vector3().setFromSpherical(q));controls.update();if(t===1)flight=null;
+    }
+    frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
+  window.TOWER360={
+    view,quality:setQuality,
+    spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
+    light:value=>{R3D.time=value;C.applyTime();finishLighting()},
+    telemetry:()=>({fps,quality,environment:environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    exportModel:async()=>{
+      await load('360/assets/GLTFExporter.js');
+      const model=bld.clone(true),materials=[];
+      model.traverse(o=>{o.userData={};if(!o.material)return;
+        const convert=m=>{const copy=new T.MeshStandardMaterial({color:m.color||0xaaaaaa,roughness:m.roughness??.7,metalness:m.metalness??0,opacity:m.opacity,transparent:m.transparent,side:m.side});materials.push(copy);return copy};
+        o.material=Array.isArray(o.material)?o.material.map(convert):convert(o.material);
+      });
+      try{return await new Promise((resolve,reject)=>{try{new T.GLTFExporter().parse(model,resolve,{binary:true,onlyVisible:true})}catch(e){reject(e)}})}
+      finally{materials.forEach(m=>m.dispose())}
+    }
+  };
+  renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
+  try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
+    const generator=new T.PMREMGenerator(renderer);const target=generator.fromEquirectangular(hdr);env=target.texture;hdr.dispose();generator.dispose();environmentStatus='HDRI 적용 · 현장 촬영 아님';finishLighting();
+  }catch(e){environmentStatus='HDRI 실패 · 기존 하늘 조명 사용';console.warn(environmentStatus,e)}
+})();
