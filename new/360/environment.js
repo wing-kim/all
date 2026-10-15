@@ -42,6 +42,16 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const contextGlasses=['#24343c','#485862','#809099','#4d5b63','#303c45','#77838a','#b0aaa0','#364f5b'].map((col,i)=>new T.MeshStandardMaterial({color:new T.Color(col).convertSRGBToLinear(),metalness:i===6?.05:.42,roughness:i===6?.65:.12+i*.025}));
   const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
   const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
+  // Fine architectural finishes, with no change to the original member geometry.
+  for(const key of ['core','corewall','col','slab']){const mat=C.M[key];if(!mat)continue;mat.normalMap=plasterNormal;mat.normalScale.set(key==='slab'?.035:.08,key==='slab'?.035:.08);mat.roughnessMap=plasterRough;mat.needsUpdate=true;}
+  const grainCanvas=document.createElement('canvas');grainCanvas.width=grainCanvas.height=128;
+  const grainContext=grainCanvas.getContext('2d'),grainPixels=grainContext.createImageData(128,128);
+  let grainSeed=7231;
+  for(let x=0;x<128;x++){grainSeed=(Math.imul(grainSeed,1664525)+1013904223)>>>0;const line=190+grainSeed%55;
+    for(let y=0;y<128;y++){const i=(y*128+x)*4,value=Math.min(255,line+Math.sin(y*.31+x)*5);grainPixels.data[i]=grainPixels.data[i+1]=grainPixels.data[i+2]=value;grainPixels.data[i+3]=255;}}
+  grainContext.putImageData(grainPixels,0,0);const grain=new T.CanvasTexture(grainCanvas);grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,8);grain.anisotropy=4;
+  const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
+  for(const mat of facadeMetals){mat.roughnessMap=grain;mat.roughness=.34;mat.userData.satinMetal=true;mat.needsUpdate=true;}
   const frameMat=new T.MeshStandardMaterial({color:0x464d50,metalness:.55,roughness:.4});
   const copingMat=new T.MeshStandardMaterial({color:0x999b96,metalness:.2,roughness:.7});
   const signMats=[0x293c42,0x4b514a,0x786851,0x3d485b].map(color=>new T.MeshStandardMaterial({color,roughness:.68}));
