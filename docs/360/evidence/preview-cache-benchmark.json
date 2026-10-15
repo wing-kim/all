@@ -1,0 +1,19 @@
+{
+  "result": {
+    "type": "object",
+    "value": {
+      "cacheVisible": [
+        "none"
+      ],
+      "complete": true,
+      "elapsedMs": 16332.5,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.981089823339139
+      },
+      "started": 48122.5
+    }
+  }
+}

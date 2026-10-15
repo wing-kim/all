@@ -69,19 +69,31 @@ export async function start(C){
   for(const [m,color] of previewGlass)m.color.copy(color).multiplyScalar(.55);
   try{if(previewHigh)previewPipeline.render();else renderer.render(scene,camera)}finally{for(const [m,color] of previewGlass)m.color.copy(color)}
  }
- let presented=false;
- let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);window.TOWER_MODERN_ACTIVE=true;
- window.TOWER_CINEMA={scene,camera,renderer,tracer,context:show=>{scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{sun.position.copy(C.sun.position);sun.color.copy(C.sun.color);sun.intensity=C.R3D.time==='sunset'?2:3.7;tracer.updateLights()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;tracer.updateEnvironment()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();tracer.dispose();probeTarget.dispose();previewPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
- function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){presented=false;lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer.updateCamera()}
-  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){presented=false;lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer.updateCamera()}
+ let presented=false,previewCached=false;
+ // While the camera is still, keep a single exact preview frame above the tracer.
+ // Repainting thousands of scene objects during every tracing pass wastes GPU time.
+ const cachedPreview=document.createElement('canvas'),cachedContext=cachedPreview.getContext('2d',{alpha:false});
+ Object.assign(cachedPreview.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'3',display:'none'});
+ function invalidatePresentation(){presented=false;previewCached=false;cachedPreview.style.display='none'}
+ function cachePreview(){
+  renderPreview();
+  if(!cachedContext)return;
+  cachedPreview.width=renderer.domElement.width;cachedPreview.height=renderer.domElement.height;
+  cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
+ }
+ let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
+ window.TOWER_CINEMA={scene,camera,renderer,tracer,context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.copy(C.sun.color);sun.intensity=C.R3D.time==='sunset'?2:3.7;tracer.updateLights()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();tracer.dispose();probeTarget.dispose();previewPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer.updateCamera()}
+  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){invalidatePresentation();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer.updateCamera()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views use the same meshes, materials, camera and environment.
   try{
     if(gpuError)throw gpuError;
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200)tracer.renderSample();
-    if(performance.now()-lastMotion<=200||!tracer._denoiser?.complete)renderPreview();
-    else if(tracer._denoiser.texture){precisionTexture.value=tracer._denoiser.texture;precisionPipeline.render();presented=true;}
+    if(performance.now()-lastMotion<=200)renderPreview();
+    else if(!tracer._denoiser?.complete){if(!previewCached)cachePreview();}
+    else if(tracer._denoiser.texture){cachedPreview.style.display='none';precisionTexture.value=tracer._denoiser.texture;precisionPipeline.render();presented=true;}
   }catch(error){console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
 
  }frame();

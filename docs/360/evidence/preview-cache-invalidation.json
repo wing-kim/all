@@ -1,0 +1,26 @@
+{
+  "morning": {
+    "complete": true,
+    "display": "none",
+    "hash": 3914815519,
+    "height": 568,
+    "light": "am",
+    "width": 883
+  },
+  "afternoon": {
+    "complete": true,
+    "display": "none",
+    "hash": 845827244,
+    "height": 568,
+    "light": "pm",
+    "width": 883
+  },
+  "resized": {
+    "complete": true,
+    "display": "none",
+    "hash": 3145732040,
+    "height": 540,
+    "light": "pm",
+    "width": 865
+  }
+}
