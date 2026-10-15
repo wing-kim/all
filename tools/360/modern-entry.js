@@ -51,6 +51,8 @@ export async function start(C){
   // Appearance approximation for reflective facade glazing; not measured product optics.
   if(m===C.M.glass){n.metalness=.26;n.roughness=.035;}
   if(glass)n.userData.glazingRole=m===C.M.glass?'facade':m===C.M.glass1?'ground':'clear';
+  // Opaque painted backing with a glossy surface, preserving the authored spandrel geometry.
+  if(m===C.FM?.spandrel){n.color.set('#41494d');n.opacity=1;n.transparent=false;n.metalness=.05;n.roughness=.35;n.clearcoat=1;n.clearcoatRoughness=.06;n.userData.spandrelFinish=true;}
   materials.set(m,n);return n;
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
