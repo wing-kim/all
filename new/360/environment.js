@@ -30,7 +30,13 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   // Road maintenance details sit above asphalt but below lane paint (no coplanar decals).
   const repair=RMAT.road.clone();repair.color.setRGB(.73,.75,.76);repair.roughness=.98;
   const seal=new T.MeshStandardMaterial({color:0x292b2a,roughness:.9});
-  function roadPatch(px,py,width,depth,rotation=0){const [x,z]=P(px,py),o=box(x,.006,z,width,.012,depth,repair);o.rotation.y=rotation;o.castShadow=false;
+  C.scene.updateMatrixWorld(true);const roadMeshes=[];C.scene.traverse(o=>{if(o.isMesh&&o.material===RMAT.road)roadMeshes.push(o)});
+  function roadPatch(px,py,width,depth,rotation=0){
+    const [x,z]=P(px,py),ray=new T.Raycaster(new T.Vector3(x,5,z),new T.Vector3(0,-1,0)),hit=ray.intersectObjects(roadMeshes,false)[0],roadY=hit?.point.y??.02;
+    const o=box(x,roadY+.001,z,width,.004,depth,repair);o.rotation.y=rotation;o.castShadow=false;o.name='Asphalt repair patch';o.userData.roadY=roadY;
+    // Metre-scale UVs match the surrounding road; keep the patch 3 mm above it.
+    o.geometry=cube.clone();o.updateMatrixWorld();const position=o.geometry.attributes.position,uv=o.geometry.attributes.uv,v=new T.Vector3();
+    for(let i=0;i<position.count;i++){v.fromBufferAttribute(position,i).applyMatrix4(o.matrixWorld);uv.setXY(i,v.x,v.z)}uv.needsUpdate=true;
     return o;
   }
   roadPatch(-300,-750,2.7,4.6);roadPatch(-800,450,2.1,3.4);roadPatch(2050,1365-.3604*(2050-230)+140,3.2,1.65,angle);

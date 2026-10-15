@@ -1,5 +1,5 @@
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix, saturation } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation, uniform } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -57,8 +57,10 @@ export async function start(C){
  // Protect the nearby architecture and leave the photographic sky untouched.
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  const hazeColor=new T.Color('#bdcbd5');
- const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze),1.12),node.a);
+ const whiteBalance=uniform(new T.Vector3(.93,1.015,1.03));
+ const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),1.12),node.a);
  const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(previewPass.mul(filteredAO.r.mul(.65).add(.35))));
+ const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=fxaa(atmospheric(previewPass));
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
  let previewHigh=!compactTouch;
@@ -67,7 +69,7 @@ export async function start(C){
   // Raster refraction lacks the interior light loss computed by path tracing.
   // Compensate only during this draw; authored and traced materials stay unchanged.
   for(const [m,color] of previewGlass)m.color.copy(color).multiplyScalar(.55);
-  try{if(previewHigh)previewPipeline.render();else renderer.render(scene,camera)}finally{for(const [m,color] of previewGlass)m.color.copy(color)}
+  try{if(previewHigh)previewPipeline.render();else balancedPipeline.render()}finally{for(const [m,color] of previewGlass)m.color.copy(color)}
  }
  let presented=false,previewCached=false;
  // While the camera is still, keep a single exact preview frame above the tracer.
@@ -82,7 +84,7 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- window.TOWER_CINEMA={scene,camera,renderer,tracer,context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.copy(C.sun.color);sun.intensity=C.R3D.time==='sunset'?2:3.7;tracer.updateLights()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();tracer.dispose();probeTarget.dispose();previewPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ window.TOWER_CINEMA={scene,camera,renderer,tracer,context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.copy(C.sun.color);sun.intensity=C.R3D.time==='sunset'?2:3.7;tracer.updateLights()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);invalidatePresentation()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();tracer.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){invalidatePresentation();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer.updateCamera()}
   // Keep stochastic grain off screen during movement and convergence.
