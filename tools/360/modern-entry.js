@@ -1,4 +1,4 @@
-import { copyRoundedMullions } from './curtain-wall.js';
+import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { copyGeometry } from './geometry-copy.js';
 import * as T from 'three/webgpu';
@@ -58,12 +58,12 @@ export async function start(C){
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
- const roundedProfiles=new Map();
+ const roundedProfiles=new Map(),glazingEdges=collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);
  C.scene.traverse(o=>{
   for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box)return;
   if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
-  let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles):null;
+  let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
   if(!copies){
    const g=geometry(o.geometry);let n;
    if(o.isInstancedMesh){n=new T.InstancedMesh(g,m,o.count);n.instanceMatrix.array.set(o.instanceMatrix.array.subarray(0,o.count*16));n.instanceMatrix.needsUpdate=true;if(o.instanceColor)n.instanceColor=new T.InstancedBufferAttribute(o.instanceColor.array.subarray(0,o.count*3),3)}
