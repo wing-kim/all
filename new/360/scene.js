@@ -149,7 +149,7 @@
   const leaves=new T.InstancedMesh(leafGeo,material('#607646'),12000);leaves.castShadow=true;leaves.receiveShadow=true;
   let n=0;const dummy=new T.Object3D();
   function plant(x,y,z,size){
-    box(extra,x,y+size*.42,z,.10*size,size*.84,.10*size,timber);
+    box(extra,x,y+size*.42,z,.10*size,size*.84,.10*size,timber).userData.legacyInteriorFoliage=true;
     const count=Math.round(size*400);
     for(let i=0;i<count&&n<12000;i++){
       const a=random()*Math.PI*2,r=Math.sqrt(random())*size*.52,h=(random()-.5)*size*.7;
@@ -158,8 +158,9 @@
     }
   }
   [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);/* Replaced below by scanned tree assets. */});
-  C.levels().filter(l=>l.kind==='upper').forEach(l=>{const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1)});
-  leaves.count=n;leaves.instanceMatrix.needsUpdate=true;extra.add(leaves);
+  extra.userData.interiorPlantAnchors=[];
+  C.levels().filter(l=>l.kind==='upper').forEach(l=>{if(!Array.from({length:8},(_,i)=>[445+Math.cos(i*Math.PI/4)*27,480+Math.sin(i*Math.PI/4)*27]).every(q=>inPoly(q,l.poly)))return;const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1);extra.userData.interiorPlantAnchors.push({x,y:l.y+.495,z,height:1.35,floor:l.key,poly:l.poly})});
+  leaves.count=n;leaves.instanceMatrix.needsUpdate=true;leaves.userData.legacyInteriorFoliage=true;extra.add(leaves);
   // Fine surface relief, rather than painting lighting into albedo.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
   for(let i=0;i<pixels.data.length;i+=4){const v=115+random()*30;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;pixels.data[i+3]=255}ctx.putImageData(pixels,0,0);

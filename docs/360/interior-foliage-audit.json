@@ -1,0 +1,76 @@
+{
+  "placement": {
+    "fallbackVisible": 0,
+    "furniture": {
+      "addedTriangles": 20736,
+      "count": 72,
+      "maxBoundsDelta": 1.937150939657073e-9,
+      "radiusMetres": 0.006,
+      "textureWidthMetres": 1.8
+    },
+    "plants": [
+      {
+        "anchorDifference": 0,
+        "floor": "2F",
+        "footDifference": 0,
+        "height": 1.3500000000000003,
+        "outsideFloorVertices": 0,
+        "vertices": 77017
+      },
+      {
+        "anchorDifference": 0,
+        "floor": "3F",
+        "footDifference": 0,
+        "height": 1.3499999999999996,
+        "outsideFloorVertices": 0,
+        "vertices": 77017
+      },
+      {
+        "anchorDifference": 0,
+        "floor": "4F",
+        "footDifference": 0,
+        "height": 1.3499999999999996,
+        "outsideFloorVertices": 0,
+        "vertices": 77017
+      },
+      {
+        "anchorDifference": 0,
+        "floor": "5F",
+        "footDifference": 0,
+        "height": 1.349999999999998,
+        "outsideFloorVertices": 0,
+        "vertices": 77017
+      },
+      {
+        "anchorDifference": 0,
+        "floor": "6F",
+        "footDifference": 0,
+        "height": 1.349999999999998,
+        "outsideFloorVertices": 0,
+        "vertices": 77017
+      }
+    ],
+    "sharedGeometryCount": 2,
+    "sharedMaterialCount": 2
+  },
+  "render": {
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1616,
+      "objects": 2788,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.3518558283053705
+      }
+    }
+  },
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  }
+}

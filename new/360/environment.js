@@ -254,6 +254,18 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const draco=new T.DRACOLoader().setDecoderPath('360/assets/draco/');
   const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
   try{
+    const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/interior-foliage.glb',resolve,undefined,reject));
+    const bounds=new T.Box3().setFromObject(asset.scene),height=bounds.max.y-bounds.min.y;
+    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material.side=T.DoubleSide;if(o.material.alphaTest>0){o.material.alphaTest=.45;o.material.transparent=false;}o.material.needsUpdate=true;}});
+    const replacements=[];
+    for(const [i,anchor] of (extra.userData.interiorPlantAnchors||[]).entries()){
+      const root=new T.Group();root.name='CC0 Interior Foliage';root.userData.interiorPlant={...anchor,sourceHeight:height};
+      const foliage=asset.scene.clone(true);foliage.scale.setScalar(anchor.height/height);root.add(foliage);root.position.set(anchor.x,anchor.y,anchor.z);root.rotation.y=i*2.399;replacements.push(root);
+    }
+    if(replacements.length){extra.traverse(o=>{if(o.userData.legacyInteriorFoliage)o.visible=false});replacements.forEach(o=>extra.add(o));}
+  }catch(error){console.warn('Interior foliage unavailable; keeping existing plants',error)}
+
+  try{
     const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/tree-small-02.glb',resolve,undefined,reject));
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     // Anchor the trunk foot, not the asymmetric canopy bounding-box centre.
@@ -346,7 +358,8 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     if(root===extra&&m.userData.illustrativeTimber&&source.parameters?.width){
       source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),center=source.boundingBox.getCenter(new T.Vector3()),scale=o.getWorldScale(new T.Vector3());
       if(Math.min(scale.x,scale.y,scale.z)>0){
-        const physical=size.clone().multiply(scale),radius=Math.min(.006,Math.min(physical.x,physical.y,physical.z)/4),g=new T.RoundedBoxGeometry(physical.x,physical.y,physical.z,2,radius);
+        const physical=size.clone().multiply(scale);if(physical.y>.15||physical.x<.4||physical.z<.3)return source.clone();
+        const radius=Math.min(.006,Math.min(physical.x,physical.y,physical.z)/4),g=new T.RoundedBoxGeometry(physical.x,physical.y,physical.z,2,radius);
         const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
         // Veneer runs along the long X edge; project in metres rather than stretching
         // one flooring image independently over every face of a unit box.
@@ -379,7 +392,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   function batch(root){
     root.updateWorldMatrix(true,true);const inverse=root.matrixWorld.clone().invert(),groups=new Map();
     root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||Array.isArray(o.material)||o.material.transparent||o===root)return;
-      let visible=true;for(let p=o;p&&p!==root;p=p.parent)if(!p.visible||p.name==='CC0 Tree Small 02')visible=false;if(!visible)return;
+      let visible=true;for(let p=o;p&&p!==root;p=p.parent)if(!p.visible||(p.name==='CC0 Tree Small 02'||p.name==='CC0 Interior Foliage'))visible=false;if(!visible)return;
       const key=o.material.id+':'+o.castShadow+':'+Object.keys(o.geometry.attributes).sort().join(',');
       if(!groups.has(key))groups.set(key,[]);groups.get(key).push(o);
     });

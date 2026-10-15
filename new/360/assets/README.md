@@ -36,3 +36,5 @@
 - `facade-granite_*.jpg`: Poly Haven [Granite Tile 03](https://polyhaven.com/a/granite_tile_03), Charlotte Baglioni, CC0. Original 1K diffuse/OpenGL normal/roughness, source width 1.8 m. Tinted illustrative finish on existing grey/ESMOD context masses; not a verified site material survey. Source URLs and checked MD5 hashes: `docs/360/context-stone-source.json`.
 
 - `furniture-veneer_*.jpg`: Poly Haven [Oak Veneer 01](https://polyhaven.com/a/oak_veneer_01), Jenelle van Heerden, CC0. Original 1K diffuse/OpenGL normal/roughness, source width 1.8 m; illustrative desk and coffee-table tops. Replaces stretched floorboard maps on this furniture only. Download hashes: `docs/360/furniture-veneer-source.json`.
+
+- `interior-foliage.glb`: stem and leaves from Poly Haven [Potted Plant 01](https://polyhaven.com/a/potted_plant_01), Rico Cilliers, CC0, 1K PBR maps. Original decorative pot/gravel omitted; stem-foot anchor and Draco level 6 applied with `tools/360/prepare_interior_plant.py`. Kept inside the existing illustrative square planters. Source file checksums and derivative metadata: `docs/360/interior-plant-source-study.json`, `docs/360/interior-foliage-source.json`.
