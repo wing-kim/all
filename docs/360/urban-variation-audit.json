@@ -1,0 +1,175 @@
+{
+  "geometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "urban": {
+    "layers": [
+      {
+        "count": 118,
+        "heights": [
+          6.4
+        ],
+        "minRadius": 157.64666315200256
+      },
+      {
+        "count": 105,
+        "heights": [
+          9.6
+        ],
+        "minRadius": 114.83768465452329
+      },
+      {
+        "count": 108,
+        "heights": [
+          12.8
+        ],
+        "minRadius": 153.0092408763404
+      },
+      {
+        "count": 124,
+        "heights": [
+          16
+        ],
+        "minRadius": 127.07272319254004
+      },
+      {
+        "count": 41,
+        "heights": [
+          12.8
+        ],
+        "minRadius": 134.44881857646675
+      },
+      {
+        "count": 56,
+        "heights": [
+          16
+        ],
+        "minRadius": 134.23063923648934
+      },
+      {
+        "count": 63,
+        "heights": [
+          22.4
+        ],
+        "minRadius": 115.37308648434168
+      },
+      {
+        "count": 53,
+        "heights": [
+          28.8
+        ],
+        "minRadius": 120.22358907158966
+      },
+      {
+        "count": 16,
+        "heights": [
+          19.2
+        ],
+        "minRadius": 268.19667320405864
+      },
+      {
+        "count": 27,
+        "heights": [
+          25.6
+        ],
+        "minRadius": 282.8230117673167
+      },
+      {
+        "count": 30,
+        "heights": [
+          32
+        ],
+        "minRadius": 321.9022101371795
+      },
+      {
+        "count": 12,
+        "heights": [
+          38.4
+        ],
+        "minRadius": 338.98319897690544
+      },
+      {
+        "count": 50,
+        "heights": [
+          6.4
+        ],
+        "minRadius": 158.6402150791608
+      },
+      {
+        "count": 52,
+        "heights": [
+          9.6
+        ],
+        "minRadius": 139.38961003645352
+      },
+      {
+        "count": 57,
+        "heights": [
+          12.8
+        ],
+        "minRadius": 115.18104240653912
+      },
+      {
+        "count": 59,
+        "heights": [
+          16
+        ],
+        "minRadius": 138.77381603894065
+      },
+      {
+        "count": 2,
+        "heights": [
+          44.8
+        ],
+        "minRadius": 519.726583076653
+      },
+      {
+        "count": 6,
+        "heights": [
+          57.6
+        ],
+        "minRadius": 503.72494618469307
+      },
+      {
+        "count": 2,
+        "heights": [
+          70.4
+        ],
+        "minRadius": 586.864275994298
+      }
+    ],
+    "maxHeight": 70.4000015258789,
+    "nearMaxHeight": 28.799999237060547,
+    "overlaps": 0,
+    "total": 981
+  },
+  "render": {
+    "complete": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.9484724347384312
+      }
+    }
+  },
+  "rearRender": {
+    "complete": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.863311219895322
+      }
+    }
+  }
+}
