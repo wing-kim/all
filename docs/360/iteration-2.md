@@ -374,3 +374,10 @@ context-stone-before/after.png는 동일 카메라 (-37,11,-22), target (-5,9,-2
 Poly Haven Square Tiled Wall은 공개 설명상 갈색/회색 띠가 있는 장식 벽이어서 선택하지 않았다. 이 변경에는 외부 이미지 에셋을 추가하지 않았다. 기존 석재용 미터 단위 UV 투영을 재사용했고, 해당 벽의 삼각형 변 36개에서 수평 길이 오차 최대 1.85e-6m를 확인했다. 타일 가운데 법선은 (128,128,255), 줄눈 근처는 (98,128,251)로 평면과 모서리가 구분된다.
 
 context-tile-before/after.png는 같은 카메라 (-32,12,46), target (-4,8,24), 고품질 64샘플/노이즈 제거 완료의 비교다. 창 위치와 기존 매스는 유지하며 원본 본 건물 해시 3710930476도 동일하다. GPU 실패 없음과 재질 설정은 context-tile-audit.json에 기록했다. 이 재질 개선으로 주변 상가의 불투명 창 대용 면과 단순한 실외기/간판까지 사실적으로 복원된 것은 아니다.
+
+
+### 유리 투과색 대조 시험 — 미채택
+
+상층 유리의 원래 색 f3f9fc 대신 선형 RGB (.8,.83,.86)를 동일 실사 근사 구도에서 시험했다. 공유 재질 한 개/상층 유리 객체 8개만 대상으로 했고, 형상·IOR·반사 혼합·거칠기·조명은 유지했다. 실제 광선 추적 64샘플/노이즈 제거 완료와 GPU 실패 없음을 확인했다. 실내가 조금 어두워졌지만 겹쳐 보이는 구조를 충분히 줄이지 못하고 밝은 인상이 약해져 채택하지 않았다. 시험 후 색 f3f9fc 복원을 확인했으며 런타임 비교 상태를 제거했다. 코드 변경은 없다. 비교 화면은 glass-transmission-color-before/rejected.png, 실행 기록은 glass-transmission-color-study.json에 있다.
+
+로컬 설치된 three-gpu-pathtracer WebGPU의 PathtracerBVHComputeData.js는 thickness 0과 attenuationDistance Infinity의 조합을 얇은 벽으로 분류한다. MaterialKernel.js의 체적 흡수는 다음 교차까지의 광선 거리로 계산하므로, 현재 얇은 외피에 유한 attenuationDistance를 무작정 적용하는 방식은 실제 유리판 두께에 맞는 흡수 모델이 아니다. 체적 흡수로 변경하지 않았다. 다음 개선에서는 같은 광학 변수의 반복 조정보다 실내 공간의 배치와 반사 환경을 우선 검토한다.
