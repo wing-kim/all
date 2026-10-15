@@ -48,6 +48,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   }
   // Give the existing context facades depth at their existing window texture grid.
   const contextGlasses=['#24343c','#485862','#809099','#4d5b63','#303c45','#77838a','#b0aaa0','#364f5b'].map((col,i)=>new T.MeshStandardMaterial({color:new T.Color(col).convertSRGBToLinear(),metalness:i===6?.05:.42,roughness:i===6?.65:.12+i*.025}));
+  const contextBlindMats=['#bcc1bc','#c9c5b9'].map(color=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness:.78}));
   const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
   const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
   // Fine architectural finishes, with no change to the original member geometry.
@@ -130,6 +131,16 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
         const o=new T.Mesh(cube,frameMat);o.position.set(x,y,z);o.rotation.y=angle;o.scale.set(windowWidth+.11,.09,.32);o.castShadow=o.receiveShadow=true;m.add(o);
         const variation=Math.abs(Math.floor(Math.sin(d*8.4+y*1.2+m.id)*9999))%8;const pane=new T.Mesh(cube,contextGlasses[variation]);pane.position.set(x,y+.82,z);pane.rotation.y=angle;pane.scale.set(windowWidth,1.58,.24);m.add(pane);
         if(variation===6){for(let k=0;k<9;k++){const slat=new T.Mesh(cube,frameMat);slat.position.set(x,y+.15+k*.16,z);slat.rotation.y=angle;slat.scale.set(windowWidth-.06,.018,.26);m.add(slat)}}
+        // Illustrative partial blinds stay within the existing reveal and opening.
+        // These background windows are opaque proxies, not claimed interior reconstructions.
+        if(!apartment&&[1,4,7].includes(variation)){
+          const count=variation===1?3:variation===4?5:7;
+          for(let k=0;k<count;k++){
+            const slat=detail(x-inward.x*.135,y+1.48-k*.115,z-inward.y*.135,windowWidth-.10,.10,.018,contextBlindMats[variation%2],angle);
+            slat.userData.contextBlind={windowCenter:[x,y+.82,z],windowWidth,count,slat:k};
+          }
+          m.userData.environmentDressing.partialBlinds=(m.userData.environmentDressing.partialBlinds||0)+1;
+        }
         if(variation===3&&y<14){const ac=new T.Mesh(cube,unitMat);ac.position.set(x+u.x*.6,y-.48,z+u.y*.6);ac.rotation.y=angle;ac.scale.set(.72,.45,.5);ac.castShadow=true;m.add(ac);const vent=ac.clone();vent.material=grilleMat;vent.scale.set(.52,.3,.515);m.add(vent)}
         const sill=o.clone();sill.position.y=y+1.65;sill.scale.y=.12;m.add(sill);
         for(const dx of [-windowWidth/2,0,windowWidth/2]){const bar=o.clone();bar.position.set(x+u.x*dx,y+.82,z+u.y*dx);bar.scale.set(.045,1.64,.32);m.add(bar)}
