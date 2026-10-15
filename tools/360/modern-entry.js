@@ -16,6 +16,7 @@ class StableGuideDenoiser extends OIDNDenoiser {
  }
 }
 export async function start(C){
+ const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  T.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(C.camera.fov,C.camera.aspect,2,1800);
  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
@@ -47,12 +48,12 @@ export async function start(C){
  const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);
  try {probe.update(renderer,scene);for(const m of materials.values())if(m.transmission>0){m.envMap=probeTarget.texture;m.envMapIntensity=1;m.needsUpdate=true;}}
  finally {primary.forEach(o=>o.visible=true);}
- const tracer=new WebGPUPathTracer(renderer);tracer.maxBounces=8;tracer.maxTransparentBounces=12;tracer.frameBudget=150000;tracer.lowResScale=.25;tracer.renderDelay=350;tracer.maxSamples=parent.innerWidth<=850?32:48;tracer.renderScale=parent.innerWidth<=850?.8:1;addInteriorLighting({scene,tracer},C);tracer.setScene(scene,camera);tracer.setDenoiser(new StableGuideDenoiser({initUNetFromURL,auxWeightsUrl:parent.innerWidth<=850?"360/assets/rt_hdr_alb_nrm_small.tza":"360/assets/rt_hdr_alb_nrm.tza",maxTileSize:256}));
+ const tracer=new WebGPUPathTracer(renderer);tracer.maxBounces=8;tracer.maxTransparentBounces=12;tracer.frameBudget=150000;tracer.lowResScale=.25;tracer.renderDelay=350;tracer.maxSamples=compactTouch?32:64;tracer.renderScale=compactTouch?.8:1;addInteriorLighting({scene,tracer},C);tracer.setScene(scene,camera);tracer.setDenoiser(new StableGuideDenoiser({initUNetFromURL,auxWeightsUrl:compactTouch?"360/assets/rt_hdr_alb_nrm_small.tza":"360/assets/rt_hdr_alb_nrm.tza",maxTileSize:256}));
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
  previewAO.resolutionScale=.5;previewAO.radius.value=1;previewAO.thickness.value=.4;
  const filteredAO=denoise(previewAO.getTextureNode(),previewPass.getTextureNode('depth'),null,camera);
  const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(previewPass.mul(filteredAO.r.mul(.65).add(.35)));
- let previewHigh=parent.innerWidth>850;
+ let previewHigh=!compactTouch;
  const previewGlass=new Map([...materials.values()].filter(m=>m.transmission>0).map(m=>[m,m.color.clone()]));
  function renderPreview(){
   // Raster refraction lacks the interior light loss computed by path tracing.

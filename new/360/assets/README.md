@@ -18,3 +18,5 @@
 - `rt_hdr_alb_nrm_small.tza`, `rt_hdr_alb_nrm.tza`: Intel Open Image Denoise weights, Apache 2.0, https://github.com/RenderKit/oidn-weights . See OIDN-LICENSE.txt. Used locally in WebGPU; no remote rendering or uploaded model data.
 
 - `facade-brick_*.jpg`: ambientCG Facade 018 A by Lennart Demes, CC0, https://ambientcg.com/view?id=Facade018A . Procedural PBR facade with brick, glazing roughness and normals; used only for illustrative distant blocks.
+
+- `wood-floor_{color,normal,rough}.jpg`: Poly Haven [Wood Floor](https://polyhaven.com/a/wood_floor), Dimitrios Savva, CC0, 1K JPG diffuse / OpenGL normal / roughness; used for illustrative interior furniture.

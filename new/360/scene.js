@@ -30,6 +30,15 @@
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
   const material=(color,roughness=.7)=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness});
   const timber=material('#b39570'),fabric=material('#d5c9b5'),dark=material('#373b3c'),pot=material('#aaa394');
+  const upholstery=[fabric,material('#8d9692'),material('#796b5b'),material('#a6a49a')];
+  const screen=new T.MeshStandardMaterial({color:0x151c20,roughness:.24,metalness:.25});
+  const textureLoader=new T.TextureLoader();
+  try{
+    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/wood-floor_'+name+'.jpg')));
+    color.encoding=T.sRGBEncoding;
+    for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
+    timber.map=color;timber.normalMap=normal;timber.normalScale.set(.14,.14);timber.roughnessMap=rough;timber.color.setRGB(1,1,1);timber.roughness=.72;
+  }catch(error){console.warn('Interior wood texture unavailable',error)}
   const lit=new T.MeshStandardMaterial({color:0xffe8cc,emissive:0xffce91,emissiveIntensity:.8});
   const boxGeo=new T.BoxGeometry(1,1,1);
   function box(parent,x,y,z,w,h,d,m){const o=new T.Mesh(boxGeo,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
@@ -40,10 +49,24 @@
       if(![[x-45,z-40],[x+45,z-40],[x-45,z+40],[x+45,z+40]].every(q=>inPoly(q,l.poly)))continue;
       // Keep the rear core clear; only dress the glazed street frontage.
       if(x>640&&z<820)continue;
-      const [a,b]=P(x,z);box(extra,a,y+.76,b,1.65,.08,.85,timber);
-      [-.65,.65].forEach(dx=>[-.3,.3].forEach(dz=>box(extra,a+dx,y+.37,b+dz,.045,.74,.045,dark)));
-      box(extra,a,y+.46,b+.85,.55,.12,.55,fabric);box(extra,a,y+.8,b+1.08,.55,.64,.08,fabric);
-      box(extra,a,y+l.h-.65,b,2.2,.035,.08,lit);
+      const [a,b]=P(x,z),bay=Math.round((x-450)/145+(z-360)/170)+li;
+      const cloth=upholstery[bay%upholstery.length];
+      if(bay%4===0){
+        // Low lounge seating gives each floor readable depth through the glazing.
+        box(extra,a,y+.26,b,1.65,.24,.76,dark);
+        for(const dx of [-.4,.4])box(extra,a+dx,y+.43,b,.76,.18,.68,cloth);
+        box(extra,a,y+.73,b-.32,1.65,.62,.16,cloth);
+        for(const dx of [-.77,.77])box(extra,a+dx,y+.56,b,.15,.38,.78,cloth);
+        box(extra,a,y+.32,b+.98,1.1,.065,.48,timber);
+        for(const dx of [-.43,.43])box(extra,a+dx,y+.16,b+.98,.035,.3,.38,dark);
+      }else{
+        box(extra,a,y+.76,b,1.65,.08,.85,timber);
+        [-.65,.65].forEach(dx=>[-.3,.3].forEach(dz=>box(extra,a+dx,y+.37,b+dz,.045,.74,.045,dark)));
+        box(extra,a,y+.46,b+.85,.55,.12,.55,cloth);box(extra,a,y+.8,b+1.08,.55,.64,.08,cloth);
+        box(extra,a,y+.23,b+.85,.04,.42,.04,dark);box(extra,a,y+.035,b+.85,.5,.04,.5,dark);
+        if(bay%3===0){box(extra,a,y+1.08,b-.18,.57,.34,.035,screen);box(extra,a,y+.86,b-.18,.035,.18,.035,dark);box(extra,a,y+.813,b+.16,.46,.015,.15,dark);}
+      }
+      if(bay%3!==1)box(extra,a,y+l.h-.65,b,1.5,.035,.08,lit);
     }
   });
   // Instanced leaves, fixed seed: stable shapes from every camera and no per-frame reconstruction.
@@ -100,7 +123,8 @@
     else flight={from,to,start:performance.now()};
   }
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
-  setQuality(parent.innerWidth<=850?'balanced':'high');view('corner');
+  const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
+  setQuality(compactTouch?'balanced':'high');view('corner');
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
