@@ -110,7 +110,7 @@
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
   function view(name){
-    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.16,1],aerial:[-1,.7,1.1]};
+    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;
     const distance=62*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
