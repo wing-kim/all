@@ -77,35 +77,50 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   masses.forEach(m=>{
     const shape=m.geometry.parameters.shapes,h=m.geometry.parameters.options.depth;
     if(h>55||h<5||m.userData.box.distanceToPoint(new T.Vector3(-3,0,0))>100)return;
+    const kind=m.userData.contextKind,keepFacade=kind==='cw'||m.userData.customContextMaterial;
+    const originalChildren=m.children.slice();
+    const existingParapet=originalChildren.some(o=>o.isMesh&&o.geometry.parameters?.options?.depth===.95&&Math.abs(o.position.y-h)<.01);
+    const roofEquipment=originalChildren.filter(o=>{const p=o.geometry?.parameters;return o.isMesh&&o.geometry.type==='BoxGeometry'&&o.position.y>=h&&p.width>=.8&&p.width<=4&&p.height>=.8&&p.height<=3&&p.depth>=.8&&p.depth<=4});
     const bounds=m.userData.box,facadeSeed=Math.abs(Math.round(bounds.min.x*17+bounds.min.z*31));
     const facadeTints=[[1.48,1.48,1.4],[1.62,1.67,1.68],[1.42,1.35,1.22],[1.58,1.55,1.45],[1.32,1.4,1.45],[1.55,1.47,1.34]];
-    const facadeTint=facadeTints[facadeSeed%facadeTints.length];
-    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
+    const facadeTint=({ribbon:[1.45,1.35,1.12],band:[1.62,1.64,1.6],grey:[1.45,1.46,1.42],wrib:[1.62,1.65,1.64],esm:[.82,.84,.87],tile:[1.65,1.65,1.59],apt:[1.60,1.62,1.60]})[kind]||facadeTints[facadeSeed%facadeTints.length];
+    if(Array.isArray(m.material)){m.material=m.material.map((v,i)=>{if(i===0){const roof=v.clone();roof.color.setRGB(1.05,1.08,1.06);roof.map=plasterColor;roof.normalMap=plasterNormal;roof.normalScale?.set(.12,.12);roof.roughnessMap=plasterRough;roof.roughness=.94;return roof}const n=v.clone();if(keepFacade){if(kind==='cw'){n.roughness=.18;n.metalness=.35;}return n}n.map=plasterColor;n.normalMap=plasterNormal;n.normalScale.set(.18,.18);n.roughnessMap=plasterRough;n.color.setRGB(...facadeTint);n.roughness=.86;return n})}
     let apartment=false;for(let node=m;node;node=node.parent)if(node===C.contextBuildings?.current)apartment=true;
-    const ribbon=!apartment&&facadeSeed%3===0,windowWidth=ribbon?2.98:2.14;
+    const ribbon=!apartment&&['office','ribbon','band','wrib'].includes(kind),windowWidth=apartment?2.65:ribbon?2.98:kind==='esm'?1.1:kind==='tile'?1.6:2.14;
+    const storey=m.userData.contextStoreyHeight||(apartment?2.9:3.4);
+    m.userData.environmentDressing={kind,keptFacade:!!keepFacade,existingParapet,existingRoofEquipment:roofEquipment.length,storey,windowWidth};
     const pts=shape.getPoints().map(p=>new T.Vector2(p.x,-p.y));
     function detail(x,y,z,w,height,depth,material,rotation=0){const o=new T.Mesh(cube,material);o.position.set(x,y,z);o.scale.set(w,height,depth);o.rotation.y=rotation;o.castShadow=o.receiveShadow=true;m.add(o);return o}
     // Roof equipment and parapet caps add scale cues without changing the surveyed mass.
     const center=pts.reduce((sum,p)=>sum.add(p),new T.Vector2()).multiplyScalar(1/pts.length);
-    detail(center.x,h+.42,center.y,2.6,.84,1.4,unitMat);
-    detail(center.x,h+.87,center.y,2.35,.08,1.15,grilleMat);
-    for(let k=0;k<5;k++)detail(center.x-.9+k*.45,h+.92,center.y,.04,.06,1.1,copingMat);
+    if(!roofEquipment.length&&!existingParapet){
+      detail(center.x,h+.42,center.y,2.6,.84,1.4,unitMat);
+      detail(center.x,h+.87,center.y,2.35,.08,1.15,grilleMat);
+      for(let k=0;k<5;k++)detail(center.x-.9+k*.45,h+.92,center.y,.04,.06,1.1,copingMat);
+    }else for(const unit of roofEquipment){
+      unit.geometry.computeBoundingBox();const b=unit.geometry.boundingBox,size=b.getSize(new T.Vector3()),top=unit.position.y+b.max.y;
+      detail(unit.position.x,top+.025,unit.position.z,size.x*.72,.05,size.z*.7,grilleMat);
+      for(let k=0;k<5;k++)detail(unit.position.x-size.x*.28+k*size.x*.14,top+.065,unit.position.z,.025,.03,size.z*.66,copingMat);
+    }
     for(let i=0;i<pts.length-1;i++){
       const a=pts[i],b=pts[i+1],len=a.distanceTo(b);if(len<2)continue;
       const u=new T.Vector2().subVectors(b,a).normalize(),angle=-Math.atan2(u.y,u.x);
-      detail((a.x+b.x)/2,h+.12,(a.y+b.y)/2,len,.24,.36,copingMat,angle);
+      const midpoint=a.clone().add(b).multiplyScalar(.5),inward=new T.Vector2(-u.y,u.x);if(inward.dot(center.clone().sub(midpoint))<0)inward.multiplyScalar(-1);
+      if(existingParapet)midpoint.addScaledVector(inward,.14);
+      detail(midpoint.x,h+(existingParapet?1.01:.12),midpoint.y,len,existingParapet?.12:.24,.36,copingMat,angle);
+      if(keepFacade)continue;
       // A subset of existing blocks uses ribbon glazing and projecting floor ledges.
       // The mass and storey height stay unchanged; this is illustrative facade dressing.
-      if(ribbon)for(let floor=3.55;floor<h-.8;floor+=3.4)detail((a.x+b.x)/2,floor,(a.y+b.y)/2,len,.12,.48,copingMat,angle);
+      if(ribbon)for(let floor=3.55;floor<h-.8;floor+=storey)detail((a.x+b.x)/2,floor,(a.y+b.y)/2,len,.12,.48,copingMat,angle);
       // Recessed storefront glazing, sign fascia and door mullions at pedestrian level.
-      if(!apartment)for(let d=1.7;d<len-1.2;d+=3.5){
+      if(!apartment&&m.userData.contextShop!==false)for(let d=1.7;d<len-1.2;d+=3.5){
         const x=a.x+u.x*d,z=a.y+u.y*d;
         detail(x,1.55,z,2.85,2.65,.25,contextGlasses[(m.id+i)%5],angle);
         detail(x,3.08,z,3.05,.45,.42,signMats[(m.id+i)%4],angle);
         for(const dx of [-1.4,0,1.4])detail(x+u.x*dx,1.55,z+u.y*dx,.055,2.7,.3,frameMat,angle);
         detail(x,.23,z,3,.15,.42,copingMat,angle);
       }
-      for(let y=4.5;y<h-1.2;y+=apartment?2.95:3.4)for(let d=1.5;d<len-.8;d+=3.2){
+      for(let y=apartment?.8:4.5;y<h-1.8;y+=storey)for(let d=1.5;d<len-.8;d+=3.2){
         const x=a.x+u.x*d,z=a.y+u.y*d;
         const o=new T.Mesh(cube,frameMat);o.position.set(x,y,z);o.rotation.y=angle;o.scale.set(windowWidth+.11,.09,.32);o.castShadow=o.receiveShadow=true;m.add(o);
         const variation=Math.abs(Math.floor(Math.sin(d*8.4+y*1.2+m.id)*9999))%8;const pane=new T.Mesh(cube,contextGlasses[variation]);pane.position.set(x,y+.82,z);pane.rotation.y=angle;pane.scale.set(windowWidth,1.58,.24);m.add(pane);

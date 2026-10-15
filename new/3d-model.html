@@ -7323,6 +7323,7 @@ function wm(kind,col,rv){const k=kind+col+(rv||'');if(!wmat[k]){const t=kind==='
 // one context block: px polygon extruded h metres; caps = roof colour, walls = window texture
 function mass(poly,h,col,kind,label,grp,opt={}){const sh=shape(poly);const geo=new THREE.ExtrudeGeometry(sh,{depth:h,bevelEnabled:false});geo.rotateX(-Math.PI/2);
   const m=new THREE.Mesh(geo,[CM2.roof,opt.mat||wm(kind,col,opt.rv)]);m.position.y=opt.y0||0;m.castShadow=true;m.receiveShadow=true;
+  m.userData.contextKind=kind;m.userData.contextStoreyHeight=opt.rv||3.4;m.userData.contextShop=opt.shop!==false;m.userData.customContextMaterial=!!opt.mat;
   m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),LM.edge));(grp||city).add(m);m.updateMatrixWorld(true);m.userData.box=new THREE.Box3().setFromObject(m);if(!opt.noOcc)OCC.push(m);
   if(opt.detail!==false&&!opt.y0&&kind!=='apt'&&kind!=='tower'&&h<30)massDetail(m,poly,h,opt);
   if(label)CTXLAB.push([label,opt.at||centroid(poly),(opt.y0||0)+h+1.6,m]);return m}
