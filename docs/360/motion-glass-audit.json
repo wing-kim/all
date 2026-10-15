@@ -1,0 +1,43 @@
+{
+  "restored": {
+    "active": true,
+    "done": true,
+    "glassObjects": 49,
+    "invalid": [],
+    "materials": [
+      "{\"role\":\"clear\",\"transmission\":1,\"opacity\":1,\"transparent\":false,\"color\":\"f3f9fc\"}",
+      "{\"role\":\"ground\",\"transmission\":1,\"opacity\":1,\"transparent\":false,\"color\":\"f3f9fc\"}",
+      "{\"role\":\"facade\",\"transmission\":1,\"opacity\":1,\"transparent\":false,\"color\":\"f3f9fc\"}"
+    ],
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 4.077420012490196
+      }
+    }
+  },
+  "wideRear": {
+    "active": true,
+    "done": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 1.773020173643992
+      }
+    }
+  },
+  "sourceGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  }
+}
