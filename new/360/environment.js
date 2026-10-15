@@ -165,7 +165,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
   for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
     const r=Math.hypot(x,z);if(r<110||r>620||Math.abs(x+35)<16||Math.abs(z+104)<12)continue;
-    const type=r>260&&rnd()<.055?4:rnd()<.22?3:rnd()<.62?0:rnd()<.72?1:2,t=types[type],layer=cityLayers[type],h=t.h*(.75+rnd()*.45),w=t.apartment?24+rnd()*9:12+rnd()*5,d=t.apartment?9+rnd()*3:11+rnd()*5;
+    const selected=r>260&&rnd()<.055?4:rnd()<.22?3:rnd()<.62?0:rnd()<.72?1:2;
+    // Keep the illustrative near neighbourhood predominantly low/mid rise.
+    // Tall generic silhouettes belong on the horizon, outside surveyed context.
+    const type=selected===2&&r<240?1:selected===4&&r<400?2:selected;
+    const t=types[type],layer=cityLayers[type],h=t.h*(.75+rnd()*.45),w=t.apartment?24+rnd()*9:12+rnd()*5,d=t.apartment?9+rnd()*3:11+rnd()*5;
     const px=x+rnd()*5,pz=z+rnd()*5,bounds=new T.Box3(new T.Vector3(px-w/2-2,0,pz-d/2-2),new T.Vector3(px+w/2+2,h,pz+d/2+2));
     if(occupied.some(b=>b.intersectsBox(bounds)))continue;occupied.push(bounds);
     dummy.position.set(px,h/2,pz);dummy.scale.set(w,h,d);dummy.updateMatrix();layer.mesh.setMatrixAt(layer.count,dummy.matrix);layer.mesh.setColorAt(layer.count++,new T.Color(['#e7e4df','#c6c4bc','#d6cec0','#a2aaad','#817a70','#b6aaa0','#9d9690','#ddd8d1'][Math.floor(rnd()*8)]).convertSRGBToLinear());
