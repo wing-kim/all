@@ -1,0 +1,36 @@
+{
+  "active": true,
+  "passed": true,
+  "results": [
+    {
+      "maxPolar": 2.1151404756751004,
+      "radius": 28,
+      "requested": 28,
+      "y": 1.5
+    },
+    {
+      "maxPolar": 1.80685349633044,
+      "radius": 62,
+      "requested": 62,
+      "y": 1.500000000000005
+    },
+    {
+      "maxPolar": 1.6514392612355575,
+      "radius": 180,
+      "requested": 180,
+      "y": 1.5000000000000142
+    },
+    {
+      "maxPolar": 2.1151404756751004,
+      "radius": 28,
+      "requested": 28,
+      "y": 1.5
+    },
+    {
+      "maxPolar": 1.6514392612355575,
+      "radius": 180,
+      "requested": 180,
+      "y": 1.5000000000000142
+    }
+  ]
+}

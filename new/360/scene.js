@@ -21,7 +21,20 @@
   });
   camera.fov=45;camera.near=2;camera.far=1800;camera.updateProjectionMatrix();
   controls.enablePan=false;controls.minDistance=28;controls.maxDistance=180;
-  controls.minPolarAngle=.22;controls.maxPolarAngle=Math.PI*.485;controls.dampingFactor=.075;
+  controls.minPolarAngle=.22;controls.dampingFactor=.075;
+  // Permit street-height observation below the building centre without going underground.
+  const cameraOffset=new T.Vector3();
+  function constrainCameraHeight(){
+    cameraOffset.copy(camera.position).sub(controls.target);
+    const radius=T.MathUtils.clamp(cameraOffset.length(),controls.minDistance,controls.maxDistance);
+    if(camera.position.y<1.5){
+      const horizontal=Math.sqrt(Math.max(0,radius*radius-(1.5-controls.target.y)**2)),length=Math.hypot(cameraOffset.x,cameraOffset.z);
+      camera.position.set(controls.target.x+(length?cameraOffset.x/length:1)*horizontal,1.5,controls.target.z+(length?cameraOffset.z/length:0)*horizontal);
+      camera.lookAt(controls.target);
+    }
+    controls.maxPolarAngle=Math.acos(T.MathUtils.clamp((1.5-controls.target.y)/Math.max(.001,radius),-1,1));
+  }
+  controls.addEventListener('change',constrainCameraHeight);constrainCameraHeight();
   let flight=null;
   const cancel=()=>{flight=null;C.cancel()};
   controls.addEventListener('start',cancel);
@@ -172,7 +185,7 @@
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
   function view(name){
-    const directions={corner:[-1,.12,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
+    const directions={corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;
     const distance=62*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
