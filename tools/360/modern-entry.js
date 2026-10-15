@@ -1,5 +1,5 @@
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -57,7 +57,7 @@ export async function start(C){
  // Protect the nearby architecture and leave the photographic sky untouched.
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  const hazeColor=new T.Color('#bdcbd5');
- const atmospheric=node=>vec4(mix(node.rgb,hazeColor,haze),node.a);
+ const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze),1.12),node.a);
  const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(previewPass.mul(filteredAO.r.mul(.65).add(.35))));
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
@@ -90,7 +90,10 @@ export async function start(C){
 export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer.updateEnvironment();}
 export function addInteriorLighting(state,C){
  for(const l of C.levels().filter(l=>l.kind==='upper'||l.kind==='ground')){
-  const light=new T.RectAreaLight(0xffdfae,120,2.2,.18);light.position.set(-7,l.y+l.h-.45,1);light.lookAt(-7,l.y,1);state.scene.add(light);
+  // Distribute soft interior light across the glazed frontage, rather than
+  // leaving one bright central patch per floor. Fixture positions remain inside the plan.
+  const positions=[[-9.5,-7],[-9.5,0],[-9.5,6]].filter(([x,z])=>C.inPoly([x*41.6+914,z*41.6+770],l.poly));
+  for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?240:180)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);state.scene.add(light);}
  }
  state.tracer.updateLights();
 }

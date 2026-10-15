@@ -54,6 +54,16 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   grainContext.putImageData(grainPixels,0,0);const grain=new T.CanvasTexture(grainCanvas);grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,8);grain.anisotropy=4;
   const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
   for(const mat of facadeMetals){mat.roughnessMap=grain;mat.roughness=.34;mat.userData.satinMetal=true;mat.needsUpdate=true;}
+  // Appearance study: keep every mullion profile and opening in place, but use
+  // a darker satin finish on the narrow vertical curtain-wall members only.
+  const mullionFinishes=new Map();C.bld.updateMatrixWorld(true);
+  C.bld.traverse(o=>{
+    const m=o.material,g=o.geometry;if(!g||!m||Array.isArray(m)||m.metalness!==.85)return;
+    g.computeBoundingBox();const dimensions=g.boundingBox.getSize(new T.Vector3());
+    if(dimensions.y<=1||dimensions.x>=.35||dimensions.z>=.35||o.getWorldPosition(new T.Vector3()).y>=30.6)return;
+    if(!mullionFinishes.has(m)){const finish=m.clone();finish.color.set('#66737a').convertSRGBToLinear();finish.metalness=.72;finish.roughness=.3;finish.userData.satinMetal=true;mullionFinishes.set(m,finish)}
+    o.material=mullionFinishes.get(m);
+  });
   const frameMat=new T.MeshStandardMaterial({color:0x464d50,metalness:.55,roughness:.4});
   const copingMat=new T.MeshStandardMaterial({color:0x999b96,metalness:.2,roughness:.7});
   const signMats=[0x293c42,0x4b514a,0x786851,0x3d485b].map(color=>new T.MeshStandardMaterial({color,roughness:.68}));
@@ -134,7 +144,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const roof=C.levels().find(l=>l.kind==='roof');
     if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-center.x*s,-bounds.min.y*s,-center.z*s);g.add(tree);g.position.set(x,roof.y+.55,z);g.name='CC0 Tree Small 02';extra.add(g)}
   }catch(error){console.warn('Tree asset unavailable',error)}
-  // Reusable authored vehicle meshes; keep their original proportions.
+  // Reusable authored vehicle meshes, adapted to road headings and passenger-car width.
   try{
     const car=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/concept-car.glb',resolve,undefined,reject));
     const oldCars=[];C.R3D.props.traverse(o=>{if(o.userData.car)oldCars.push(o)});
