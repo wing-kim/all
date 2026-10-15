@@ -95,6 +95,42 @@
       if(bay%3!==1)box(extra,a,l.y+l.h-.45,b,1.5,.035,.08,lit);
     }
   });
+  // Optional interior dressing follows the existing curtain-wall bay divisions.
+  // Facade openings and structural members remain unchanged.
+  const shadeCloth=material('#d2d0c7',.92),shadeCase=material('#a6aaa6',.42);shadeCase.metalness=.25;
+  const weaveCanvas=document.createElement('canvas');weaveCanvas.width=weaveCanvas.height=64;
+  const weaveContext=weaveCanvas.getContext('2d');weaveContext.fillStyle='#888';weaveContext.fillRect(0,0,64,64);
+  for(let i=0;i<64;i+=4){weaveContext.fillStyle=i%8?'#969696':'#a0a0a0';weaveContext.fillRect(i,0,1,64);weaveContext.fillRect(0,i,64,1);}
+  const weave=new T.CanvasTexture(weaveCanvas);weave.wrapS=weave.wrapT=T.RepeatWrapping;weave.repeat.set(30,30);shadeCloth.bumpMap=weave;shadeCloth.bumpScale=.00025;
+  const bayStep=({base:1.25,big:3,front:2.5,mega:6})[state.win],shadeColumns=[];
+  bld.updateWorldMatrix(true,true);bld.traverse(o=>{if(o.isMesh&&o.material===M.col)shadeColumns.push(new T.Box3().setFromObject(o))});
+  extra.userData.shadePlacement={candidates:0,skippedColumns:0,accepted:0};
+  C.levels().filter(l=>l.kind==='upper').forEach((l,li)=>{
+    for(const e of l.env||[{poly:l.poly,y0:l.y,y1:l.y+l.h-.38}])for(let edge=0;edge<e.poly.length;edge++){
+      const a=P(...e.poly[edge]),b=P(...e.poly[(edge+1)%e.poly.length]),dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+      if(!bayStep||length<2)continue;
+      // Only the two street-facing elevations, away from the rear circulation core.
+      const midPx=(e.poly[edge][0]+e.poly[(edge+1)%e.poly.length][0])/2,midPy=(e.poly[edge][1]+e.poly[(edge+1)%e.poly.length][1])/2;
+      if(midPx>600&&midPy<900)continue;
+      const count=Math.max(1,Math.round(length/bayStep)),ux=dx/length,uz=dz/length;let nx=-uz,nz=ux;
+      const midx=(a[0]+b[0])/2,midz=(a[1]+b[1])/2;
+      if(!inPoly([(midx+nx*.22)*41.6+914,(midz+nz*.22)*41.6+770],e.poly)){nx=-nx;nz=-nz;}
+      for(let bay=1;bay<count-1;bay++){
+        const key=li*17+edge*7+bay*11;if(key%13>2)continue;
+        const along=(bay+.5)*length/count,x=a[0]+ux*along+nx*.22,z=a[1]+uz*along+nz*.22,width=length/count-.16;
+        if(![-.5,.5].every(t=>inPoly([(x+ux*width*t)*41.6+914,(z+uz*width*t)*41.6+770],l.poly)))continue;
+        const drop=[.65,1.05,1.45][key%3],root=new T.Group();root.name='Illustrative interior roller shade';root.position.set(x,e.y1-.22,z);root.rotation.y=-Math.atan2(dz,dx);root.userData.illustrativeFurniture=true;
+        root.userData.shade={floor:l.key,poly:l.poly,edge,bay,bayCount:count,width,drop,glassInset:.22};extra.add(root);
+        box(root,0,0,0,width,.09,.09,shadeCase);
+        box(root,0,-.06-drop/2,0,width-.035,drop,.006,shadeCloth);
+        box(root,0,-.06-drop,0,width-.025,.025,.025,shadeCase);
+        extra.userData.shadePlacement.candidates++;root.updateWorldMatrix(true,true);
+        const bounds=new T.Box3().setFromObject(root);
+        if(shadeColumns.some(b=>b.intersectsBox(bounds))){extra.remove(root);extra.userData.shadePlacement.skippedColumns++;}
+        else extra.userData.shadePlacement.accepted++;
+      }
+    }
+  });
   // Instanced leaves, fixed seed: stable shapes from every camera and no per-frame reconstruction.
   const leafGeo=new T.SphereGeometry(1,4,3);leafGeo.scale(.15,.035,.065);
   const leaves=new T.InstancedMesh(leafGeo,material('#607646'),12000);leaves.castShadow=true;leaves.receiveShadow=true;

@@ -1,0 +1,253 @@
+{
+  "active": true,
+  "failure": null,
+  "placement": {
+    "accepted": 22,
+    "candidates": 30,
+    "skippedColumns": 8
+  },
+  "rows": [
+    {
+      "bay": 1,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "2F",
+      "minGlassClearance": 0.17499999999999946,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 7,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "2F",
+      "minGlassClearance": 0.17500000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 8,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.05,
+      "edge": 6,
+      "floor": "2F",
+      "minGlassClearance": 0.17500000000000054,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 4,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 7,
+      "floor": "2F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 5,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "2F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 17,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "2F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 9,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "3F",
+      "minGlassClearance": 0.1749999999999996,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 10,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.05,
+      "edge": 6,
+      "floor": "3F",
+      "minGlassClearance": 0.17500000000000146,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 7,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "3F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 13,
+      "ceilingClearance": 0.1750000000000007,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "3F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 5,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "4F",
+      "minGlassClearance": 0.17499999999999982,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 2,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 7,
+      "floor": "4F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 8,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 7,
+      "floor": "4F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 9,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "4F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 1,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "5F",
+      "minGlassClearance": 0.17499999999999946,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 7,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "5F",
+      "minGlassClearance": 0.17500000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 4,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 7,
+      "floor": "5F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 17,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "5F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 2,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 6,
+      "floor": "6F",
+      "minGlassClearance": 0.17499999999999935,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 9,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 6,
+      "floor": "6F",
+      "minGlassClearance": 0.1749999999999996,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 12,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 0.65,
+      "edge": 7,
+      "floor": "6F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    },
+    {
+      "bay": 13,
+      "ceilingClearance": 0.17499999999999716,
+      "columnBoxIntersections": 0,
+      "drop": 1.45,
+      "edge": 7,
+      "floor": "6F",
+      "minGlassClearance": 0.1750000000000007,
+      "outside": 0,
+      "vertices": 72
+    }
+  ]
+}
