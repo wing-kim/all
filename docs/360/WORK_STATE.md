@@ -118,3 +118,10 @@
 - 9c88dc7 미니맵/패드/나침반연결: 카메라읽어원본미니맵갱신, 원본패드전진/미니맵좌표클릭→실사카메라이동실제확인. 후속fixed-orbitdistance보정/CSS 상태표시위치 변경은 다음로드재검증예정. 원본라벨/단면전체대응여전히미완.
 - 221ec21/4f88863 offlineambientproof: 정확한원본바닥11삼각형336.47㎡/천장14삼각형357.09㎡, Cycles32sample256EXR출력. 공개적용아님. 후속Sol512/256samples와 opt-in study runtime연결진행. 원본전형적출처UVrepeat/alpha/유리전달근사한계명시.
 - 마지막실제주간조회18%. 잔여32%p(50상한); 계속진행, 전체기능/실사목표성공확약은아님. Claude핸드오프폴더준비완료,45정리48완료원칙유지.
+
+## Ambient study / interior navigation checkpoint
+- bffc4a4: exact floor/ceiling indirect-light atlas, Cycles512/256 samples, offline linear bilateral denoise; sourceEXRs retained, runtime~168KB +8KBmanifest. Query ambientBake=study only, default off. Source-state/furniture/receiver checks; night disabled. Direct sun remains source-controlled. Not quantitative daylight/complete GI.
+- Actual IAB matched1Fcorner before/after screenshots cafe-ambient-before.jpg, cafe-ambient-after.jpg(raw noisy), cafe-ambient-denoised.jpg. Noise reduced; ceiling/floor shading is calmer but image-reference realism remains unmet. Walls/furniture still have approximate lighting; do not claim whole-interior baking.
+- cafe-ambient-performance.json:5sec mean32.18/p9535.6/max44ms,0 over100; geometry/probe/precision increments0. Firstframe4531ms and studyload1145ms; not controlled startup benchmark, no speedup claim.
+- e3a3948 original interior text labels and toggles now visible in modern mode. Source/child camera exact afterQ (rotation, unchangedheight/location); A/Dstrafe, Q/E/arrowsrotate likeoriginal. Roomlabeltoggle staysmodern. Screenshotinterior-labels-navigation.jpg. Height/ramp3Dguides, upperoverlay, sections stillunmapped. Compare split hides labels to avoidincorrectprojection.
+- Current weekly measured22%; ongoing section/clipping feasibility audit bysameSol, parentvisualQA. Continue boundedimplementation; broaderphotorealquality notpassed.
