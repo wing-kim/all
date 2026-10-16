@@ -1,0 +1,15 @@
+진행 체크포인트 — 2026-10-16
+실제 구현 재개. 원래 구조는 변경하지 않음.
+
+완료:
+- material-textures.js와 modern-entry.js 연결: 원본 lightMap/강도/보조 UV 채널을 현대 렌더러에 전달. 알베도와 라이트맵이 같은 소스 텍스처일 때 UV 채널 간섭 방지. source uv2→modern uv1은 기존 geometry-copy 경로 사용.
+- test-material-textures.mjs 통과: 보조 UV, 선형 색공간 보존, 알베도 UV 독립, 0 강도, 미지정 맵 초기화. geometry-copy, glazing-sides 검사 및 빌드 통과.
+- Blender 5.1.1 설치 확인.
+- Poly Haven Modern Arm Chair 01 (Vibrant Nordic, CC0) 1K glTF 다운로드·MD5 검증 후 Blender로 GLB 변환. cafe-lounge-chair.glb 2,701,204바이트, 두 재질·여섯 텍스처. 출처는 cafe-lounge-chair.source.json. 아직 카페에 배치하지 않은 후보 자산이며 품질 개선 완료로 보고하지 않는다. 원본 치수 약 폭0.82 깊이0.99 높이1.02m로 식탁 의자와 다르므로 좌석 높이/동선을 확인한 대표 라운지 자리부터 검토할 것. 가구 교체 시 기존 접촉 AO 무효화/재베이크 필요.
+
+미완료:
+- 실제 실내 전체 GI 라이트맵 생성·적용은 아직 안 됨. 이번 변경은 전달 누락 수정이며 화면이 실사 수준으로 변했다는 의미가 아님.
+- 실내·외부 독립 품질 게이트 모두 미통과(미검증).
+- 외부 장면의 조명/반사/도로 디테일 실측 비교 및 별도 공개 배포 미완료.
+
+다음: 현재 동일 구조 스냅샷을 Blender로 내보내 월드 좌표·메시·재질·일광 조건을 보존 → 대표 바닥/벽/천장 UV 및 간접광 베이크 → 기본 렌더에 재주입 → 3시점/회전 직후 비교. 외부는 원본 조감/거리/반대편 별도 비교. UI 진행은 ui-integration-checkpoint.txt 참조.

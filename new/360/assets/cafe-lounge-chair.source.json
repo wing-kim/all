@@ -1,0 +1,27 @@
+{
+  "asset": "Modern Arm Chair 01",
+  "source": "https://polyhaven.com/a/modern_arm_chair_01",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://polyhaven.com/license",
+  "authors": {
+    "Vibrant Nordic": "All"
+  },
+  "credit": "Powered by Poly Haven",
+  "download": "1k glTF and included textures, MD5 verified against Poly Haven files API",
+  "conversion": "Blender 5.1.1 import glTF and export GLB; geometry unchanged; embedded textures",
+  "bytes": 2701204,
+  "sha256": "ef3ca22fe52de5311d93926fcac14a154438c90baf41e0ec2d1c5182efabd898",
+  "status": "Prepared candidate, NOT installed in cafe; dimensions/seat height and visual fit must be checked before replacing furniture; invalidate contact AO for changed furniture",
+  "sourceBoundsBlenderZUp": [
+    [
+      -0.406809,
+      -0.41111,
+      0.000382
+    ],
+    [
+      0.413536,
+      0.575452,
+      1.023234
+    ]
+  ]
+}
