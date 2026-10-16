@@ -48,3 +48,9 @@
 - IAB 공개 URL에서 실시간360 외관 렌더 완료 → 카페 전환 → 스케치업 이탈 → 기존 내부 층 목록 B2~PH2 표시 확인.
 - 증거: deployed-preview-exterior.jpg, deployed-preview-cafe.jpg. 초기 로딩은 여전히 길었으며 정확한 성능 계측/Chrome/전체 기능 회귀는 미완.
 - 공개 배포 성공은 기능 대응/실사 품질 성공이 아니다. 유리의 세로 반사와 가구 단순함/실내외 균일한 명암은 다음 품질 검토 대상.
+
+### 모드 비간섭 수정 / 다음 구현
+- a7f0703: 새 모드 비활성 때 disable 무동작, 원본 컨트롤/렌더 소유권 복원, 외관 카메라 전달, 카페 이탈 시 외관 버튼 선택 복구. 원본 HTML/기존 핸들러 변경 없음.
+- node tools/360/test-integrated-lifecycle.mjs 통과. IAB 최신 로컬에서 카페→스케치 전환 후 v-int=false/v-corner=true, 기존 내부 진입→렌더 전환 후 v-int=true 및 B2~PH2 층 목록 확인. 증거 lifecycle-original-interior.jpg. 전체 회귀 완료는 아님.
+- 격리 배포 업데이트: 소스8a0ba56(수정a7f0703 포함), 배포8c36fc8.
+- 다음 첫 작업: VIEWER_CONTRACT의 날짜/시간/계절 전달 및 현재 고정 태양 덮어쓰기 해결을 bounded Sol 작업으로 진행. integrated.js snapshot → scene.js applyConfig/light → tools/360/modern-entry.js alignDaylight 경로. 원본 R3D 태양 계산/기존 applyTime은 변경하지 말고 읽기/adapter로 전달. 이어서 층·단면 연결.
