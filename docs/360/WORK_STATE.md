@@ -2,19 +2,19 @@
 
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
-## 최신 재개 요약 — 2026-10-16, 64b044e 이후 검증
+## 최신 재개 요약 — 2026-10-16, 220429e 배포 검증 완료
 
 이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력은 과거 기록이다.
 
 - **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1, 병합 금지.
-- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 33f87ad(소스727f0a8) 공개 Chrome 실제 렌더/베이크valid 확인. 최신 병렬로드/한계선 패키지 배포 진행 중, 마지막 체크포인트 우선.
+- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 최신 fcb73ec(소스220429e), Pages built 및 공개 Chrome 실제 렌더/베이크/점선/비교 UI 확인.
 - **기능:** 원본 태양/일시/층/모서리/홀/창밖/미니맵/패드/나침반 연결. 층별 batch 소유권을 보존하여 3F/B1 층 단면, coreTop→coreHall→걷기 복귀 실제 IAB 검증 완료. 지하 단면에서 외부 지면/도시/차량 숨김, 복귀 시 복구. 북쪽 도면 화살표 반복 복귀 후에도 제외.
 - **최신 Chrome 검증:** 602172a. 1F→3F 높이 가이드 4.95m→3.80m 교체 확인. 외부 복귀 후 t-cxlab 켜도 실시간 모드 유지; source/child 카메라 좌표 일치. 스케치 복귀 시 모드 해제와 카메라 보존. 캡처 chrome-3f-guides.png, chrome-exterior-labels.png.
 - **Chrome 성능:** viewport1209×601,DPR2.5, balanced. 첫 렌더4316.4ms(전체 앱 로딩과 다름). 외부5초회전157프레임, 간격 p50=31.7/p95=35.3/max=67.2ms,100ms초과0. 측정 구간 geometry/probe/precision 갱신0. 단일 기기/짧은 시험, 콜드네트워크 및 모바일 보장 아님.
 - **베이크:** 기본 꺼짐, `ambientBake=study`. 현재 geometry로 재추출/재베이크9816adc:599객체/1,929,081정점/누락0, 실제 수신면 자동발견. IAB valid=true,2면,load542.9ms. 정량채광/전체GI/모든시안 지원 아님. 원본 구조·가구·수신면 검증, 야간/단면/불일치 해제. 512²/256samples+오프라인 denoise.
 - **미완료:** 상부/전체 종단면, 윗층투시, era/지하투시 일부 표시, 램프 안내선 전부 검증, 상세 실내 후보 매핑, 사진 수준 실내외 품질, 초기 로딩/정밀준비(약4.4초차단) 개선, 모바일. 기능연결 완성/실사품질 달성으로 보고하지 않는다.
 - **다음:** 최신 패키지 audit→격리배포→공개 Chrome 렌더 확인. 이후 남은 기능을 제한 단위로 진행하고 매 단위 예산 확인. 전체품질+모든기능50%내 완성 확약 근거 없음.
-- **예산:** 마지막 실제36%,상한50%,45%정리/48%산출물완료. Claude 전환 준비 root CLAUDE.md 및 docs/360/handoff/claude-code/{README,PROMPT}.md. 사용자 설치/로그인 필요, 같은 repo/branch, 동시쓰기 금지.
+- **예산:** 마지막 실제38%,상한50%,45%정리/48%산출물완료. Claude 전환 준비 root CLAUDE.md 및 docs/360/handoff/claude-code/{README,PROMPT}.md. 사용자 설치/로그인 필요, 같은 repo/branch, 동시쓰기 금지.
 - **후속 담당자:** docs/360/final-handoff-prompt-ko.txt 작성됨. 실제 상태는 이 파일 최신요약/마지막 체크포인트가 우선. 공개 패키지는 allowlist runtime+명시된 비교페이지만 포함.
 
 ## 초기 감사 이력 — 현재 상태가 아님
@@ -161,3 +161,12 @@
 - db4a9a7: 사진시점 선택기가 원본 실내 툴바 아래 보이도록 위치 측정/ResizeObserver 적용. 실제 IAB selector 접근 확인. 하단 설명은 이동패드 위로 여유 확보.
 - 공개46a260a 검증에서 parent integrated=limits-1인데 child modern=labels-1로 이전 HTML 캐시가 섞임. integrated child iframe URL에 revision=compare-layout-1 추가, parent loader 토큰도 갱신. 앞으로 해당 release token을 함께 갱신해야 함.
 - 공개 warmed reload에서 베이크 valid2면/937.2ms, 첫화면5095.5ms였으나 캐시 구버전 혼합이 발견돼 새버전 성능 증거로 사용하지 않는다. 최신 공개검증을 마지막 체크포인트에 기록할 것.
+
+## 최종 공개 검토 및 인계 준비 체크포인트 — 2026-10-16
+- 공개 배포 fcb73ec, 소스220429e. Pages built/error null. Chrome public 실제 카페/원본사진 비교 렌더 확인. chrome-public-final-comparison.png.
+- child URL revision=compare-layout-1 확인. 원본3개 LineDashedMaterial dash=.6/gap=.4 확인. ambient requested/valid/enabled=true,2면. 캐시 혼합 오류 이후 새버전 동작 확인.
+- 공개 Chrome 이번 초기 renderer firstFrame9322.1ms, ambientLoad2532.3ms. 네트워크/캐시/뷰포트가 이전14초와 통제된 비교가 아니므로 개선율로 인용하지 않는다. 전체 페이지 초기 자산 준비는 이 시간 외에도 존재하며 아직 빠르다고 판정하지 않는다.
+- 로컬 비교 메뉴 사진2 선택 실제조작 성공, toolbarBottom194.5/photoTop205. 하단설명도 이동패드 위. cafe-comparison-controls-fixed.png.
+- 원본 운영 Pages source main:/ 보존 재확인. 원본HTMLdiff는 additive opt-in hook 중심(+33/-8 시점), 기존 기능 전체 회귀 완료 아님.
+- 최신 실제 주간38%. 50%까지12%p,45%정리/48%산출물완료 정책 유지. Claude 진입파일/실행절차/현재 근거가 준비됨. 이 문서 최신요약과 마지막 체크포인트가 역사 기록보다 우선.
+- **다음 첫 행동:** git/usage 확인 → VIEWER_CONTRACT 미완료 목록 기반으로 단면/윗층투시/지하투시 adapter를 한 단위씩 선택. 사진수준 전체품질 미달을 숨기지 말 것. 전환 시 Codex/Claude 동시쓰기 금지, 동일 branch를 사용. main merge 금지.
