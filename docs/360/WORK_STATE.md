@@ -156,3 +156,8 @@
 - 나란히 비교 실제 IAB: modern 유지, HTML라벨 hidden, 원본사진 표시. cafe-latest-comparison.png. 사진의 강한 자연광/재질·가구 디테일에 미달. 사진시점 메뉴가 상단 원본 버튼 아래 겹치는 배치 문제를 발견, 후속 UI 정리 필요. 높이3D가이드는 토글로 해제 가능.
 - 사용자 요청 Claude Code 준비 완료: root CLAUDE.md, handoff/claude-code/README.md의 실제 실행명령 및 PROMPT.md, 독립 인간인계 final-handoff-prompt-ko.txt. 같은 checkout/branch에서 Codex 쓰기 중지 후 시작. 별도 코드사본 불필요.
 - 현재36%, 50%까지 여유14%p. 남은 모든 기능+실내외 사진품질 완료를 보장할 수 없으며 Claude 전환 준비가 필요하다고 판단. 우선 공개 검토본 검증/정확한 남은 항목을 남긴다.
+
+## 검토 UI/배포 캐시 보완
+- db4a9a7: 사진시점 선택기가 원본 실내 툴바 아래 보이도록 위치 측정/ResizeObserver 적용. 실제 IAB selector 접근 확인. 하단 설명은 이동패드 위로 여유 확보.
+- 공개46a260a 검증에서 parent integrated=limits-1인데 child modern=labels-1로 이전 HTML 캐시가 섞임. integrated child iframe URL에 revision=compare-layout-1 추가, parent loader 토큰도 갱신. 앞으로 해당 release token을 함께 갱신해야 함.
+- 공개 warmed reload에서 베이크 valid2면/937.2ms, 첫화면5095.5ms였으나 캐시 구버전 혼합이 발견돼 새버전 성능 증거로 사용하지 않는다. 최신 공개검증을 마지막 체크포인트에 기록할 것.

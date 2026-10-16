@@ -15,7 +15,7 @@
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
     .precision-on:has(#pad:not([hidden])) #precision-status{left:150px;max-width:calc(100% - 380px);font-size:11px}
     @media(max-width:600px){.precision-on:has(#pad:not([hidden])) #precision-status{left:8px;bottom:175px;max-width:calc(100% - 16px)}}
-    #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:55px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px;flex-direction:column;overflow:auto}
+    #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:115px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px;flex-direction:column;overflow:auto}
     #cafe-reference img{display:block;width:100%;height:auto;min-height:0;flex:1;object-fit:contain} #cafe-reference p{font-size:12px;margin:8px 0;flex:none}
     .precision-on.cafe-compare #cafe-reference{display:flex}
     .precision-on.cafe-compare #precision-frame{left:50%;width:50%}
@@ -104,7 +104,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=compare-layout-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(reviewParams.get('ambientBake')==='study')url.searchParams.set('ambientBake','study');
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
