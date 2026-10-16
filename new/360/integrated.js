@@ -43,6 +43,7 @@
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
   let frame=null,active=false,key='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false;
+  let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
   const timings=[];
   const api=()=>frame?.contentWindow?.TOWER360;
   function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},time:document.getElementById('precision-light').value,season:C.R3D.season};}
@@ -71,13 +72,28 @@
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   function disable(){
-    active=false;clearTimeout(timer);frame?.contentWindow?.TOWER_CINEMA?.pause(true);
+    if(!active)return;
+    active=false;poseUntil=0;following=false;clearTimeout(timer);
+    const child=frame?.contentWindow,position=child?.TOWER360?.telemetry?.();
+    // A cafe camera is inside the building; keep the last usable exterior host
+    // camera in that case. Otherwise carry the free exterior viewpoint home.
+    if(position&&!child.TOWER_LAB_CONTEXT?.cafeMode){
+      C.cancel();C.camera.position.fromArray(position.camera);C.controls.target.fromArray(position.target);C.controls.update();
+    }
+    if(lastExteriorView){
+      document.querySelectorAll('.views [data-v]').forEach(button=>button.setAttribute('aria-pressed',String(button===lastExteriorView)));
+      document.getElementById('v-int').setAttribute('aria-pressed','false');
+    }
+    child?.TOWER_CINEMA?.pause(true);
     if(frame)frame.style.display='none';
-    C.controls.enabled=true;window.TOWER_MODERN_ACTIVE=false;host.classList.remove('precision-on');settings.hidden=status.hidden=true;
+    C.controls.enabled=hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;
+    if(document.activeElement===frame)document.getElementById('vm-sketch').focus({preventScroll:true});
   }
   function enable(){
     if(active)return;if(window.PH?.on)window.PH.set(false);
-    C.setRender(false);document.getElementById('vm-precision').checked=true;
+    hostControlsEnabled=C.controls.enabled;hostModernActive=!!window.TOWER_MODERN_ACTIVE;
+    lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
+    if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
     active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;
     if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);if(JSON.stringify(snapshot())!==key)rebuild();}
     else rebuild();
@@ -101,6 +117,7 @@
       event.stopImmediatePropagation();document.getElementById('precision-cafe').click();return;
     }else {
       clearComparison();
+      lastExteriorView=button;
       const previous=api()?.telemetry();if(previous){C.camera.position.fromArray(previous.camera);C.controls.target.fromArray(previous.target);C.controls.update();}
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
