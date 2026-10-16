@@ -249,7 +249,7 @@
     }
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
-    view,navigateKey,quality:setQuality,
+    view,navigateKey,quality:setQuality,appearance:value=>window.TOWER_CINEMA?.appearance(value),
     requestPrecision:()=>window.TOWER_CINEMA?.requestPrecision(),
     cancelPrecision:()=>window.TOWER_CINEMA?.cancelPrecision(),
     applyConfig:async config=>{
@@ -300,13 +300,13 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=navigation-2');
+  await load('360/environment.js?v=bake-1');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=navigation-2');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=bake-1');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import * as T from 'three';
+import {applyBakedGround} from './baked-ground.js';
+const scene=new T.Scene(),source=new T.BoxGeometry(10,.1,10),material=new T.MeshStandardMaterial({color:0x777777});
+const ground=new T.Mesh(source,material);ground.position.set(12,0,-8);scene.add(ground);
+const tower=new T.Mesh(source,material);tower.userData.primary=true;scene.add(tower);
+const roof=new T.Mesh(source,material);roof.position.y=20;scene.add(roof);
+const before=Array.from(source.attributes.position.array),api=await applyBakedGround({...T,TextureLoader:class{async loadAsync(){return new T.Texture()}}},scene);
+assert.equal(api.count,1);assert.equal(tower.geometry,source);assert.equal(tower.material,material);assert.equal(roof.material,material);assert.deepEqual(Array.from(source.attributes.position.array),before);assert.notEqual(ground.geometry,source);assert.equal(source.attributes.uv1,undefined);
+const point=new T.Vector3().fromBufferAttribute(ground.geometry.attributes.position,0).add(ground.position),uv=ground.geometry.attributes.uv1;
+assert.ok(Math.abs(uv.getX(0)-(point.x+112)/224)<1e-6);assert.ok(Math.abs(uv.getY(0)-(point.z+112)/224)<1e-6);
+assert.equal(ground.material.aoMap.channel,1);assert.equal(ground.material.lightMap.channel,1);api.setEnabled(false);assert.equal(ground.material,material);api.setEnabled(true);assert.notEqual(ground.material,material);
+console.log('Baked ground: primary geometry untouched; only ground receivers; world UV alignment; before/after materials restored.');

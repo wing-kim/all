@@ -1,10 +1,11 @@
+import { applyBakedGround } from './baked-ground.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { copyGeometry } from './geometry-copy.js';
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix, saturation, uniform } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -58,6 +59,8 @@ export async function start(C){
  });}
  copyRoot(C.scene);
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
+ let improved=new URLSearchParams(location.search).get('bake')!=='off';
+ let groundBake=null;try{groundBake=await applyBakedGround(T,scene);groundBake.setEnabled(improved&&C.city.visible&&C.ctx.visible)}catch(error){console.warn('Baked ground unavailable; retaining realtime lighting',error)}
  const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.8;scene.backgroundIntensity=1.55;
  const daylightColor=()=>C.R3D.time==='sunset'?C.sun.color.getHex():C.R3D.time==='am'?0xfff4e6:0xfff3dd;
  const sun=new T.DirectionalLight(daylightColor(),C.R3D.time==='sunset'?2:1.2);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
@@ -115,7 +118,12 @@ export async function start(C){
  function refreshGlazing(){
   previewGlazing.forEach(m=>m.dispose());previewGlazing.clear();previewBindings.length=0;
   previewGlass=[...materials.values()].filter(m=>m.transmission>0);
-  for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.FrontSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;previewGlazing.set(m,p);}
+  for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.FrontSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;
+   if(improved){const facade=m.userData.glazingRole==='facade';p.color.set(facade?'#d6e2e4':'#edf3f3');p.metalness=0;p.ior=1.52;p.roughness=.075;p.clearcoat=1;p.clearcoatRoughness=.06;p.envMapIntensity=1.35;
+    const grazing=normalWorld.dot(cameraPosition.sub(positionWorld).normalize()).abs().oneMinus().pow(5);
+    p.opacityNode=grazing.mul(facade?.42:.4).add(facade?.38:.16);
+   }
+   previewGlazing.set(m,p);}
   scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
  }
  refreshGlazing();
@@ -146,23 +154,24 @@ export async function start(C){
   const began=performance.now();cancelPrecision();
   scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>scene.remove(o));
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
-  const usedG=new Set(),usedM=new Set();for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
+  const usedG=new Set(),usedM=new Set(groundBake?.materials||[]);for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
   copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);refreshGlazing();
-  const usedTextures=new Set();for(const m of materials.values())for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
+  const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
   renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
  }
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  window.TOWER_CINEMA={scene,camera,renderer,get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
- context:display=>{cancelPrecision();scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});refreshProbe();renderer.shadowMap.needsUpdate=true},
+ appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
+ context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
  light:()=>{cancelPrecision();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();refreshProbe();renderer.shadowMap.needsUpdate=true},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
- status:()=>({mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameTimes.length?frameTimes.reduce((a,b)=>a+b,0)/frameTimes.length:null}),
+ status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameTimes.length?frameTimes.reduce((a,b)=>a+b,0)/frameTimes.length:null}),
  stop:()=>{stopped=true;cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused)return;const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){cancelPrecision();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer?.updateCamera()}

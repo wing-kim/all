@@ -13,8 +13,8 @@
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
-  settings.innerHTML='<label>조명 <select id="precision-light"><option value="pm">맑은 오후</option><option value="am">오전</option><option value="sunset">석양</option></select></label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 내부·단면은 스케치업으로 전환합니다.</div>';
-  group.after(settings);
+  settings.innerHTML='<label>조명 <select id="precision-light"><option value="pm">맑은 오후</option><option value="am">오전</option><option value="sunset">석양</option></select></label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 내부·단면은 스케치업으로 전환합니다.</div>';
+  group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
   reference.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();api()?.view('reference');};
@@ -47,7 +47,8 @@
     key=JSON.stringify(snapshot());ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=navigation-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=bake-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   function disable(){
@@ -85,6 +86,7 @@
       if(canvas){document.getElementById('capImg').src=canvas.toDataURL('image/png');document.getElementById('capTxt').textContent='360도 현재 화면';document.getElementById('capBox').hidden=false;}
     }
   },true);
+  document.getElementById('precision-bake').onchange=e=>api()?.appearance(e.target.checked);
   document.getElementById('precision-render').onclick=()=>api()?.requestPrecision();
   document.getElementById('precision-cancel').onclick=()=>api()?.cancelPrecision();
   document.getElementById('precision-light').onchange=e=>{api()?.cancelPrecision();api()?.light(e.target.value);key=JSON.stringify(snapshot());};
