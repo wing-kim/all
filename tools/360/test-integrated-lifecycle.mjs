@@ -26,7 +26,7 @@ const document={head:element(),activeElement:null,
   addEventListener(){},
 };
 function vector(initial){let values=[...initial];return {toArray:()=>[...values],fromArray(v){values=[...v]},update(){}}}
-const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3])},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
+const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3])},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,interiorState:()=>({on:false,key:'1F',camera:C.camera.position.toArray(),target:C.controls.target.toArray()}),setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
 let interval;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>100},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(){},addEventListener(){},console};
 vm.runInNewContext(readFileSync(new URL('../../new/360/integrated.js',import.meta.url),'utf8'),context);
 const review=context.window.TOWER_REVIEW;
@@ -56,12 +56,16 @@ review.disable();
 assert.deepEqual(C.camera.position.toArray(),[10,20,30],'cafe camera does not strand original viewer inside building');
 assert.equal(ids.get('v-corner').getAttribute('aria-pressed'),'true','original exterior selection is restored');
 assert.equal(ids.get('v-int').getAttribute('aria-pressed'),'false');
-let daylight={time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff},lightCalls=[];
+let daylight={time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff},lightCalls=[],floorCalls=[];
 C.sourceDaylight=()=>daylight;
 review.enable();const daylightFrame=review.frame;
-daylightFrame.contentWindow={TOWER360:{telemetry:()=>({environment:'ready'}),quality(){},light:value=>lightCalls.push(value)},TOWER_CINEMA:{status:()=>({mode:'interactive',firstFrameMs:1}),pause(){}},TOWER_LAB_CONTEXT:{cafeMode:false},addEventListener(){}};
+daylightFrame.contentWindow={TOWER360:{telemetry:()=>({environment:'ready'}),quality(){},light:value=>lightCalls.push(value),interiorPose:(...args)=>floorCalls.push(args)},TOWER_CINEMA:{status:()=>({mode:'interactive',firstFrameMs:1}),pause(){}},TOWER_LAB_CONTEXT:{cafeMode:false},addEventListener(){}};
 interval();daylight={...daylight,direction:[-1,1,0],intensity:1.7};interval();
 assert.equal(review.frame,daylightFrame,'daylight-only change keeps the building frame');
 assert.equal(lightCalls.length,1,'daylight-only change updates light once');
 assert.equal(lightCalls[0].intensity,1.7);
+let selectedFloor='1F';C.interiorState=()=>({on:true,key:selectedFloor,camera:[0,1.6,2],target:[0,1.6,1.7]});
+interval();assert.equal(floorCalls.length,1);assert.equal(floorCalls[0][0],'1F');
+selectedFloor='2F';interval();assert.equal(floorCalls.length,2);assert.equal(floorCalls[1][0],'2F');
+assert.equal(review.frame,daylightFrame,'floor selection uses the existing renderer frame');
 console.log('integrated lifecycle: passed');

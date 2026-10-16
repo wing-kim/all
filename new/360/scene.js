@@ -65,8 +65,10 @@
     if(['KeyD','ArrowRight'].includes(code))delta.copy(right);
     if(code==='KeyQ')delta.y=-1;if(code==='KeyE')delta.y=1;
     delta.multiplyScalar(C.cafeMode?(event.shiftKey?.6:.2):(event.shiftKey?3:1));
-    if(C.cafeMode){const L=C.levels().find(l=>l.kind==='ground'),p=camera.position.clone().add(delta),q=[p.x*41.6+914,p.z*41.6+770];if(!C.cafeIsWalkable?.(p.x,p.z)||p.y<C.floorTop(L)+.4||p.y>C.ceilOf(L)-.25)return;}
-    if(camera.position.y+delta.y<1.5)delta.y=1.5-camera.position.y;
+    if(C.cafeMode){const L=C.levels().find(l=>l.key===C.interiorFloorKey),p=camera.position.clone().add(delta);if(!L)return;
+      const passable=L.key==='1F'?C.cafeIsWalkable?.(p.x,p.z):C.walkable(p.x,p.z,L);
+      if(!passable||p.y<C.floorTop(L)+.4||((L.kind!=='roof'&&L.kind!=='terrace')&&p.y>C.ceilOf(L)-.25))return;}
+    else if(camera.position.y+delta.y<1.5)delta.y=1.5-camera.position.y;
     camera.position.add(delta);controls.target.add(delta);controls.update();
   }
   addEventListener('keydown',navigateKey);
@@ -236,8 +238,14 @@
   }
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
+  function interiorPose(key,position,target){
+    const level=C.levels().find(l=>l.key===key);if(!level)return false;
+    cancel();C.cafeMode=true;C.interiorFloorKey=key;
+    camera.near=.08;camera.fov=72;camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;
+    camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
+  }
   function view(name){
-    if(name==='cafe'||name==='cafe-counter'){cancel();C.cafeMode=true;camera.near=.08;camera.fov=65;camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6;camera.position.set(...(name==='cafe'?[-4.6,y,5.5]:[-10,y,-1]));controls.target.set(...(name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2]));const look=controls.target.clone().sub(camera.position).normalize().multiplyScalar(.35);controls.target.copy(camera.position).add(look);controls.update();return;}
+    if(name==='cafe'||name==='cafe-counter'){const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6,position=name==='cafe'?[-4.6,y,5.5]:[-10,y,-1],lookAt=name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2],target=new T.Vector3(...lookAt).sub(new T.Vector3(...position)).normalize().multiplyScalar(.35).add(new T.Vector3(...position)).toArray();interiorPose('1F',position,target);return;}
     C.cafeMode=false;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();controls.minPolarAngle=.22;
     const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
@@ -255,7 +263,7 @@
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
   const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
   setQuality(compactTouch?'balanced':'high');view('corner');
-  if(initial.camera&&initial.target){flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}
+  if(initial.camera&&initial.target){if(initial.floor?.on)interiorPose(initial.floor.key,initial.camera,initial.target);else{flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}}
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
@@ -265,7 +273,7 @@
     }
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
-    view,navigateKey,quality:setQuality,appearance:value=>window.TOWER_CINEMA?.appearance(value),
+    view,interiorPose,navigateKey,quality:setQuality,appearance:value=>window.TOWER_CINEMA?.appearance(value),
     requestPrecision:()=>window.TOWER_CINEMA?.requestPrecision(),
     cancelPrecision:()=>window.TOWER_CINEMA?.cancelPrecision(),
     applyConfig:async config=>{
@@ -290,7 +298,7 @@
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{window.TOWER_CINEMA?.cancelPrecision();applySourceLight(value);window.TOWER_CINEMA?.light(value)},
-    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'structure-only'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');

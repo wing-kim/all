@@ -7639,7 +7639,10 @@ build();go('corner',true);
 // Opt-in validation only. Ordinary v87 pages keep their original rendering path.
 if(['360','verify','review'].includes(new URLSearchParams(location.search).get('lab'))) {
   window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,sun,hemi,P,inPoly,
-    interior:()=>I.on,levels:()=>LEVELS,floorTop,ceilOf,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
+    interior:()=>I.on,interiorState:()=>({on:I.on,key:I.key||'1F',camera:camera.position.toArray(),target:controls.target.toArray()}),
+    enterInterior:enterInt,exitInterior:exitInt,selectInteriorFloor:key=>{const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return false;if(!I.on)enterInt();placeLevel(index,true);return true},
+    restoreInteriorPose:(position,target)=>{if(!I.on)return;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
+    levels:()=>LEVELS,floorTop,ceilOf,walkable,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
@@ -7650,7 +7653,7 @@ let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;
   if(I.on&&!I.doll){if(anim){let t=Math.min(1,(now-anim.s)/800);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-    step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
+    step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}if(!window.TOWER_MODERN_ACTIVE)drawFrame();placeLabels();drawMini();drawCompass();return}
   if(I.on&&I.doll)step(dt);
   if(anim){let t=Math.min(1,(now-anim.s)/900);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
   controls.update();occl();if(!window.TOWER_MODERN_ACTIVE)drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
