@@ -60,7 +60,7 @@ export async function start(C){
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
  const roundedProfiles=new Map();
- function copyRoot(root){const glazingEdges=collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);root.updateWorldMatrix(true,true);
+ function copyRoot(root){const glazingEdges=root===C.ovl?new Map():collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);root.updateWorldMatrix(true,true);
  root.traverse(o=>{
   let building=false;for(let p=o;p;p=p.parent)if(p===C.bld)building=true;
   if(!building)for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
@@ -73,10 +73,19 @@ export async function start(C){
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.persistentNeighborhood||p===C.R3D.street||p===C.R3D.props)n.userData.outdoorEnhancement=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
+  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.ovl)n.userData.sourceOverlay=true;if(p===C.persistentNeighborhood||p===C.R3D.street||p===C.R3D.props)n.userData.outdoorEnhancement=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
  });}
- function syncSourceVisibility(){const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed}
  copyRoot(C.scene);
+ function currentOverlaySources(){const sources=new Set();C.ovl?.traverse(o=>{if(o.isMesh&&!o.userData.batched&&!o.material?.isShaderMaterial)sources.add(o)});return sources}
+ let overlaySources=currentOverlaySources();
+ function refreshOverlayCopies(){
+  const next=currentOverlaySources();
+  if(next.size===overlaySources.size&&[...next].every(o=>overlaySources.has(o)))return 0;
+  const stale=scene.children.filter(o=>o.userData.sourceOverlay);
+  for(const copy of stale){scene.remove(copy);const source=copy.sourceVisibilityObject;if(source&&geometries.get(source.geometry)===copy.geometry&&!scene.children.some(other=>other.geometry===copy.geometry)){geometries.delete(source.geometry);copy.geometry.dispose()}}
+  overlaySources=next;copyRoot(C.ovl);return stale.length+next.size;
+ }
+ function syncSourceVisibility(){const overlaysChanged=refreshOverlayCopies();if(overlaysChanged)cancelPrecision();const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed+overlaysChanged}
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  timings.sceneCopyMs=performance.now()-bootAt;
  let improved=new URLSearchParams(location.search).get('bake')!=='off';

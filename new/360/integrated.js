@@ -7,10 +7,11 @@
     .precision-on .views,.precision-on .tools{z-index:8}
     .precision-on .intui,.precision-on .ihud{z-index:8}
     .precision-on > canvas:not(#mini){visibility:hidden}
-    .precision-on .labels,.precision-on .compass,.precision-on .hint{visibility:hidden}
+    .precision-on .compass,.precision-on .hint{visibility:hidden}
     .precision-on #mini,.precision-on .pad{z-index:8}
     .precision-on .compass{visibility:visible;z-index:4}
-    .precision-on:has(#intui:not([hidden])):not(.cafe-compare) .labels{visibility:visible;z-index:4}
+    .precision-on:not(.cafe-compare) .labels{visibility:visible;z-index:4}
+    .precision-on.cafe-compare .labels{visibility:hidden}
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
     .precision-on:has(#pad:not([hidden])) #precision-status{left:150px;max-width:calc(100% - 380px);font-size:11px}
     @media(max-width:600px){.precision-on:has(#pad:not([hidden])) #precision-status{left:8px;bottom:175px;max-width:calc(100% - 16px)}}
@@ -62,13 +63,17 @@
     copyPose();requestAnimationFrame(followPose);
   }
   function showNotice(message){notice=message;noticeUntil=performance.now()+6000;status.textContent=message;}
-  // Keep source minimap/compass on the visible camera. While an original UI
+  // Keep source labels/minimap/compass on the visible camera. While an original UI
   // navigation command owns the camera, followPose runs the opposite direction.
   function mirrorVisiblePose(){
     requestAnimationFrame(mirrorVisiblePose);
-    if(!active||!ready||updating||following||currentFloorKey!==C.interiorState().key||!C.interior())return;
-    const pose=api()?.telemetry();if(!pose||pose.floor!==currentFloorKey)return;
-    C.restoreInteriorPose(pose.camera,pose.target,pose.fov,pose.floor);
+    if(!active||!ready||updating||following)return;
+    const floor=C.interiorState(),pose=api()?.telemetry();if(!pose)return;
+    if(floor.on){if(currentFloorKey!==floor.key||pose.floor!==floor.key)return;C.restoreInteriorPose(pose.camera,pose.target,pose.fov,pose.floor);return;}
+    if(currentFloorKey||pose.floor)return;
+    C.camera.position.fromArray(pose.camera);C.controls.target.fromArray(pose.target);
+    if(Number.isFinite(pose.fov)&&C.camera.fov!==pose.fov){C.camera.fov=pose.fov;C.camera.updateProjectionMatrix()}
+    C.controls.update();
   }
   requestAnimationFrame(mirrorVisiblePose);
   let padHeld=false;
@@ -108,7 +113,7 @@
     // camera in that case. Otherwise carry the free exterior viewpoint home.
     if(position&&C.interior())C.restoreInteriorPose(position.camera,position.target,position.fov,position.floor);
     else if(position&&!child.TOWER_LAB_CONTEXT?.cafeMode){
-      C.cancel();C.camera.position.fromArray(position.camera);C.controls.target.fromArray(position.target);C.controls.update();
+      C.cancel();C.camera.position.fromArray(position.camera);C.controls.target.fromArray(position.target);if(Number.isFinite(position.fov)){C.camera.fov=position.fov;C.camera.updateProjectionMatrix()}C.controls.update();
     }
     if(lastExteriorView&&!C.interior()){
       document.querySelectorAll('.views [data-v]').forEach(button=>button.setAttribute('aria-pressed',String(button===lastExteriorView)));
@@ -130,7 +135,7 @@
   }
   document.addEventListener('change',event=>{
     const el=event.target;
-    if(active&&(['t-cxlab','t-limits','t-b1'].includes(el.id)||(el.id==='t-labels'&&!C.interior())||el.name==='era')){
+    if(active&&(['t-limits','t-b1'].includes(el.id)||el.name==='era')){
       disable();document.getElementById('vm-sketch').checked=true;
     }
     if(el.name==='vmode'){

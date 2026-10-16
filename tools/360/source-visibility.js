@@ -1,6 +1,6 @@
 export function sourceVisible(object){
- for(let node=object;node;node=node.parent)if(!node.visible)return false;
- return true;
+ for(let node=object;node;node=node.parent){if(!node.visible)return false;if(node.isScene)return true;}
+ return false; // A replaced overlay mesh is detached even if its own visible flag remains true.
 }
 
 export function bindSourceVisibility(copy,source){

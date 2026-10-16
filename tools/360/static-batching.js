@@ -5,7 +5,7 @@ export function batchStaticSurroundings(T,mergeGeometries,scene){
  for(const o of scene.children){
   // Keep dense scanned assets instanced by shared geometry in the path tracer.
   // Flattening repeated foliage into large unique meshes explodes BVH/storage size.
-  if(!o.isMesh||o.isInstancedMesh||o.geometry.attributes.position.count>3000||o.userData.primary||Array.isArray(o.material)||o.material.transparent||o.material.transmission)continue;
+  if(!o.isMesh||o.isInstancedMesh||o.geometry.attributes.position.count>3000||o.userData.primary||o.userData.sourceOverlay||Array.isArray(o.material)||o.material.transparent||o.material.transmission)continue;
   const m=o.material,key=JSON.stringify([m.color.toArray(),m.emissive.toArray(),m.emissiveIntensity,m.roughness,m.metalness,m.side,m.opacity,m.alphaTest,m.clearcoat,m.clearcoatRoughness,m.normalScale.toArray(),m.bumpScale,m.polygonOffset,m.polygonOffsetFactor,m.polygonOffsetUnits,...['map','normalMap','roughnessMap','metalnessMap','bumpMap','emissiveMap','alphaMap'].map(k=>m[k]?.uuid)]);
   if(!palette.has(key))palette.set(key,m);o.material=palette.get(key);
   const center=new T.Vector3();o.geometry.computeBoundingBox();o.geometry.boundingBox.getCenter(center).applyMatrix4(o.matrix);

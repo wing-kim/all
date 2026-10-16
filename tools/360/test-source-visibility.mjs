@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {bindSourceVisibility,sourceVisible,syncCopiedVisibility} from './source-visibility.js';
 
-const authored=new T.Group(),first=new T.Group(),third=new T.Group();authored.add(first,third);
+const authored=new T.Group(),sourceScene=new T.Scene(),first=new T.Group(),third=new T.Group();sourceScene.add(authored);authored.add(first,third);
 const geometry=new T.BoxGeometry(1,1,1),material=new T.MeshBasicMaterial();
 const lower=new T.Mesh(geometry,material),lowerCeiling=new T.Mesh(geometry,material),upper=new T.Mesh(geometry,material),upperCeiling=new T.Mesh(geometry,material);
 first.add(lower,lowerCeiling);third.add(upper,upperCeiling);
@@ -34,7 +34,8 @@ C.dollMode=false;first.visible=third.visible=lowerCeiling.visible=upperCeiling.v
 syncCopiedVisibility(T,scene,C,renderer);
 assert.deepEqual(visibility(),[true,true,true,true,true],'walk mode restores every source mesh');
 assert.equal(scene.children.every(object=>object.geometry===geometry),true,'visibility changes never rebuild geometry');
-const outdoorSource=new T.Mesh(geometry,material),outdoorScene=new T.Scene(),outdoorCopy=new T.Mesh(geometry,material),outdoorBatch=new T.Mesh(geometry,material);
+const outdoorSource=new T.Mesh(geometry,material),outdoorAuthoredScene=new T.Scene(),outdoorScene=new T.Scene(),outdoorCopy=new T.Mesh(geometry,material),outdoorBatch=new T.Mesh(geometry,material);
+outdoorAuthoredScene.add(outdoorSource);
 bindSourceVisibility(outdoorCopy,outdoorSource);outdoorCopy.userData.outdoorEnhancement=true;outdoorBatch.userData.outdoorEnhancement=true;
 outdoorScene.add(outdoorCopy,outdoorBatch);
 C.levels=()=>[{key:'B1',kind:'base'}];C.ceilOf=()=>0;C.dollMode=true;C.interiorFloorKey='B1';
@@ -42,4 +43,8 @@ syncCopiedVisibility(T,outdoorScene,C,renderer);
 assert.deepEqual(outdoorScene.children.map(object=>object.visible),[false,false],'basement doll hides both copied and batched outdoor additions');
 C.dollMode=false;syncCopiedVisibility(T,outdoorScene,C,renderer);
 assert.deepEqual(outdoorScene.children.map(object=>object.visible),[true,true],'outdoor additions return on exit');
+const formerGuide=new T.Mesh(geometry,material),overlay=new T.Group();sourceScene.add(overlay);overlay.add(formerGuide);
+assert.equal(sourceVisible(formerGuide),true);
+overlay.remove(formerGuide);
+assert.equal(sourceVisible(formerGuide),false,'removed source overlay meshes cannot linger after a floor change');
 console.log('source visibility: floor, dollhouse, core and walk transitions passed');

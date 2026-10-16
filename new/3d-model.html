@@ -7638,7 +7638,7 @@ buildContext();existBuilding();
 build();go('corner',true);
 // Opt-in validation only. Ordinary v87 pages keep their original rendering path.
 if(['360','verify','review'].includes(new URLSearchParams(location.search).get('lab'))) {
-  window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,sun,hemi,P,inPoly,
+  window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,ovl,sun,hemi,P,inPoly,
     interior:()=>I.on,interiorState:()=>({on:I.on,key:I.key||'1F',camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,spin:I.spin,doll:I.doll,look:I.look}),
     enterInterior:enterInt,exitInterior:exitInt,selectInteriorFloor:key=>{const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return false;if(!I.on)enterInt();placeLevel(index,true);return true},
     // The opt-in child renderer asks the original interior controller to apply
@@ -7651,8 +7651,8 @@ if(['360','verify','review'].includes(new URLSearchParams(location.search).get('
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=doll-1';document.head.appendChild(script);}
-  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=doll-3';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=labels-1';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=labels-1';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){

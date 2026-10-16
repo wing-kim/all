@@ -35,3 +35,8 @@ assert.equal(trace.children.filter(o=>o.geometry===dense).length,2);
 assert.equal(trace.children.filter(o=>o.geometry===box).length,6);
 assert(!trace.children.some(o=>o.geometry===merged.geometry),'expanded raster buffer excluded from tracing');
 console.log('Precision scene passed: original shared geometries, transforms and sky rotation retained.');
+const overlayScene=new T.Scene();
+for(let i=0;i<2;i++){const guide=new T.Mesh(box,material);guide.userData.sourceOverlay=true;guide.position.x=i*2;overlayScene.add(guide)}
+const overlayAudit=batchStaticSurroundings(T,mergeGeometries,overlayScene);
+assert.equal(overlayAudit.sources.size,0,'replaceable guide copies stay out of static batches');
+assert.equal(overlayScene.children.length,2);

@@ -13,7 +13,7 @@ function element(id=''){
     get dataset(){return this._dataset||{}},set dataset(value){this._dataset=value},
   };
 }
-for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','t-labels','t-cxlab','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
 ids.get('sec-time').hidden=true;
 const views=element('views'),group=element('group');
 for(const [id,view,pressed] of [['v-corner','corner','true'],['v-front','front','false'],['v-int','int','false']]){
@@ -27,7 +27,7 @@ const document={head:element(),activeElement:null,
   addEventListener(type,fn){listeners.set(type,fn)},
 };
 function vector(initial){let values=[...initial];return {toArray:()=>[...values],fromArray(v){values=[...v]},update(){}}}
-const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3])},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,interiorState:()=>({on:false,key:'1F',camera:C.camera.position.toArray(),target:C.controls.target.toArray()}),setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
+const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3]),fov:45,updateProjectionMatrix(){this.projectionUpdates=(this.projectionUpdates||0)+1}},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,interiorState:()=>({on:false,key:'1F',camera:C.camera.position.toArray(),target:C.controls.target.toArray()}),setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
 let interval,now=100;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>now},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(fn){frames.push(fn)},addEventListener(){},console};
 vm.runInNewContext(readFileSync(new URL('../../new/360/integrated.js',import.meta.url),'utf8'),context);
 const review=context.window.TOWER_REVIEW;
@@ -65,6 +65,18 @@ interval();daylight={...daylight,direction:[-1,1,0],intensity:1.7};interval();
 assert.equal(review.frame,daylightFrame,'daylight-only change keeps the building frame');
 assert.equal(lightCalls.length,1,'daylight-only change updates light once');
 assert.equal(lightCalls[0].intensity,1.7);
+let visiblePose={camera:[17,21,32],target:[3,4,5],fov:58,floor:null};
+daylightFrame.contentWindow.TOWER360.telemetry=()=>({...visiblePose,environment:'ready'});
+frames.splice(0).forEach(fn=>fn());
+assert.deepEqual(C.camera.position.toArray(),visiblePose.camera,'exterior labels use the child camera position');
+assert.deepEqual(C.controls.target.toArray(),visiblePose.target,'exterior labels use the child camera target');
+assert.equal(C.camera.fov,58,'exterior label projection uses child field of view');
+assert.equal(C.camera.projectionUpdates,1);
+for(const id of ['t-labels','t-cxlab']){
+  listeners.get('change')({target:ids.get(id),stopImmediatePropagation(){}});
+  assert.equal(C.controls.enabled,false,`${id} remains in the continuous viewer`);
+  assert.equal(review.frame,daylightFrame,`${id} preserves the renderer frame`);
+}
 let selectedFloor='1F',sourcePose={camera:[0,1.6,2],target:[0,1.6,1.7],fov:72,spin:false,doll:false};C.interiorState=()=>({on:true,key:selectedFloor,...sourcePose});
 interval();assert.equal(floorCalls.length,1);assert.equal(floorCalls[0][0],'1F');
 selectedFloor='2F';interval();assert.equal(floorCalls.length,2);assert.equal(floorCalls[1][0],'2F');
