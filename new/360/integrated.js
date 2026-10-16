@@ -19,7 +19,7 @@
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
-  settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>원본 층 선택을 사용합니다. 1F 카페에는 검토용 가구가 있고 다른 층은 원본 구조만 표시합니다. 단면·표시 연결은 준비 중입니다.</div>';
+  settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>원본 층 선택을 사용합니다. 1F 카페에는 검토용 가구가 있고 다른 층은 원본 구조와 임시 가구가 표시됩니다. 실내 시안·단면·표시 연결은 준비 중입니다.</div>';
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
   const compareLabel=document.createElement('label');compareLabel.style.display='block';compareLabel.style.marginTop='10px';compareLabel.innerHTML='<input type="checkbox" id="precision-cafe-compare"> 1층 실사와 나란히 비교';settings.appendChild(compareLabel);
   const referencePanel=document.createElement('section');referencePanel.id='cafe-reference';referencePanel.innerHTML='<p>원본 실사 · AI 인테리어 시안 <select aria-label="카페 실사 시점" id="cafe-photo-angle"></select></p><img id="cafe-reference-image" alt="기존 1층 카페 실사 이미지"><p>구조는 기존 모델 기준 · 가구 배치는 검토용 예시입니다.</p>';host.appendChild(referencePanel);
@@ -45,18 +45,19 @@
   addEventListener('keydown',event=>{if(!active)return;api()?.navigateKey(event);if(['Home','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)&&!event.target?.closest?.('input,textarea,select,[contenteditable=true]'))event.stopImmediatePropagation()},true);
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
-  let frame=null,active=false,key='',daylightKey='',currentFloorKey=null,ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false;
+  let frame=null,active=false,key='',daylightKey='',currentFloorKey=null,ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false,notice='',noticeUntil=0;
   let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
   const timings=[];
   const api=()=>frame?.contentWindow?.TOWER360;
   function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},daylight:C.sourceDaylight(),floor:C.interiorState()};}
   const modelKey=config=>JSON.stringify({state:config.state,display:config.display});
-  function copyPose(){const floor=C.interiorState();if(floor.on)api()?.interiorPose(floor.key,floor.camera,floor.target);else api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
-  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;if(floor.on){if(force||currentFloorKey!==floor.key){api().interiorPose(floor.key,floor.camera,floor.target);currentFloorKey=floor.key;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;}}
+  function copyPose(){const floor=C.interiorState();if(floor.on)api()?.interiorPose(floor.key,floor.camera,floor.target,floor.fov);else api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
+  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;if(floor.on){if(force||currentFloorKey!==floor.key){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov);currentFloorKey=floor.key;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;}}
   function followPose(){
-    if(!active||performance.now()>=poseUntil){following=false;return;}
+    if(!active||(performance.now()>=poseUntil&&!C.interiorState().spin)){following=false;return;}
     copyPose();requestAnimationFrame(followPose);
   }
+  function showNotice(message){notice=message;noticeUntil=performance.now()+6000;status.textContent=message;}
   async function rebuild(){
     if(!active)return;
     if(updating){queued=true;return;}
@@ -82,7 +83,7 @@
     const child=frame?.contentWindow,position=child?.TOWER360?.telemetry?.();
     // A cafe camera is inside the building; keep the last usable exterior host
     // camera in that case. Otherwise carry the free exterior viewpoint home.
-    if(position&&C.interior())C.restoreInteriorPose(position.camera,position.target);
+    if(position&&C.interior())C.restoreInteriorPose(position.camera,position.target,position.fov,position.floor);
     else if(position&&!child.TOWER_LAB_CONTEXT?.cafeMode){
       C.cancel();C.camera.position.fromArray(position.camera);C.controls.target.fromArray(position.target);C.controls.update();
     }
@@ -92,7 +93,7 @@
     }
     child?.TOWER_CINEMA?.pause(true);
     if(frame)frame.style.display='none';
-    C.controls.enabled=hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;document.getElementById('sec-time').hidden=!C.R3D.on;
+    C.controls.enabled=C.interior()?!C.interiorState().look:hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;document.getElementById('sec-time').hidden=!C.R3D.on;
     if(document.activeElement===frame)document.getElementById('vm-sketch').focus({preventScroll:true});
   }
   function enable(){
@@ -127,9 +128,9 @@
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
     if(event.target.closest('#floorChips button'))requestAnimationFrame(()=>syncInterior(true));
-    if(event.target.closest('[data-c],#coreTop,#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
+    if(event.target.closest('[data-c],#coreTop,#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(event.target.closest('#coreTop'))showNotice('코어 상부 시점 · 단면 절단은 실사 3D 연결 준비 중입니다.');if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#exitInt'))requestAnimationFrame(()=>syncInterior(true));
-    if(event.target.closest('#dollBtn,#secBtn,#secAllBtn,[data-iv]')){event.preventDefault();event.stopImmediatePropagation();status.textContent='단면·표시 도구는 실사 3D 연결 준비 중입니다.';return;}
+    if(event.target.closest('#dollBtn,#secBtn,#secAllBtn,[data-iv]')){event.preventDefault();event.stopImmediatePropagation();showNotice('단면·표시 도구는 실사 3D 연결 준비 중입니다.');return;}
     if(event.target.closest('#capBtn')){
       event.stopImmediatePropagation();
       const w=frame?.contentWindow,canvas=w?.TOWER_CINEMA?.captureCanvas||w?.TOWER_CINEMA?.renderer.domElement||w?.TOWER_LAB_CONTEXT?.renderer.domElement;
@@ -148,7 +149,7 @@
     if(ready&&nextDaylight!==daylightKey){api()?.light(config.daylight);daylightKey=nextDaylight;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}
     const w=frame.contentWindow;
-    if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);syncInterior(true);}
+    if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});w.addEventListener('tower-navigation-home',()=>{document.getElementById('v-corner').click();poseUntil=0;currentFloorKey=null;});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);syncInterior(true);}
     else syncInterior();
     const renderState=w.TOWER_CINEMA?.status();
     const floor=C.interiorState(),inCafe=floor.on&&floor.key==='1F';
@@ -159,8 +160,10 @@
     if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · WASD 이동':' · '+floor.key+' 원본 구조만 표시 · 상세 자산 미제작'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · WASD 이동':' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
+    if(floor.on&&floor.doll)status.textContent+=' · 단면 절단은 실사 3D 미연결';
+    if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;
   },200);
   window.TOWER_REVIEW={enable,disable,snapshot,timings,get frame(){return frame}};
   enable();

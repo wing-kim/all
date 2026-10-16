@@ -56,7 +56,7 @@
     const code=event.code;
     if(!['Home','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;
     event.preventDefault();cancel();dispatchEvent(new Event('tower-navigation-start'));controls.autoRotate=false;window.TOWER_CINEMA?.cancelPrecision();
-    if(code==='Home'){view('aerial');return;}
+    if(code==='Home'){dispatchEvent(new Event('tower-navigation-home'));view('aerial');return;}
     const forward=camera.getWorldDirection(new T.Vector3());forward.y=0;forward.normalize();
     const right=new T.Vector3().crossVectors(forward,camera.up).normalize(),delta=new T.Vector3();
     if(['KeyW','ArrowUp'].includes(code))delta.copy(forward);
@@ -238,10 +238,10 @@
   }
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
-  function interiorPose(key,position,target){
+  function interiorPose(key,position,target,fov=72){
     const level=C.levels().find(l=>l.key===key);if(!level)return false;
     cancel();C.cafeMode=true;C.interiorFloorKey=key;
-    camera.near=.08;camera.fov=72;camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;
+    camera.near=.08;camera.fov=T.MathUtils.clamp(fov,35,100);camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;
     camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
   }
   function view(name){
@@ -263,7 +263,7 @@
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
   const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
   setQuality(compactTouch?'balanced':'high');view('corner');
-  if(initial.camera&&initial.target){if(initial.floor?.on)interiorPose(initial.floor.key,initial.camera,initial.target);else{flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}}
+  if(initial.camera&&initial.target){if(initial.floor?.on)interiorPose(initial.floor.key,initial.camera,initial.target,initial.floor.fov);else{flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}}
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
@@ -298,7 +298,7 @@
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{window.TOWER_CINEMA?.cancelPrecision();applySourceLight(value);window.TOWER_CINEMA?.light(value)},
-    telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'structure-only'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'provisional-unmapped'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');

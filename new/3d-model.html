@@ -7639,9 +7639,9 @@ build();go('corner',true);
 // Opt-in validation only. Ordinary v87 pages keep their original rendering path.
 if(['360','verify','review'].includes(new URLSearchParams(location.search).get('lab'))) {
   window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,sun,hemi,P,inPoly,
-    interior:()=>I.on,interiorState:()=>({on:I.on,key:I.key||'1F',camera:camera.position.toArray(),target:controls.target.toArray()}),
+    interior:()=>I.on,interiorState:()=>({on:I.on,key:I.key||'1F',camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,spin:I.spin,doll:I.doll,look:I.look}),
     enterInterior:enterInt,exitInterior:exitInt,selectInteriorFloor:key=>{const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return false;if(!I.on)enterInt();placeLevel(index,true);return true},
-    restoreInteriorPose:(position,target)=>{if(!I.on)return;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
+    restoreInteriorPose:(position,target,fov,key)=>{if(!I.on)return;if(key&&key!==I.key){const index=LEVELS.findIndex(level=>level.key===key);if(index>=0)placeLevel(index,true)}anim=null;camera.position.fromArray(position);controls.target.fromArray(target);if(Number.isFinite(fov)){camera.fov=fov;camera.updateProjectionMatrix()}controls.update()},
     levels:()=>LEVELS,floorTop,ceilOf,walkable,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
