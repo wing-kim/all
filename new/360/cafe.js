@@ -16,7 +16,7 @@ window.dressTowerCafe=async function(C,root,timber){
  // Curved upholstered back, four tapered wood legs and thin supporting rails.
  const leafMaterial=mat('Olive leaves','#657448',.8);
  const backGeo=new T.CylinderGeometry(.27,.27,.24,28,1,true,Math.PI*.58,Math.PI*.84);
- function chair(x,z,angle,high=false,upholstery=leather){const g=new T.Group();g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);const sy=high?.77:.46;
+ function chair(x,z,angle,high=false,upholstery=leather){const g=new T.Group();g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);if(!high)g.userData.diningAnchor={x,z,y:floor,angle,floor:L.key,poly:L.poly};const sy=high?.77:.46;
   mesh(seatGeo,upholstery,0,sy,0,g);mesh(backGeo,upholstery,0,sy+.2,0,g).material=upholstery;
   for(const dx of [-1,1])for(const dz of [-1,1])rod(oak,[dx*.20,.035,dz*.21],[dx*.17,sy-.02,dz*.16],.027,g);
   for(const dx of [-1,1])rod(oak,[dx*.20,sy-.05,-.19],[dx*.20,sy+.27,-.23],.025,g);

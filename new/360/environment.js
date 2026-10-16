@@ -8,7 +8,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
     const assetCache=new Map();
     const cachedAsset=url=>{if(!assetCache.has(url))assetCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject)));return assetCache.get(url)};
-    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
+    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf','dining-chair-02/dining-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
     return {cachedAsset};
   })();
   const loader=new T.TextureLoader(),pendingTextures=[];
@@ -413,6 +413,27 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       fallback.visible=false;
     }
   }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
+  // CC0 dining-height furniture replaces only the low-chair fallback, at the
+  // same authored illustrative positions. Preserve shared geometry and textures.
+  try{
+    const asset=await cachedAsset('360/assets/dining-chair-02/dining-chair.gltf');
+    const bounds=new T.Box3().setFromObject(asset.scene),center=bounds.getCenter(new T.Vector3());
+    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;}});
+    const anchors=[];extra.traverse(o=>{if(o.userData.diningAnchor)anchors.push(o)});
+    const audit={source:'Poly Haven Dining Chair 02 / CC0',replaced:0,rejected:0};
+    for(const fallback of anchors){
+      const a=fallback.userData.diningAnchor,root=new T.Group(),model=asset.scene.clone(true);
+      // Source dimensions are already metres, including its dining-height seat.
+      model.position.set(-center.x,-bounds.min.y,0);root.add(model);
+      root.position.set(a.x,a.y,a.z);root.rotation.y=a.angle;root.updateMatrixWorld(true);
+      const b=new T.Box3().setFromObject(root);
+      const inside=[b.min.x,b.max.x].every(x=>[b.min.z,b.max.z].every(z=>C.inPoly([x*41.6+914,z*41.6+770],a.poly)));
+      if(!inside){audit.rejected++;continue;}
+      root.name='CC0 dining chair';root.userData.illustrativeFurniture=true;
+      fallback.parent.add(root);fallback.visible=false;audit.replaced++;
+    }
+    if(extra.userData.cafe)extra.userData.cafe.diningAsset=audit;
+  }catch(error){console.warn('Dining chair unavailable; keeping original fit-out',error)}
     C.dressRoof?.(extra);batch(C.bld);batch(extra);
   };
   await C.enhanceBuildingDetails(C.interiorDressing);

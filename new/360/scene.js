@@ -75,7 +75,7 @@
 
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
-  await load('360/cafe.js?v=cafe-2');
+  await load('360/cafe.js?v=cafe-3');
   async function dressBuilding(){
   const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
@@ -325,7 +325,7 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=cafe-2');
+  await load('360/environment.js?v=cafe-3');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
