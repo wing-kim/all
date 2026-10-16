@@ -20,9 +20,10 @@ export async function start(C){
  const counts={previewFrames:0,precisionSamples:0,cameraMoves:0,buildingUpdates:0,precisionRequests:0,probeRefreshes:0};
  // Wall-clock intervals and render submission time; these are not GPU timings.
  const frameSubmitMs=[],frameIntervals=[];
+ const precisionTiming={moduleMs:null,sceneMs:null,tracerMs:null,totalMs:null,cancelMs:null};
  const measure=(items,value)=>{items.push(value);if(items.length>600)items.shift()};
  let performanceBaseline={...counts};
- const performanceStatus=()=>({counts:{...counts},windowCounts:Object.fromEntries(Object.keys(counts).map(key=>[key,counts[key]-performanceBaseline[key]])),bootMs:{...timings,firstFrame:firstFrameMs},previewIntervalMs:summarizeSamples(frameIntervals),previewSubmitMs:summarizeSamples(frameSubmitMs)});
+ const performanceStatus=()=>({counts:{...counts},windowCounts:Object.fromEntries(Object.keys(counts).map(key=>[key,counts[key]-performanceBaseline[key]])),bootMs:{...timings,firstFrame:firstFrameMs},precisionMs:{...precisionTiming},previewIntervalMs:summarizeSamples(frameIntervals),previewSubmitMs:summarizeSamples(frameSubmitMs)});
  function resetPerformance(){frameSubmitMs.length=0;frameIntervals.length=0;lastDrawAt=0;performanceBaseline={...counts};return performanceStatus()}
  const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  T.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
@@ -101,20 +102,24 @@ export async function start(C){
  addInteriorLighting({scene},C);
  async function requestPrecision(){
   if(precisionLoading||precisionRequested)return;
-  counts.precisionRequests++;
+  counts.precisionRequests++;lastDrawAt=0;
+  const prepareAt=performance.now();
   const version=++requestVersion;precisionLoading=true;precisionError=null;
   try{
    const {createTracer}=await import('./precision.js');
+   precisionTiming.moduleMs=performance.now()-prepareAt;
    if(version!==requestVersion||stopped)return;
    // Raster batching reduces draw calls; tracing needs the original shared geometries.
-   const traceScene=createPrecisionScene(T,scene,batchSources);
+   const sceneAt=performance.now(),traceScene=createPrecisionScene(T,scene,batchSources);
+   precisionTiming.sceneMs=performance.now()-sceneAt;const tracerAt=performance.now();
    if(!tracer)tracer=createTracer(renderer,traceScene,camera,compactTouch);else tracer.setScene(traceScene,camera);
+   precisionTiming.tracerMs=performance.now()-tracerAt;
    tracer.maxSamples=previewHigh?64:32;tracer.renderScale=previewHigh?1:.8;
    precisionRequested=true;invalidatePresentation();
   }catch(error){precisionError=String(error.message||error);console.warn('Precision request failed',error)}
-  finally{if(version===requestVersion)precisionLoading=false;}
+  finally{precisionTiming.totalMs=performance.now()-prepareAt;lastDrawAt=0;if(version===requestVersion)precisionLoading=false;}
  }
- function cancelPrecision(){requestVersion++;const wasActive=precisionRequested||precisionLoading;precisionRequested=false;precisionLoading=false;if(wasActive)tracer?.reset();invalidatePresentation();}
+ function cancelPrecision(){requestVersion++;const wasActive=precisionRequested||precisionLoading;precisionRequested=false;precisionLoading=false;if(wasActive){const cancelAt=performance.now();tracer?.reset();precisionTiming.cancelMs=performance.now()-cancelAt;lastDrawAt=0;}invalidatePresentation();}
 
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
  previewPass.renderTarget.texture.name='tower-preview-color';
