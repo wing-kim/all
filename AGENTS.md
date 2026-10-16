@@ -6,6 +6,8 @@ For work on the architectural/interior viewer (`new/3d-model.html`, `new/360`, `
 3. `docs/360/WORK_STATE.md` — current evidence, next action, budget and checkpoints.
 Then read only the implementation files needed for the assigned task.
 
+Branch scope is additive: implement the photoreal mode only, preserving all working main behavior. Existing handlers/data/UI may receive minimal opt-in hooks, not unrelated rewrites. Adapter subscriptions/listeners/resources must be enabled only for this mode and restored/disposed on exit. Ordinary URLs and old modes must retain original behavior. Final delivery is a reviewable PR suitable for merging into main; do not merge without a direct request.
+
 The photoreal viewer is a rendering mode of the existing decision-making application, NOT an independent cafe demo. Keep original controls and their meanings across modes. High-detail assets may be staged, but missing assets must not remove floor/structure/daylight/option functionality or silently switch to SketchUp.
 Preserve authored structure. Do not substitute AI-image geometry. Daylight/date/time/orientation and option comparisons take precedence over cosmetic lighting. Keep photographic reference images separate from the continuous photoreal renderer.
 

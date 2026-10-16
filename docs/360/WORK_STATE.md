@@ -11,6 +11,9 @@
 - Blender5.1.1 사용 가능. cafe-gi-study.json.gz는171객체/248139정점,13배치 누락, 텍스처/외부차폐/조명 미포함. 베이크 적용 금지. 자세한 구현 이력은 rendering-checkpoint.txt/ui-integration-checkpoint.txt.
 - 원본 평가 보고 docs/360/assessment.md 등은 존재했지만 제품 목적·전체 기능 계약·재개 우선순위를 통합한 기준 문서가 없었음. 이번에 root AGENTS.md와3개 기준 md로 보완.
 
+## 최신 범위 정정과 배포 착수
+실사3D 모드만 추가하고 기존 main 기능은 비간섭 보존, 최종 main 병합 가능한 PR이 목표. 원본 상태관리 전면 재작성은 하지 않는다. evyfjae/kapehorn-3d-preview private 저장소 생성 완료. 아직 Pages 활성화/공개 접속 검증 전이며 성공 URL로 보고하지 않는다. 부모가 GitHub 설정, Sol이 allowlist 기반 정적 패키징 담당. 원본 new/index.html의 업무 문서는 배포 패키지에서 제외한다.
+
 ## 다음 실행 순서 / 사용량 관리
 1. 0~3% 목표: 기존 운영본 보호하며 온라인 검토 배포. URL·버전·실제 접속/렌더 검증. 사용자 검토 환경 확보가 첫 구현 단계.
 2. 3~7% 목표: 원본 상태/명령 계약 확정과 핵심 adapter 연결(층·단면·일시). 소수 성공 사례 조사도 이 단계에서 수행. UI만 보기 좋게 새로 만들지 않는다.
