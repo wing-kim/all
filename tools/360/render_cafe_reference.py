@@ -41,6 +41,7 @@ except Exception as error:
     print('GPU fallback', error)
 
 cache, missing = {}, []
+FALLBACK = {'dining_chair_02': (.33, .12, .05), 'modern_arm_chair_01_legs': (.06, .045, .035)}
 
 
 def texture(url):
@@ -64,6 +65,9 @@ def material(key):
     nodes, links = mat.node_tree.nodes, mat.node_tree.links
     bsdf = nodes.get('Principled BSDF')
     color = (*[min(1, max(0, x)) for x in data['color']], 1)
+    # 스냅샷에 glTF 텍스처가 빠진 가구 재질은 검토용 대체 색을 쓴다(실제 사양 아님)
+    if data.get('name') in FALLBACK and not data.get('map') and min(color[:3]) > .95:
+        color = (*FALLBACK[data['name']], 1)
     bsdf.inputs['Base Color'].default_value = color
     bsdf.inputs['Roughness'].default_value = data.get('roughness', .7)
     bsdf.inputs['Metallic'].default_value = data.get('metalness', 0)
@@ -115,7 +119,8 @@ def b(v):
     return Vector((v[0], -v[2], v[1]))
 
 
-sun_dir = b((0.01865693407120436, 0.6091816962686522, 0.7928111879522831)).normalized()
+# 기본은 가을 15시. SUNDIR에 앱 TOWER_CINEMA.status().daylight.direction 값을 "x,y,z"로 넣는다.
+sun_dir = b([float(v) for v in os.environ.get('SUNDIR', '0.0187,0.6092,0.7928').split(',')]).normalized()
 world = bpy.data.worlds.new('Daylight'); world.use_nodes = True; scene.world = world
 nt = world.node_tree; nt.nodes.clear()
 outn = nt.nodes.new('ShaderNodeOutputWorld'); bg = nt.nodes.new('ShaderNodeBackground')
@@ -124,7 +129,8 @@ sky = nt.nodes.new('ShaderNodeTexSky'); sky.sky_type = 'MULTIPLE_SCATTERING'
 sky.sun_elevation = math.asin(sun_dir.z); sky.sun_rotation = math.atan2(sun_dir.y, sun_dir.x) - math.pi / 2
 sky.sun_disc = False
 nt.links.new(sky.outputs['Color'], bg.inputs['Color']); nt.links.new(bg.outputs[0], outn.inputs['Surface'])
-sd = bpy.data.lights.new('Sun', 'SUN'); sd.energy = float(os.environ.get('SUN', '4')); sd.color = (1.0, .92, .80)
+sd = bpy.data.lights.new('Sun', 'SUN'); sd.energy = float(os.environ.get('SUN', '4'))
+sd.color = tuple(float(v) for v in os.environ.get('SUNCOLOR', '1.0,.92,.80').split(','))
 sd.angle = math.radians(1.5)
 sun = bpy.data.objects.new('Sun', sd); scene.collection.objects.link(sun)
 sun.rotation_euler = (-sun_dir).to_track_quat('-Z', 'Y').to_euler()
