@@ -6,6 +6,7 @@ import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { copyGeometry } from './geometry-copy.js';
+import { summarizeSamples } from './performance-stats.js';
 import * as T from 'three/webgpu';
 import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
@@ -20,8 +21,9 @@ export async function start(C){
  // Wall-clock intervals and render submission time; these are not GPU timings.
  const frameSubmitMs=[],frameIntervals=[];
  const measure=(items,value)=>{items.push(value);if(items.length>120)items.shift()};
- const percentile=(items,p)=>{if(!items.length)return null;const sorted=[...items].sort((a,b)=>a-b);return sorted[Math.ceil(p*sorted.length)-1]};
- const summary=items=>({samples:items.length,p50:percentile(items,.5),p95:percentile(items,.95),p99:percentile(items,.99)});
+ let performanceBaseline={...counts};
+ const performanceStatus=()=>({counts:{...counts},windowCounts:Object.fromEntries(Object.keys(counts).map(key=>[key,counts[key]-performanceBaseline[key]])),bootMs:{...timings,firstFrame:firstFrameMs},previewIntervalMs:summarizeSamples(frameIntervals),previewSubmitMs:summarizeSamples(frameSubmitMs)});
+ function resetPerformance(){frameSubmitMs.length=0;frameIntervals.length=0;lastDrawAt=0;performanceBaseline={...counts};return performanceStatus()}
  const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  T.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(C.camera.fov,C.camera.aspect,2,1800);
@@ -188,7 +190,8 @@ export async function start(C){
  light:()=>{cancelPrecision();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();refreshProbe();renderer.shadowMap.needsUpdate=true},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
- status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:{counts:{...counts},bootMs:{...timings,firstFrame:firstFrameMs},previewIntervalMs:summary(frameIntervals),previewSubmitMs:summary(frameSubmitMs)}}),
+  resetPerformance,
+  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
@@ -196,7 +199,8 @@ export async function start(C){
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
     if(gpuError)throw gpuError;
-    if(!precisionRequested){if(!previewCached){const began=performance.now();renderPreview();counts.previewFrames++;if(lastDrawAt&&began-lastDrawAt<250)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began);if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}return;}
+    if(!precisionRequested){if(!previewCached){const began=performance.now();renderPreview();counts.previewFrames++;if(lastDrawAt)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began);if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}else lastDrawAt=0;return;}
+    lastDrawAt=0;
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200){tracer.renderSample();counts.precisionSamples++;}
     if(performance.now()-lastMotion<=200)renderPreview(true);
