@@ -14,7 +14,7 @@ for key,m in src['materials'].items():
  bsdf.inputs['Emission Color'].default_value=(*m['emissive'],1);bsdf.inputs['Emission Strength'].default_value=m['emissiveIntensity']
  if m.get('transparent'): bsdf.inputs['Transmission Weight'].default_value=1-m.get('opacity',1)
  mats[key]=mat
-cache={}
+cache={};normalized_groups=0
 for obj in src['objects']:
  key=(obj['geometry'],tuple(obj['materials']))
  if key not in cache:
@@ -24,7 +24,17 @@ for obj in src['objects']:
   for mk in obj['materials']: mesh.materials.append(mats[mk])
   for poly,i in zip(mesh.polygons,range(start,end-2,3)):
    for group in g['groups']:
-    if group['start']<=i<group['start']+group['count']:poly.material_index=group['materialIndex'];break
+    if group['start']<=i<group['start']+group['count']:
+     slot=group['materialIndex']
+     if len(obj['materials'])==1:
+      if slot:normalized_groups+=1
+      slot=0  # Three ignores groups when a mesh has a single material.
+     if slot>=len(obj['materials']):raise ValueError(f"Invalid material slot {slot} in {obj['geometry']}")
+     poly.material_index=slot;break
+  if g.get('uv'):
+   layer=mesh.uv_layers.new(name='Source UV')
+   for loop in mesh.loops:
+    j=loop.vertex_index*2;layer.data[loop.index].uv=(g['uv'][j],g['uv'][j+1])
   mesh.update();cache[key]=mesh
  o=bpy.data.objects.new(obj['name'] or 'source-mesh',cache[key]);bpy.context.collection.objects.link(o)
  a=obj['matrix'];o.matrix_world=axis@Matrix([a[i:i+4] for i in range(0,16,4)]).transposed()
@@ -34,4 +44,5 @@ import math
 data.angle=math.radians(c['fov']);bpy.context.scene.camera=cam
 bpy.context.scene['bake_input_scope']=src['scope'];bpy.context.scene['bake_input_skipped']=json.dumps(src['skipped'])
 bpy.context.scene['source_state']=json.dumps(src['state']);bpy.context.scene['lighting_ready']=False
+bpy.context.scene['single_material_groups_normalized']=normalized_groups
 bpy.ops.wm.save_as_mainfile(filepath=args[1]);print('IMPORTED',len(src['objects']),'objects;',len(src['skipped']),'skips; lighting not configured')

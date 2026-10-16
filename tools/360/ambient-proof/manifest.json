@@ -1,0 +1,109 @@
+{
+  "source": "tools/360/cafe-ambient-source.json.gz",
+  "sourceSha256": "d139ee77cd853fbb827e70b6b130269f21de6ee8cc050ca4703d1dfdfc7d9b1a",
+  "sourceObjects": 559,
+  "sourceVertices": 1946173,
+  "sourceSkipped": [],
+  "receiverGeometry": {
+    "floor": {
+      "geometryKey": "region-141",
+      "faceOffsets": [
+        33,
+        36,
+        39,
+        42,
+        45,
+        48,
+        51,
+        54,
+        57,
+        60,
+        63
+      ],
+      "triangleCount": 11,
+      "areaSquareMeters": 336.4667739868164,
+      "atlasBoundsXY": [
+        -13.197114944458008,
+        -9.103038787841797,
+        8.4375,
+        13.461538314819336
+      ],
+      "image": "floor-ambient.exr",
+      "preview": "floor-ambient-preview.png",
+      "redChannelCoveredPixels": 35821,
+      "redChannelCoveredMinMaxMean": [
+        0.0010420395992696285,
+        0.5736117362976074,
+        0.11680309078831308
+      ]
+    },
+    "ceiling": {
+      "geometryKey": "region-150",
+      "faceOffsets": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39
+      ],
+      "triangleCount": 14,
+      "areaSquareMeters": 357.0861886739731,
+      "atlasBoundsXY": [
+        -13.197114944458008,
+        -10.697114944458008,
+        8.4375,
+        13.461538314819336
+      ],
+      "image": "ceiling-ambient.exr",
+      "preview": "ceiling-ambient-preview.png",
+      "redChannelCoveredPixels": 40235,
+      "redChannelCoveredMinMaxMean": [
+        0.0011027008295059204,
+        0.6114201545715332,
+        0.1374443589176593
+      ]
+    }
+  },
+  "singleMaterialGroupIndexNormalized": {
+    "1": 920,
+    "2": 348,
+    "3": 438,
+    "4": 450,
+    "5": 450
+  },
+  "localAlbedoTextures": [
+    "new/360/assets/facade-granite_color.jpg",
+    "new/360/assets/furniture-veneer_color.jpg",
+    "new/360/assets/interior-stone_color.jpg",
+    "new/360/assets/plaster_color.jpg",
+    "new/360/assets/roof-concrete_color.jpg"
+  ],
+  "settings": {
+    "engine": "Cycles CPU",
+    "samples": 32,
+    "atlasSize": 256,
+    "bake": "DIFFUSE direct+indirect, color OFF",
+    "world": "neutral RGB .8, strength 1",
+    "sun": "none",
+    "emission": "off",
+    "fixedFillLights": "none",
+    "diffuseBounces": 3,
+    "transmissionBounces": 4
+  },
+  "limitations": [
+    "Glazing uses source opacity as a transparent/opaque shader mix, not physically calibrated glass.",
+    "Texture UVs are exported, but map repeat/offset/rotation are absent; albedo projection is approximate.",
+    "Only source floor region-141 and ceiling region-150 are receivers; raised finish patches are not baked.",
+    "Irradiance is ambient-only and independent of source time/season; daylight-specific effects remain dynamic.",
+    "Runtime integration and structural-key invalidation are not implemented."
+  ]
+}
