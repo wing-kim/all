@@ -1,3 +1,5 @@
+최신 기준: PROJECT_BRIEF.md / VIEWER_CONTRACT.md / WORK_STATE.md. 아래는 이력·상세 근거이며 충돌 시 위 md와 최신 사용자 지시 우선. 기능 연결은 원본 전체, 상세자산은 단계 제작.
+
 목표 달성 가능성 재검토 — 2026-10-16
 기준: 80f73a7, 실제 구현 8a6f095. git fetch 후 origin/main 추가 미병합 커밋 없음. 작업 트리 깨끗함. 주간 사용량97%, 아직 초기화 전. 이번 평가는 소스·기존 Chrome 캡처 cafe-opaque-fix.jpg·검증 기록 및 Sol 독립 코드 검토에 근거하며 새 브라우저 성능 측정을 했다는 뜻이 아니다.
 
