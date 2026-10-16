@@ -1,8 +1,8 @@
 {
   "source": "tools/360/cafe-ambient-source.json.gz",
-  "sourceSha256": "d139ee77cd853fbb827e70b6b130269f21de6ee8cc050ca4703d1dfdfc7d9b1a",
-  "sourceObjects": 559,
-  "sourceVertices": 1946173,
+  "sourceSha256": "23623442e63a1c34fc712f54f63ff3d772986e96bfae41c27ff982838b67c6e7",
+  "sourceObjects": 599,
+  "sourceVertices": 1929081,
   "sourceSkipped": [],
   "sourceState": {
     "era": "new",
@@ -38,7 +38,7 @@
   "sourceCafeCeiling": 5.0200000000000005,
   "furnitureManifest": {
     "360/cafe.js": "eb6d60606ce731ad2b04a16f50b43df4b29e7d131c7d7b1b1191213cda2533bf",
-    "360/environment.js": "fae969f6361228cecfd6bfb3ce23878f714ab4b1e2cdfd71b1b3e6863c5e5fd8",
+    "360/environment.js": "306ba2ed87898ade35e995ceba6029befddb0fc30a10249d33d1c23f981085ac",
     "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
     "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
     "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6",
@@ -47,7 +47,7 @@
   },
   "receiverGeometry": {
     "floor": {
-      "geometryKey": "region-141",
+      "geometryKey": "region-2",
       "faceOffsets": [
         33,
         36,
@@ -87,15 +87,15 @@
       "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
       "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
       "preview": "floor-ambient-preview.png",
-      "redChannelCoveredPixels": 143330,
+      "redChannelCoveredPixels": 143387,
       "redChannelCoveredMinMaxMean": [
         0.0010002299677580595,
-        0.5180670619010925,
-        0.11400756680063288
+        0.534024178981781,
+        0.14871439903276654
       ]
     },
     "ceiling": {
-      "geometryKey": "region-150",
+      "geometryKey": "region-74",
       "faceOffsets": [
         0,
         3,
@@ -141,21 +141,15 @@
       "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
       "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
       "preview": "ceiling-ambient-preview.png",
-      "redChannelCoveredPixels": 159821,
+      "redChannelCoveredPixels": 159839,
       "redChannelCoveredMinMaxMean": [
-        0.0010014501167461276,
-        0.5898092985153198,
-        0.1351943574416633
+        0.0010015012230724096,
+        0.6028186082839966,
+        0.16771982774796415
       ]
     }
   },
-  "singleMaterialGroupIndexNormalized": {
-    "1": 920,
-    "2": 348,
-    "3": 438,
-    "4": 450,
-    "5": 450
-  },
+  "singleMaterialGroupIndexNormalized": {},
   "localAlbedoTextures": [
     "new/360/assets/facade-granite_color.jpg",
     "new/360/assets/furniture-veneer_color.jpg",
@@ -181,7 +175,7 @@
     "Glazing uses source opacity as a transparent/opaque shader mix, not physically calibrated glass.",
     "Texture UVs are exported, but map repeat/offset/rotation are absent; albedo projection is approximate.",
     "Normal maps and one alpha-tested material are not represented in the bake shaders.",
-    "Only source floor region-141 and ceiling region-150 are receivers; raised finish patches are not baked.",
+    "Only the largest coplanar source floor and ceiling meshes are receivers; raised finish patches are not baked.",
     "Nearby exterior assets and non-receiver occluder geometry are not fully fingerprinted by the runtime key.",
     "Irradiance is ambient-only and independent of source time/season; daylight-specific effects remain dynamic.",
     "This is a non-quantitative opt-in appearance study, not a daylight or illuminance validation."

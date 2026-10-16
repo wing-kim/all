@@ -3,7 +3,8 @@
 blender --background --factory-startup --python bake-cafe-ambient.py -- \
   cafe-ambient-source.json.gz /tmp/kapehorn-ambient-proof --size 256 --samples 32
 
-This is an offline proof. The images are not wired into the viewer.
+This is an offline proof. The filtered linear PNGs can be used by the opt-in
+ambientBake=study viewer after manifest and source-key checks pass.
 """
 import argparse
 import gzip
@@ -19,6 +20,8 @@ from urllib.parse import urlparse
 
 import bpy
 from mathutils import Matrix, Vector
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cafe_ambient_receivers import discover_receivers, source_faces
 
 
 def arguments():
@@ -41,7 +44,7 @@ assert src['version'] == 2 and not src['skipped'], 'Incomplete or unexpected sou
 objects = {obj['geometry']: obj for obj in src['objects']}
 assert len(objects) == len(src['objects']), 'Geometry keys must uniquely identify source objects'
 assert abs(src['floor'] - .07) < .001 and abs(src['ceiling'] - 5.02) < .001
-receiver_specs = {'floor': ('region-141', src['floor'], 1), 'ceiling': ('region-150', src['ceiling'], -1)}
+receiver_specs = discover_receivers(src)
 root = Path(__file__).resolve().parents[2]
 bpy.ops.wm.read_factory_settings(use_empty=True)
 axis = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
@@ -130,14 +133,6 @@ def face_material(geometry, obj, offset):
     if index >= len(obj['materials']):
         raise ValueError(f"Invalid material group: {obj['geometry']} face {offset // 3} slot {index}")
     return index
-
-
-def source_faces(geometry):
-    indices = geometry['index'] or list(range(len(geometry['position']) // 3))
-    draw = geometry['drawRange']
-    end = min(len(indices), draw['start'] + draw['count'])
-    for offset in range(draw['start'], end - 2, 3):
-        yield offset, tuple(indices[offset:offset + 3])
 
 
 receiver_offsets, receiver_areas, receiver_triangles = {}, {}, {}
@@ -234,7 +229,7 @@ proof = {'source': str(args.source), 'sourceSha256': source_hash,
          'limitations': ['Glazing uses source opacity as a transparent/opaque shader mix, not physically calibrated glass.',
                          'Texture UVs are exported, but map repeat/offset/rotation are absent; albedo projection is approximate.',
                          'Normal maps and one alpha-tested material are not represented in the bake shaders.',
-                         'Only source floor region-141 and ceiling region-150 are receivers; raised finish patches are not baked.',
+                         'Only the largest coplanar source floor and ceiling meshes are receivers; raised finish patches are not baked.',
                          'Nearby exterior assets and non-receiver occluder geometry are not fully fingerprinted by the runtime key.',
                          'Irradiance is ambient-only and independent of source time/season; daylight-specific effects remain dynamic.',
                          'This is a non-quantitative opt-in appearance study, not a daylight or illuminance validation.']}
