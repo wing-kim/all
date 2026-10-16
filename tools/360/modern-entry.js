@@ -120,7 +120,13 @@ export async function start(C){
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false,lightProbeTimer=null;
  addInteriorLighting({scene},C);
- const ambientStudy=await createCafeAmbientStudy(T,scene,C);
+ // Bake validation downloads and hashes furniture files. Never hold the first frame for it:
+ // the realtime path renders immediately and the bake binds once every check has passed.
+ let ambientStudy={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){},materials:()=>[]};
+ createCafeAmbientStudy(T,scene,C).then(study=>{
+  if(stopped){study.dispose();return}
+  ambientStudy=study;study.precision(precisionRequested||precisionLoading);study.light(C.reviewDaylight);invalidatePresentation();
+ }).catch(error=>console.warn('Cafe bake unavailable; realtime lighting retained',error));
  syncSourceVisibility();
  async function requestPrecision(){
   if(precisionLoading||precisionRequested||C.dollMode)return;
