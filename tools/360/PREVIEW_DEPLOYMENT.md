@@ -34,3 +34,21 @@ feature parity, sunlight correctness or photoreal quality.
 To check a GitHub Pages style base path locally, serve the output's parent and
 open `http://127.0.0.1:PORT/OUTPUT-DIRECTORY/`. Test all three landing links and
 inspect browser errors/network requests before publishing.
+
+## Deployment target (2026-10-16)
+
+Private repository: https://github.com/evyfjae/kapehorn-3d-preview
+Public Pages: https://evyfjae.github.io/kapehorn-3d-preview/
+Pages source: the deployment repository's `main:/` (legacy branch build).
+The API accepted public Pages on this private repository. This does not make the
+source repository public. Website runtime files are publicly retrievable.
+
+Original production remains `wing-kim/all`, `main:/`; never change that source.
+Development remains `codex/tower-360-validation` in the original repository.
+The isolated repository contains only generated runtime files, not original history.
+
+For updates, build a fresh package, inspect its audit, then copy only audited files
+into a checkout of the deployment repository and commit/push there. Remove stale
+previous runtime files only within that dedicated deployment checkout. Record the
+source SHA and deployment SHA in WORK_STATE. Check Pages build success and test
+HTTPS integrated/cafe/original entry points after every meaningful release.

@@ -5,14 +5,14 @@
 ## 확인된 상태
 - Repo wing-kim/all, branch codex/tower-360-validation. 기준 main25b111a(이번 fetch로 확인). 이번 문서 수정 전 HEAD427e254, 작업 트리 깨끗했음.
 - 실제 사용량 초기화0% 확인 후 계획/감사 진행. 실행 시작마다 현재 수치 재확인. 총 주간50% 상한,45% 정리,48% 산출물 완료. 문서화도 예산 포함.
-- 운영 Pages는 main:/ legacy 배포. 별도 검토 배포 아직 없음. 기존 운영본/main 변경 없이 가능한 기존 진입 경로 확인 후 없으면 private repo/public Pages. CLI evyfjae, Pro 상태 미확인. 자격/소유 계정 확인 필요.
+- 운영 Pages는 main:/ legacy 배포. 별도 private 저장소 evyfjae/kapehorn-3d-preview 생성 및 공개 Pages 활성화 성공. API public:true/https_enforced:true 확인, 첫 빌드와 IAB 브라우저 렌더 검증 완료. CLI evyfjae의 private-source Pages 사용 가능함을 실제 API로 확인했다.
 - 카페 진입/복귀, 이중상 수정, lightMap 전달, 무료 의자 후보 확보 완료. 전체 기능 통합/실내외 품질 성공 아님.
 - 현재 다른 층은 스케치 우회, 실사 진입은1F 고정. 날짜/시간/계절 연결이 불완전하고 고정 태양 사용. 이 상태로 채광 의사결정 기능 완료라고 보고하지 말 것.
 - Blender5.1.1 사용 가능. cafe-gi-study.json.gz는171객체/248139정점,13배치 누락, 텍스처/외부차폐/조명 미포함. 베이크 적용 금지. 자세한 구현 이력은 rendering-checkpoint.txt/ui-integration-checkpoint.txt.
 - 원본 평가 보고 docs/360/assessment.md 등은 존재했지만 제품 목적·전체 기능 계약·재개 우선순위를 통합한 기준 문서가 없었음. 이번에 root AGENTS.md와3개 기준 md로 보완.
 
 ## 최신 범위 정정과 배포 착수
-실사3D 모드만 추가하고 기존 main 기능은 비간섭 보존, 최종 main 병합 가능한 PR이 목표. 원본 상태관리 전면 재작성은 하지 않는다. evyfjae/kapehorn-3d-preview private 저장소 생성 완료. 아직 Pages 활성화/공개 접속 검증 전이며 성공 URL로 보고하지 않는다. 부모가 GitHub 설정, Sol이 allowlist 기반 정적 패키징 담당. 원본 new/index.html의 업무 문서는 배포 패키지에서 제외한다.
+실사3D 모드만 추가하고 기존 main 기능은 비간섭 보존, 최종 main 병합 가능한 PR이 목표. 원본 상태관리 전면 재작성은 하지 않는다. evyfjae/kapehorn-3d-preview private 저장소 생성 완료. Pages 활성화/첫 빌드/공개 브라우저 접속 및 외관·카페 렌더 확인 완료. 소스 f8f0831의 패키지를 배포 repo 6426fc9로 push했다. 부모가 GitHub/브라우저 검증, Sol이 모드 진입/이탈 비간섭 수정을 담당. 원본 new/index.html의 업무 문서는 배포 패키지에서 제외한다.
 
 ## 다음 실행 순서 / 사용량 관리
 1. 0~3% 목표: 기존 운영본 보호하며 온라인 검토 배포. URL·버전·실제 접속/렌더 검증. 사용자 검토 환경 확보가 첫 구현 단계.
@@ -35,3 +35,16 @@
 - 다음 첫 행동(파일/재현법):
 
 지속 목적은 PROJECT_BRIEF, 계약은 VIEWER_CONTRACT, 변하는 상태는 이 파일에 기록한다. 과거 기록을 반복해서 앞에 붙이지 않는다. 컨텍스트 압축/새 세션에서는 AGENTS의3파일 읽기 순서 후 git/usage를 확인한다. 다음 담당자 최종 프롬프트는 완료 시 final-handoff-prompt-ko.txt에 별도 작성한다.
+
+## 현재 실행 체크포인트
+- 원본 작업 커밋96cc17d: additive-only/최종 병합 원칙, f8f0831: allowlist 패키징.
+- 패키지 /private/tmp/kapehorn-preview-f8f0831, 80 runtime files/68,225,660 bytes, 정적 참조33개 누락0. new/index.html 업무 자료 제외.
+- 검토 URL(실제 접속 확인): https://evyfjae.github.io/kapehorn-3d-preview/
+- 운영 Pages API 재확인: wing-kim/all main:/, built, 설정 변경 없음.
+- 최신 주간 사용량2%. 다음: 공개 브라우저 검증 후 상태 기록, Sol lifecycle diff 검수/모드 왕복 테스트.
+
+### 배포 검증 결과
+- GitHub Pages build6426fc9: built, error:null. HTTPS modern.js200.
+- IAB 공개 URL에서 실시간360 외관 렌더 완료 → 카페 전환 → 스케치업 이탈 → 기존 내부 층 목록 B2~PH2 표시 확인.
+- 증거: deployed-preview-exterior.jpg, deployed-preview-cafe.jpg. 초기 로딩은 여전히 길었으며 정확한 성능 계측/Chrome/전체 기능 회귀는 미완.
+- 공개 배포 성공은 기능 대응/실사 품질 성공이 아니다. 유리의 세로 반사와 가구 단순함/실내외 균일한 명암은 다음 품질 검토 대상.
