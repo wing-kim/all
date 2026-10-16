@@ -170,3 +170,6 @@
 - 원본 운영 Pages source main:/ 보존 재확인. 원본HTMLdiff는 additive opt-in hook 중심(+33/-8 시점), 기존 기능 전체 회귀 완료 아님.
 - 최신 실제 주간38%. 50%까지12%p,45%정리/48%산출물완료 정책 유지. Claude 진입파일/실행절차/현재 근거가 준비됨. 이 문서 최신요약과 마지막 체크포인트가 역사 기록보다 우선.
 - **다음 첫 행동:** git/usage 확인 → VIEWER_CONTRACT 미완료 목록 기반으로 단면/윗층투시/지하투시 adapter를 한 단위씩 선택. 사진수준 전체품질 미달을 숨기지 말 것. 전환 시 Codex/Claude 동시쓰기 금지, 동일 branch를 사용. main merge 금지.
+
+## Claude 시작 절차 사용자 정정 — 2026-10-16
+사용자는 Claude가 먼저 전체 목적/계획/가능성/자원 계획을 보고하고 최초 승인을 받은 뒤 계속 작업하기를 요청했다. handoff/claude-code/PROMPT.md를 이 조건으로 교체했고 root CLAUDE.md에 초기 승인 gate를 추가했다. 과거의 즉시 구현 재개 지침보다 우선한다. 권장 시작: claude --model opusplan --permission-mode plan. 로컬2.1.138 설치 확인, 인증/계정 모델 접근은 사용자 실행 시 확인.

@@ -17,3 +17,11 @@ functional success from photoreal quality. Report limitations honestly.
 
 The Codex weekly budget is not a Claude spending authorization. Use the user's
 current instructions for Claude usage and paid services.
+
+## Initial handoff approval gate
+The user's current handoff instruction requires a read-only intake report and
+explicit plan approval before implementation, installs, commits, pushes or
+deployment. Read handoff/claude-code/PROMPT.md under docs/360 for the report
+requirements. After that initial approval, continue authorized work autonomously;
+do not repeat routine permission questions. This gate takes precedence over
+older resume instructions to implement immediately.

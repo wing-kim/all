@@ -35,3 +35,8 @@ claude
 ```
 
 위 명령은 Claude Code가 설치·인증된 경우의 시작 방법이다. 실행 후 이 폴더의 PROMPT.md를 읽고 작업하도록 요청한다. 다른 컴퓨터라면 작업 브랜치를 clone한 실제 경로를 사용한다. 별도 코드 사본은 만들지 않아도 된다. 격리 작업이 필요하면 clean HEAD에서 worktree를 만들고 이전 작업자는 쓰기를 중지한다.
+
+## 사용자 확인 후 시작하는 현재 절차 (2026-10-16)
+현재 로컬 Claude Code2.1.138 설치 확인. `claude --model opusplan --permission-mode plan`으로 시작한 뒤 PROMPT.md를 읽도록 요청한다. `/model`에서 실제 사용 가능한 모델을 확인한다. 최신 모델이 필요하면 사용자가 `claude update` 후 다시 확인한다. 모델/계정별 접근 가능 여부는 별도이며 설치 확인이 로그인 확인은 아니다.
+첫 보고서는 읽기 중심 인수 검토와 목표/전체계획/가능성/검증/자원 계획을 포함하며, 사용자 명시 승인 전 구현·설치·커밋·푸시·배포 금지. 승인 후 Plan Mode의 실행 전환 UI를 사용한다. 계속 Plan Mode라면 표시된 전환 안내/Shift+Tab으로 일반 실행 모드로 바꾼다. opusplan은 계획 Opus/실행 Sonnet이며 자동 독립 검수자가 아니다. 주요 검수는 Plan Mode 재진입 또는 별도 지원 경로를 사용한다.
+공식 근거: https://code.claude.com/docs/en/model-config , https://code.claude.com/docs/en/cli-reference .
