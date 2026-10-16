@@ -23,7 +23,10 @@ export function syncCopiedVisibility(T,scene,C,renderer){
    continue;
   }
   let visible=sourceVisible(source);
-  if(visible&&level&&object.userData.interiorDressing){bounds.setFromObject(source);if(bounds.min.y>=cap)visible=false}
+  if(visible&&level&&object.userData.interiorDressing){
+   if(source.isInstancedMesh&&source.userData.legacyInteriorFoliage)visible=false;
+   else{bounds.setFromObject(source);if(bounds.min.y>=cap)visible=false}
+  }
   if(object.visible!==visible){object.visible=visible;changed++}
  }
  if(changed&&renderer?.shadowMap)renderer.shadowMap.needsUpdate=true;

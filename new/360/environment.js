@@ -365,9 +365,12 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   }
   function batch(root){
     root.updateWorldMatrix(true,true);const inverse=root.matrixWorld.clone().invert(),groups=new Map();
-    root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||Array.isArray(o.material)||o.material.transparent||o===root)return;
+    const floors=root===C.interiorDressing?C.levels().map(level=>({key:level.key,y:C.floorTop(level)})).sort((a,b)=>b.y-a.y):null;
+    root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||Array.isArray(o.material)||o.material.transparent||o===root||o.userData.ceil||o.userData.well||o.userData.holeCover)return;
       let visible=true;for(let p=o;p&&p!==root;p=p.parent)if(!p.visible||(p.name==='CC0 Tree Small 02'||p.name==='CC0 Interior Foliage'))visible=false;if(!visible)return;
-      const key=o.material.id+':'+o.castShadow+':'+Object.keys(o.geometry.attributes).sort().join(',');
+      const minY=floors?new T.Box3().setFromObject(o).min.y:null;
+      const floorKey=floors?(floors.find(level=>minY>=level.y-.4)?.key||'below'):'';
+      const key=o.material.id+':'+o.castShadow+':'+floorKey+':'+Object.keys(o.geometry.attributes).sort().join(',');
       if(!groups.has(key))groups.set(key,[]);groups.get(key).push(o);
     });
     groups.forEach(list=>{if(list.length<3)return;const parts=list.map(o=>renderGeometry(o,root).applyMatrix4(inverse.clone().multiply(o.matrixWorld)));
@@ -376,6 +379,14 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       if(merged){const m=new T.Mesh(merged,list[0].material);m.name='Static material batch';m.castShadow=list[0].castShadow;m.receiveShadow=true;list.forEach(o=>{o.visible=false;o.userData.batched=true});root.add(m)}
       new Set([...parts,...geos]).forEach(g=>g.dispose());
     });
+  }
+  function batchBuilding(){
+    // Keep the authored floor groups and exterior child units as visibility
+    // owners. A building-wide batch would remain visible above a dollhouse cut.
+    for(const branch of C.bld.children){
+      if(branch.userData.li!=null){batch(branch);continue}
+      for(const unit of branch.children)if(unit.isGroup)batch(unit);
+    }
   }
   C.enhanceBuildingDetails=async extra=>{
   const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
@@ -434,7 +445,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     }
     if(extra.userData.cafe)extra.userData.cafe.diningAsset=audit;
   }catch(error){console.warn('Dining chair unavailable; keeping original fit-out',error)}
-    C.dressRoof?.(extra);batch(C.bld);batch(extra);
+    C.dressRoof?.(extra);batchBuilding();batch(extra);
   };
   await C.enhanceBuildingDetails(C.interiorDressing);
   masses.forEach(batch);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;extra.userData.furnitureEdgeAudit=furnitureEdgeAudit;

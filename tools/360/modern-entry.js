@@ -64,7 +64,7 @@ export async function start(C){
  root.traverse(o=>{
   let building=false;for(let p=o;p;p=p.parent)if(p===C.bld)building=true;
   if(!building)for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
-  if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;
+  if(!o.isMesh||o.userData.batched||o===C.R3D.sky||o.material?.isShaderMaterial)return;
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
   let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
   if(!copies){
