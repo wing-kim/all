@@ -54,3 +54,20 @@
 - node tools/360/test-integrated-lifecycle.mjs 통과. IAB 최신 로컬에서 카페→스케치 전환 후 v-int=false/v-corner=true, 기존 내부 진입→렌더 전환 후 v-int=true 및 B2~PH2 층 목록 확인. 증거 lifecycle-original-interior.jpg. 전체 회귀 완료는 아님.
 - 격리 배포 업데이트: 소스8a0ba56(수정a7f0703 포함), 배포8c36fc8.
 - 다음 첫 작업: VIEWER_CONTRACT의 날짜/시간/계절 전달 및 현재 고정 태양 덮어쓰기 해결을 bounded Sol 작업으로 진행. integrated.js snapshot → scene.js applyConfig/light → tools/360/modern-entry.js alignDaylight 경로. 원본 R3D 태양 계산/기존 applyTime은 변경하지 말고 읽기/adapter로 전달. 이어서 층·단면 연결.
+
+## 2026-10-16 추가 요구: 시점 변경 대기 금지
+다음 단계 우선순위를 수정한다. 채광/층 연결 확장 전에 탐색 성능을 계측하고 통과시킨다. 기본 탐색은 카메라 이동/정지 후 정밀 누적을 기다리지 않는 동일 실시간 경로여야 한다. 사진처럼 보이는 품질은 탐색 화면 자체에서 검증하고 정밀 버튼으로 대체하지 않는다.
+- 1단계: 회전/이동/휠의 프레임 간격 p50/p95, 200ms 이상 stall, 지오메트리 재생성·probe·정밀요청 횟수 계측. 최초 다운로드/첫 프레임과 반복 탐색을 구분한다. 외부/카페 모두 검사. 목표 데스크톱 탐색 약30fps 이상, 지속100ms+ stall 없음; 측정 환경과 미달을 공개한다. 이는 보장값이 아니라 통과 기준이다.
+- 2단계: 고정 간접광+실시간 직사광/반사의 대표 구간 품질 검증. 구조·일시가 바뀌면 오래된 베이크 무효화. 회전만으로 베이크/모델 재계산 금지.
+- 3단계: 원본 상태·채광·층·단면 연결, 필요한 변경만 갱신. 기존 모드 비간섭 회귀 유지.
+- 4단계: 실내외 품질 확대, 성능 재검증, 격리 배포와 인계. 각 단계 종료 시 수치/화면/미완 보고. 통과 못한 접근을 목표 달성 가능하다고 확약하거나 전체 확대하지 않는다.
+- 공식 참고: https://doc.babylonjs.com/guidedLearning/lightmaps/ (베이크 제작/적용), https://threejs.org/examples/webgpu_loader_gltf_compressed (압축 자산 경로). 참고 사례만으로 이 프로젝트 목표 품질을 증명하지 않는다.
+- 현재 배포8c36fc8 IAB 첫 계측: parent 초기준비7999ms, renderer 첫프레임3349.8ms. 4초 외관 자동회전 평균 프레임간격34.87ms, CPU 제출31.69ms(초기샘플 포함). 정밀mode interactive, 시안재생성timing 없음. 기존 통계는200ms 이상 간격을 제외하므로 합격 판단 불가; 새 계측 추가 중. Chrome 커넥터 현재 이용 불가, IAB로 검증 중.
+
+### 탐색 성능 1차 결과 (수정75f0907/4835134)
+- 비활성 tracer reset/updateCamera 반복을 제거. 기본 카메라 이동은 지오메트리/probe/정밀 누적을 갱신하지 않음을 카운터로 확인.
+- 전체5초/고품질/IAB/local: 외관142간격 평균35.16ms,p9537.4ms,max40.4ms; 카페151간격 평균32.84ms,p9534.7ms,max37.1ms. 100ms 이상0. 각 구간 buildingUpdates/probeRefreshes/precisionRequests/precisionSamples 증가0.
+- 초기부모준비7299.6ms, renderer첫프레임3303.8ms(콜드 네트워크 벤치마크 아님). GPU시간이 아닌 프레임 간격/CPU 제출 측정이다. docs/360/navigation-performance.json에 원자료.
+- 정밀 생성 후 즉시 취소→이동 시험: tracer생성 확인, 추가정밀샘플0이지만543.8ms 간격1회. 정밀 준비 취소 직후 잔여 지연 문제는 미해결. 일반탐색 전체성공/완전성능통과로 보고하지 않는다.
+- 계측 버퍼600개로 확장해5초 전체구간을 보존. 긴 간격을 버리지 않고 idle시만 연속측정종료. stats테스트[16,17,500] 통과. lifecycle test도 통과.
+- 공식 사례 후보: https://playcanvas.com/project/391368/overview/sponza-lightmap-demo (lightmap성능 시연), https://editor.babylonjs.com/experiments/mansion (고품질 자산/desktop한계 안내). 아직 우리앱과 동등기능/성능 비교 검증은 안했음.

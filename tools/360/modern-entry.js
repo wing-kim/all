@@ -20,7 +20,7 @@ export async function start(C){
  const counts={previewFrames:0,precisionSamples:0,cameraMoves:0,buildingUpdates:0,precisionRequests:0,probeRefreshes:0};
  // Wall-clock intervals and render submission time; these are not GPU timings.
  const frameSubmitMs=[],frameIntervals=[];
- const measure=(items,value)=>{items.push(value);if(items.length>120)items.shift()};
+ const measure=(items,value)=>{items.push(value);if(items.length>600)items.shift()};
  let performanceBaseline={...counts};
  const performanceStatus=()=>({counts:{...counts},windowCounts:Object.fromEntries(Object.keys(counts).map(key=>[key,counts[key]-performanceBaseline[key]])),bootMs:{...timings,firstFrame:firstFrameMs},previewIntervalMs:summarizeSamples(frameIntervals),previewSubmitMs:summarizeSamples(frameSubmitMs)});
  function resetPerformance(){frameSubmitMs.length=0;frameIntervals.length=0;lastDrawAt=0;performanceBaseline={...counts};return performanceStatus()}
