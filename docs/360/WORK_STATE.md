@@ -110,3 +110,11 @@
 - 9b85423 PolyHaven Dining Chair02(CC0)1K0.9MB공식파일checksum검증. 기존20개 낮은의자 위치 대체, 바스툴유지, 외곽검사20통과, 브라우저크기·방향확인. cafe-dining-asset.jpg. 원본실사와동일제품이아닌검토용예시.
 - 새카페5초회전 IAB고품질: 평균34.66ms,p9538.4,max44.5,100ms초과0; geometry/probe/precision증가0. cafe-dining-performance.json. 정확한fps표시는프레임측정사용(telemetry의rafFPS는idle시렌더FPS가아님).
 - 주간실측13%. 다음: 공간명령/모드왕복/Home검수, 격리배포갱신. 병행Sol은 실제ambient-only floor/ceiling베이크가능성검증. 새exporter큰batch삼각형필터링, snapshot1946173vertices559objects/skipped0, 로컬37MB는.gitignore로배포/커밋제외. tools/360/cafe-ambient-source.json.gz. bake적용완료아님.
+
+## 공개 배포와 공간 이동 검수
+- source affaaba → isolated deployment c98ee69, Pages built/error:null, 공개 ?lab=review&view=cafe 실제카페/원본UI 확인. deployed-connected-cafe.jpg. 원본main배포 변경없음.
+- f5579d0 원본3F엘리베이터홀 camera/target/FOV 일치. 실제키d 이동→스케치복귀 floor/pose/FOV보존, Home키실내UI해제 및 공중전체시점 확인.
+- coreTop은doll/단면에 의존, 최초연결은.8m거리제한에걸려벽속카메라버그발견. affaaba에서실사모드에서는예고와함께차단, 원본모드그대로동작(일반URL query없음에서3F코어단면직접확인, original-mode-core-regression.jpg). 연결완료아님.
+- 9c88dc7 미니맵/패드/나침반연결: 카메라읽어원본미니맵갱신, 원본패드전진/미니맵좌표클릭→실사카메라이동실제확인. 후속fixed-orbitdistance보정/CSS 상태표시위치 변경은 다음로드재검증예정. 원본라벨/단면전체대응여전히미완.
+- 221ec21/4f88863 offlineambientproof: 정확한원본바닥11삼각형336.47㎡/천장14삼각형357.09㎡, Cycles32sample256EXR출력. 공개적용아님. 후속Sol512/256samples와 opt-in study runtime연결진행. 원본전형적출처UVrepeat/alpha/유리전달근사한계명시.
+- 마지막실제주간조회18%. 잔여32%p(50상한); 계속진행, 전체기능/실사목표성공확약은아님. Claude핸드오프폴더준비완료,45정리48완료원칙유지.
