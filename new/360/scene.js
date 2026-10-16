@@ -57,6 +57,15 @@
     if(!['Home','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;
     event.preventDefault();cancel();dispatchEvent(new Event('tower-navigation-start'));controls.autoRotate=false;window.TOWER_CINEMA?.cancelPrecision();
     if(code==='Home'){dispatchEvent(new Event('tower-navigation-home'));view('aerial');return;}
+    // Interior keys keep the original viewer's meaning: Q/E and left/right
+    // arrows turn in place; A/D strafe. Exterior Q/E still changes height.
+    if(C.cafeMode&&['KeyQ','KeyE','ArrowLeft','ArrowRight'].includes(code)){
+      const angle=(['KeyE','ArrowRight'].includes(code)?1:-1)*.065;
+      const dx=controls.target.x-camera.position.x,dz=controls.target.z-camera.position.z;
+      controls.target.x=camera.position.x+dx*Math.cos(angle)-dz*Math.sin(angle);
+      controls.target.z=camera.position.z+dx*Math.sin(angle)+dz*Math.cos(angle);
+      controls.update();return;
+    }
     const forward=camera.getWorldDirection(new T.Vector3());forward.y=0;forward.normalize();
     const right=new T.Vector3().crossVectors(forward,camera.up).normalize(),delta=new T.Vector3();
     if(['KeyW','ArrowUp'].includes(code))delta.copy(forward);

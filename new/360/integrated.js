@@ -10,6 +10,7 @@
     .precision-on .labels,.precision-on .compass,.precision-on .hint{visibility:hidden}
     .precision-on #mini,.precision-on .pad{z-index:8}
     .precision-on .compass{visibility:visible;z-index:4}
+    .precision-on:has(#intui:not([hidden])):not(.cafe-compare) .labels{visibility:visible;z-index:4}
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
     .precision-on:has(#pad:not([hidden])) #precision-status{left:150px;max-width:calc(100% - 380px);font-size:11px}
     @media(max-width:600px){.precision-on:has(#pad:not([hidden])) #precision-status{left:8px;bottom:175px;max-width:calc(100% - 16px)}}
@@ -129,7 +130,7 @@
   }
   document.addEventListener('change',event=>{
     const el=event.target;
-    if(active&&(['t-labels','t-cxlab','t-limits','t-b1'].includes(el.id)||el.name==='era')){
+    if(active&&(['t-cxlab','t-limits','t-b1'].includes(el.id)||(el.id==='t-labels'&&!C.interior())||el.name==='era')){
       disable();document.getElementById('vm-sketch').checked=true;
     }
     if(el.name==='vmode'){
@@ -153,7 +154,7 @@
     if(event.target.closest('#floorChips button'))requestAnimationFrame(()=>syncInterior(true));
     if(event.target.closest('[data-c],#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#exitInt'))requestAnimationFrame(()=>syncInterior(true));
-    if(event.target.closest('#coreTop,#dollBtn,#secBtn,#secAllBtn,[data-iv]')){event.preventDefault();event.stopImmediatePropagation();showNotice(event.target.closest('#coreTop')?'코어 상부 시점 · 단면 절단은 실사 3D 연결 준비 중입니다.':'단면·표시 도구는 실사 3D 연결 준비 중입니다.');return;}
+    if(event.target.closest('#coreTop,#dollBtn,#secBtn,#secAllBtn,[data-iv="up"],[data-iv="rp"]')){event.preventDefault();event.stopImmediatePropagation();showNotice(event.target.closest('#coreTop')?'코어 상부 시점 · 단면 절단은 실사 3D 연결 준비 중입니다.':'단면·형상 표시 도구는 실사 3D 연결 준비 중입니다.');return;}
     if(event.target.closest('#capBtn')){
       event.stopImmediatePropagation();
       const w=frame?.contentWindow,canvas=w?.TOWER_CINEMA?.captureCanvas||w?.TOWER_CINEMA?.renderer.domElement||w?.TOWER_LAB_CONTEXT?.renderer.domElement;
