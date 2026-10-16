@@ -8,6 +8,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { copyGeometry } from './geometry-copy.js';
 import { summarizeSamples } from './performance-stats.js';
 import { createSourceSky } from './sky-background.js';
+import { createCafeAmbientStudy } from './cafe-ambient.js';
 import * as T from 'three/webgpu';
 import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
@@ -104,8 +105,10 @@ export async function start(C){
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false,lightProbeTimer=null;
  addInteriorLighting({scene},C);
+ const ambientStudy=await createCafeAmbientStudy(T,scene,C);
  async function requestPrecision(){
   if(precisionLoading||precisionRequested)return;
+  ambientStudy.precision(true);
   counts.precisionRequests++;lastDrawAt=0;
   const prepareAt=performance.now();
   const version=++requestVersion;precisionLoading=true;precisionError=null;
@@ -120,10 +123,10 @@ export async function start(C){
    precisionTiming.tracerMs=performance.now()-tracerAt;
    tracer.maxSamples=previewHigh?64:32;tracer.renderScale=previewHigh?1:.8;
    precisionRequested=true;invalidatePresentation();
-  }catch(error){precisionError=String(error.message||error);console.warn('Precision request failed',error)}
+  }catch(error){ambientStudy.precision(false);precisionError=String(error.message||error);console.warn('Precision request failed',error)}
   finally{precisionTiming.totalMs=performance.now()-prepareAt;lastDrawAt=0;if(version===requestVersion)precisionLoading=false;}
  }
- function cancelPrecision(){requestVersion++;const wasActive=precisionRequested||precisionLoading;precisionRequested=false;precisionLoading=false;if(wasActive){const cancelAt=performance.now();tracer?.reset();precisionTiming.cancelMs=performance.now()-cancelAt;lastDrawAt=0;}invalidatePresentation();}
+ function cancelPrecision(){requestVersion++;const wasActive=precisionRequested||precisionLoading;precisionRequested=false;precisionLoading=false;if(wasActive){const cancelAt=performance.now();tracer?.reset();precisionTiming.cancelMs=performance.now()-cancelAt;lastDrawAt=0;}ambientStudy.precision(false);invalidatePresentation();}
 
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
  previewPass.renderTarget.texture.name='tower-preview-color';
@@ -182,13 +185,14 @@ export async function start(C){
  function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach(o=>o.visible=true)}}
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
+  ambientStudy.clear();
   scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
   const usedG=new Set(),usedM=new Set(groundBake?.materials||[]);for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
-  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);refreshGlazing();
+  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);ambientStudy.refresh();refreshGlazing();
   const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
   renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
@@ -198,12 +202,12 @@ export async function start(C){
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
- light:daylight=>{cancelPrecision();alignDaylight(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
+ light:daylight=>{cancelPrecision();alignDaylight(daylight);ambientStudy.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
   resetPerformance,
-  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
- stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
+ stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
@@ -236,7 +240,7 @@ export function addInteriorLighting(state,C){
  }
  const cafe=C.interiorDressing?.userData.cafe;
  if(cafe){for(const x of [-10,-5])for(const z of [-7,0,5]){if(!C.inPoly([x*41.6+914,z*41.6+770],C.levels().find(l=>l.kind==='ground').poly))continue;const a=new T.RectAreaLight(0xffedda,2.5,3,3);a.position.set(x,cafe.ceiling-.12,z);a.lookAt(x,cafe.floor,z);a.userData.interiorLight=true;state.scene.add(a);}
- const bounce=new T.RectAreaLight(0xffdfb6,.7,8,12);bounce.position.set(-6,cafe.floor+.1,-2);bounce.lookAt(-6,cafe.ceiling,-2);bounce.userData.interiorLight=true;state.scene.add(bounce);
- const windowFill=new T.RectAreaLight(0xe4efff,2,16,3.5);windowFill.position.set(-12.5,2.4,-1);windowFill.lookAt(-3,2.4,-1);windowFill.userData.interiorLight=true;state.scene.add(windowFill);}
+ const bounce=new T.RectAreaLight(0xffdfb6,.7,8,12);bounce.position.set(-6,cafe.floor+.1,-2);bounce.lookAt(-6,cafe.ceiling,-2);bounce.userData.interiorLight=true;bounce.userData.cafeAmbientFallback=true;state.scene.add(bounce);
+ const windowFill=new T.RectAreaLight(0xe4efff,2,16,3.5);windowFill.position.set(-12.5,2.4,-1);windowFill.lookAt(-3,2.4,-1);windowFill.userData.interiorLight=true;windowFill.userData.cafeAmbientFallback=true;state.scene.add(windowFill);}
  state.tracer?.updateLights();
 }
