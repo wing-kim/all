@@ -1,0 +1,47 @@
+# S-1 실현 가능성 검증: 회전 대기 없는 실사 화질의 상한
+
+2026-10-17, Claude Code(Opus 5.5). 사용자 승인 범위는 "실제 사례를 먼저 찾아 화질 상한을 눈으로 확인"하는 조사와 로컬 실험입니다. 앱 코드는 수정하지 않았습니다. 같은 날 사용자 지시로 **무료 구현만** 고려합니다.
+
+비공개 비교 페이지(사례 캡처 포함): https://claude.ai/artifact/7j6n9aQFJjvSt9dCB7tkYJ
+타사 데모 캡처는 저작권 때문에 저장소에 넣지 않았습니다. 저장소에는 우리 측 이미지 세 장만 `evidence/s1/`에 두었습니다.
+
+## 결론
+
+회전 대기 없이 사진에 가까운 웹 3D는 실제로 가능합니다. 다만 확인한 사례는 모두 빛을 미리 구워 고정한 결과입니다. 날짜와 시간을 바꿔도 사진급 화질이 유지되는 무료 웹 사례는 찾지 못했고, 그런 사례는 유료 클라우드 스트리밍뿐이었습니다.
+
+우리 카페를 같은 카메라와 태양으로 Cycles 경로추적해도 AI 사진에 미치지 못했습니다. 차이의 큰 부분은 렌더러보다 자산·재질·조명 연출입니다. 무료 추천 경로는 자산과 재질을 보강하고, Blender Cycles로 대표 시간대의 간접광을 구운 뒤 실시간 원본 직사광과 합치는 방식입니다. 굽지 않은 일시는 실시간 경로로 동작하며 그 상태를 표시합니다.
+
+## 우리 카페 비교 (같은 시점 1)
+
+| 이미지 | 조건 |
+|---|---|
+| `evidence/s1/ref-f1-back-mid.jpg` | 원본 AI 실사 사진(kapehorn-media std/int/f1/1_back_mid). 구조와 배치는 모델과 다름 |
+| `evidence/s1/ours-cafe-realtime-v1.jpg` | 현재 앱 실시간, `?lab=review&view=cafe`, 비교 시점 1, 가을 15시, 균형 품질, 1600×1000 캔버스 직접 캡처 |
+| `evidence/s1/ours-cafe-cycles-256.jpg` | `tools/360/render_cafe_reference.py`, 원본 스냅샷 599객체, 같은 카메라(눈높이 1.67m, 수직 FOV 72°)와 태양 벡터, 256샘플, Metal GPU 39초, EXPOSURE=1.0 |
+
+## 실행한 사례와 측정 (내장 브라우저, 이 Mac, 4초에서 7초 구간)
+
+| 사례 | 방식 | 측정 | 동적 태양 | 무료 구현 |
+|---|---|---|---|---|
+| Shapespark Workshop (showcase.shapespark.com/loft_apartment_by_motionwave) | 오프라인 경로추적 GI 라이트맵 | 3200×2000, p50 8.3ms, p95 9.3ms, 최대 9.4ms | 없음(씬당 라이트맵 1세트) | 제작 도구 유료, 참고만 |
+| Shapespark Gratio Residence (showcase.shapespark.com/gratio_residence_by_aura3dstudio) | 같음 | p50 8.3ms, p95 9.3ms | 없음 | 참고만 |
+| The Junk Shop 스플랫 (superspl.at/scene/6d3e0231) | Cycles 렌더 350장으로 학습한 3DGS, CC BY 4.0 | 45MB, 150만 스플랫, p50 33.2ms | 없음(재학습 필요) | 무료 도구 존재(미검증) |
+| Private Residence Interior (superspl.at/scene/9d09ab82) | 360 사진 약 1000장 촬영 3DGS | 523MB, 1500만 스플랫, p50 41.6ms | 없음 | 지어진 공간만 |
+| Speedball GI (cl0nazepamm.github.io/speedball) | three.js WebGPU 실시간 DDGI | 2400×1500, 태양 변경 중 p50 8.4ms, p95 16.6ms, 최대 26ms | 즉시 반영 | 오픈소스(라이선스 미확인), 화질은 게임 수준 |
+
+제외: Vagon Streams와 Twinmotion Cloud(유료 GPU 스트리밍), Neoverse(게임형 뷰어), SplatGarden(404), Babylon Mansion(라이브 데모 없음).
+측정 한계: 합성 입력, 단일 기기, 짧은 구간. 화질은 육안 판단. 사례 내부 구현은 공식 문서·포럼 기준.
+
+## 이번에 발견한 결함과 미확인 항목
+
+- 결함: "정밀 이미지 만들기"가 내장 브라우저에서 `readRenderTargetPixels is not a function`로 실패(`TOWER_CINEMA.status().error`). Chrome 재현 여부 미확인.
+- 확인 필요: 가을 15시에서 실시간 화면은 오른쪽 창가 바닥에 햇빛 자국이 있으나, 같은 태양 벡터의 Cycles 렌더에는 실내 직사광이 없음. 채광 신뢰성과 직결되므로 태양 방향·그림자 처리 대조 필요. Cycles 쪽 좌표 변환 오류 가능성도 함께 배제해야 함.
+- 제약: `TOWER360.exportModel('scene')` GLB는 실시간 전용 유리를 불투명 광택면으로 내보내 오프라인 렌더에 부적합(168MB, 1616재질). 원본 스냅샷 경로를 사용.
+- 제약: 원본 스냅샷에 의자 glTF 텍스처가 없어 Cycles 렌더의 의자가 흰색.
+
+## 다음 제안: S-2 카페 한 장면 무료 실증
+
+1. 의자 텍스처 복구와 바닥·벽·천장·목재 재질 보강(재배포 가능한 무료 라이선스만).
+2. 확정 구조 하나에 두 시간대 간접광을 Cycles로 굽고 직사광은 원본 일시를 따름. 미베이크 일시는 실시간 경로와 표시.
+3. 같은 구도로 AI 사진, Cycles 스틸, 새 실시간 화면 비교. 합격선은 회전 p95 33ms 이하와 Cycles 스틸 근접.
+4. 실패 시 Cycles 렌더 기반 스플랫 학습 또는 DDGI 시험. 위 결함 두 가지는 S-2와 별도로 먼저 원인 확인.
