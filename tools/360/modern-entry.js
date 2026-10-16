@@ -1,3 +1,4 @@
+import { glazingSides } from './glazing-sides.js';
 import { applyBakedGround } from './baked-ground.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
@@ -28,8 +29,8 @@ export async function start(C){
  function material(m){if(materials.has(m))return materials.get(m);
   const glass=m===C.M.glass||m===C.M.glass1||m===C.M.door||m===C.M.guard||m===C.M.rail;
   const n=new T.MeshPhysicalMaterial({color:m.color?.clone()||new T.Color(.5,.5,.5),roughness:m.roughness??.7,metalness:m.metalness??0,side:m.side,opacity:m.opacity,transparent:m.transparent,alphaTest:m.alphaTest||0});
-  ['map','normalMap','roughnessMap','metalnessMap','bumpMap','emissiveMap','alphaMap','clearcoatMap','clearcoatRoughnessMap','clearcoatNormalMap'].forEach(k=>n[k]=texture(m[k]));if(m.normalScale)n.normalScale.copy(m.normalScale);n.bumpScale=m.bumpScale||.01;if(m.emissive)n.emissive.copy(m.emissive);n.emissiveIntensity=m.emissiveIntensity||0;
-  n.clearcoat=m.clearcoat||0;n.clearcoatRoughness=m.clearcoatRoughness||0;
+  ['map','aoMap','normalMap','roughnessMap','metalnessMap','bumpMap','emissiveMap','alphaMap','clearcoatMap','clearcoatRoughnessMap','clearcoatNormalMap'].forEach(k=>n[k]=texture(m[k]));if(m.normalScale)n.normalScale.copy(m.normalScale);n.bumpScale=m.bumpScale||.01;if(m.emissive)n.emissive.copy(m.emissive);n.emissiveIntensity=m.emissiveIntensity||0;
+  if(m.aoMap){n.aoMap.channel=1;n.aoMapIntensity=m.aoMapIntensity??1;}n.clearcoat=m.clearcoat||0;n.clearcoatRoughness=m.clearcoatRoughness||0;
   n.polygonOffset=!!m.polygonOffset;n.polygonOffsetFactor=m.polygonOffsetFactor||0;n.polygonOffsetUnits=m.polygonOffsetUnits||0;
   if(m.userData?.satinMetal){n.anisotropy=.32;n.clearcoat=.12;n.clearcoatRoughness=.28;}
   if(glass){n.color.set('#f3f9fc');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.52;n.thickness=0;n.side=T.DoubleSide;}
@@ -38,6 +39,7 @@ export async function start(C){
   if(glass)n.userData.glazingRole=m===C.M.glass?'facade':m===C.M.glass1?'ground':'clear';
   // Opaque painted backing with a glossy surface, preserving the authored spandrel geometry.
   if(m===C.FM?.spandrel){n.color.set('#41494d');n.opacity=1;n.transparent=false;n.metalness=.05;n.roughness=.35;n.clearcoat=1;n.clearcoatRoughness=.06;n.userData.spandrelFinish=true;}
+  if(m===C.M.slab){n.color.set('#e7dfd1');n.roughness=.82;}
   materials.set(m,n);return n;
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
@@ -50,12 +52,12 @@ export async function start(C){
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
   let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
   if(!copies){
-   const g=geometry(o.geometry);let n;
+   let g=geometry(o.geometry);if(o.material===C.M.glass||o.material===C.M.glass1){g=glazingSides(T,g,o.matrixWorld);}let n;
    if(o.isInstancedMesh){n=new T.InstancedMesh(g,m,o.count);n.instanceMatrix.array.set(o.instanceMatrix.array.subarray(0,o.count*16));n.instanceMatrix.needsUpdate=true;if(o.instanceColor)n.instanceColor=new T.InstancedBufferAttribute(o.instanceColor.array.subarray(0,o.count*3),3)}
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}if(n.userData.contextKind)n.visible=C[n.userData.contextKind].visible;scene.add(n)}
+  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}if(n.userData.contextKind)n.visible=C[n.userData.contextKind].visible;scene.add(n)}
  });}
  copyRoot(C.scene);
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
@@ -118,7 +120,7 @@ export async function start(C){
  function refreshGlazing(){
   previewGlazing.forEach(m=>m.dispose());previewGlazing.clear();previewBindings.length=0;
   previewGlass=[...materials.values()].filter(m=>m.transmission>0);
-  for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.FrontSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;
+  for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.DoubleSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;
    if(improved){const facade=m.userData.glazingRole==='facade';p.color.set(facade?'#d6e2e4':'#edf3f3');p.metalness=0;p.ior=1.52;p.roughness=.075;p.clearcoat=1;p.clearcoatRoughness=.06;p.envMapIntensity=1.35;
     const grazing=normalWorld.dot(cameraPosition.sub(positionWorld).normalize()).abs().oneMinus().pow(5);
     p.opacityNode=grazing.mul(facade?.42:.4).add(facade?.38:.16);
@@ -152,7 +154,7 @@ export async function start(C){
  function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene)}finally{primary.forEach(o=>o.visible=true)}}
  function updateBuilding(){
   const began=performance.now();cancelPrecision();
-  scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>scene.remove(o));
+  scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
   const usedG=new Set(),usedM=new Set(groundBake?.materials||[]);for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
@@ -174,7 +176,7 @@ export async function start(C){
  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameTimes.length?frameTimes.reduce((a,b)=>a+b,0)/frameTimes.length:null}),
  stop:()=>{stopped=true;cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused)return;const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer?.updateCamera()}
-  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){cancelPrecision();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer?.updateCamera()}
+  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld();tracer?.updateCamera()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
@@ -196,11 +198,15 @@ export async function start(C){
 }
 export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer?.updateEnvironment();}
 export function addInteriorLighting(state,C){
- for(const l of C.levels().filter(l=>l.kind==='upper'||l.kind==='ground')){
+ for(const l of C.levels().filter(l=>l.kind==='upper')){
   // Distribute soft interior light across the glazed frontage, rather than
   // leaving one bright central patch per floor. Fixture positions remain inside the plan.
   const positions=[[-9.5,-7],[-9.5,0],[-9.5,6]].filter(([x,z])=>C.inPoly([x*41.6+914,z*41.6+770],l.poly));
   for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?60:45)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);light.userData.interiorLight=true;state.scene.add(light);}
  }
+ const cafe=C.interiorDressing?.userData.cafe;
+ if(cafe){for(const x of [-10,-5])for(const z of [-7,0,5]){if(!C.inPoly([x*41.6+914,z*41.6+770],C.levels().find(l=>l.kind==='ground').poly))continue;const a=new T.RectAreaLight(0xffedda,2.5,3,3);a.position.set(x,cafe.ceiling-.12,z);a.lookAt(x,cafe.floor,z);a.userData.interiorLight=true;state.scene.add(a);}
+ const bounce=new T.RectAreaLight(0xffdfb6,.7,8,12);bounce.position.set(-6,cafe.floor+.1,-2);bounce.lookAt(-6,cafe.ceiling,-2);bounce.userData.interiorLight=true;state.scene.add(bounce);
+ const windowFill=new T.RectAreaLight(0xe4efff,2,16,3.5);windowFill.position.set(-12.5,2.4,-1);windowFill.lookAt(-3,2.4,-1);windowFill.userData.interiorLight=true;state.scene.add(windowFill);}
  state.tracer?.updateLights();
 }

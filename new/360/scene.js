@@ -34,6 +34,7 @@
   // Permit street-height observation below the building centre without going underground.
   const cameraOffset=new T.Vector3();
   function constrainCameraHeight(){
+    if(C.cafeMode){controls.maxPolarAngle=Math.PI-.1;return;}
     cameraOffset.copy(camera.position).sub(controls.target);
     const radius=T.MathUtils.clamp(cameraOffset.length(),controls.minDistance,controls.maxDistance);
     if(camera.position.y<1.5){
@@ -49,6 +50,7 @@
   controls.addEventListener('start',()=>{cancel();dispatchEvent(new Event('tower-navigation-start'));window.TOWER_CINEMA?.cancelPrecision()});
   const inputCanvas=renderer.domElement;inputCanvas.tabIndex=0;inputCanvas.setAttribute('aria-label','건물 360도 탐색. 휠 확대 축소, WASD 이동, Home 전체 보기');
   inputCanvas.addEventListener('pointerdown',()=>inputCanvas.focus({preventScroll:true}));
+  inputCanvas.addEventListener('wheel',e=>{if(!C.cafeMode)return;e.preventDefault();e.stopImmediatePropagation();camera.fov=T.MathUtils.clamp(camera.fov+e.deltaY*.035,35,85);camera.updateProjectionMatrix();window.TOWER_CINEMA?.cancelPrecision();},{capture:true,passive:false});
   function navigateKey(event){
     if(event.target?.closest?.('input,textarea,select,[contenteditable=true]')||event.ctrlKey||event.metaKey||event.altKey)return;
     const code=event.code;
@@ -62,7 +64,8 @@
     if(['KeyA','ArrowLeft'].includes(code))delta.copy(right).negate();
     if(['KeyD','ArrowRight'].includes(code))delta.copy(right);
     if(code==='KeyQ')delta.y=-1;if(code==='KeyE')delta.y=1;
-    delta.multiplyScalar(event.shiftKey?3:1);
+    delta.multiplyScalar(C.cafeMode?(event.shiftKey?.6:.2):(event.shiftKey?3:1));
+    if(C.cafeMode){const L=C.levels().find(l=>l.kind==='ground'),p=camera.position.clone().add(delta),q=[p.x*41.6+914,p.z*41.6+770];if(!C.cafeIsWalkable?.(p.x,p.z)||p.y<C.floorTop(L)+.4||p.y>C.ceilOf(L)-.25)return;}
     if(camera.position.y+delta.y<1.5)delta.y=1.5-camera.position.y;
     camera.position.add(delta);controls.target.add(delta);controls.update();
   }
@@ -70,6 +73,7 @@
 
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
+  await load('360/cafe.js?v=cafe-1');
   async function dressBuilding(){
   const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
@@ -112,7 +116,7 @@
       for(const side of [-1,1]){const wheel=part(wheelGeometry,casterMat,dx+Math.cos(a)*side*.022,.046,dz-Math.sin(a)*side*.022);wheel.rotation.set(0,a,Math.PI/2);}}
   }
   // Interior furnishings are illustrative. Architecture and opening locations remain from the model.
-  C.levels().filter(l=>l.kind==='upper'||l.kind==='ground').forEach((l,li)=>{
+  C.levels().filter(l=>l.kind==='upper').forEach((l,li)=>{
     // Match the original finished floor: ground +70 mm, upper floors +15 mm.
     const y=l.y+(l.kind==='ground'?.07:.015)+.003;
     for(let x=450;x<900;x+=145)for(let z=360;z<1100;z+=170){
@@ -193,6 +197,7 @@
   extra.userData.interiorPlantAnchors=[];
   C.levels().filter(l=>l.kind==='upper').forEach(l=>{if(!Array.from({length:8},(_,i)=>[445+Math.cos(i*Math.PI/4)*27,480+Math.sin(i*Math.PI/4)*27]).every(q=>inPoly(q,l.poly)))return;const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1);extra.userData.interiorPlantAnchors.push({x,y:l.y+.495,z,height:1.35,floor:l.key,poly:l.poly})});
   leaves.count=n;leaves.instanceMatrix.needsUpdate=true;leaves.userData.legacyInteriorFoliage=true;extra.add(leaves);
+  await window.dressTowerCafe(C,extra,timber);
   return extra;
   }
   let interiors=await dressBuilding();
@@ -223,6 +228,8 @@
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
   function view(name){
+    if(name==='cafe'||name==='cafe-counter'){cancel();C.cafeMode=true;camera.near=.08;camera.fov=65;camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6;camera.position.set(...(name==='cafe'?[-4.6,y,5.5]:[-10,y,-1]));controls.target.set(...(name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2]));const look=controls.target.clone().sub(camera.position).normalize().multiplyScalar(.35);controls.target.copy(camera.position).add(look);controls.update();return;}
+    C.cafeMode=false;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();controls.minPolarAngle=.22;
     const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;controls.enabled=true;controls.enableZoom=true;controls.minDistance=8;controls.maxDistance=400;
@@ -269,7 +276,7 @@
       geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
       window.TOWER_LAST_SWITCH_MS=performance.now()-before;return true;
     },
-    pose:(position,target)=>{flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
+    pose:(position,target)=>{C.cafeMode=false;controls.enableZoom=true;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
@@ -300,13 +307,13 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=bake-1');
+  await load('360/environment.js?v=cafe-1');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=bake-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=cafe-1');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

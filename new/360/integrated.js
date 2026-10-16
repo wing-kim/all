@@ -8,18 +8,32 @@
     .precision-on > canvas{visibility:hidden}
     .precision-on .labels,.precision-on .compass,.precision-on .hint{visibility:hidden}
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
+    #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:55px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px}
+    #cafe-reference img{width:100%;height:calc(100% - 44px);object-fit:contain} #cafe-reference p{font-size:12px;margin:8px 0}
+    .precision-on.cafe-compare #cafe-reference{display:block}
+    .precision-on.cafe-compare #precision-frame{left:50%;width:50%}
     #precision-settings{padding:10px 0;font-size:12px} #precision-settings select{padding:5px;margin:4px}
   `;document.head.appendChild(style);
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
-  settings.innerHTML='<label>조명 <select id="precision-light"><option value="pm">맑은 오후</option><option value="am">오전</option><option value="sunset">석양</option></select></label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 내부·단면은 스케치업으로 전환합니다.</div>';
+  settings.innerHTML='<label>조명 <select id="precision-light"><option value="pm">맑은 오후</option><option value="am">오전</option><option value="sunset">석양</option></select></label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 1층 카페는 실시간 실내 보기로, 다른 층 단면은 스케치업으로 확인합니다.</div>';
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
+  const compareLabel=document.createElement('label');compareLabel.style.display='block';compareLabel.style.marginTop='10px';compareLabel.innerHTML='<input type="checkbox" id="precision-cafe-compare"> 1층 실사와 나란히 비교';settings.appendChild(compareLabel);
+  const referencePanel=document.createElement('section');referencePanel.id='cafe-reference';referencePanel.innerHTML='<p>원본 실사 · AI 인테리어 시안 <select aria-label="카페 실사 시점" id="cafe-photo-angle"></select></p><img id="cafe-reference-image" alt="기존 1층 카페 실사 이미지"><p>구조는 기존 모델 기준 · 가구 배치는 검토용 예시입니다.</p>';host.appendChild(referencePanel);
+  const photoKeys=['1_back_mid','2_back_right','3_front_right','4_front_mid','5_front_left','6_back_left','7_hall'];const photoSelect=document.getElementById('cafe-photo-angle');photoKeys.forEach((key,i)=>photoSelect.add(new Option('시점 '+(i+1),key)));
+  function cafePhoto(){const key=photoSelect.value,entry=window.PH?.man?.int?.f1;document.getElementById('cafe-reference-image').src=(window.PH?.src?.base||'https://wing-kim.github.io/kapehorn-media/')+(window.PH?.man?.tiers?.std||'std/')+(entry?.img?.[key]||'int/f1/'+key+'.webp');}
+  photoSelect.onchange=cafePhoto;
+  document.getElementById('precision-cafe-compare').onchange=e=>{host.classList.toggle('cafe-compare',e.target.checked);if(e.target.checked){cafePhoto();document.getElementById('precision-cafe').click();}};
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
   reference.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();api()?.view('reference');};
   const home=document.createElement('button');home.id='precision-home';home.textContent='건물 전체 보기 ↗';home.title='건물 중심 공중 시점으로 복귀 (Home)';views.prepend(home);
   home.onclick=()=>{poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();api()?.view('aerial');};
+  for(const [id,title,view] of [['precision-cafe','1층 카페 3D','cafe'],['precision-cafe-counter','카페 카운터','cafe-counter']]){const button=document.createElement('button');button.id=id;button.textContent=title;views.appendChild(button);button.onclick=()=>{poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();if(ready)api()?.view(view);else pendingView=view;};}
+  const reviewParams=new URLSearchParams(location.search);
+  let pendingView=reviewParams.get('view')==='cafe'?'cafe':null;
+  if(reviewParams.get('compare')==='1'){document.getElementById('precision-cafe-compare').checked=true;host.classList.add('cafe-compare');cafePhoto();pendingView='cafe';}
   addEventListener('keydown',event=>{if(active)api()?.navigateKey(event)});
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
@@ -47,7 +61,7 @@
     key=JSON.stringify(snapshot());ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=bake-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
@@ -100,10 +114,11 @@
     const w=frame.contentWindow;
     if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);}
     const renderState=w.TOWER_CINEMA?.status();
-    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE)frame.style.visibility='visible';
+    document.getElementById('precision-cafe').setAttribute('aria-pressed',String(!!w.TOWER_LAB_CONTEXT?.cafeMode));
+    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기');
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(w.TOWER_LAB_CONTEXT?.cafeMode?' · 카페: 드래그 둘러보기 · 휠 화각 · WASD 이동 · Home 외부':' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
   },200);
   window.TOWER_REVIEW={enable,disable,snapshot,timings,get frame(){return frame}};
