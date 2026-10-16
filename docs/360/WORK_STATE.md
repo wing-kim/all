@@ -97,3 +97,10 @@
 - 준비/회전 분리 실제검증: precision-preparation-performance.json. tracer초기화4393.7ms/전체4455.5ms, 이후4초회전평균27.02ms,p9530.9,max59.7,100ms이상0. 일반탐색과 명시적 정밀준비 비용 분리 확인. 정밀준비동기차단 및 초기로딩 최적화는 남음.
 - 실증 레퍼런스: PlayCanvas Sponza Dynamic→Lightmapped 실제 실행/화면 비교 완료. reference-method-review.md에 적용/미적용/한계 정리. 베이크를 카메라 독립 조명으로 사용하는 원리 확인, 우리목표 전체달성 증거는 아님.
 - Sol 현재 작업: daylight_adapter, 원본 일시/계절/태양 벡터와 실사모드 연결, 조명만 바꿀 때 geometry재생성 금지. 부모 CUA 검증 예정. 기존main핸들러 보존.
+
+## 채광 연결 및 유리 검수 체크포인트
+- d95cce4 원본 태양/일시/계절 연결: 겨울오전과 사용자2026-06-21 11시 및 야간 source/render 방향·강도 일치. 하루재생 시 geometry 재생성0, light polling200ms. 베이크는 검증된AO만 사용, sunlightBakeValid=false.
+- 6b20293 source-aligned analytic sky256cube. 실제 외관 표시 확인. 회전5초 동안 captures1 유지/probeRefresh증가0/geometry0/precision0. 평균38.73ms,p9542.6,max198.7ms,100ms초과1회: 완전 성능 통과 아님. 하늘 captureCPU12.9ms는 GPU완료 시간이 아니다.
+- 유리 분리 비교로 밝은 diffuse alpha 층이 불투명 흰 패턴을 강화함 확인. 형상은 유지하고 alpha 근사의 색/opacity/Fresnel/clearcoat를 완화. glass-preview-after.jpg와 daylight-sky-exterior.jpg; 내부 시야도 직접 확인. 물리적 투과/측정 유리 사양이 아닌 실시간 근사이며 실사 목표 미달.
+- 증거 daylight-custom-day.jpg/daylight-night.jpg/daylight-cafe-reference-comparison.jpg: 원본 실사 대비 가구·간접광·창밖 명암 개선 필요.
+- 실제 주간 사용률10%,50%까지40%p. 다음 Sol: 원본v-int/층 UI 상태와 실사 카메라 연결, 상세자산 없는층 구조보기 유지. 부모: 유리수정 commit 및 통합 검수 후 격리배포. Claude 인계폴더는 준비됨, 지금 전환 필요는 없음.

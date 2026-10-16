@@ -147,9 +147,11 @@ export async function start(C){
   previewGlazing.forEach(m=>m.dispose());previewGlazing.clear();previewBindings.length=0;
   previewGlass=[...materials.values()].filter(m=>m.transmission>0);
   for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.DoubleSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;
-   if(improved){const facade=m.userData.glazingRole==='facade';p.color.set(facade?'#d6e2e4':'#edf3f3');p.metalness=0;p.ior=1.52;p.roughness=.075;p.clearcoat=1;p.clearcoatRoughness=.06;p.envMapIntensity=1.35;
+   if(improved){const facade=m.userData.glazingRole==='facade';// Alpha preview is not transmission: a pale diffuse layer reads as frosted paint.
+    // Keep its absorption tint restrained and let the scene probe supply highlights.
+    p.color.set(facade?'#49636b':'#779094');p.metalness=0;p.ior=1.52;p.roughness=.09;p.clearcoat=.12;p.clearcoatRoughness=.08;p.envMapIntensity=1.0;
     const grazing=normalWorld.dot(cameraPosition.sub(positionWorld).normalize()).abs().oneMinus().pow(5);
-    p.opacityNode=grazing.mul(facade?.42:.4).add(facade?.38:.16);
+    p.opacityNode=grazing.mul(facade?.55:.52).add(facade?.18:.1);
    }
    previewGlazing.set(m,p);}
   scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
