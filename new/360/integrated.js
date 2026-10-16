@@ -27,10 +27,15 @@
   document.getElementById('precision-cafe-compare').onchange=e=>{host.classList.toggle('cafe-compare',e.target.checked);if(e.target.checked){cafePhoto();document.getElementById('precision-cafe').click();}};
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
-  reference.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();api()?.view('reference');};
+  reference.onclick=()=>{clearComparison();poseUntil=0;C.cancel();if(!active)enable();api()?.view('reference');};
   const home=document.createElement('button');home.id='precision-home';home.textContent='건물 전체 보기 ↗';home.title='건물 중심 공중 시점으로 복귀 (Home)';views.prepend(home);
-  home.onclick=()=>{poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();api()?.view('aerial');};
+  home.onclick=()=>{clearComparison();poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();api()?.view('aerial');};
   for(const [id,title,view] of [['precision-cafe','1층 카페 3D','cafe'],['precision-cafe-counter','카페 카운터','cafe-counter']]){const button=document.createElement('button');button.id=id;button.textContent=title;views.appendChild(button);button.onclick=()=>{poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();if(ready)api()?.view(view);else pendingView=view;};}
+  // Keep the original floor selector available without putting the host scene in
+  // interior mode while the independent 1F renderer owns the camera.
+  const originalInterior=document.createElement('button');originalInterior.id='precision-original-interior';originalInterior.textContent='다른 층 · 기존 내부 보기';originalInterior.title='기존 층 선택·단면·실내 실사 보기';views.appendChild(originalInterior);
+  originalInterior.onclick=()=>{clearComparison();disable();document.getElementById('vm-sketch').checked=true;document.getElementById('v-int').click();};
+  function clearComparison(){host.classList.remove('cafe-compare');document.getElementById('precision-cafe-compare').checked=false;}
   const reviewParams=new URLSearchParams(location.search);
   let pendingView=reviewParams.get('view')==='cafe'?'cafe':null;
   if(reviewParams.get('compare')==='1'){document.getElementById('precision-cafe-compare').checked=true;host.classList.add('cafe-compare');cafePhoto();pendingView='cafe';}
@@ -90,7 +95,12 @@
   document.addEventListener('click',event=>{
     if(!active)return;
     const button=event.target.closest('[data-v]');
-    if(button){if(button.dataset.v==='int'){disable();document.getElementById('vm-sketch').checked=true;}else {
+    if(button){if(button.dataset.v==='int'){
+      // The original listener calls enterInt(), which changes host visibility,
+      // clipping and controls. Consume this click before that listener runs.
+      event.stopImmediatePropagation();document.getElementById('precision-cafe').click();return;
+    }else {
+      clearComparison();
       const previous=api()?.telemetry();if(previous){C.camera.position.fromArray(previous.camera);C.controls.target.fromArray(previous.target);C.controls.update();}
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
@@ -114,7 +124,11 @@
     const w=frame.contentWindow;
     if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);}
     const renderState=w.TOWER_CINEMA?.status();
-    document.getElementById('precision-cafe').setAttribute('aria-pressed',String(!!w.TOWER_LAB_CONTEXT?.cafeMode));
+    const inCafe=!!w.TOWER_LAB_CONTEXT?.cafeMode;
+    document.getElementById('precision-cafe').setAttribute('aria-pressed',String(inCafe));
+    document.getElementById('v-int').setAttribute('aria-pressed',String(inCafe));
+    if(inCafe)document.querySelectorAll('[data-v]:not([data-v="int"])').forEach(button=>button.setAttribute('aria-pressed','false'));
+    else if(!pendingView)clearComparison();
     if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
