@@ -13,3 +13,10 @@
 - 외부 장면의 조명/반사/도로 디테일 실측 비교 및 별도 공개 배포 미완료.
 
 다음: 현재 동일 구조 스냅샷을 Blender로 내보내 월드 좌표·메시·재질·일광 조건을 보존 → 대표 바닥/벽/천장 UV 및 간접광 베이크 → 기본 렌더에 재주입 → 3시점/회전 직후 비교. 외부는 원본 조감/거리/반대편 별도 비교. UI 진행은 ui-integration-checkpoint.txt 참조.
+
+후속 진행 (주간 사용량99% 확인):
+- export-cafe-bake.js로 원본 건물/실내 배치의 카페 범위 스냅샷을 추출했다. cafe-gi-study.json.gz에 상태/카메라/재질 색상/형상/배치 좌표 저장(765,945바이트). 171객체,248,139정점. 정점 상한 때문에13개 Static material batch가 빠졌으므로 완전한 베이크 입력이 아니다. 일부 배치는 범위에 걸쳐 전체가 포함되므로 삼각형 단위로 범위 분리하는 개선이 다음 첫 작업이다.
+- import-cafe-bake.py를 Blender5.1.1에서 실제 실행해 /tmp/cafe-gi-study.blend 생성 성공. 원본 drawRange/material groups/인스턴스 월드변환을 처리하고 Three Y-up→Blender Z-up 변환. 텍스처/외부 차폐체/실제 조명은 아직 미포함이며 장면에 lighting_ready=False와 누락 내역 저장. 이 스냅샷으로 최종 베이크를 생성하거나 적용하지 말 것.
+- 재현: Blender --background --factory-startup --python tools/360/import-cafe-bake.py -- tools/360/cafe-gi-study.json.gz /tmp/cafe-gi-study.blend
+- 다음 첫 작업: exporter에서 큰 배치를 카페 범위의 삼각형으로 잘라 누락 없는 구조 확보; 층고/바닥/벽/천장/개구부 검증 → 텍스처/태양·HDR/외부 차폐체 포함 → 간접광만 베이크하여 런타임 직사광 중복 방지 → 기본 렌더 검수. 외부 품질 게이트는 별도로 계속 필요.
+- UI/라이트맵/의자 변경은 원격 분리 브랜치 저장됨. 현재 공개 배포는 변경하지 않았고 별도 검토 사이트도 아직 미배포.
