@@ -6,10 +6,13 @@
     #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef}
     .precision-on .views,.precision-on .tools{z-index:8}
     .precision-on .intui,.precision-on .ihud{z-index:8}
-    .precision-on > canvas{visibility:hidden}
+    .precision-on > canvas:not(#mini){visibility:hidden}
     .precision-on .labels,.precision-on .compass,.precision-on .hint{visibility:hidden}
-    .precision-on #mini,.precision-on .pad{visibility:hidden}
+    .precision-on #mini,.precision-on .pad{z-index:8}
+    .precision-on .compass{visibility:visible;z-index:4}
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
+    .precision-on:has(#pad:not([hidden])) #precision-status{left:150px;max-width:calc(100% - 380px);font-size:11px}
+    @media(max-width:600px){.precision-on:has(#pad:not([hidden])) #precision-status{left:8px;bottom:175px;max-width:calc(100% - 16px)}}
     #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:55px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px}
     #cafe-reference img{width:100%;height:calc(100% - 44px);object-fit:contain} #cafe-reference p{font-size:12px;margin:8px 0}
     .precision-on.cafe-compare #cafe-reference{display:block}
@@ -58,6 +61,24 @@
     copyPose();requestAnimationFrame(followPose);
   }
   function showNotice(message){notice=message;noticeUntil=performance.now()+6000;status.textContent=message;}
+  // Keep source minimap/compass on the visible camera. While an original UI
+  // navigation command owns the camera, followPose runs the opposite direction.
+  function mirrorVisiblePose(){
+    requestAnimationFrame(mirrorVisiblePose);
+    if(!active||!ready||updating||following||currentFloorKey!==C.interiorState().key||!C.interior())return;
+    const pose=api()?.telemetry();if(!pose||pose.floor!==currentFloorKey)return;
+    C.restoreInteriorPose(pose.camera,pose.target,pose.fov,pose.floor);
+  }
+  requestAnimationFrame(mirrorVisiblePose);
+  let padHeld=false;
+  document.addEventListener('pointerdown',event=>{
+    if(!active)return;
+    const padButton=event.target.closest('#pad button');if(!padButton)return;
+    if(padButton.dataset.k==='in'){event.preventDefault();event.stopImmediatePropagation();showNotice('층 단면 연결은 준비 중입니다. 현재 실내 탐색은 유지합니다.');return;}
+    padHeld=true;poseUntil=Infinity;if(!following){following=true;requestAnimationFrame(followPose);}
+  },true);
+  for(const type of ['pointerup','pointercancel','blur'])addEventListener(type,()=>{if(padHeld){padHeld=false;poseUntil=performance.now()+100;}},true);
+
   async function rebuild(){
     if(!active)return;
     if(updating){queued=true;return;}
@@ -75,11 +96,12 @@
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
     const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
+    if(reviewParams.get('ambientBake')==='study')url.searchParams.set('ambientBake','study');
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   function disable(){
     if(!active)return;
-    active=false;poseUntil=0;following=false;clearTimeout(timer);
+    active=false;padHeld=false;poseUntil=0;following=false;clearTimeout(timer);
     const child=frame?.contentWindow,position=child?.TOWER360?.telemetry?.();
     // A cafe camera is inside the building; keep the last usable exterior host
     // camera in that case. Otherwise carry the free exterior viewpoint home.
@@ -127,6 +149,7 @@
       const previous=api()?.telemetry();if(previous){C.camera.position.fromArray(previous.camera);C.controls.target.fromArray(previous.target);C.controls.update();}
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
+    if(event.target.closest('#mini')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#floorChips button'))requestAnimationFrame(()=>syncInterior(true));
     if(event.target.closest('[data-c],#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#exitInt'))requestAnimationFrame(()=>syncInterior(true));

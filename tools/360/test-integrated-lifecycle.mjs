@@ -71,7 +71,7 @@ selectedFloor='2F';interval();assert.equal(floorCalls.length,2);assert.equal(flo
 assert.equal(review.frame,daylightFrame,'floor selection uses the existing renderer frame');
 const click=selector=>listeners.get('click')({target:{closest:query=>query.includes(selector)?{}:null},preventDefault(){},stopImmediatePropagation(){}});
 sourcePose={camera:[8,11,13],target:[8,11,12],fov:45,spin:false,doll:false};
-click('[data-c]');frames.shift()();
+click('[data-c]');frames.splice(0).forEach(fn=>fn());
 assert.deepEqual(floorCalls.at(-1),['2F',sourcePose.camera,sourcePose.target,45],'authored interior corner pose and field of view reach the child');
 sourcePose={...sourcePose,doll:true};click('#coreTop');interval();
 const status=ids.get('viewer').children.find(child=>child.id==='precision-status');
