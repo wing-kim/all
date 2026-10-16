@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {verifyFurnitureManifest} from './cafe-ambient.js';
+const data=new TextEncoder().encode('fixture');
+const hash=Buffer.from(await crypto.subtle.digest('SHA-256',data)).toString('hex');
+const pending=[],started=[];
+const verification=verifyFurnitureManifest({a:hash,b:hash},path=>{started.push(path);return new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>data.buffer})));});
+assert.deepEqual(started,['a','b'],'both requests start before either finishes');
+pending.forEach(resolve=>resolve());await verification;
+await assert.rejects(verifyFurnitureManifest({a:'wrong'},async()=>({ok:true,arrayBuffer:async()=>data.buffer})),/furniture-mismatch:a/);
+await assert.rejects(verifyFurnitureManifest({a:hash},async()=>({ok:false})),/furniture-unavailable:a/);
+console.log('parallel asset validation preserves fail-closed checks');

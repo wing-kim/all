@@ -11,6 +11,17 @@ export function validateAmbientSource(manifest,state,cafe,daylight){
 const fixed=value=>Math.abs(value)<.00005?'0.0000':value.toFixed(4);
 export const triangleKey=points=>points.map(point=>point.map(fixed).join(',')).sort().join('|');
 
+// Independent cached asset checks must all pass before a baked material is bound.
+// Parallel requests avoid adding every network round trip to the first frame.
+export async function verifyFurnitureManifest(entries,fetchAsset=fetch){
+ await Promise.all(Object.entries(entries).map(async ([path,expected])=>{
+  const result=await fetchAsset(path);if(!result.ok)throw Error('furniture-unavailable:'+path);
+  const digest=await crypto.subtle.digest('SHA-256',await result.arrayBuffer());
+  const actual=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+  if(actual!==expected)throw Error('furniture-mismatch:'+path);
+ }));
+}
+
 export async function createCafeAmbientStudy(T,scene,C){
  const requested=new URLSearchParams(location.search).get('ambientBake')==='study';
  let reason=requested?'loading':'not-requested',valid=false,enabled=false,precisionActive=false,manifest=null,assetsReady=false,bindings=[],textures=[],loadMs=null;
@@ -38,12 +49,7 @@ export async function createCafeAmbientStudy(T,scene,C){
   const response=await fetch('360/assets/cafe-ambient/manifest.json');
   if(!response.ok)throw Error('manifest-unavailable');
   manifest=await response.json();
-  for(const [path,expected] of Object.entries(manifest.furnitureManifest)){
-   const result=await fetch(path);if(!result.ok)throw Error('furniture-unavailable:'+path);
-   const digest=await crypto.subtle.digest('SHA-256',await result.arrayBuffer());
-   const actual=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
-   if(actual!==expected)throw Error('furniture-mismatch:'+path);
-  }
+  await verifyFurnitureManifest(manifest.furnitureManifest);
   const loader=new T.TextureLoader();
   for(const name of ['floor','ceiling']){
    const map=await loader.loadAsync('360/assets/cafe-ambient/'+manifest.receiverGeometry[name].runtimeImage);
