@@ -4,20 +4,18 @@
 
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
-## 최신 재개 요약 — 2026-10-16, 220429e 배포 검증 완료
+## 최신 재개 요약 — 2026-10-17, S-2 봄·오후 시간대 베이크 배포 완료 (Claude Code)
 
-이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력은 과거 기록이다.
+이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 2026-10-16 요약은 과거 기록이다.
 
-- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1, 병합 금지.
-- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 최신 fcb73ec(소스220429e), Pages built 및 공개 Chrome 실제 렌더/베이크/점선/비교 UI 확인.
-- **기능:** 원본 태양/일시/층/모서리/홀/창밖/미니맵/패드/나침반 연결. 층별 batch 소유권을 보존하여 3F/B1 층 단면, coreTop→coreHall→걷기 복귀 실제 IAB 검증 완료. 지하 단면에서 외부 지면/도시/차량 숨김, 복귀 시 복구. 북쪽 도면 화살표 반복 복귀 후에도 제외.
-- **최신 Chrome 검증:** 602172a. 1F→3F 높이 가이드 4.95m→3.80m 교체 확인. 외부 복귀 후 t-cxlab 켜도 실시간 모드 유지; source/child 카메라 좌표 일치. 스케치 복귀 시 모드 해제와 카메라 보존. 캡처 chrome-3f-guides.png, chrome-exterior-labels.png.
-- **Chrome 성능:** viewport1209×601,DPR2.5, balanced. 첫 렌더4316.4ms(전체 앱 로딩과 다름). 외부5초회전157프레임, 간격 p50=31.7/p95=35.3/max=67.2ms,100ms초과0. 측정 구간 geometry/probe/precision 갱신0. 단일 기기/짧은 시험, 콜드네트워크 및 모바일 보장 아님.
-- **베이크:** 기본 꺼짐, `ambientBake=study`. 현재 geometry로 재추출/재베이크9816adc:599객체/1,929,081정점/누락0, 실제 수신면 자동발견. IAB valid=true,2면,load542.9ms. 정량채광/전체GI/모든시안 지원 아님. 원본 구조·가구·수신면 검증, 야간/단면/불일치 해제. 512²/256samples+오프라인 denoise.
-- **미완료:** 상부/전체 종단면, 윗층투시, era/지하투시 일부 표시, 램프 안내선 전부 검증, 상세 실내 후보 매핑, 사진 수준 실내외 품질, 초기 로딩/정밀준비(약4.4초차단) 개선, 모바일. 기능연결 완성/실사품질 달성으로 보고하지 않는다.
-- **다음:** 최신 패키지 audit→격리배포→공개 Chrome 렌더 확인. 이후 남은 기능을 제한 단위로 진행하고 매 단위 예산 확인. 전체품질+모든기능50%내 완성 확약 근거 없음.
-- **예산:** 마지막 실제38%,상한50%,45%정리/48%산출물완료. Claude 전환 준비 root CLAUDE.md 및 docs/360/handoff/claude-code/{README,PROMPT}.md. 사용자 설치/로그인 필요, 같은 repo/branch, 동시쓰기 금지.
-- **후속 담당자:** docs/360/final-handoff-prompt-ko.txt 작성됨. 실제 상태는 이 파일 최신요약/마지막 체크포인트가 우선. 공개 패키지는 allowlist runtime+명시된 비교페이지만 포함.
+- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1, 병합 금지. 로컬 커밋은 origin보다 앞서 있으며 push하지 않음.
+- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 b6b9461(소스 06ec66c). Pages built, 공개 Chrome(앱 내장 브라우저)에서 봄+오후 베이크 active, 의자 20개 교체, 안내 문구 확인.
+- **S-2 결과:** 원본 계절·시간대 버튼 중 봄+오후에 카페 바닥·천장 하늘빛+태양 반사광 베이크(`new/360/assets/cafe-ambient-slots/spring-pm`). 다른 조합·사용자 일시·야간은 실시간과 "실시간 빛" 표시. 베이크는 첫 화면을 막지 않고 비동기 결합. 가구: 식탁 의자 Modern Arm Chair 01 코냑 쿠션, 화분 9곳.
+- **측정:** 회전 5초 p95 51.2ms(베이크 끔 55.3ms), 100ms 초과 0. 공개 첫 화면 3.4초(캐시 데워짐), 베이크 0.5초 뒤 적용. 굽기 27초(Metal GPU).
+- **정정 기록:** 석양 직사광 "결함"은 오판(스냅샷 ±60m로 서쪽 건물 누락). 기존 12개 시간대 모두 카페 시점 1에 햇빛 무늬 거의 없음(최대 봄 15시 11%).
+- **사용자 지시(2026-10-17):** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단해 진행. 가구는 AI 시안 분위기 기준으로 교체 가능.
+- **미완료:** 벽·기둥·가구 수신면 베이크, 실내 조명 베이크, 다른 시간대 슬롯, 스냅샷 범위 확대(먼 주변 건물), 재질 텍스처 보강, 정밀 이미지 오류(readRenderTargetPixels), 콜드 로딩·모바일 측정, 기존 VIEWER_CONTRACT 미완료 행(종단면·윗층투시·지하투시 등). 사진 수준 품질은 아직 아님.
+- **예산:** Claude 주간 전체 모델 14%(인수 시점 10%), 추가 과금 꺼짐. Codex 수치와 별개.
 
 ## 초기 감사 이력 — 현재 상태가 아님
 - Repo wing-kim/all, branch codex/tower-360-validation. 기준 main25b111a(이번 fetch로 확인). 이번 문서 수정 전 HEAD427e254, 작업 트리 깨끗했음.
@@ -197,3 +195,10 @@
 - 2026-10-17 추가: 고정 시간대 전체 빛 베이크 방향과 정적 배포(컴퓨터 상시 가동 불필요) 설명. 실시간 석양 실내 직사광 누락 결함 발견(유리 castShadow 추정, 미확정), 창가 밝은 띠는 직사광 아님으로 정정. 가구·재질은 AI 사진 분위기 기준 무료 자산 교체 허용. 상세 s1-feasibility.md 추가 절.
 - **다음 첫 행동(갱신):** S-2 승인 시 (1) 실시간 직사광 누락 원인 확인·수정 (2) 카페 가구·재질 무료 자산 교체 (3) 사용자가 고른 시간대 전체 빛 베이크 웹 적용 (4) 목표 스틸과 동일 구도 비교·회전 측정. 시간대 선택은 사용자 확인 필요.
 - 2026-10-17 정정: "실시간 석양 직사광 누락 결함"은 오판(스냅샷 ±60m로 서쪽 도시 건물 누락). 기존 12개 시간대 모두 카페 시점 1에 햇빛 무늬가 거의 없음(최대 봄 15시 바닥 11%). 사용자는 원본 시간대 버튼 중 하나로 실증을 요청했고, 후보를 봄+오후로 제시하고 확인 대기. 베이크 대상은 하늘빛·태양 반사광·실내 조명 간접광으로 조정 제안.
+
+## S-2 시간대 베이크 체크포인트 — 2026-10-17 (Claude Code)
+- 커밋: bcce974(슬롯 베이크·런타임·표시), 405fc64(가구 교체·재베이크·캐시 우회 해시 검증), 06ec66c(비동기 결합). 배포 9160b8e→b6b9461.
+- 베이크 재현: `blender --background --factory-startup --python tools/360/bake-cafe-ambient.py -- tools/360/cafe-ambient-source.json.gz tools/360/ambient-slots/spring-pm --size 512 --samples 256 --slot spring-pm --sun 0.0758,0.6412,0.7636 --sun-strength 2.6 --sun-color 1,0.8714,0.7379 --device GPU` 후 linear PNG와 manifest를 `new/360/assets/cafe-ambient-slots/spring-pm/`로 복사, index.json에 키 등록.
+- 가구를 바꾸면 export-cafe-bake.js로 스냅샷 재추출(로컬, gitignore) → 기준·슬롯 재베이크 필수. 이전 스냅샷은 `cafe-ambient-source.2026-10-16-tufted-chairs.json.gz`로 로컬 보관.
+- 증거: docs/360/evidence/s2/, 비공개 비교 페이지 https://claude.ai/artifact/7j6n9aQFJjvSt9dCB7tkYJ (S-2 결과 절).
+- **다음 첫 행동:** 수신면을 벽·기둥까지 늘리는 베이크(아틀라스 UV 생성) 설계와 실내 조명 베이크 검토. 병행으로 정밀 이미지 오류 원인 확인. 원본 main 설정 범위 안이면 사용자에게 묻지 않고 진행.
