@@ -31,7 +31,22 @@ def audit(out, paths):
         source = (out / rel).read_text(errors='replace')
         # Module paths resolve against module URL; scene's 360/... loader paths
         # resolve against the containing viewer document at new/3d-model.html.
-        for _, value in LITERAL.findall(source):
+        if rel.suffix == '.gltf':
+            # glTF image names are labels, not dependencies. Only URI fields load files.
+            def uris(value):
+                if isinstance(value, dict):
+                    for key, item in value.items():
+                        if key == 'uri' and isinstance(item, str):
+                            yield item
+                        else:
+                            yield from uris(item)
+                elif isinstance(value, list):
+                    for item in value:
+                        yield from uris(item)
+            values = uris(json.loads(source))
+        else:
+            values = (value for _, value in LITERAL.findall(source))
+        for value in values:
             if not EXTENSION.search(value) or any(c.isspace() for c in value):
                 continue
             if value.startswith(('https://', 'http://', '//')):

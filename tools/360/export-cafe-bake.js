@@ -20,7 +20,8 @@
    for(let i=start;i+2<end;i+=3){const ids=[0,1,2].map(k=>idx?idx.getX(i+k):i+k);
     a.fromBufferAttribute(p,ids[0]).applyMatrix4(one);b.fromBufferAttribute(p,ids[1]).applyMatrix4(one);c.fromBufferAttribute(p,ids[2]).applyMatrix4(one);
     triBox.setFromPoints([a,b,c]);if(!triBox.intersectsBox(region))continue;
-    const mi=g.groups.find(q=>i>=q.start&&i<q.start+q.count)?.materialIndex||0,m=ms[mi];
+    const mi=Array.isArray(o.material)?(g.groups.find(q=>i>=q.start&&i<q.start+q.count)?.materialIndex||0):0,m=ms[mi];
+    if(!m)throw new Error('Bake snapshot: invalid material group');
     const glass=[C.M.glass,C.M.glass1,C.M.door,C.M.guard,C.M.rail].includes(m);
     if(glass){normal.crossVectors(b.clone().sub(a),c.clone().sub(a)).normalize();if(Math.abs(normal.y)>.999)continue;}
     const group=groups.at(-1);if(group?.materialIndex===mi)group.count+=3;else groups.push({start:index.length,count:3,materialIndex:mi});
