@@ -14,14 +14,22 @@ import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 export async function start(C){
- const bootAt=performance.now();let firstFrameMs=null,lastUpdateMs=null,frameTimes=[],lastDrawAt=0,frameIntervals=[];
+ const bootAt=performance.now();let firstFrameMs=null,lastUpdateMs=null,lastDrawAt=0;
+ const timings={adapterMs:null,rendererInitMs:null,sceneCopyMs:null,bakeMs:null,hdrMs:null,probeMs:null};
+ const counts={previewFrames:0,precisionSamples:0,cameraMoves:0,buildingUpdates:0,precisionRequests:0,probeRefreshes:0};
+ // Wall-clock intervals and render submission time; these are not GPU timings.
+ const frameSubmitMs=[],frameIntervals=[];
+ const measure=(items,value)=>{items.push(value);if(items.length>120)items.shift()};
+ const percentile=(items,p)=>{if(!items.length)return null;const sorted=[...items].sort((a,b)=>a-b);return sorted[Math.ceil(p*sorted.length)-1]};
+ const summary=items=>({samples:items.length,p50:percentile(items,.5),p95:percentile(items,.95),p99:percentile(items,.99)});
  const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  T.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(C.camera.fov,C.camera.aspect,2,1800);
  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
  if(!adapter)throw new Error('WebGPU adapter unavailable');
+ timings.adapterMs=performance.now()-bootAt;
  const limit=512*1024*1024;
- const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(compactTouch?1:1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();
+ const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(compactTouch?1:1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
  renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
@@ -62,9 +70,12 @@ export async function start(C){
  });}
  copyRoot(C.scene);
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
+ timings.sceneCopyMs=performance.now()-bootAt;
  let improved=new URLSearchParams(location.search).get('bake')!=='off';
  let groundBake=null;try{groundBake=await applyBakedGround(T,scene);groundBake.setEnabled(improved&&C.city.visible&&C.ctx.visible)}catch(error){console.warn('Baked ground unavailable; retaining realtime lighting',error)}
+ timings.bakeMs=performance.now()-bootAt;
  const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.8;scene.backgroundIntensity=1.55;
+ timings.hdrMs=performance.now()-bootAt;
  const daylightColor=()=>C.R3D.time==='sunset'?C.sun.color.getHex():C.R3D.time==='am'?0xfff4e6:0xfff3dd;
  const sun=new T.DirectionalLight(daylightColor(),C.R3D.time==='sunset'?2:1.2);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
  // Measured brightest texel of this specific 2K HDR: azimuth .59672, elevation .83602 rad.
@@ -83,10 +94,12 @@ export async function start(C){
  const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);
  try {probe.update(renderer,scene);for(const m of materials.values())if(m.transmission>0){m.envMap=probeTarget.texture;m.envMapIntensity=1;m.needsUpdate=true;}}
  finally {primary.forEach(o=>o.visible=true);}
+ counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false;
  addInteriorLighting({scene},C);
  async function requestPrecision(){
   if(precisionLoading||precisionRequested)return;
+  counts.precisionRequests++;
   const version=++requestVersion;precisionLoading=true;precisionError=null;
   try{
    const {createTracer}=await import('./precision.js');
@@ -99,7 +112,7 @@ export async function start(C){
   }catch(error){precisionError=String(error.message||error);console.warn('Precision request failed',error)}
   finally{if(version===requestVersion)precisionLoading=false;}
  }
- function cancelPrecision(){requestVersion++;precisionRequested=false;precisionLoading=false;tracer?.reset();invalidatePresentation();}
+ function cancelPrecision(){requestVersion++;const wasActive=precisionRequested||precisionLoading;precisionRequested=false;precisionLoading=false;if(wasActive)tracer?.reset();invalidatePresentation();}
 
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
  previewPass.renderTarget.texture.name='tower-preview-color';
@@ -153,9 +166,9 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene)}finally{primary.forEach(o=>o.visible=true)}}
+ function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach(o=>o.visible=true)}}
  function updateBuilding(){
-  const began=performance.now();cancelPrecision();
+  const began=performance.now();counts.buildingUpdates++;cancelPrecision();
   scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
   const usedG=new Set(),usedM=new Set(groundBake?.materials||[]);for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
@@ -175,17 +188,17 @@ export async function start(C){
  light:()=>{cancelPrecision();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();refreshProbe();renderer.shadowMap.needsUpdate=true},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
- status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameTimes.length?frameTimes.reduce((a,b)=>a+b,0)/frameTimes.length:null}),
+ status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,loadMs:groundBake.loadMs}:null,improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:{counts:{...counts},bootMs:{...timings,firstFrame:firstFrameMs},previewIntervalMs:summary(frameIntervals),previewSubmitMs:summary(frameSubmitMs)}}),
  stop:()=>{stopped=true;cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
- function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused)return;const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer?.updateCamera()}
-  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld();tracer?.updateCamera()}
+ function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
+  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
     if(gpuError)throw gpuError;
-    if(!precisionRequested){if(!previewCached){const began=performance.now();if(lastDrawAt&&began-lastDrawAt<200){frameIntervals.push(began-lastDrawAt);if(frameIntervals.length>120)frameIntervals.shift();}lastDrawAt=began;renderPreview();frameTimes.push(performance.now()-began);if(frameTimes.length>120)frameTimes.shift();if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}return;}
+    if(!precisionRequested){if(!previewCached){const began=performance.now();renderPreview();counts.previewFrames++;if(lastDrawAt&&began-lastDrawAt<250)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began);if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}return;}
     if(presented&&tracer._denoiser?.complete)return;
-    if(performance.now()-lastMotion>200)tracer.renderSample();
+    if(performance.now()-lastMotion>200){tracer.renderSample();counts.precisionSamples++;}
     if(performance.now()-lastMotion<=200)renderPreview(true);
     else if(!tracer._denoiser?.complete){if(!previewCached)cachePreview();}
     else if(tracer._denoiser.texture){cachedPreview.style.display='none';if(precisionTexture.value!==tracer._denoiser.texture){precisionTexture.value=tracer._denoiser.texture;precisionPipeline.needsUpdate=true;}// The atmospheric depth node reuses previewPass. Keep its auxiliary raster
