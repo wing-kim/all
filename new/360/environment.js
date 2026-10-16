@@ -1,6 +1,16 @@
 /* Appearance assets are illustrative surroundings, never surveyed building geometry. */
 window.enhanceTowerEnvironment=async function(C,extra,load){
   const {THREE:T,RMAT,P,renderer}=C;
+  const assetsReady=(async()=>{
+    await load('360/assets/GLTFLoader.js');
+    await load('360/assets/DRACOLoader.js');
+  const draco=new T.DRACOLoader().setDecoderPath('360/assets/draco/');
+  const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
+    const assetCache=new Map();
+    const cachedAsset=url=>{if(!assetCache.has(url))assetCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject)));return assetCache.get(url)};
+    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
+    return {cachedAsset};
+  })();
   const loader=new T.TextureLoader(),pendingTextures=[];
   function texture(name,repeat,color){let done;pendingTextures.push(new Promise(resolve=>{done=resolve}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
   function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
@@ -105,20 +115,6 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   for(let x=0;x<128;x++){grainSeed=(Math.imul(grainSeed,1664525)+1013904223)>>>0;const line=190+grainSeed%55;
     for(let y=0;y<128;y++){const i=(y*128+x)*4,value=Math.min(255,line+Math.sin(y*.31+x)*5);grainPixels.data[i]=grainPixels.data[i+1]=grainPixels.data[i+2]=value;grainPixels.data[i+3]=255;}}
   grainContext.putImageData(grainPixels,0,0);const grain=new T.CanvasTexture(grainCanvas);grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,8);grain.anisotropy=4;
-  const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
-  for(const mat of facadeMetals){mat.roughnessMap=grain;mat.roughness=.34;mat.userData.satinMetal=true;mat.needsUpdate=true;}
-  for(const [mat,tint] of [[C.R3D.mullM,'#627078'],[C.R3D.mullD,'#56636a']]){mat.color.set(tint).convertSRGBToLinear();mat.roughness=.3;}
-  C.bld.traverse(o=>{if(o.isInstancedMesh&&(o.material===C.R3D.mullM||o.material===C.R3D.mullD))o.userData.roundedCurtainWall=true});
-  // Appearance study: keep every mullion profile and opening in place, but use
-  // a darker satin finish on the narrow vertical curtain-wall members only.
-  const mullionFinishes=new Map();C.bld.updateMatrixWorld(true);
-  C.bld.traverse(o=>{
-    const m=o.material,g=o.geometry;if(!g||!m||Array.isArray(m)||m.metalness!==.85)return;
-    g.computeBoundingBox();const dimensions=g.boundingBox.getSize(new T.Vector3());
-    if(dimensions.y<=1||dimensions.x>=.35||dimensions.z>=.35||o.getWorldPosition(new T.Vector3()).y>=30.6)return;
-    if(!mullionFinishes.has(m)){const finish=m.clone();finish.color.set('#66737a').convertSRGBToLinear();finish.metalness=.72;finish.roughness=.3;finish.userData.satinMetal=true;mullionFinishes.set(m,finish)}
-    o.material=mullionFinishes.get(m);
-  });
   // Weathered roof finish is illustrative; preserve every existing roof surface.
   const roofColor=texture('roof-concrete_color.jpg',.5,true),roofNormal=texture('roof-concrete_normal.jpg',.5),roofRough=texture('roof-concrete_rough.jpg',.5);
   const roofTints=[[.925,1.11,1.6],[.785,1,1.415],[.685,1.035,1.15],[1.06,1.225,1.715]];
@@ -249,24 +245,10 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   }
   roofUnits.count=roofCount;roofUnits.instanceMatrix.needsUpdate=true;
   cityLayers.flat().forEach(({mesh,count})=>{mesh.count=count;mesh.instanceMatrix.needsUpdate=true});
-  await load('360/assets/GLTFLoader.js');
-  await load('360/assets/DRACOLoader.js');
-  const draco=new T.DRACOLoader().setDecoderPath('360/assets/draco/');
-  const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
-  try{
-    const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/interior-foliage.glb',resolve,undefined,reject));
-    const bounds=new T.Box3().setFromObject(asset.scene),height=bounds.max.y-bounds.min.y;
-    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material.side=T.DoubleSide;if(o.material.alphaTest>0){o.material.alphaTest=.45;o.material.transparent=false;}o.material.needsUpdate=true;}});
-    const replacements=[];
-    for(const [i,anchor] of (extra.userData.interiorPlantAnchors||[]).entries()){
-      const root=new T.Group();root.name='CC0 Interior Foliage';root.userData.interiorPlant={...anchor,sourceHeight:height};
-      const foliage=asset.scene.clone(true);foliage.scale.setScalar(anchor.height/height);root.add(foliage);root.position.set(anchor.x,anchor.y,anchor.z);root.rotation.y=i*2.399;replacements.push(root);
-    }
-    if(replacements.length){extra.traverse(o=>{if(o.userData.legacyInteriorFoliage)o.visible=false});replacements.forEach(o=>extra.add(o));}
-  }catch(error){console.warn('Interior foliage unavailable; keeping existing plants',error)}
+  const {cachedAsset}=await assetsReady;
 
   try{
-    const asset=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/tree-small-02.glb',resolve,undefined,reject));
+    const asset=await cachedAsset('360/assets/tree-small-02.glb');
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     // Anchor the trunk foot, not the asymmetric canopy bounding-box centre.
     asset.scene.updateMatrixWorld(true);const trunkPoints=[];
@@ -296,19 +278,11 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       bedPart(0,.155,0,1.25,.05,1.25,soil);
       for(const side of [-1,1]){bedPart(side*.65,.17,0,.09,.09,1.4,stone);bedPart(0,.17,side*.65,1.4,.09,.09,stone)}
     });
+    C.dressRoof=extra=>{
     const roof=C.levels().find(l=>l.kind==='roof');
-    if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);box(x,roof.y+.28,z,.9,.5,.8,stone);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-foot.x*s,-foot.y*s,-foot.z*s);g.add(tree);g.position.set(x,roof.y+.53,z);g.name='CC0 Tree Small 02';extra.add(g)}
+    if(roof)for(const q of [[450,500],[450,700],[450,900],[450,1050]]){if(!C.inPoly(q,roof.poly))continue;const [x,z]=P(...q);const planter=new T.Mesh(cube,stone);planter.position.set(x,roof.y+.28,z);planter.scale.set(.9,.5,.8);planter.castShadow=planter.receiveShadow=true;extra.add(planter);const g=new T.Group(),tree=asset.scene.clone(true),s=1.55/size.y;tree.scale.setScalar(s);tree.position.set(-foot.x*s,-foot.y*s,-foot.z*s);g.add(tree);g.position.set(x,roof.y+.53,z);g.name='CC0 Tree Small 02';extra.add(g)}
+    };
   }catch(error){console.warn('Tree asset unavailable',error)}
-  try{
-    const chair=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/modern-arm-chair/modern-arm-chair.gltf',resolve,undefined,reject));
-    const b=new T.Box3().setFromObject(chair.scene),size=b.getSize(new T.Vector3()),center=b.getCenter(new T.Vector3()),scale=.76/size.x;
-    chair.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;}});
-    for(const fallback of extra.children.slice()){
-      const a=fallback.userData.loungeAnchor;if(!a)continue;
-      for(const dx of [-.47,.47]){const root=new T.Group(),model=chair.scene.clone(true);model.scale.setScalar(scale);model.position.set(-center.x*scale,-b.min.y*scale,-center.z*scale);root.add(model);root.position.set(a.x+dx,a.y,a.z);root.rotation.y=dx<0?.12:-.12;root.name='CC0 lounge armchair';root.userData.illustrativeFurniture=true;extra.add(root)}
-      fallback.visible=false;
-    }
-  }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
   // Omit abstract scale figures from the photoreal view; keep the authored scene intact.
   for(const person of C.R3D.props.children){
     if(!person.isGroup||person.children.length!==2||person.children[0].geometry?.type!=='CylinderGeometry'||person.children[1].geometry?.type!=='SphereGeometry')continue;
@@ -322,7 +296,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   }
   // Reusable authored vehicle meshes, adapted to road headings and passenger-car width.
   try{
-    const car=await new Promise((resolve,reject)=>gltfLoader.load('360/assets/concept-car.glb',resolve,undefined,reject));
+    const car=await cachedAsset('360/assets/concept-car.glb');
     const oldCars=[];C.R3D.props.traverse(o=>{if(o.userData.car)oldCars.push(o)});
     const b=new T.Box3().setFromObject(car.scene),s=b.getSize(new T.Vector3()),c=b.getCenter(new T.Vector3()),scale=4.65/Math.max(s.x,s.z);
     oldCars.forEach((old,i)=>{
@@ -355,7 +329,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const furnitureEdgeAudit={count:0,maxBoundsDelta:0,radiusMetres:.006,textureWidthMetres:1.8,addedTriangles:0};
   function renderGeometry(o,root){
     const source=o.geometry,m=o.material;
-    if(root===extra&&m.userData.illustrativeTimber&&source.parameters?.width){
+    if(root===C.interiorDressing&&m.userData.illustrativeTimber&&source.parameters?.width){
       source.computeBoundingBox();const size=source.boundingBox.getSize(new T.Vector3()),center=source.boundingBox.getCenter(new T.Vector3()),scale=o.getWorldScale(new T.Vector3());
       if(Math.min(scale.x,scale.y,scale.z)>0){
         const physical=size.clone().multiply(scale);if(physical.y>.15||physical.x<.4||physical.z<.3)return source.clone();
@@ -403,7 +377,46 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
       new Set([...parts,...geos]).forEach(g=>g.dispose());
     });
   }
-  masses.forEach(batch);batch(C.bld);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;extra.userData.furnitureEdgeAudit=furnitureEdgeAudit;
+  C.enhanceBuildingDetails=async extra=>{
+  const facadeMetals=new Set();C.bld.traverse(o=>{for(const mat of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])if(mat.metalness>=.6&&!mat.transparent)facadeMetals.add(mat)});
+  for(const mat of facadeMetals){mat.roughnessMap=grain;mat.roughness=.34;mat.userData.satinMetal=true;mat.needsUpdate=true;}
+  for(const [mat,tint] of [[C.R3D.mullM,'#627078'],[C.R3D.mullD,'#56636a']]){mat.color.set(tint).convertSRGBToLinear();mat.roughness=.3;}
+  C.bld.traverse(o=>{if(o.isInstancedMesh&&(o.material===C.R3D.mullM||o.material===C.R3D.mullD))o.userData.roundedCurtainWall=true});
+  // Appearance study: keep every mullion profile and opening in place, but use
+  // a darker satin finish on the narrow vertical curtain-wall members only.
+  const mullionFinishes=new Map();C.bld.updateMatrixWorld(true);
+  C.bld.traverse(o=>{
+    const m=o.material,g=o.geometry;if(!g||!m||Array.isArray(m)||m.metalness!==.85)return;
+    g.computeBoundingBox();const dimensions=g.boundingBox.getSize(new T.Vector3());
+    if(dimensions.y<=1||dimensions.x>=.35||dimensions.z>=.35||o.getWorldPosition(new T.Vector3()).y>=30.6)return;
+    if(!mullionFinishes.has(m)){const finish=m.clone();finish.color.set('#66737a').convertSRGBToLinear();finish.metalness=.72;finish.roughness=.3;finish.userData.satinMetal=true;mullionFinishes.set(m,finish)}
+    o.material=mullionFinishes.get(m);
+  });
+  try{
+    const asset=await cachedAsset('360/assets/interior-foliage.glb');
+    const bounds=new T.Box3().setFromObject(asset.scene),height=bounds.max.y-bounds.min.y;
+    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;o.material.side=T.DoubleSide;if(o.material.alphaTest>0){o.material.alphaTest=.45;o.material.transparent=false;}o.material.needsUpdate=true;}});
+    const replacements=[];
+    for(const [i,anchor] of (extra.userData.interiorPlantAnchors||[]).entries()){
+      const root=new T.Group();root.name='CC0 Interior Foliage';root.userData.interiorPlant={...anchor,sourceHeight:height};
+      const foliage=asset.scene.clone(true);foliage.scale.setScalar(anchor.height/height);root.add(foliage);root.position.set(anchor.x,anchor.y,anchor.z);root.rotation.y=i*2.399;replacements.push(root);
+    }
+    if(replacements.length){extra.traverse(o=>{if(o.userData.legacyInteriorFoliage)o.visible=false});replacements.forEach(o=>extra.add(o));}
+  }catch(error){console.warn('Interior foliage unavailable; keeping existing plants',error)}
+  try{
+    const chair=await cachedAsset('360/assets/modern-arm-chair/modern-arm-chair.gltf');
+    const b=new T.Box3().setFromObject(chair.scene),size=b.getSize(new T.Vector3()),center=b.getCenter(new T.Vector3()),scale=.76/size.x;
+    chair.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;}});
+    for(const fallback of extra.children.slice()){
+      const a=fallback.userData.loungeAnchor;if(!a)continue;
+      for(const dx of [-.47,.47]){const root=new T.Group(),model=chair.scene.clone(true);model.scale.setScalar(scale);model.position.set(-center.x*scale,-b.min.y*scale,-center.z*scale);root.add(model);root.position.set(a.x+dx,a.y,a.z);root.rotation.y=dx<0?.12:-.12;root.name='CC0 lounge armchair';root.userData.illustrativeFurniture=true;extra.add(root)}
+      fallback.visible=false;
+    }
+  }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
+    C.dressRoof?.(extra);batch(C.bld);batch(extra);
+  };
+  await C.enhanceBuildingDetails(C.interiorDressing);
+  masses.forEach(batch);batch(extra);C.bld.userData.edgeFinishAudit=edgeAudit;extra.userData.furnitureEdgeAudit=furnitureEdgeAudit;
   // Conversion to the precision renderer snapshots images: wait for every requested map.
   await Promise.all(pendingTextures);
 };

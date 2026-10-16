@@ -1,6 +1,6 @@
 'use strict';
 const frame=document.getElementById('scene'),status=document.getElementById('status');
-const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=v106-review-6';
+const engine=new URLSearchParams(location.search).get('engine');if(engine!=='realtime'&&navigator.gpu)frame.src='../3d-model.html?lab=360&engine=cinema&model=interactive-1';
 const api=()=>frame.contentWindow?.TOWER360;
 const controls=[...document.querySelectorAll('nav button,.settings button,.settings select')];controls.forEach(e=>e.disabled=true);
 const reference=document.getElementById('reference'),label=document.getElementById('reference-label');
@@ -18,3 +18,7 @@ let ready=false,seconds=0;
 setInterval(()=>{const a=api();if(!a){if(++seconds>30)status.textContent='모델 로딩 지연 · WebGL 지원 및 새로고침을 확인해 주세요';return}if(!ready){controls.forEach(e=>e.disabled=false);document.getElementById('quality').value=a.telemetry().quality;ready=true}const s=a.telemetry();status.textContent=s.environment.includes('정밀')?s.environment:`${s.fps} FPS · ${s.environment}`},1000);
 
 document.getElementById('context').onclick=e=>{const show=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',show);api()?.context(show)};
+
+document.getElementById('render-still').onclick=()=>{api()?.spin(false);spin.setAttribute('aria-pressed','false');api()?.requestPrecision()};
+document.getElementById('cancel-still').onclick=()=>api()?.cancelPrecision();
+setInterval(()=>{const mode=frame.contentWindow?.TOWER_CINEMA?.status().mode;document.getElementById('render-still').disabled=!mode||mode==='preparing'||mode==='rendering'||mode==='complete';document.getElementById('cancel-still').hidden=!mode||mode==='interactive'},500);

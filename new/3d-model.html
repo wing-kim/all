@@ -7177,7 +7177,7 @@ function makeComposer(){if(R3D.composer||!THREE.EffectComposer)return;const w=ho
     fragmentShader:'uniform sampler2D tDiffuse;uniform float vig,sat,con;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,sat);c.rgb=(c.rgb-.5)*con+.5;vec2 d=vUv-.5;c.rgb*=1.0-vig*dot(d,d)*1.6;gl_FragColor=vec4(clamp(c.rgb,0.,1.),c.a);}'});
   c.addPass(R3D.grade);
   R3D.fxaa=new THREE.ShaderPass(THREE.FXAAShader);c.addPass(R3D.fxaa);R3D.composer=c;resizeR()}
-function updateReflections(){if(typeof HQ!=='undefined')hqMark();if(!R3D.on)return;
+function updateReflections(){if(window.TOWER_MODERN_ACTIVE)return;if(typeof HQ!=='undefined')hqMark();if(!R3D.on)return;
   if(!R3D.cube){R3D.cube=new THREE.WebGLCubeRenderTarget(512,{format:THREE.RGBAFormat,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});R3D.cubeCam=new THREE.CubeCamera(0.5,1500,R3D.cube);scene.add(R3D.cubeCam)}
   const up=LEVELS.find(l=>l.kind==='upper'),[cx,cz]=P(...centroid(up.poly));R3D.cubeCam.position.set(cx,up.y+8,cz);
   const vis=[bld.visible,city.visible,ovl.visible];bld.visible=false;ovl.visible=false;city.visible=document.getElementById('t-city').checked;
@@ -7611,8 +7611,8 @@ if(['360','verify','review'].includes(new URLSearchParams(location.search).get('
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=review-6';document.head.appendChild(script);}
-  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=review-6';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=interactive-1';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=interactive-1';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){

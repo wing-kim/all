@@ -1,43 +1,26 @@
+import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { copyGeometry } from './geometry-copy.js';
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix, saturation, uniform, viewportOpaqueMipTexture } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation, uniform } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
 import { RectAreaLightTexturesLib } from 'three/addons/lights/RectAreaLightTexturesLib.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
-import { WebGPUPathTracer, OIDNDenoiser } from 'three-gpu-pathtracer/webgpu';
-import { initUNetFromURL } from 'oidn-web';
-// For thin clear glazing, guide the denoiser with the first opaque surface behind it.
-// Opaque-glass guides flatten every interior edge to the curtain wall and smear furniture.
-// This only affects auxiliary albedo/normal buffers; beauty rays still see all glazing.
-class StableGuideDenoiser extends OIDNDenoiser {
- _copyOutputToTexture(output,width,height){super._copyOutputToTexture(output,width,height);if(this._rawTexture)this._rawTexture.label=`tower-denoised-${width}x${height}`;}
- _renderAuxiliaryBuffers(width,height){
-  const materials=new Map(),visibility=new Map();
-  this.scene.traverse(o=>{
-   const list=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];
-   if(list.length&&list.every(m=>(materials.get(m)??m.transmission)>.9&&m.thickness===0)){visibility.set(o,o.visible);o.visible=false;}
-   for(const m of list)if(m.transmission>0&&!materials.has(m)){materials.set(m,m.transmission);m.transmission=0;m.needsUpdate=true;}
-  });
-  try{return super._renderAuxiliaryBuffers(width,height)}finally{
-   for(const [m,value] of materials){m.transmission=value;m.needsUpdate=true;}
-   for(const [o,visible] of visibility)o.visible=visible;
-  }
- }
-}
 export async function start(C){
+ const bootAt=performance.now();let firstFrameMs=null,lastUpdateMs=null,frameTimes=[],lastDrawAt=0,frameIntervals=[];
  const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  T.RectAreaLightNode.setLTC(RectAreaLightTexturesLib.init());
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(C.camera.fov,C.camera.aspect,2,1800);
  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
  if(!adapter)throw new Error('WebGPU adapter unavailable');
  const limit=512*1024*1024;
- const renderer=new T.WebGPURenderer({antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();
- let gpuError=null;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
- renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed')gpuError=new Error(info.message||'GPU device lost')});
+ const renderer=new T.WebGPURenderer({antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(1);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();
+ let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
+ renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
  const materials=new Map(),geometries=new Map(),textures=new Map();
  function texture(t){if(!t)return null;if(textures.has(t))return textures.get(t);const n=new T.Texture(t.image);n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.repeat.copy(t.repeat);n.offset.copy(t.offset);n.rotation=t.rotation;n.flipY=t.flipY;n.colorSpace=t.encoding===3001?T.SRGBColorSpace:T.NoColorSpace;n.anisotropy=4;n.needsUpdate=true;textures.set(t,n);return n}
@@ -58,9 +41,10 @@ export async function start(C){
  }
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
- const roundedProfiles=new Map(),glazingEdges=collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);
- C.scene.traverse(o=>{
-  for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box)return;
+ const roundedProfiles=new Map();
+ function copyRoot(root){const glazingEdges=collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);root.updateWorldMatrix(true,true);
+ root.traverse(o=>{
+  for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
   if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
   let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
@@ -70,8 +54,10 @@ export async function start(C){
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld)n.userData.primary=true;}scene.add(n)}
- });
+  for(const n of copies){for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}if(n.userData.contextKind)n.visible=C[n.userData.contextKind].visible;scene.add(n)}
+ });}
+ copyRoot(C.scene);
+ const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;scene.background=hdr;scene.environmentIntensity=.8;scene.backgroundIntensity=1.55;
  const daylightColor=()=>C.R3D.time==='sunset'?C.sun.color.getHex():C.R3D.time==='am'?0xfff4e6:0xfff3dd;
  const sun=new T.DirectionalLight(daylightColor(),C.R3D.time==='sunset'?2:1.2);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
@@ -91,7 +77,24 @@ export async function start(C){
  const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);
  try {probe.update(renderer,scene);for(const m of materials.values())if(m.transmission>0){m.envMap=probeTarget.texture;m.envMapIntensity=1;m.needsUpdate=true;}}
  finally {primary.forEach(o=>o.visible=true);}
- const tracer=new WebGPUPathTracer(renderer);tracer.maxBounces=8;tracer.maxTransparentBounces=12;tracer.frameBudget=150000;tracer.lowResScale=.25;tracer.renderDelay=350;tracer.maxSamples=compactTouch?32:64;tracer.renderScale=compactTouch?.8:1;addInteriorLighting({scene,tracer},C);tracer.setScene(scene,camera);tracer.setDenoiser(new StableGuideDenoiser({initUNetFromURL,auxWeightsUrl:compactTouch?"360/assets/rt_hdr_alb_nrm_small.tza":"360/assets/rt_hdr_alb_nrm.tza",maxTileSize:256}));
+ let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false;
+ addInteriorLighting({scene},C);
+ async function requestPrecision(){
+  if(precisionLoading||precisionRequested)return;
+  const version=++requestVersion;precisionLoading=true;precisionError=null;
+  try{
+   const {createTracer}=await import('./precision.js');
+   if(version!==requestVersion||stopped)return;
+   // Raster batching reduces draw calls; tracing needs the original shared geometries.
+   const traceScene=createPrecisionScene(T,scene,batchSources);
+   if(!tracer)tracer=createTracer(renderer,traceScene,camera,compactTouch);else tracer.setScene(traceScene,camera);
+   tracer.maxSamples=previewHigh?64:32;tracer.renderScale=previewHigh?1:.8;
+   precisionRequested=true;invalidatePresentation();
+  }catch(error){precisionError=String(error.message||error);console.warn('Precision request failed',error)}
+  finally{if(version===requestVersion)precisionLoading=false;}
+ }
+ function cancelPrecision(){requestVersion++;precisionRequested=false;precisionLoading=false;tracer?.reset();invalidatePresentation();}
+
  const previewPass=pass(scene,camera,{samples:0}),previewAO=ao(previewPass.getTextureNode('depth'),null,camera);
  previewPass.renderTarget.texture.name='tower-preview-color';
  previewAO.resolutionScale=.5;previewAO.radius.value=1;previewAO.thickness.value=.4;
@@ -107,28 +110,23 @@ export async function start(C){
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
  let previewHigh=!compactTouch;
- const previewGlass=[...materials.values()].filter(m=>m.transmission>0);
- const previewGlazing=new Map(previewGlass.map(m=>{const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.48:.16;p.color.set(m.userData.glazingRole==='facade'?'#667e8b':'#c1d0d5');p.depthWrite=false;return [m,p]}));
- const previewBindings=[];
- scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
- const transmissionViewport=viewportOpaqueMipTexture(),previewSize=new T.Vector2();let transmissionRevision=0;
- function prepareTransmissionViewport(){
-  renderer.getDrawingBufferSize(previewSize);previewPass.setSize(previewSize.x,previewSize.y);
-  const target=previewPass.renderTarget,t=transmissionViewport.getTextureForReference(target);
-  t.name='tower-transmission-front';
-  if(t.image.width!==target.width||t.image.height!==target.height){
-   t.dispose();t.image.width=target.width;t.image.height=target.height;t.type=target.texture.type;t.generateMipmaps=true;t.needsUpdate=true;
-   // Allocate before encoding the scene; resizing during transmission otherwise invalidates bindings.
-   renderer.initTexture(t);transmissionRevision++;for(const m of previewGlass){m.customProgramCacheKey=()=>`tower-transmission-${transmissionRevision}`;m.needsUpdate=true;}
-  }
+ let previewGlass=[];
+ const previewGlazing=new Map(),previewBindings=[];
+ function refreshGlazing(){
+  previewGlazing.forEach(m=>m.dispose());previewGlazing.clear();previewBindings.length=0;
+  previewGlass=[...materials.values()].filter(m=>m.transmission>0);
+  for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.FrontSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;previewGlazing.set(m,p);}
+  scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
  }
+ refreshGlazing();
  function renderPreview(moving=false){
-  prepareTransmissionViewport();
+  // Alpha glazing needs no transmission framebuffer allocation.
+
   // Moving raster frames use an alpha approximation of thin glass. Screen-space
   // refraction through overlapping facade faces otherwise obscures the interiors.
   // Restore every original material before the path tracer or guide pass runs.
   for(const b of previewBindings)b.object.material=b.replacement;
-  try{if(previewHigh&&!moving)previewPipeline.render();else balancedPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
+  try{if(previewHigh)previewPipeline.render();else balancedPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
  }
  let presented=false,previewCached=false;
  // While the camera is still, keep a single exact preview frame above the tracer.
@@ -143,14 +141,36 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- window.TOWER_CINEMA={scene,camera,renderer,tracer,
-context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData.context)o.visible=show});tracer.setScene(scene,camera)},quality:value=>{invalidatePresentation();previewHigh=value==='high';tracer.maxSamples=value==='high'?64:32;tracer.renderScale=value==='high'?1:.8;tracer.reset()},light:()=>{invalidatePresentation();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();tracer.updateLights();tracer.updateEnvironment()},background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;invalidatePresentation();tracer.updateEnvironment()},whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);invalidatePresentation()},status:()=>({samples:tracer._lastSampleCounts,objects:scene.children.length,materials:materials.size}),stop:()=>{window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
- function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer.updateCamera()}
-  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){invalidatePresentation();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer.updateCamera()}
+ function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene)}finally{primary.forEach(o=>o.visible=true)}}
+ function updateBuilding(){
+  const began=performance.now();cancelPrecision();
+  scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>scene.remove(o));
+  // Keep neighbourhood buffers/textures, release only resources no longer referenced.
+  const usedG=new Set(),usedM=new Set();for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
+  for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
+  for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
+  roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
+  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);refreshGlazing();
+  const usedTextures=new Set();for(const m of materials.values())for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
+  for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
+  renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
+ }
+ renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
+ window.TOWER_CINEMA={scene,camera,renderer,get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
+ context:display=>{cancelPrecision();scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});refreshProbe();renderer.shadowMap.needsUpdate=true},
+ quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?1:.8);renderer.setSize(host.clientWidth,host.clientHeight)},
+ light:()=>{cancelPrecision();sun.position.copy(C.sun.position);sun.color.setHex(daylightColor());sun.intensity=C.R3D.time==='sunset'?2:1.2;alignDaylight();refreshProbe();renderer.shadowMap.needsUpdate=true},
+ background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
+ whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
+ status:()=>({mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameTimes.length?frameTimes.reduce((a,b)=>a+b,0)/frameTimes.length:null}),
+ stop:()=>{stopped=true;cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused)return;const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();tracer?.updateCamera()}
+  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray()).map(v=>v.toFixed(5)).join(',');if(next!==signature){cancelPrecision();lastMotion=performance.now();signature=next;camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.updateMatrixWorld();tracer?.updateCamera()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
     if(gpuError)throw gpuError;
+    if(!precisionRequested){if(!previewCached){const began=performance.now();if(lastDrawAt&&began-lastDrawAt<200){frameIntervals.push(began-lastDrawAt);if(frameIntervals.length>120)frameIntervals.shift();}lastDrawAt=began;renderPreview();frameTimes.push(performance.now()-began);if(frameTimes.length>120)frameTimes.shift();if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}return;}
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200)tracer.renderSample();
     if(performance.now()-lastMotion<=200)renderPreview(true);
@@ -160,18 +180,18 @@ context:show=>{invalidatePresentation();scene.children.forEach(o=>{if(o.userData
       for(const b of previewBindings)b.object.material=b.replacement;
       try{precisionPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
       presented=true;}
-  }catch(error){console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA_FAILURE_REASON=String(error?.message||error);window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
+  }catch(error){if(!deviceLost&&(tracer||precisionRequested||precisionLoading)){precisionError=String(error?.message||error);tracer?.dispose();tracer=null;gpuError=null;cancelPrecision();console.warn('Precision stopped; interactive renderer retained',precisionError);return;}console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA_FAILURE_REASON=String(error?.message||error);window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
 
  }frame();
- const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}tracer.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;
+ const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}if(precisionRequested)tracer?.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;
 }
-export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer.updateEnvironment();}
+export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer?.updateEnvironment();}
 export function addInteriorLighting(state,C){
  for(const l of C.levels().filter(l=>l.kind==='upper'||l.kind==='ground')){
   // Distribute soft interior light across the glazed frontage, rather than
   // leaving one bright central patch per floor. Fixture positions remain inside the plan.
   const positions=[[-9.5,-7],[-9.5,0],[-9.5,6]].filter(([x,z])=>C.inPoly([x*41.6+914,z*41.6+770],l.poly));
-  for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?60:45)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);state.scene.add(light);}
+  for(const [x,z] of positions){const light=new T.RectAreaLight(0xffe8ce,(l.kind==='ground'?60:45)/positions.length,2.2,.18);light.position.set(x,l.y+l.h-.45,z);light.lookAt(x,l.y,z);light.userData.interiorLight=true;state.scene.add(light);}
  }
- state.tracer.updateLights();
+ state.tracer?.updateLights();
 }

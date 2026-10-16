@@ -1,0 +1,129 @@
+{
+  "initial": [
+    {
+      "kind": "initial",
+      "ms": 15103.399999976158
+    },
+    {
+      "kind": "switch",
+      "ms": 315.19999998807907,
+      "state": {
+        "era": "new",
+        "scheme": "mech",
+        "floors": 6,
+        "h1": 5.4,
+        "ht": 4.2,
+        "frame": true,
+        "g1": "skin",
+        "upSt": false,
+        "skin": false,
+        "use7": false,
+        "style": "glass",
+        "form": "none",
+        "win": "base",
+        "design": "stack",
+        "cgl": "none",
+        "finC": null,
+        "dsgC": null,
+        "formC": null,
+        "a4park": false,
+        "mode": "preset",
+        "cfin": "glass",
+        "cform": "none",
+        "pdesign": "stack",
+        "dl": [
+          "stack"
+        ],
+        "skinD": null,
+        "formD": null,
+        "skinOn": true
+      }
+    },
+    {
+      "kind": "switch",
+      "ms": 214.60000002384186,
+      "state": {
+        "era": "new",
+        "scheme": "mech",
+        "floors": 6,
+        "h1": 5.4,
+        "ht": 4.2,
+        "frame": true,
+        "g1": "skin",
+        "upSt": false,
+        "skin": false,
+        "use7": false,
+        "style": "glass",
+        "form": "none",
+        "win": "base",
+        "design": "arch",
+        "cgl": "none",
+        "finC": null,
+        "dsgC": null,
+        "formC": null,
+        "a4park": false,
+        "mode": "preset",
+        "cfin": "glass",
+        "cform": "none",
+        "pdesign": "arch",
+        "dl": [
+          "arch"
+        ],
+        "skinD": null,
+        "formD": null,
+        "skinOn": true
+      }
+    }
+  ],
+  "status": {
+    "mode": "interactive",
+    "error": null,
+    "objects": 1396,
+    "batchedObjects": 1347,
+    "batchBoundsDelta": 0,
+    "materials": 1624,
+    "firstFrameMs": 4699.199999988079,
+    "lastUpdateMs": null,
+    "frameIntervalMs": null,
+    "frameMs": 693.0999999940395
+  },
+  "navigation": 1792113522910.5,
+  "precision": {
+    "mode": "complete",
+    "error": null,
+    "samples": {
+      "min": 64,
+      "max": 64,
+      "avg": 64,
+      "samplesPerSecond": 1.3797653105445642
+    },
+    "objects": 1310,
+    "batchedObjects": 1347,
+    "batchBoundsDelta": 0,
+    "materials": 438,
+    "firstFrameMs": 4699.199999988079,
+    "lastUpdateMs": 10.199999988079071,
+    "frameIntervalMs": 96.70000004768372,
+    "frameMs": 677.1166666547457
+  },
+  "drag": {
+    "mode": "interactive",
+    "error": null,
+    "samples": {
+      "min": 0,
+      "max": 0,
+      "avg": 0,
+      "samplesPerSecond": 0
+    },
+    "objects": 1310,
+    "batchedObjects": 1347,
+    "batchBoundsDelta": 0,
+    "materials": 438,
+    "firstFrameMs": 4699.199999988079,
+    "lastUpdateMs": 10.199999988079071,
+    "frameIntervalMs": 33.60270270302489,
+    "frameMs": 115.44186046788859
+  },
+  "finalStateEqual": true,
+  "currentRunConsoleErrors": []
+}

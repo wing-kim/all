@@ -3,7 +3,8 @@
   'use strict';
   const C=window.TOWER_LAB_CONTEXT;
   const {THREE:T,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,P,inPoly}=C;
-  const load=src=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});
+  const scripts=new Map();
+  const load=src=>{if(scripts.has(src))return scripts.get(src);const promise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});scripts.set(src,promise);return promise;};
   const style=document.createElement('style');style.textContent='.panel,.views,.tools,.compass,.hint,.labels,.hqtag{display:none!important}.viewer{width:100%}';document.head.appendChild(style);
   let initial={};
   try{initial=JSON.parse(new URLSearchParams(location.hash.slice(1)).get('config')||'{}')}catch(error){console.warn('Invalid review configuration',error)}
@@ -11,7 +12,7 @@
   else state.scheme='alt4';
   if(['am','pm','sunset'].includes(initial.time))R3D.time=initial.time;
   if(initial.season)R3D.season=initial.season;
-  C.build();C.setRender(true);C.hideGuides();
+  C.setRender(true);C.hideGuides();
   window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
   if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
   // Remove the drafting north marker only in the opt-in continuous viewer.
@@ -46,7 +47,9 @@
   const cancel=()=>{flight=null;C.cancel()};
   controls.addEventListener('start',cancel);
   R3D.hq=false;HQ.on=false;
-  const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);
+  T.Cache.enabled=true;
+  async function dressBuilding(){
+  const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
   const material=(color,roughness=.7)=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness});
   const timber=material('#b39570'),fabric=material('#d5c9b5'),dark=material('#373b3c'),pot=material('#aaa394');
@@ -168,6 +171,11 @@
   extra.userData.interiorPlantAnchors=[];
   C.levels().filter(l=>l.kind==='upper').forEach(l=>{if(!Array.from({length:8},(_,i)=>[445+Math.cos(i*Math.PI/4)*27,480+Math.sin(i*Math.PI/4)*27]).every(q=>inPoly(q,l.poly)))return;const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1);extra.userData.interiorPlantAnchors.push({x,y:l.y+.495,z,height:1.35,floor:l.key,poly:l.poly})});
   leaves.count=n;leaves.instanceMatrix.needsUpdate=true;leaves.userData.legacyInteriorFoliage=true;extra.add(leaves);
+  return extra;
+  }
+  let interiors=await dressBuilding();
+  const extra=new T.Group();extra.name='persistent-neighbourhood';scene.add(extra);
+  let seed=7231;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
   // Fine surface relief, rather than painting lighting into albedo.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
   for(let i=0;i<pixels.data.length;i+=4){const v=115+random()*30;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=v;pixels.data[i+3]=255}ctx.putImageData(pixels,0,0);
@@ -220,16 +228,35 @@
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
     view,quality:setQuality,
+    requestPrecision:()=>window.TOWER_CINEMA?.requestPrecision(),
+    cancelPrecision:()=>window.TOWER_CINEMA?.cancelPrecision(),
+    applyConfig:async config=>{
+      if(!window.TOWER_CINEMA)return false;
+      const before=performance.now();window.TOWER_CINEMA.cancelPrecision();
+      for(const key of Object.keys(state))if(Object.prototype.hasOwnProperty.call(config.state,key))state[key]=config.state[key];
+      // Preserve the neighbourhood and GPU renderer. Only rebuild the authored building.
+      C.build();C.hideGuides();finishLighting();
+      const old=interiors;scene.remove(old);interiors=await dressBuilding();
+      await C.enhanceBuildingDetails?.(interiors);
+      window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
+      window.TOWER_CINEMA.updateBuilding();
+      if(config.display&&JSON.stringify(config.display)!==JSON.stringify(initial.display)){C.city.visible=config.display.city!==false;C.ctx.visible=config.display.ctx!==false;window.TOWER_CINEMA.context(config.display);initial.display={...config.display};}
+      const geometries=new Set(),materials=new Set();old.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m)});
+      // Imported templates share resources with the new dressing; never dispose those.
+      interiors.traverse(o=>{geometries.delete(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.delete(m)});
+      geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
+      window.TOWER_LAST_SWITCH_MS=performance.now()-before;return true;
+    },
     pose:(position,target)=>{flight=null;C.cancel();controls.minDistance=1;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
-    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?'정밀 광선 추적 · '+Math.round(window.TOWER_CINEMA.tracer._lastSampleCounts.avg)+' 샘플'+(window.TOWER_CINEMA.tracer._denoiser?.complete?' · 노이즈 제거 완료':''):window.TOWER_CINEMA_FAILURE?'정밀 렌더 중단 · 실시간 보기로 전환':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');
       const model=new T.Group(),materials=[],geometries=[],cache=new Map();
-      const sources=scope==='scene'?[bld,C.city,C.site,C.ctx,extra,R3D.street,R3D.props]:[bld];
+      const sources=scope==='scene'?[bld,C.city,C.site,C.ctx,extra,interiors,R3D.street,R3D.props]:[bld];
       sources.forEach(source=>model.add(source.clone(true)));
       model.traverse(o=>{o.userData={};if(!o.material)return;
         const convert=m=>{
@@ -251,10 +278,15 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=review-6');
+  await load('360/environment.js?v=interactive-1');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
+  if(new URLSearchParams(location.search).get('engine')==='cinema'){
+    environmentStatus='실시간 재질 준비 중';
+    try{const modern=await import('./modern.js?v=interactive-1');await modern.start(C);return;}
+    catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
+  }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
     const generator=new T.PMREMGenerator(renderer);const target=generator.fromEquirectangular(hdr);env=target.texture;hdr.dispose();generator.dispose();environmentStatus='HDRI 적용 · 현장 촬영 아님';finishLighting();
     skyTexture=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/clear-noon-sky_2k.hdr',resolve,undefined,reject));
@@ -266,6 +298,6 @@
     const pmrem=new T.PMREMGenerator(renderer);env=pmrem.fromCubemap(cube.texture).texture;pmrem.dispose();cube.dispose();scene.remove(probe);
     bld.traverse(o=>{if(o.material&&!Array.isArray(o.material)&&o.material.envMap){o.material.envMap=env;o.material.envMapIntensity=.85;o.material.needsUpdate=true}});
     finishLighting();
-    if(new URLSearchParams(location.search).get('engine')==='cinema'){environmentStatus='정밀 조명 준비 중';try{const modern=await import('./modern.js?v=review-6');await modern.start(C)}catch(error){environmentStatus='정밀 렌더러 미지원 · 실시간 화면';console.warn(environmentStatus,error)}}
+
   }catch(e){environmentStatus='HDRI 실패 · 기존 하늘 조명 사용';console.warn(environmentStatus,e)}
 })();
