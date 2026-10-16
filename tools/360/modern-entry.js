@@ -9,6 +9,7 @@ import { copyGeometry } from './geometry-copy.js';
 import { summarizeSamples } from './performance-stats.js';
 import { createSourceSky } from './sky-background.js';
 import { createCafeAmbientStudy } from './cafe-ambient.js';
+import { bindSourceVisibility, sourceVisible, syncCopiedVisibility } from './source-visibility.js';
 import * as T from 'three/webgpu';
 import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
@@ -34,7 +35,7 @@ export async function start(C){
  if(!adapter)throw new Error('WebGPU adapter unavailable');
  timings.adapterMs=performance.now()-bootAt;
  const limit=512*1024*1024;
- const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(compactTouch?1:1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
+ const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(1);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
  renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
@@ -61,7 +62,8 @@ export async function start(C){
  const roundedProfiles=new Map();
  function copyRoot(root){const glazingEdges=collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);root.updateWorldMatrix(true,true);
  root.traverse(o=>{
-  for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
+  let building=false;for(let p=o;p;p=p.parent)if(p===C.bld)building=true;
+  if(!building)for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
   if(!o.isMesh||o===C.R3D.sky||o.material?.isShaderMaterial)return;
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
   let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
@@ -71,8 +73,9 @@ export async function start(C){
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}if(n.userData.contextKind)n.visible=C[n.userData.contextKind].visible;scene.add(n)}
+  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
  });}
+ function syncSourceVisibility(){const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed}
  copyRoot(C.scene);
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  timings.sceneCopyMs=performance.now()-bootAt;
@@ -99,15 +102,16 @@ export async function start(C){
  // Path tracing continues to use geometric reflections and the original lighting HDR.
  const probeTarget=new T.CubeRenderTarget(256,{type:T.HalfFloatType});
  const probe=new T.CubeCamera(.5,1500,probeTarget);probe.position.set(-3,18,0);
- const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);
+ const primary=scene.children.filter(o=>o.userData.primary),primaryVisibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);
  try {probe.update(renderer,scene);for(const m of materials.values())if(m.transmission>0){m.envMap=probeTarget.texture;m.envMapIntensity=1;m.needsUpdate=true;}}
- finally {primary.forEach(o=>o.visible=true);}
+ finally {primary.forEach((o,i)=>o.visible=primaryVisibility[i]);}
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false,lightProbeTimer=null;
  addInteriorLighting({scene},C);
  const ambientStudy=await createCafeAmbientStudy(T,scene,C);
+ syncSourceVisibility();
  async function requestPrecision(){
-  if(precisionLoading||precisionRequested)return;
+  if(precisionLoading||precisionRequested||C.dollMode)return;
   ambientStudy.precision(true);
   counts.precisionRequests++;lastDrawAt=0;
   const prepareAt=performance.now();
@@ -143,7 +147,7 @@ export async function start(C){
  const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=fxaa(atmospheric(previewPass));
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
- let previewHigh=!compactTouch;
+ let previewHigh=false;
  let previewGlass=[];
  const previewGlazing=new Map(),previewBindings=[];
  function refreshGlazing(){
@@ -182,7 +186,7 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach(o=>o.visible=true)}}
+ function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary),visibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach((o,i)=>o.visible=visibility[i])}}
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
   ambientStudy.clear();
@@ -192,7 +196,7 @@ export async function start(C){
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
-  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);ambientStudy.refresh();refreshGlazing();
+  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);ambientStudy.refresh();syncSourceVisibility();refreshGlazing();
   const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
   renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
@@ -200,12 +204,12 @@ export async function start(C){
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  window.TOWER_CINEMA={scene,camera,renderer,get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
- context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});refreshProbe();renderer.shadowMap.needsUpdate=true},
+ context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
  light:daylight=>{cancelPrecision();alignDaylight(daylight);ambientStudy.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
-  resetPerformance,
+  resetPerformance,syncSourceVisibility,
   status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}

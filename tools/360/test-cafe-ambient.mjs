@@ -51,7 +51,7 @@ function recoveryFixture(night,mismatch=false){
   ['floor',.07,[[0,.07,0],[0,.07,1],[1,.07,0]]],
   ['ceiling',5.02,[[0,5.02,0],[1,5.02,0],[0,5.02,1]]]])
   studyManifest.receiverGeometry[name]={triangleKeys:[triangleKey(vertices)],atlasBoundsXY:[0,-1,1,0],runtimeImage:name+'.png'};
- const context={state:mismatch?{...state,floors:7}:state,interiorDressing:{userData:{cafe:{floor:.07,ceiling:5.02}}},reviewDaylight:{night}};
+ const context={state:mismatch?{...state,floors:7}:state,interiorDressing:{userData:{cafe:{floor:.07,ceiling:5.02}}},city:{visible:true},ctx:{visible:true},reviewDaylight:{night}};
  return {scene,context,studyManifest,state};
 }
 const fakeThree={...T,TextureLoader:class{async loadAsync(){return new T.Texture()}}};
@@ -65,6 +65,12 @@ try{
   assert.equal(study.status().reason,night?'night':'source-state-mismatch');
   context.state=state;context.reviewDaylight={night:false};study.refresh();study.light(context.reviewDaylight);
   assert.equal(study.status().enabled,true,'matching daytime can recover without reloading assets');
+  context.dollMode=true;study.light(context.reviewDaylight);
+  assert.equal(study.status().reason,'dollhouse');assert.equal(study.status().enabled,false);
+  context.dollMode=false;context.ctx.visible=false;study.light(context.reviewDaylight);
+  assert.equal(study.status().reason,'context-hidden');assert.equal(study.status().enabled,false);
+  context.ctx.visible=true;study.light(context.reviewDaylight);
+  assert.equal(study.status().enabled,true,'restored spatial context can re-enable the study');
   study.dispose();
  }
  const failed=recoveryFixture(false);

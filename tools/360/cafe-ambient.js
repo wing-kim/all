@@ -1,5 +1,6 @@
 // Offline irradiance study for the exact 1F floor and ceiling source triangles.
 // The original scene and default renderer path are never changed.
+import { bindSourceVisibility } from './source-visibility.js';
 export const stableJSON=value=>JSON.stringify(value,(_,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.keys(item).sort().map(key=>[key,item[key]])):item);
 export function validateAmbientSource(manifest,state,cafe,daylight){
  if(stableJSON(state)!==stableJSON(manifest.sourceState))return 'source-state-mismatch';
@@ -17,7 +18,7 @@ export async function createCafeAmbientStudy(T,scene,C){
  const report=()=>({requested,valid,enabled,reason,receivers:bindings.length,loadMs,sourceKey:manifest?.sourceSha256||null});
  function setLights(){scene.children.filter(o=>o.userData.cafeAmbientFallback).forEach(o=>o.visible=!enabled)}
  function setDaylight(daylight){
-  const invalid=manifest?validateAmbientSource(manifest,C.state,C.interiorDressing?.userData.cafe,daylight):reason;
+  const invalid=manifest?(C.dollMode?'dollhouse':!C.city?.visible||!C.ctx?.visible?'context-hidden':validateAmbientSource(manifest,C.state,C.interiorDressing?.userData.cafe,daylight)):reason;
   enabled=valid&&!invalid&&!precisionActive;
   reason=invalid||(!valid?reason:precisionActive?'precision':'active');
   for(const binding of bindings)binding.receiver.material=enabled?binding.baked:binding.original;
@@ -129,6 +130,7 @@ function splitReceiver(T,scene,plan,target){
  // Three's PhysicalLightingModel treats lightMap RGB as irradiance before albedo/PI.
  const baked=original.clone();baked.lightMap=plan.map;baked.lightMapIntensity=Math.PI;baked.envMapIntensity=0;baked.aoMap=null;baked.needsUpdate=true;
  const receiver=new T.Mesh(receiverGeometry,original);receiver.matrix.copy(object.matrix);receiver.matrixAutoUpdate=false;receiver.castShadow=object.castShadow;receiver.receiveShadow=object.receiveShadow;receiver.userData={...object.userData,ambientReceiver:true};
+ if(object.sourceVisibilityObject)bindSourceVisibility(receiver,object.sourceVisibilityObject);
  object.geometry=remainder;scene.add(receiver);
  return {object,receiver,original,baked,sourceGeometry,remainder};
 }

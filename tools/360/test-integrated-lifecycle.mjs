@@ -72,11 +72,15 @@ assert.equal(review.frame,daylightFrame,'floor selection uses the existing rende
 const click=selector=>listeners.get('click')({target:{closest:query=>query.includes(selector)?{}:null},preventDefault(){},stopImmediatePropagation(){}});
 sourcePose={camera:[8,11,13],target:[8,11,12],fov:45,spin:false,doll:false};
 click('[data-c]');frames.splice(0).forEach(fn=>fn());
-assert.deepEqual(floorCalls.at(-1),['2F',sourcePose.camera,sourcePose.target,45],'authored interior corner pose and field of view reach the child');
+assert.deepEqual(floorCalls.at(-1).slice(0,4),['2F',sourcePose.camera,sourcePose.target,45],'authored interior corner pose and field of view reach the child');
 sourcePose={...sourcePose,doll:true};click('#coreTop');interval();
 const status=ids.get('viewer').children.find(child=>child.id==='precision-status');
-assert.match(status.textContent,/단면 절단은 실사 3D 미연결/,'unsupported section clipping stays visible in the status');
-now+=200;interval();assert.match(status.textContent,/코어 상부 시점/,'section warning survives status refresh');
+assert.equal(floorCalls.at(-1)[4],true,'core top enters the original dollhouse visibility mode');
+assert.match(status.textContent,/원본 층별 가시성 · 절단면 미지원/,'dollhouse visibility does not claim a geometric section cut');
+sourcePose={camera:[3,2,4],target:[3,2,3.7],fov:72,spin:false,doll:false};click('#coreHall');interval();
+assert.equal(floorCalls.at(-1)[4],false,'walking back out clears dollhouse visibility');
+selectedFloor='3F';interval();sourcePose={...sourcePose,doll:true};click('#dollBtn');interval();
+assert.equal(floorCalls.at(-1)[0],'3F');assert.equal(floorCalls.at(-1)[4],true,'another floor can enter dollhouse without rebuilding');
 let originalHomeClicks=0;
 ids.get('v-corner').onclick=()=>{originalHomeClicks++;C.interiorState=()=>({on:false,key:'2F',look:false})};
 childListeners.get('tower-navigation-home')();interval();

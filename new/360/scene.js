@@ -45,7 +45,7 @@
     controls.maxPolarAngle=Math.acos(T.MathUtils.clamp((1.5-controls.target.y)/Math.max(.001,radius),-1,1));
   }
   controls.addEventListener('change',constrainCameraHeight);constrainCameraHeight();
-  let flight=null;
+  let flight=null,lastVisibilityKey='';
   const cancel=()=>{flight=null;C.cancel()};
   controls.addEventListener('start',()=>{cancel();dispatchEvent(new Event('tower-navigation-start'));window.TOWER_CINEMA?.cancelPrecision()});
   const inputCanvas=renderer.domElement;inputCanvas.tabIndex=0;inputCanvas.setAttribute('aria-label','건물 360도 탐색. 휠 확대 축소, WASD 이동, Home 전체 보기');
@@ -54,9 +54,20 @@
   function navigateKey(event){
     if(event.target?.closest?.('input,textarea,select,[contenteditable=true]')||event.ctrlKey||event.metaKey||event.altKey)return;
     const code=event.code;
-    if(!['Home','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;
+    if(!['Home','Enter','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;
     event.preventDefault();cancel();dispatchEvent(new Event('tower-navigation-start'));controls.autoRotate=false;window.TOWER_CINEMA?.cancelPrecision();
     if(code==='Home'){dispatchEvent(new Event('tower-navigation-home'));view('aerial');return;}
+    if(code==='Enter'){if(C.dollMode)dispatchEvent(new Event('tower-navigation-walk'));return;}
+    if(C.dollMode){
+      const forward=camera.getWorldDirection(new T.Vector3());forward.y=0;forward.normalize();
+      const right=new T.Vector3(-forward.z,0,forward.x),delta=new T.Vector3();
+      if(['ArrowLeft','KeyQ'].includes(code))delta.copy(right).negate();
+      if(['ArrowRight','KeyE'].includes(code))delta.copy(right);
+      if(['KeyW','ArrowUp'].includes(code))delta.copy(forward);
+      if(['KeyS','ArrowDown'].includes(code))delta.copy(forward).negate();
+      if(code==='KeyA')delta.copy(right).negate();if(code==='KeyD')delta.copy(right);
+      delta.multiplyScalar(Math.max(.4,camera.position.distanceTo(controls.target)*.04));camera.position.add(delta);controls.target.add(delta);controls.update();return;
+    }
     // Interior keys keep the original viewer's meaning: Q/E and left/right
     // arrows turn in place; A/D strafe. Exterior Q/E still changes height.
     if(C.cafeMode&&['KeyQ','KeyE','ArrowLeft','ArrowRight'].includes(code)){
@@ -80,7 +91,7 @@
     else if(camera.position.y+delta.y<1.5)delta.y=1.5-camera.position.y;
     camera.position.add(delta);controls.target.add(delta);controls.update();
   }
-  addEventListener('keydown',navigateKey);
+  addEventListener('keydown',event=>{if(!window.TOWER_MODERN_ACTIVE)return;const code=event.code;if(!['Home','Enter','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;if(event.target?.closest?.('input,textarea,select,[contenteditable=true]'))return;event.stopImmediatePropagation();navigateKey(event)},true);
 
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
@@ -247,15 +258,19 @@
   }
   finishLighting();
   const center=new T.Vector3(-3,16,0);let quality='balanced';
-  function interiorPose(key,position,target,fov=72){
+  function interiorPose(key,position,target,fov=72,doll=false,visibility=null){
     const level=C.levels().find(l=>l.key===key);if(!level)return false;
-    cancel();C.cafeMode=true;C.interiorFloorKey=key;
-    camera.near=.08;camera.fov=T.MathUtils.clamp(fov,35,100);camera.updateProjectionMatrix();controls.minDistance=.15;controls.maxDistance=.8;controls.enableZoom=false;controls.minPolarAngle=.1;controls.maxPolarAngle=Math.PI-.1;controls.autoRotate=false;
+    const visibilityKey=JSON.stringify(visibility||{});
+    const displayChanged=!C.cafeMode||C.interiorFloorKey!==key||C.dollMode!==!!doll||lastVisibilityKey!==visibilityKey;
+    cancel();C.cafeMode=true;C.dollMode=!!doll;C.interiorFloorKey=key;
+    if(displayChanged){if(doll)window.TOWER_CINEMA?.cancelPrecision();C.syncInteriorDisplay?.(key,doll,visibility);window.TOWER_CINEMA?.syncSourceVisibility();lastVisibilityKey=visibilityKey}
+    camera.near=doll ? .2 : .08;camera.fov=T.MathUtils.clamp(fov,35,100);camera.updateProjectionMatrix();controls.minDistance=doll ? 3 : .15;controls.maxDistance=doll ? 300 : .8;controls.enableZoom=!!doll;controls.minPolarAngle=.1;controls.maxPolarAngle=doll ? Math.PI*.49 : Math.PI-.1;controls.autoRotate=false;
     camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
   }
   function view(name){
     if(name==='cafe'||name==='cafe-counter'){const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6,position=name==='cafe'?[-4.6,y,5.5]:[-10,y,-1],lookAt=name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2],target=new T.Vector3(...lookAt).sub(new T.Vector3(...position)).normalize().multiplyScalar(.35).add(new T.Vector3(...position)).toArray();interiorPose('1F',position,target);return;}
-    C.cafeMode=false;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();controls.minPolarAngle=.22;
+    C.cafeMode=false;C.dollMode=false;C.syncInteriorDisplay?.(null,false);window.TOWER_CINEMA?.syncSourceVisibility();
+    camera.near=2;camera.fov=45;camera.updateProjectionMatrix();controls.minPolarAngle=.22;
     const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
     controls.autoRotate=false;controls.enabled=true;controls.enableZoom=true;controls.minDistance=8;controls.maxDistance=400;
@@ -271,8 +286,8 @@
   }
   function setQuality(value){quality=value;window.TOWER_CINEMA?.quality(value);const ratio=value==='high'?Math.min(devicePixelRatio,1.7):1;renderer.setPixelRatio(ratio);R3D.composer.setPixelRatio(ratio);R3D.ao=value==='high';C.resizeR()}
   const compactTouch=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
-  setQuality(compactTouch?'balanced':'high');view('corner');
-  if(initial.camera&&initial.target){if(initial.floor?.on)interiorPose(initial.floor.key,initial.camera,initial.target,initial.floor.fov);else{flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}}
+  setQuality('balanced');view('corner');
+  if(initial.camera&&initial.target){if(initial.floor?.on)interiorPose(initial.floor.key,initial.camera,initial.target,initial.floor.fov,initial.floor.doll,initial.visibility);else{flight=null;camera.position.fromArray(initial.camera);controls.target.fromArray(initial.target);controls.update();}}
   let frames=0,start=performance.now(),fps=0;
   function stats(now){
     if(flight){const t=Math.min(1,(now-flight.start)/1000),s=t*t*(3-2*t),a=flight.from,b=flight.to;
@@ -294,8 +309,11 @@
       C.build();C.hideGuides();finishLighting();
       const old=interiors;scene.remove(old);interiors=await dressBuilding();
       await C.enhanceBuildingDetails?.(interiors);
+      if(config.display){document.getElementById('t-city').checked=config.display.city!==false;document.getElementById('t-ctx').checked=config.display.ctx!==false}
+      C.syncInteriorDisplay?.(config.floor?.on?config.floor.key:null,!!config.floor?.doll,config.visibility);
       window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
       window.TOWER_CINEMA.updateBuilding();
+      if(config.floor?.on)interiorPose(config.floor.key,config.floor.camera,config.floor.target,config.floor.fov,config.floor.doll,config.visibility);
       if(config.display&&JSON.stringify(config.display)!==JSON.stringify(initial.display)){C.city.visible=config.display.city!==false;C.ctx.visible=config.display.ctx!==false;window.TOWER_CINEMA.context(config.display);initial.display={...config.display};}
       const geometries=new Set(),materials=new Set();old.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m)});
       // Imported templates share resources with the new dressing; never dispose those.
@@ -303,11 +321,11 @@
       geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
       window.TOWER_LAST_SWITCH_MS=performance.now()-before;return true;
     },
-    pose:(position,target)=>{C.cafeMode=false;controls.enableZoom=true;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
+    pose:(position,target)=>{C.cafeMode=false;C.dollMode=false;C.syncInteriorDisplay?.(null,false);window.TOWER_CINEMA?.syncSourceVisibility();controls.enableZoom=true;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{window.TOWER_CINEMA?.cancelPrecision();applySourceLight(value);window.TOWER_CINEMA?.light(value)},
-    telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'provisional-unmapped'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
+    telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,doll:!!C.dollMode,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'provisional-unmapped'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
       await load('360/assets/BufferGeometryUtils.js');
@@ -336,11 +354,11 @@
   };
   await load('360/environment.js?v=cafe-3');
   await window.enhanceTowerEnvironment(C,extra,load);
-  if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
+  if(initial.display){document.getElementById('t-city').checked=initial.display.city!==false;document.getElementById('t-ctx').checked=initial.display.ctx!==false;C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=lightmap-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=doll-1');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
