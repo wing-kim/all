@@ -102,6 +102,7 @@
   "limitations": [
     "Glazing uses source opacity as a transparent/opaque shader mix, not physically calibrated glass.",
     "Texture UVs are exported, but map repeat/offset/rotation are absent; albedo projection is approximate.",
+    "Normal maps and one alpha-tested material are not represented in the bake shaders.",
     "Only source floor region-141 and ceiling region-150 are receivers; raised finish patches are not baked.",
     "Irradiance is ambient-only and independent of source time/season; daylight-specific effects remain dynamic.",
     "Runtime integration and structural-key invalidation are not implemented."
