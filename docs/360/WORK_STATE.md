@@ -2,7 +2,22 @@
 
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
-## 확인된 상태
+## 최신 재개 요약 — 2026-10-16, 54fefde 이후 작업 중
+
+이 요약과 맨 아래 체크포인트가 현재 상태다. 이후의 초기 감사/이력은 과거 상태이므로 다시 구현하거나 현재 결함으로 오인하지 않는다.
+
+- **브랜치:** `codex/tower-360-validation`. main `25b111a` 보존. PR https://github.com/wing-kim/all/pull/1 은 draft, 자동 병합 금지.
+- **현재 공개 검토:** https://evyfjae.github.io/kapehorn-3d-preview/new/3d-model.html?lab=review&view=cafe — 배포 `c98ee69`, 소스 `affaaba`. 이후 로컬 수정은 아직 공개 반영 전.
+- **확인 완료:** 원본 일시/계절/태양, 층 선택, 모서리/홀/창밖, 미니맵/패드/나침반, 실내 텍스트 라벨, 원본 모드 복귀. 카페 CC0 의자. 기본 이동은 정밀 누적 없이 렌더. 정밀 버튼은 별도이며 준비 약4.4초 차단 문제는 남음.
+- **베이크:** `?ambientBake=study`로 exact1F 바닥/천장 간접광 시험. 512²/256samples+offline denoise. 원본 구조/가구 해시와 수신면 검사, 야간/구조 변경 때 해제. 기본 꺼짐. 모든 면/모든 시안의 베이크 또는 정량 채광 해석이 아님.
+- **현재 작업/첫 행동:** Sol `daylight_adapter`가 층 단면의 source visibility 연결을 수정 중. 30e05bb/c0776ac는 카메라는 맞지만 실제화면에서 상부층이 남아 QA실패. `environment.js`의 전체 material batch가 층 그룹을 잃은 것이 원인. dirty파일을 보존하고 에이전트 결과 확인→1F/3F/B1 단면/coreTop/걷기 왕복 실제검증. 검증 전 배포하지 않는다.
+- **명시적 미완료:** 종단면 전체/상부, 윗층투시, 3D 치수/램프 안내선, 현황/비교 및 일부 표시 토글, 상세 실내 후보 매핑, 원본 사진 수준 실내외 품질, 초기 로딩/정밀준비 최적화, Chrome/모바일 검증. 원본모드는 유지되지만 새모드 전체 기능대응 완료 아님.
+- **성능:** IAB 짧은5초시험 카페 베이크 high 평균32.18/p9535.6ms, 외부 high39.94/p9542.1ms, balanced30.20/p9532.2ms. 이동 중 geometry/probe/precision 갱신0. 콜드네트워크/모든기기 보장 아님. 새로운 기본 balanced 적용 후 재검증 예정.
+- **예산:** 마지막 실제 주간29%. 상한50%,45%정리/48%산출물완료. 전체실사품질+모든기능을50%내완성한다는 확약 근거 없음. 추가사용자승인대기 없이 작업 계속, 예산 초과 예상 시 Claude 인계.
+- **인계:** root `CLAUDE.md` + `docs/360/handoff/claude-code/README.md`, `PROMPT.md`. 같은저장소/브랜치로 이어받고 동시쓰기 금지. 도구 설치/로그인은 사용자 관리. 최종 사용자용 인계프롬프트는 아직 최종화 전.
+- **패키지:** `tools/360/package-preview.py`, 배포절차 `tools/360/PREVIEW_DEPLOYMENT.md`. 전체 repo를 공개업로드하지 않고 allowlist runtime+명시된비교페이지/이미지만 패키지. 사용자는 private source/public website를 승인했음.
+
+## 초기 감사 이력 — 현재 상태가 아님
 - Repo wing-kim/all, branch codex/tower-360-validation. 기준 main25b111a(이번 fetch로 확인). 이번 문서 수정 전 HEAD427e254, 작업 트리 깨끗했음.
 - 실제 사용량 초기화0% 확인 후 계획/감사 진행. 실행 시작마다 현재 수치 재확인. 총 주간50% 상한,45% 정리,48% 산출물 완료. 문서화도 예산 포함.
 - 운영 Pages는 main:/ legacy 배포. 별도 private 저장소 evyfjae/kapehorn-3d-preview 생성 및 공개 Pages 활성화 성공. API public:true/https_enforced:true 확인, 첫 빌드와 IAB 브라우저 렌더 검증 완료. CLI evyfjae의 private-source Pages 사용 가능함을 실제 API로 확인했다.
