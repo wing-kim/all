@@ -26,3 +26,12 @@ http://127.0.0.1:8765/new/3d-model.html?lab=review
 
 ## 전환 판단
 주간 계정 사용률과 작업 완료율은 다르다. 최신 실제 조회값은 WORK_STATE에 기록한다.50% 초과 전에 필요하면 전환한다. 최소45%부터 신규범위 확대 중단,48%까지 인계 산출물 완료. Claude 사용량이나 비용을 Codex 수치로 추정하지 않는다. 인계 시 실제 HEAD/dirty상태/배포SHA/미검증 변경을 WORK_STATE에 갱신한다.
+
+## 로컬 실행 위치
+
+```sh
+cd "/Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all"
+claude
+```
+
+위 명령은 Claude Code가 설치·인증된 경우의 시작 방법이다. 실행 후 이 폴더의 PROMPT.md를 읽고 작업하도록 요청한다. 다른 컴퓨터라면 작업 브랜치를 clone한 실제 경로를 사용한다. 별도 코드 사본은 만들지 않아도 된다. 격리 작업이 필요하면 clean HEAD에서 worktree를 만들고 이전 작업자는 쓰기를 중지한다.
