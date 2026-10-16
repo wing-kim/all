@@ -1,20 +1,37 @@
-// Evaluate in the local review page's precision-frame for offline bake preparation.
-// Snapshot only. Never changes geometry or source materials.
+// Evaluate in the local review page. Read-only offline ambient-bake snapshot.
+// Filter triangles of large material batches instead of dropping entire batches.
 (()=>{
  const w=document.querySelector('#precision-frame')?.contentWindow||window,C=w.TOWER_LAB_CONTEXT,T=C.THREE;
- const region=new T.Box3(new T.Vector3(-14,-.2,-14),new T.Vector3(3,5.6,11));
- const out={state:{...C.state},geometries:{},materials:{},objects:[],skipped:[],floor:C.interiorDressing?.userData.cafe?.floor,ceiling:C.interiorDressing?.userData.cafe?.ceiling,camera:{position:C.camera.position.toArray(),quaternion:C.camera.quaternion.toArray(),fov:C.camera.fov},scope:'bounded cafe geometry and material colors; textures and exterior occluders not included; not a completed lighting bake'};
- let vertices=0;
- for(const root of [C.bld,C.interiorDressing]){if(!root)continue;root.updateMatrixWorld(true);root.traverse(o=>{
+ const room=new T.Box3(new T.Vector3(-14,-.2,-14),new T.Vector3(3,5.6,11));
+ const surroundings=new T.Box3(new T.Vector3(-60,-1,-60),new T.Vector3(60,70,60));
+ const out={version:2,state:{...C.state},daylight:C.reviewDaylight,geometries:{},materials:{},objects:[],skipped:[],floor:C.interiorDressing?.userData.cafe?.floor,ceiling:C.interiorDressing?.userData.cafe?.ceiling,camera:{position:C.camera.position.toArray(),quaternion:C.camera.quaternion.toArray(),fov:C.camera.fov},scope:'Cafe and nearby exterior triangle-filtered geometry, UVs and texture references. Ambient-only bake preparation; no direct sun is baked. No completed bake implied.'};
+ let vertices=0,serial=0;const v=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),triBox=new T.Box3(),normal=new T.Vector3();
+ const imageURL=t=>t?.image?.currentSrc||t?.image?.src||null;
+ for(const root of [C.bld,C.interiorDressing,C.city,C.ctx]){if(!root)continue;const region=(root===C.bld||root===C.interiorDressing)?room:surroundings;root.updateMatrixWorld(true);root.traverse(o=>{
   if(!o.isMesh)return;for(let p=o;p;p=p.parent)if(!p.visible)return;
-  const ms=Array.isArray(o.material)?o.material:[o.material];if(ms.some(m=>m.alphaTest>0))return;
-  const g=o.geometry;if(!g.attributes.position||g.attributes.position.isInterleavedBufferAttribute)return;
-  if(!g.boundingBox)g.computeBoundingBox();const matrices=[];const one=new T.Matrix4();
-  for(let i=0;i<(o.isInstancedMesh?o.count:1);i++){if(o.isInstancedMesh){o.getMatrixAt(i,one);one.premultiply(o.matrixWorld)}else one.copy(o.matrixWorld);if(g.boundingBox.clone().applyMatrix4(one).intersectsBox(region))matrices.push(one.toArray());}
-  if(!matrices.length)return;
-  if(!out.geometries[g.uuid]){if(vertices+g.attributes.position.count>250000){out.skipped.push({name:o.name,reason:'vertex budget',vertices:g.attributes.position.count});return;}vertices+=g.attributes.position.count;out.geometries[g.uuid]={position:Array.from(g.attributes.position.array),index:g.index?Array.from(g.index.array):null,groups:g.groups,drawRange:{start:g.drawRange.start,count:Number.isFinite(g.drawRange.count)?g.drawRange.count:null}};}
-  for(const m of ms)if(!out.materials[m.uuid])out.materials[m.uuid]={color:m.color?.toArray()||[.5,.5,.5],roughness:m.roughness??.7,metalness:m.metalness??0,opacity:m.opacity,transparent:m.transparent,emissive:m.emissive?.toArray()||[0,0,0],emissiveIntensity:m.emissiveIntensity||0};
-  for(const matrix of matrices)out.objects.push({name:o.name,geometry:g.uuid,materials:ms.map(m=>m.uuid),matrix});
+  const ms=Array.isArray(o.material)?o.material:[o.material],g=o.geometry,p=g.attributes.position,uv=g.attributes.uv;
+  if(!p)throw new Error('Bake snapshot: missing position');
+  if(!g.boundingBox)g.computeBoundingBox();const one=new T.Matrix4();
+  for(let instance=0;instance<(o.isInstancedMesh?o.count:1);instance++){
+   if(o.isInstancedMesh){o.getMatrixAt(instance,one);one.premultiply(o.matrixWorld)}else one.copy(o.matrixWorld);
+   if(!g.boundingBox.clone().applyMatrix4(one).intersectsBox(region))continue;
+   const position=[],texcoord=[],index=[],groups=[],remap=new Map(),idx=g.index;
+   const start=g.drawRange.start,end=Math.min(idx?.count??p.count,start+(g.drawRange.count??Infinity));
+   for(let i=start;i+2<end;i+=3){const ids=[0,1,2].map(k=>idx?idx.getX(i+k):i+k);
+    a.fromBufferAttribute(p,ids[0]).applyMatrix4(one);b.fromBufferAttribute(p,ids[1]).applyMatrix4(one);c.fromBufferAttribute(p,ids[2]).applyMatrix4(one);
+    triBox.setFromPoints([a,b,c]);if(!triBox.intersectsBox(region))continue;
+    const mi=g.groups.find(q=>i>=q.start&&i<q.start+q.count)?.materialIndex||0,m=ms[mi];
+    const glass=[C.M.glass,C.M.glass1,C.M.door,C.M.guard,C.M.rail].includes(m);
+    if(glass){normal.crossVectors(b.clone().sub(a),c.clone().sub(a)).normalize();if(Math.abs(normal.y)>.999)continue;}
+    const group=groups.at(-1);if(group?.materialIndex===mi)group.count+=3;else groups.push({start:index.length,count:3,materialIndex:mi});
+    for(const id of ids){if(!remap.has(id)){remap.set(id,position.length/3);v.fromBufferAttribute(p,id);position.push(v.x,v.y,v.z);if(uv)texcoord.push(uv.getX(id),uv.getY(id));}index.push(remap.get(id));}
+   }
+   if(!index.length)continue;
+   vertices+=position.length/3;if(vertices>3000000)throw new Error('Bake snapshot exceeds 3M vertices; refusing an incomplete bake');
+   const key='region-'+serial++;out.geometries[key]={position,uv:uv?texcoord:null,index,groups,drawRange:{start:0,count:index.length}};
+   for(const m of ms)if(!out.materials[m.uuid])out.materials[m.uuid]={name:m.name,color:m.color?.toArray()||[.5,.5,.5],roughness:m.roughness??.7,metalness:m.metalness??0,opacity:m.opacity,transparent:m.transparent,glazing:[C.M.glass,C.M.glass1,C.M.door,C.M.guard,C.M.rail].includes(m),alphaTest:m.alphaTest||0,map:imageURL(m.map),normalMap:imageURL(m.normalMap),emissive:m.emissive?.toArray()||[0,0,0],emissiveIntensity:m.emissiveIntensity||0};
+   out.objects.push({name:o.name,geometry:key,materials:ms.map(m=>m.uuid),matrix:one.toArray()});
+  }
  });}
  out.vertices=vertices;return JSON.stringify(out);
 })()

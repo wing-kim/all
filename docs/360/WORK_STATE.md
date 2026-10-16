@@ -104,3 +104,9 @@
 - 유리 분리 비교로 밝은 diffuse alpha 층이 불투명 흰 패턴을 강화함 확인. 형상은 유지하고 alpha 근사의 색/opacity/Fresnel/clearcoat를 완화. glass-preview-after.jpg와 daylight-sky-exterior.jpg; 내부 시야도 직접 확인. 물리적 투과/측정 유리 사양이 아닌 실시간 근사이며 실사 목표 미달.
 - 증거 daylight-custom-day.jpg/daylight-night.jpg/daylight-cafe-reference-comparison.jpg: 원본 실사 대비 가구·간접광·창밖 명암 개선 필요.
 - 실제 주간 사용률10%,50%까지40%p. 다음 Sol: 원본v-int/층 UI 상태와 실사 카메라 연결, 상세자산 없는층 구조보기 유지. 부모: 유리수정 commit 및 통합 검수 후 격리배포. Claude 인계폴더는 준비됨, 지금 전환 필요는 없음.
+
+## 층 연결/자산 단계 체크포인트
+- 496d3c4 원본 내부진입/층 선택을 실사모드 유지하며 전달. 실제IAB 1F→3F→B1 floor/camera/target 일치, buildingUpdates0. f5579d0 공간명령/카메라복원 후속 구현, 부모검증 진행. 단면/주석/미니맵 아직미완.
+- 9b85423 PolyHaven Dining Chair02(CC0)1K0.9MB공식파일checksum검증. 기존20개 낮은의자 위치 대체, 바스툴유지, 외곽검사20통과, 브라우저크기·방향확인. cafe-dining-asset.jpg. 원본실사와동일제품이아닌검토용예시.
+- 새카페5초회전 IAB고품질: 평균34.66ms,p9538.4,max44.5,100ms초과0; geometry/probe/precision증가0. cafe-dining-performance.json. 정확한fps표시는프레임측정사용(telemetry의rafFPS는idle시렌더FPS가아님).
+- 주간실측13%. 다음: 공간명령/모드왕복/Home검수, 격리배포갱신. 병행Sol은 실제ambient-only floor/ceiling베이크가능성검증. 새exporter큰batch삼각형필터링, snapshot1946173vertices559objects/skipped0, 로컬37MB는.gitignore로배포/커밋제외. tools/360/cafe-ambient-source.json.gz. bake적용완료아님.
