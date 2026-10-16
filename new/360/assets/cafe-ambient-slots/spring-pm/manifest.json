@@ -1,0 +1,199 @@
+{
+  "source": "tools/360/cafe-ambient-source.json.gz",
+  "sourceSha256": "23623442e63a1c34fc712f54f63ff3d772986e96bfae41c27ff982838b67c6e7",
+  "sourceObjects": 599,
+  "sourceVertices": 1929081,
+  "sourceSkipped": [],
+  "sourceState": {
+    "era": "new",
+    "scheme": "mech",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "skin",
+    "upSt": false,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+  },
+  "sourceCafeFloor": 0.07,
+  "sourceCafeCeiling": 5.0200000000000005,
+  "furnitureManifest": {
+    "360/cafe.js": "eb6d60606ce731ad2b04a16f50b43df4b29e7d131c7d7b1b1191213cda2533bf",
+    "360/environment.js": "306ba2ed87898ade35e995ceba6029befddb0fc30a10249d33d1c23f981085ac",
+    "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
+    "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
+    "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6",
+    "360/assets/dining-chair-02/dining-chair.gltf": "88352a44a17319846f61fe03ce75c79fb1849aa508b6a262366c149c1bbd06b8",
+    "360/assets/dining-chair-02/dining_chair_02.bin": "c7f1ef858f73815176d2ab304472a69ccf6097e971e5258eb924a75f841d4af5"
+  },
+  "receiverGeometry": {
+    "floor": {
+      "geometryKey": "region-2",
+      "faceOffsets": [
+        33,
+        36,
+        39,
+        42,
+        45,
+        48,
+        51,
+        54,
+        57,
+        60,
+        63
+      ],
+      "triangleCount": 11,
+      "areaSquareMeters": 336.4667739868164,
+      "triangleKeys": [
+        "-13.1971,0.0700,-13.4615|-13.1971,0.0700,7.8846|4.0865,0.0700,-4.0385",
+        "-13.1971,0.0700,-13.4615|3.1490,0.0700,-13.4615|3.1490,0.0700,-6.8510",
+        "-13.1971,0.0700,-13.4615|3.1490,0.0700,-6.8510|4.0865,0.0700,-5.2163",
+        "-13.1971,0.0700,-13.4615|4.0865,0.0700,-4.0385|4.0865,0.0700,-5.2163",
+        "-13.1971,0.0700,7.8846|-3.5337,0.0700,2.6442|-3.5337,0.0700,7.2144",
+        "-13.1971,0.0700,7.8846|-3.5337,0.0700,2.6442|7.2596,0.0700,-4.0385",
+        "-13.1971,0.0700,7.8846|-3.5337,0.0700,7.2144|-8.7740,0.0700,9.1030",
+        "-13.1971,0.0700,7.8846|4.0865,0.0700,-4.0385|7.2596,0.0700,-4.0385",
+        "-3.5337,0.0700,2.6442|0.9856,0.0700,0.4808|0.9856,0.0700,2.6442",
+        "-3.5337,0.0700,2.6442|0.9856,0.0700,0.4808|7.2596,0.0700,-4.0385",
+        "0.9856,0.0700,0.4808|7.2596,0.0700,-4.0385|8.4375,0.0700,0.4808"
+      ],
+      "atlasBoundsXY": [
+        -13.197114944458008,
+        -9.103038787841797,
+        8.4375,
+        13.461538314819336
+      ],
+      "image": "floor-ambient.exr",
+      "runtimeImage": "floor-ambient-linear.png",
+      "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
+      "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
+      "preview": "floor-ambient-preview.png",
+      "redChannelCoveredPixels": 143426,
+      "redChannelCoveredMinMaxMean": [
+        0.0010002071503549814,
+        0.5696357488632202,
+        0.15822967642596153
+      ]
+    },
+    "ceiling": {
+      "geometryKey": "region-74",
+      "faceOffsets": [
+        0,
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24,
+        27,
+        30,
+        33,
+        36,
+        39
+      ],
+      "triangleCount": 14,
+      "areaSquareMeters": 357.0861886739731,
+      "triangleKeys": [
+        "-0.9375,5.0200,3.4856|-0.9375,5.0200,5.6250|-13.1971,5.0200,10.6971",
+        "-0.9375,5.0200,3.4856|-13.1971,5.0200,10.6971|0.9856,5.0200,0.4808",
+        "-0.9375,5.0200,3.4856|0.7452,5.0200,3.4856|0.9856,5.0200,0.4808",
+        "-0.9375,5.0200,5.6250|-13.1971,5.0200,10.6971|0.7452,5.0200,5.6250",
+        "-13.1971,5.0200,-13.4615|-13.1971,5.0200,10.6971|4.2788,5.0200,-5.3966",
+        "-13.1971,5.0200,-13.4615|3.1490,5.0200,-13.4615|3.1490,5.0200,-6.8510",
+        "-13.1971,5.0200,-13.4615|3.1490,5.0200,-6.8510|4.2788,5.0200,-5.3966",
+        "-13.1971,5.0200,10.6971|0.7452,5.0200,5.6250|0.9856,5.0200,5.5857",
+        "-13.1971,5.0200,10.6971|0.9856,5.0200,0.4808|7.3077,5.0200,-4.1587",
+        "-13.1971,5.0200,10.6971|4.2788,5.0200,-4.1587|4.2788,5.0200,-5.3966",
+        "-13.1971,5.0200,10.6971|4.2788,5.0200,-4.1587|7.3077,5.0200,-4.1587",
+        "0.7452,5.0200,3.4856|0.7452,5.0200,5.6250|0.9856,5.0200,5.5857",
+        "0.7452,5.0200,3.4856|0.9856,5.0200,0.4808|0.9856,5.0200,5.5857",
+        "0.9856,5.0200,0.4808|7.3077,5.0200,-4.1587|8.4375,5.0200,0.4808"
+      ],
+      "atlasBoundsXY": [
+        -13.197114944458008,
+        -10.697114944458008,
+        8.4375,
+        13.461538314819336
+      ],
+      "image": "ceiling-ambient.exr",
+      "runtimeImage": "ceiling-ambient-linear.png",
+      "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
+      "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
+      "preview": "ceiling-ambient-preview.png",
+      "redChannelCoveredPixels": 159745,
+      "redChannelCoveredMinMaxMean": [
+        0.0010004867799580097,
+        0.6325592398643494,
+        0.18584905380745603
+      ]
+    }
+  },
+  "singleMaterialGroupIndexNormalized": {},
+  "localAlbedoTextures": [
+    "new/360/assets/facade-granite_color.jpg",
+    "new/360/assets/furniture-veneer_color.jpg",
+    "new/360/assets/interior-stone_color.jpg",
+    "new/360/assets/plaster_color.jpg",
+    "new/360/assets/roof-concrete_color.jpg"
+  ],
+  "settings": {
+    "engine": "Cycles GPU",
+    "samples": 256,
+    "atlasSize": 512,
+    "bake": "DIFFUSE direct+indirect, color OFF",
+    "world": "neutral RGB .8, strength 1",
+    "sun": "indirect-only sun bake added to the neutral-sky bake; runtime shadow map draws direct sun",
+    "emission": "off",
+    "fixedFillLights": "none",
+    "diffuseBounces": 3,
+    "transmissionBounces": 4,
+    "runtimeLightMapIntensity": 3.141592653589793,
+    "radianceConvention": "Cycles diffuse/color-off gives outgoing white Lambert radiance; Three PhysicalLightingModel lightMap takes irradiance. Unit-world plane test baked 1, so runtime multiplies by pi."
+  },
+  "limitations": [
+    "Glazing uses source opacity as a transparent/opaque shader mix, not physically calibrated glass.",
+    "Texture UVs are exported, but map repeat/offset/rotation are absent; albedo projection is approximate.",
+    "Normal maps and one alpha-tested material are not represented in the bake shaders.",
+    "Only the largest coplanar source floor and ceiling meshes are receivers; raised finish patches are not baked.",
+    "Nearby exterior assets and non-receiver occluder geometry are not fully fingerprinted by the runtime key.",
+    "Valid only for the original app season/time button pair of this slot (custom date/time excluded). Sun indirect assumes the snapshot surroundings (about 60 m); farther context is not an occluder.",
+    "This is a non-quantitative opt-in appearance study, not a daylight or illuminance validation."
+  ],
+  "slot": {
+    "key": "spring-pm",
+    "season": "spring",
+    "time": "pm",
+    "sunDirection": [
+      0.0758,
+      0.6412,
+      0.7636
+    ],
+    "sunStrength": 2.6,
+    "sunColorLinear": [
+      1.0,
+      0.8714,
+      0.7379
+    ]
+  }
+}

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import * as T from 'three';
-import {createCafeAmbientStudy,findReceiver,triangleKey,validateAmbientSource} from './cafe-ambient.js';
+import {createCafeAmbientStudy,findReceiver,matchSlot,sameReceivers,triangleKey,validateAmbientSource} from './cafe-ambient.js';
 
 const manifest=JSON.parse(readFileSync(new URL('./ambient-proof/manifest.json',import.meta.url),'utf8'));
 const cafe={floor:manifest.sourceCafeFloor,ceiling:manifest.sourceCafeCeiling};
@@ -29,8 +29,8 @@ if(existsSync(sourcePath)){
 }
 
 const previousLocation=globalThis.location,previousFetch=globalThis.fetch;
-globalThis.location={search:'?lab=360'};
-globalThis.fetch=()=>{throw Error('default mode must not load study assets')};
+globalThis.location={search:'?lab=360&ambientBake=off'};
+globalThis.fetch=()=>{throw Error('ambientBake=off must not load bake assets')};
 try{
  const study=await createCafeAmbientStudy(null,{children:[]},{state:manifest.sourceState});
  assert.deepEqual(study.status().requested,false);
@@ -55,11 +55,14 @@ function recoveryFixture(night,mismatch=false){
  return {scene,context,studyManifest,state};
 }
 const fakeThree={...T,TextureLoader:class{async loadAsync(){return new T.Texture()}}};
+// Route fixture requests: the study manifest, an optional slot index and slot manifests.
+const route=(study,slots={})=>async url=>url.endsWith('cafe-ambient-slots/index.json')?{ok:true,json:async()=>({slots:Object.keys(slots)})}
+ :url.includes('cafe-ambient-slots/')?{ok:true,json:async()=>slots[url.split('/').at(-2)]}:{ok:true,json:async()=>study};
 globalThis.location={search:'?ambientBake=study'};
 try{
  for(const [night,mismatch] of [[true,false],[false,true]]){
   const {scene,context,studyManifest,state}=recoveryFixture(night,mismatch);
-  globalThis.fetch=async()=>({ok:true,json:async()=>studyManifest});
+  globalThis.fetch=route(studyManifest);
   const study=await createCafeAmbientStudy(fakeThree,scene,context);
   assert.equal(study.status().enabled,false,'an initially invalid study is fail-closed');
   assert.equal(study.status().reason,night?'night':'source-state-mismatch');
@@ -76,8 +79,37 @@ try{
  const failed=recoveryFixture(false);
  globalThis.fetch=async()=>({ok:false});
  const unavailable=await createCafeAmbientStudy(fakeThree,failed.scene,failed.context);
- assert.equal(unavailable.status().reason,'manifest-unavailable');
+ assert.equal(unavailable.status().reason,'manifest-unavailable:study');
  unavailable.refresh();unavailable.light({night:false});
- assert.equal(unavailable.status().reason,'manifest-unavailable','failed assets cannot bind on a later refresh');
+ assert.equal(unavailable.status().reason,'manifest-unavailable:study','failed assets cannot bind on a later refresh');
+
+ // Time-slot bakes: exact original season/time button pairs only.
+ const slot={key:'spring-pm',season:'spring',time:'pm',sunDirection:[.0758,.6412,.7636]};
+ const springPm={season:'spring',time:'pm',custom:false,night:false,direction:[.07581,.64119,.76361]};
+ assert.equal(matchSlot(slot,springPm),true);
+ assert.equal(matchSlot(slot,{...springPm,custom:true}),false,'custom date/time never uses a slot bake');
+ assert.equal(matchSlot(slot,{...springPm,time:'am'}),false);
+ assert.equal(matchSlot(slot,{...springPm,season:'summer'}),false);
+ assert.equal(matchSlot(slot,{...springPm,direction:[.2,.6,.76]}),false,'a changed solar vector invalidates the slot');
+ const fixture=recoveryFixture(false);
+ const slotManifest={...fixture.studyManifest,slot};
+ assert.equal(sameReceivers(fixture.studyManifest,slotManifest),true);
+ assert.equal(sameReceivers(fixture.studyManifest,{...slotManifest,sourceSha256:'other'}),false);
+ globalThis.location={search:'?lab=360'};
+ globalThis.fetch=route(fixture.studyManifest,{'spring-pm':slotManifest});
+ fixture.context.reviewDaylight=springPm;
+ const slotted=await createCafeAmbientStudy(fakeThree,fixture.scene,fixture.context);
+ assert.equal(slotted.status().study,false,'default review mode loads slots without the neutral study');
+ assert.deepEqual(slotted.status().slots,['spring-pm']);
+ assert.equal(slotted.status().enabled,true);assert.equal(slotted.status().slot,'spring-pm');
+ slotted.light({...springPm,time:'sunset',direction:[-.5,.11,.86]});
+ assert.equal(slotted.status().enabled,false);assert.equal(slotted.status().reason,'unbaked-time','other times keep the realtime path');
+ slotted.light({...springPm,night:true});assert.equal(slotted.status().reason,'night');
+ slotted.light(springPm);assert.equal(slotted.status().slot,'spring-pm','returning to the baked pair re-enables the slot');
+ slotted.dispose();
+ const mismatched=recoveryFixture(false);
+ globalThis.fetch=route(mismatched.studyManifest,{'spring-pm':{...slotManifest,slot:{...slot,key:'summer-pm'}}});
+ const rejected=await createCafeAmbientStudy(fakeThree,mismatched.scene,mismatched.context);
+ assert.equal(rejected.status().reason,'slot-key-mismatch:spring-pm');assert.equal(rejected.status().enabled,false);
 }finally{globalThis.location=previousLocation;globalThis.fetch=previousFetch}
-console.log('cafe ambient study: source guards and default-off contract passed');
+console.log('cafe ambient bake: source guards, ambientBake=off contract and time-slot selection passed');

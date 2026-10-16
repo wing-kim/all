@@ -30,12 +30,19 @@ def arguments():
     parser.add_argument('output', type=Path)
     parser.add_argument('--size', type=int, default=256)
     parser.add_argument('--samples', type=int, default=32)
+    # 원본 앱의 계절·시간대 버튼 조합 하나에 대한 슬롯 베이크. 태양은 반사광만 굽고 직사광은 실시간 그림자가 담당한다.
+    parser.add_argument('--slot', help='season-time key, e.g. spring-pm')
+    parser.add_argument('--sun', help='three.js daylight.direction toward the sun, "x,y,z"')
+    parser.add_argument('--sun-strength', type=float, default=0, help='three.js daylight.intensity')
+    parser.add_argument('--sun-color', default='1,1,1', help='linear RGB of three.js daylight.color')
+    parser.add_argument('--device', choices=('CPU', 'GPU'), default='CPU')
     return parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
 
 
 args = arguments()
 assert args.size in (256, 512), 'Proof atlas must be 256 or 512 pixels'
 assert 1 <= args.samples <= 256
+assert bool(args.slot) == bool(args.sun) and (not args.sun or args.sun_strength > 0), 'A slot needs --sun and a positive --sun-strength'
 args.output.mkdir(parents=True, exist_ok=True)
 source_hash = hashlib.sha256(args.source.read_bytes()).hexdigest()
 with (gzip.open(args.source, 'rt') if args.source.suffix == '.gz' else args.source.open()) as stream:
@@ -51,6 +58,14 @@ axis = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
 scene = bpy.context.scene
 scene.render.engine = 'CYCLES'
 scene.cycles.device = 'CPU'
+if args.device == 'GPU':
+    prefs = bpy.context.preferences.addons['cycles'].preferences
+    prefs.compute_device_type = 'METAL'
+    prefs.get_devices()
+    for device in prefs.devices:
+        device.use = device.type == 'METAL'
+    assert any(d.use for d in prefs.devices), 'GPU requested but no Metal device'
+    scene.cycles.device = 'GPU'
 scene.cycles.samples = args.samples
 scene.cycles.max_bounces = 4
 scene.cycles.diffuse_bounces = 3
@@ -65,6 +80,18 @@ world.use_nodes = True
 world.node_tree.nodes.get('Background').inputs['Color'].default_value = (.8, .8, .8, 1)
 world.node_tree.nodes.get('Background').inputs['Strength'].default_value = 1
 scene.world = world
+sun = None
+if args.sun:
+    # three.js Y-up 방향을 Blender Z-up으로: (x, y, z) -> (x, -z, y). 슬롯 베이크 단계에서만 켠다.
+    x, y, z = (float(v) for v in args.sun.split(','))
+    toward_sun = Vector((x, -z, y)).normalized()
+    sun_data = bpy.data.lights.new('Slot sun', 'SUN')
+    sun_data.energy = 0
+    sun_data.color = tuple(float(v) for v in args.sun_color.split(','))
+    sun_data.angle = math.radians(.53)
+    sun = bpy.data.objects.new('Slot sun', sun_data)
+    sun.rotation_euler = (-toward_sun).to_track_quat('-Z', 'Y').to_euler()
+    scene.collection.objects.link(sun)
 material_cache = {}
 texture_used, texture_missing, normalized_groups = [], [], Counter()
 
@@ -233,6 +260,15 @@ proof = {'source': str(args.source), 'sourceSha256': source_hash,
                          'Nearby exterior assets and non-receiver occluder geometry are not fully fingerprinted by the runtime key.',
                          'Irradiance is ambient-only and independent of source time/season; daylight-specific effects remain dynamic.',
                          'This is a non-quantitative opt-in appearance study, not a daylight or illuminance validation.']}
+proof['settings']['engine'] = 'Cycles ' + args.device
+if sun:
+    season, time = args.slot.split('-', 1)
+    proof['slot'] = {'key': args.slot, 'season': season, 'time': time,
+                     'sunDirection': [float(v) for v in args.sun.split(',')],
+                     'sunStrength': args.sun_strength, 'sunColorLinear': [float(v) for v in args.sun_color.split(',')]}
+    proof['settings']['sun'] = 'indirect-only sun bake added to the neutral-sky bake; runtime shadow map draws direct sun'
+    proof['limitations'][5] = ('Valid only for the original app season/time button pair of this slot (custom date/time excluded). '
+                               'Sun indirect assumes the snapshot surroundings (about 60 m); farther context is not an occluder.')
 
 
 def save_linear_png(path, pixels, size):
@@ -315,6 +351,25 @@ for name, receiver in receivers.items():
     bpy.context.view_layer.objects.active = receiver
     scene.render.bake.target = 'IMAGE_TEXTURES'
     bpy.ops.object.bake(type='DIFFUSE')
+    if sun:
+        # 하늘 결과에 태양의 반사광만 더한다. 태양 직사광은 런타임 그림자 맵이 그리므로 이중 계산하지 않는다.
+        sky_pixels = list(image.pixels)
+        background = world.node_tree.nodes.get('Background').inputs['Strength']
+        background.default_value = 0
+        sun.data.energy = args.sun_strength
+        scene.render.bake.use_pass_direct = False
+        try:
+            bpy.ops.object.bake(type='DIFFUSE')
+        finally:
+            background.default_value = 1
+            sun.data.energy = 0
+            scene.render.bake.use_pass_direct = True
+        sun_pixels = list(image.pixels)
+        combined = [a + b if i % 4 != 3 else a for i, (a, b) in enumerate(zip(sky_pixels, sun_pixels))]
+        image.pixels.foreach_set(combined)
+        image.update()
+        sun_only = [value for value in sun_pixels[0::4] if value > 0]
+        print(f'SUN INDIRECT {name}: texels {len(sun_only)}, max {max(sun_only, default=0):.4f}', flush=True)
     path = args.output / (name + '-ambient.exr')
     image.filepath_raw = str(path)
     image.file_format = 'OPEN_EXR'

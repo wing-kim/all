@@ -22,61 +22,102 @@ export async function verifyFurnitureManifest(entries,fetchAsset=fetch){
  }));
 }
 
+// A time-slot bake is valid only for the exact original season/time button pair.
+// Custom dates, night and changed solar vectors fall back to the realtime path.
+export function matchSlot(slot,daylight){
+ if(!slot||!daylight||daylight.custom||daylight.night)return false;
+ if(daylight.season!==slot.season||daylight.time!==slot.time)return false;
+ const direction=daylight.direction||[];
+ return slot.sunDirection.length===3&&slot.sunDirection.every((value,index)=>Math.abs(value-direction[index])<.002);
+}
+// Every bake set must describe the same receiver triangles and atlas projection.
+export function sameReceivers(a,b){
+ return a.sourceSha256===b.sourceSha256&&['floor','ceiling'].every(name=>{
+  const left=a.receiverGeometry?.[name],right=b.receiverGeometry?.[name];
+  return left&&right&&stableJSON(left.triangleKeys)===stableJSON(right.triangleKeys)&&stableJSON(left.atlasBoundsXY)===stableJSON(right.atlasBoundsXY);
+ });
+}
+
+// Default review mode loads the time-slot bakes. ambientBake=study adds the neutral study,
+// ambientBake=off keeps the original realtime path without any bake request.
 export async function createCafeAmbientStudy(T,scene,C){
- const requested=new URLSearchParams(location.search).get('ambientBake')==='study';
- let reason=requested?'loading':'not-requested',valid=false,enabled=false,precisionActive=false,manifest=null,assetsReady=false,bindings=[],textures=[],loadMs=null;
+ const mode=new URLSearchParams(location.search).get('ambientBake');
+ const studyRequested=mode==='study',slotsRequested=mode!=='off',requested=studyRequested||slotsRequested;
+ let reason=requested?'loading':'not-requested',valid=false,enabled=false,precisionActive=false,assetsReady=false,bindings=[],sets=[],active=null,loadMs=null;
  const started=performance.now();
- const report=()=>({requested,valid,enabled,reason,receivers:bindings.length,loadMs,sourceKey:manifest?.sourceSha256||null});
+ const base=()=>sets[0]?.manifest||null;
+ const report=()=>({requested,study:studyRequested,valid,enabled,reason,receivers:bindings.length,loadMs,sourceKey:base()?.sourceSha256||null,
+  slot:enabled&&active?.slot?active.key:null,slots:sets.filter(set=>set.slot).map(set=>set.key)});
  function setLights(){scene.children.filter(o=>o.userData.cafeAmbientFallback).forEach(o=>o.visible=!enabled)}
+ function chooseSet(daylight){return sets.find(set=>set.slot&&matchSlot(set.slot,daylight))||sets.find(set=>!set.slot)||null}
  function setDaylight(daylight){
-  const invalid=manifest?(C.dollMode?'dollhouse':!C.city?.visible||!C.ctx?.visible?'context-hidden':validateAmbientSource(manifest,C.state,C.interiorDressing?.userData.cafe,daylight)):reason;
+  active=valid?chooseSet(daylight):null;
+  const common=C.dollMode?'dollhouse':!C.city?.visible||!C.ctx?.visible?'context-hidden':null;
+  const invalid=!valid?reason:common||(active?validateAmbientSource(active.manifest,C.state,C.interiorDressing?.userData.cafe,daylight):(daylight?.night?'night':'unbaked-time'));
   enabled=valid&&!invalid&&!precisionActive;
-  reason=invalid||(!valid?reason:precisionActive?'precision':'active');
-  for(const binding of bindings)binding.receiver.material=enabled?binding.baked:binding.original;
+  reason=valid?(invalid||(precisionActive?'precision':'active')):reason;
+  const index=sets.indexOf(active);
+  for(const binding of bindings)binding.receiver.material=enabled?binding.baked[index]:binding.original;
   setLights();
  }
  function clear(){
-  enabled=false;setLights();
+  enabled=false;active=null;setLights();
   for(const binding of bindings){
    scene.remove(binding.receiver);
    binding.object.geometry=binding.sourceGeometry;
-   binding.remainder.dispose();binding.receiver.geometry.dispose();binding.baked.dispose();
+   binding.remainder.dispose();binding.receiver.geometry.dispose();binding.baked.forEach(material=>material.dispose());
   }
   bindings=[];valid=false;
  }
  if(!requested)return {status:report,clear,refresh:()=>{},light:()=>{},precision:()=>{},dispose:clear,materials:()=>[]};
- try{
-  const response=await fetch('360/assets/cafe-ambient/manifest.json');
-  if(!response.ok)throw Error('manifest-unavailable');
-  manifest=await response.json();
+ const loader=new T.TextureLoader();
+ async function loadSet(folder,key){
+  const response=await fetch(folder+'manifest.json');
+  if(!response.ok)throw Error('manifest-unavailable:'+key);
+  const manifest=await response.json();
+  if(sets.length&&!sameReceivers(sets[0].manifest,manifest))throw Error('receiver-set-mismatch:'+key);
+  if(key!=='study'&&!matchSlotKey(manifest.slot,key))throw Error('slot-key-mismatch:'+key);
   await verifyFurnitureManifest(manifest.furnitureManifest);
-  const loader=new T.TextureLoader();
-  for(const name of ['floor','ceiling']){
-   const map=await loader.loadAsync('360/assets/cafe-ambient/'+manifest.receiverGeometry[name].runtimeImage);
-   map.colorSpace=T.NoColorSpace;map.channel=1;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;
-   textures.push(map);
+  const maps=await Promise.all(['floor','ceiling'].map(async name=>{
+   const map=await loader.loadAsync(folder+manifest.receiverGeometry[name].runtimeImage);
+   map.colorSpace=T.NoColorSpace;map.channel=1;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;return map;
+  }));
+  sets.push({key,manifest,maps,slot:manifest.slot||null});
+ }
+ try{
+  if(studyRequested)await loadSet('360/assets/cafe-ambient/','study');
+  if(slotsRequested){
+   const index=await fetch('360/assets/cafe-ambient-slots/index.json');
+   if(!index.ok)throw Error('slot-index-unavailable');
+   for(const key of (await index.json()).slots)await loadSet('360/assets/cafe-ambient-slots/'+key+'/',key);
   }
+  if(!sets.length)throw Error('no-bake-sets');
   assetsReady=true;reason='geometry-check';refresh();
- }catch(error){reason=String(error.message||error);valid=false;enabled=false;setLights();}
+ }catch(error){
+  // Partial loads never bind: every loaded set must pass before any receiver changes.
+  sets.forEach(set=>set.maps.forEach(map=>map.dispose()));sets=[];
+  reason=String(error.message||error);valid=false;enabled=false;setLights();
+ }
  loadMs=performance.now()-started;
  function refresh(){
   clear();
   if(!assetsReady)return;
   try{
-   const sourceIssue=validateAmbientSource(manifest,C.state,C.interiorDressing?.userData.cafe,null);
+   const manifest=base(),sourceIssue=validateAmbientSource(manifest,C.state,C.interiorDressing?.userData.cafe,null);
    if(sourceIssue){reason=sourceIssue;return}
    const plans=[];
    for(const [index,name] of ['floor','ceiling'].entries()){
     const target=manifest.receiverGeometry[name],matches=findReceiver(T,scene,target,name==='floor'?1:-1,manifest[name==='floor'?'sourceCafeFloor':'sourceCafeCeiling']);
     if(matches.reason){reason=matches.reason;return}
-    plans.push({name,mesh:matches.mesh,offsets:matches.offsets,materialIndex:matches.materialIndex,map:textures[index]});
+    plans.push({name,mesh:matches.mesh,offsets:matches.offsets,materialIndex:matches.materialIndex,maps:sets.map(set=>set.maps[index])});
    }
    for(const plan of plans)bindings.push(splitReceiver(T,scene,plan,manifest.receiverGeometry[plan.name]));
    valid=bindings.length===2;reason=valid?'ready':'receiver-missing';setDaylight(C.reviewDaylight);
-  }catch(error){clear();reason='receiver-error:'+String(error.message||error);console.warn('Cafe ambient study disabled',error)}
+  }catch(error){clear();reason='receiver-error:'+String(error.message||error);console.warn('Cafe ambient bake disabled',error)}
  }
- return {status:report,clear,refresh,light:setDaylight,precision(value){if(precisionActive===!!value)return;precisionActive=!!value;setDaylight(C.reviewDaylight)},dispose(){clear();textures.forEach(t=>t.dispose())},materials:()=>bindings.map(b=>b.baked)};
+ return {status:report,clear,refresh,light:setDaylight,precision(value){if(precisionActive===!!value)return;precisionActive=!!value;setDaylight(C.reviewDaylight)},dispose(){clear();sets.forEach(set=>set.maps.forEach(map=>map.dispose()))},materials:()=>bindings.flatMap(b=>b.baked)};
 }
+const matchSlotKey=(slot,key)=>!!slot&&slot.key===key&&key===slot.season+'-'+slot.time;
 
 export function findReceiver(T,scene,target,facing,height){
  const expected=new Set(target.triangleKeys),matches=[],point=[new T.Vector3(),new T.Vector3(),new T.Vector3()];
@@ -134,7 +175,7 @@ function splitReceiver(T,scene,plan,target){
  if(!original)throw Error('receiver-material-missing');
  // Cycles diffuse/color-off bake is outgoing Lambert radiance for a white receiver.
  // Three's PhysicalLightingModel treats lightMap RGB as irradiance before albedo/PI.
- const baked=original.clone();baked.lightMap=plan.map;baked.lightMapIntensity=Math.PI;baked.envMapIntensity=0;baked.aoMap=null;baked.needsUpdate=true;
+ const baked=plan.maps.map(map=>{const material=original.clone();material.lightMap=map;material.lightMapIntensity=Math.PI;material.envMapIntensity=0;material.aoMap=null;material.needsUpdate=true;return material});
  const receiver=new T.Mesh(receiverGeometry,original);receiver.matrix.copy(object.matrix);receiver.matrixAutoUpdate=false;receiver.castShadow=object.castShadow;receiver.receiveShadow=object.receiveShadow;receiver.userData={...object.userData,ambientReceiver:true};
  if(object.sourceVisibilityObject)bindSourceVisibility(receiver,object.sourceVisibilityObject);
  object.geometry=remainder;scene.add(receiver);
