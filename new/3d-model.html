@@ -6929,7 +6929,7 @@ const cv=renderer.domElement;
 // click on the building / ground in the outside views → walk there (no need to press 내부 보기 first)
 {let XD=null;cv.addEventListener('pointerdown',e=>{XD=I.on?null:{x:e.clientX,y:e.clientY,t:performance.now()}});
   cv.addEventListener('pointerup',e=>{if(!XD||I.on)return;const d=XD;XD=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5||performance.now()-d.t>500||e.button!==0||state.era==='now')return;extGo(e)})}
-function extGo(e){const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+function extGo(e){if(window.TOWER_ORBIT_ONLY)return;const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   let hit=null;for(const x of ray.intersectObject(bld,true)){const m=x.object;if(!m.isMesh||!visDeep(m))continue;const mt=Array.isArray(m.material)?m.material[0]:m.material;if(!mt||mt.depthTest===false||(mt.transparent&&mt.opacity<0.35))continue;hit=x.point.clone();break}
   const gp=new THREE.Vector3(),gOk=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),gp);
   if(gOk&&(!hit||gp.distanceTo(camera.position)<hit.distanceTo(camera.position)-0.3))hit=gp;if(!hit)return;
@@ -7611,8 +7611,8 @@ if(['360','verify','review'].includes(new URLSearchParams(location.search).get('
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=interactive-1';document.head.appendChild(script);}
-  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=interactive-1';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=navigation-2';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=navigation-2';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){

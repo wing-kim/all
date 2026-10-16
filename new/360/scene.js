@@ -2,6 +2,7 @@
 (async function () {
   'use strict';
   const C=window.TOWER_LAB_CONTEXT;
+  window.TOWER_ORBIT_ONLY=true;
   const {THREE:T,scene,camera,controls,renderer,state,M,R3D,RMAT,HQ,bld,P,inPoly}=C;
   const scripts=new Map();
   const load=src=>{if(scripts.has(src))return scripts.get(src);const promise=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});scripts.set(src,promise);return promise;};
@@ -28,7 +29,7 @@
     if(m?.isMeshBasicMaterial&&o.geometry?.type==='BufferGeometry'){o.position.y+=.045; m.polygonOffset=true;m.polygonOffsetFactor=-2;m.polygonOffsetUnits=-2;}
   });
   camera.fov=45;camera.near=2;camera.far=1800;camera.updateProjectionMatrix();
-  controls.enablePan=false;controls.minDistance=28;controls.maxDistance=180;
+  controls.enabled=true;controls.enableZoom=true;controls.enablePan=false;controls.minDistance=8;controls.maxDistance=400;
   controls.minPolarAngle=.22;controls.dampingFactor=.075;
   // Permit street-height observation below the building centre without going underground.
   const cameraOffset=new T.Vector3();
@@ -45,7 +46,28 @@
   controls.addEventListener('change',constrainCameraHeight);constrainCameraHeight();
   let flight=null;
   const cancel=()=>{flight=null;C.cancel()};
-  controls.addEventListener('start',cancel);
+  controls.addEventListener('start',()=>{cancel();dispatchEvent(new Event('tower-navigation-start'));window.TOWER_CINEMA?.cancelPrecision()});
+  const inputCanvas=renderer.domElement;inputCanvas.tabIndex=0;inputCanvas.setAttribute('aria-label','건물 360도 탐색. 휠 확대 축소, WASD 이동, Home 전체 보기');
+  inputCanvas.addEventListener('pointerdown',()=>inputCanvas.focus({preventScroll:true}));
+  function navigateKey(event){
+    if(event.target?.closest?.('input,textarea,select,[contenteditable=true]')||event.ctrlKey||event.metaKey||event.altKey)return;
+    const code=event.code;
+    if(!['Home','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(code))return;
+    event.preventDefault();cancel();dispatchEvent(new Event('tower-navigation-start'));controls.autoRotate=false;window.TOWER_CINEMA?.cancelPrecision();
+    if(code==='Home'){view('aerial');return;}
+    const forward=camera.getWorldDirection(new T.Vector3());forward.y=0;forward.normalize();
+    const right=new T.Vector3().crossVectors(forward,camera.up).normalize(),delta=new T.Vector3();
+    if(['KeyW','ArrowUp'].includes(code))delta.copy(forward);
+    if(['KeyS','ArrowDown'].includes(code))delta.copy(forward).negate();
+    if(['KeyA','ArrowLeft'].includes(code))delta.copy(right).negate();
+    if(['KeyD','ArrowRight'].includes(code))delta.copy(right);
+    if(code==='KeyQ')delta.y=-1;if(code==='KeyE')delta.y=1;
+    delta.multiplyScalar(event.shiftKey?3:1);
+    if(camera.position.y+delta.y<1.5)delta.y=1.5-camera.position.y;
+    camera.position.add(delta);controls.target.add(delta);controls.update();
+  }
+  addEventListener('keydown',navigateKey);
+
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
   async function dressBuilding(){
@@ -203,7 +225,7 @@
   function view(name){
     const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
     const a=directions[name];if(!a)return;
-    controls.autoRotate=false;
+    controls.autoRotate=false;controls.enabled=true;controls.enableZoom=true;controls.minDistance=8;controls.maxDistance=400;
     const distance=(name==='reference'?66:62)*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
     const viewCenter=center.clone();if(name==='reference')viewCenter.y=15;
     const targetFrom=controls.target.clone();
@@ -227,7 +249,7 @@
     }
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
-    view,quality:setQuality,
+    view,navigateKey,quality:setQuality,
     requestPrecision:()=>window.TOWER_CINEMA?.requestPrecision(),
     cancelPrecision:()=>window.TOWER_CINEMA?.cancelPrecision(),
     applyConfig:async config=>{
@@ -247,7 +269,7 @@
       geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());
       window.TOWER_LAST_SWITCH_MS=performance.now()-before;return true;
     },
-    pose:(position,target)=>{flight=null;C.cancel();controls.minDistance=1;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
+    pose:(position,target)=>{flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
@@ -278,13 +300,13 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=interactive-1');
+  await load('360/environment.js?v=navigation-2');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=interactive-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=navigation-2');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

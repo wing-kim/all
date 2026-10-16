@@ -1,0 +1,40 @@
+{
+  "interior": false,
+  "lazyPrecisionLoaded": false,
+  "ratio": 1.25,
+  "status": {
+    "batchBoundsDelta": 0,
+    "batchedObjects": 1347,
+    "error": null,
+    "firstFrameMs": 4963.300000011921,
+    "frameIntervalMs": 57.17749999960264,
+    "frameMs": 17.9641666640838,
+    "lastUpdateMs": null,
+    "materials": 1624,
+    "mode": "interactive",
+    "objects": 1396
+  },
+  "telemetry": {
+    "camera": [
+      -41.19361086274089,
+      42.412398884138,
+      41.080813945815514
+    ],
+    "environment": "실시간 탐색 · 회전 후 대기 없음",
+    "fps": 60,
+    "geometryCount": 3659,
+    "meshes": 86,
+    "quality": "high",
+    "target": [
+      -3,
+      16,
+      0
+    ]
+  },
+  "timings": [
+    {
+      "kind": "initial",
+      "ms": 15143.100000023842
+    }
+  ]
+}

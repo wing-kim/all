@@ -5,6 +5,7 @@
   const style=document.createElement('style');style.textContent=`
     #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef}
     .precision-on .views,.precision-on .tools{z-index:8}
+    .precision-on > canvas{visibility:hidden}
     .precision-on .labels,.precision-on .compass,.precision-on .hint{visibility:hidden}
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
     #precision-settings{padding:10px 0;font-size:12px} #precision-settings select{padding:5px;margin:4px}
@@ -16,7 +17,11 @@
   group.after(settings);
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
-  reference.onclick=()=>{if(!active)enable();api()?.view('reference');};
+  reference.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();api()?.view('reference');};
+  const home=document.createElement('button');home.id='precision-home';home.textContent='건물 전체 보기 ↗';home.title='건물 중심 공중 시점으로 복귀 (Home)';views.prepend(home);
+  home.onclick=()=>{poseUntil=0;C.cancel();if(C.interior())document.getElementById('v-corner').click();if(!active)enable();api()?.view('aerial');};
+  addEventListener('keydown',event=>{if(active)api()?.navigateKey(event)});
+
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
   let frame=null,active=false,key='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false;
   const timings=[];
@@ -42,8 +47,8 @@
     key=JSON.stringify(snapshot());ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=interactive-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
-    frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=navigation-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   function disable(){
     active=false;clearTimeout(timer);frame?.contentWindow?.TOWER_CINEMA?.pause(true);
@@ -91,11 +96,12 @@
     if(next!==key){key=next;clearTimeout(timer);timer=setTimeout(rebuild,120);status.textContent='변경한 시안 적용 중…';return;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}
     const w=frame.contentWindow;
-    if(!ready&&w.TOWER_CINEMA){ready=true;timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);}
+    if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);}
     const renderState=w.TOWER_CINEMA?.status();
+    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE)frame.style.visibility='visible';
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':api().telemetry().environment;
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기');
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
   },200);
   window.TOWER_REVIEW={enable,disable,snapshot,timings,get frame(){return frame}};
