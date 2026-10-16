@@ -30,7 +30,7 @@ http://127.0.0.1:8765/new/3d-model.html?lab=review
 ## 로컬 실행 위치
 
 ```sh
-cd "/Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all"
+cd "/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower"
 claude
 ```
 

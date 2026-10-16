@@ -7,7 +7,7 @@
 아래 인수 보고서를 제출한 뒤 “이 이해와 계획으로 구현을 시작해도 될까요?”라고 묻고 제 명시적인 답을 기다리세요. 기존 문서의 자율 진행 지침보다 이 최초 승인 조건이 우선합니다.
 
 [작업 위치와 읽을 자료]
-현재 저장소 루트: /Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all
+현재 저장소 루트: /Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower
 작업 브랜치: codex/tower-360-validation
 먼저 git status --short --branch와 최근 로그로 실제 상태를 확인하고 변경을 보존하세요. 다른 Codex/Claude 작업자가 같은 파일을 쓰고 있다면 중복 작업을 시작하지 마세요.
 다음 순서로 읽으세요:

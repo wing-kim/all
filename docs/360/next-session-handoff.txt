@@ -70,7 +70,7 @@
 4. 확인된 저장소 상태
 
 Repo: https://github.com/wing-kim/all
-로컬: /Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all
+로컬: /Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower
 작업 브랜치: codex/tower-360-validation
 Draft PR: https://github.com/wing-kim/all/pull/1
 구현 기준 HEAD: 8a6f095 (최신 인계 문서 커밋은 그 이후)

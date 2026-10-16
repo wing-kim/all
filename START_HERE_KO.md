@@ -2,7 +2,7 @@
 
 ## 지정 프로젝트 폴더
 
-`/Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all`
+`/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`
 
 이 폴더가 코드, Git 이력, 프로젝트 지침을 함께 관리하는 실제 저장소 루트다.
 Claude Code 앱의 로컬 코드 작업에서 이 폴더를 작업 폴더로 선택한다.

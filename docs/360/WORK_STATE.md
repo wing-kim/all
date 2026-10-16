@@ -1,5 +1,7 @@
 # 작업 상태와 다음 행동
 
+현재 지정 작업 루트: `/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`. 이전 pm/문서 작성/kapehorn-all 경로의 기록은 과거 위치다.
+
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
 ## 최신 재개 요약 — 2026-10-16, 220429e 배포 검증 완료
@@ -176,3 +178,10 @@
 
 ## Claude Code 앱의 지정 폴더와 지속 문서 — 2026-10-16
 사용자는 터미널이 아니라 Claude Code 앱을 사용한다. 지정 폴더는 현재 Git 루트 kapehorn-all이며 지침은 이미 해당 루트/하위 docs에서 Git으로 관리해 왔다. START_HERE_KO.md에 앱의 작업폴더 선택, 첫 메시지, 문서 역할 및 매 단계/압축 후 갱신 절차를 추가했다. CLAUDE.md를 한글로 정리하고 한글 응답과 최초 승인/승인 후 자율 진행의 구분을 명시했다. 앱에 CLI 옵션/opusplan UI가 반드시 존재한다고 가정하지 않는다. 별도 빈 폴더나 중복 소스 사본을 만들지 않는다.
+
+## 독립 작업 공간 이전 — 2026-10-16
+- 사용자 지정 `/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`에 --no-hardlinks 독립 clone 생성. 작업브랜치 codex/tower-360-validation, 이전 기준 e694ac2 및 전체 조상 이력 보존. origin은 https://github.com/wing-kim/all.git로 설정. 공유 git worktree/alternates 아님.
+- Git 제외 tools/360/node_modules와 cafe-ambient-source.json.gz도 새 위치로 이동. 베이크 입력 SHA256 이동 전후 동일 확인.
+- 기존 저장소는 미커밋 변경 없음을 확인한 뒤 원래 local main0f250ee로 복귀. 작업 시작 checkout reflog와 일치하며 diff/ignored status도 비어 있음. 원격 최신main으로 임의 갱신하지 않음. 기존 작업 브랜치/이력도 안전을 위해 삭제하지 않음.
+- 지침·인계 프롬프트·시작 안내의 실행경로를 새 위치로 변경. GPT/Claude는 새 폴더에서 시작하고 이전 폴더에 타워 기능 수정 금지. 앱의 현재 대화 프로젝트 선택을 도구로 자동 이동했다고 주장하지 말 것.
+- 이전 후 검증: integrated lifecycle 및 cafe ambient guard 테스트 통과. localhost8765 서버를 새 루트에서 재시작하고 START_HERE HTTP 응답이 새 파일과 바이트 일치, viewer HTTP200 확인. 렌더 코드 변경 없는 경로 이전이며 전체 시각 회귀를 다시 수행했다는 뜻은 아님.

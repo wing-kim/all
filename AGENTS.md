@@ -19,3 +19,9 @@ After a meaningful work unit, update WORK_STATE with commit/evidence/remaining i
 Budget: after the reset, total weekly account use <=50%; 45% wrap-up, finish artifacts by48%, reserve2%. All agents/research/deployment included. Monitor at milestones. Report technical success and visual success separately. Avoid broad searches through bundled/minified lines in the monolithic HTML; use scoped reads or rg --max-columns.
 
 At every stage boundary, report the full roadmap with completed/current/next markers; restate the architectural/interior decision purpose and main noninterference invariant; identify reference sources and distinguish discovered/read/applied/visually verified evidence; report implementation feasibility from actual indoor/outdoor quality and navigation performance; report current weekly account usage (not invented token counts), remaining budget to50%, and Sol delegation efficiency; give a continue/change/hold-expansion judgment with reasons and unresolved items. Save evidence and the exact next action in WORK_STATE. A progress report alone does not complete a stage. Do not repeat research without a specific unresolved question.
+
+## 지정 작업 공간 — 2026-10-16 이전 완료
+현재 유일한 타워 실사3D 작업 루트는 `/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`이다.
+GPT/Codex와 Claude Code 모두 이 폴더를 프로젝트로 선택한다. 명령 실행 전 실제 경로와 브랜치를 확인한다.
+기존 `pm/문서 작성/kapehorn-all`은 원래 local main으로 복구했으므로 이 기능 개발을 위해 수정하거나 다시 브랜치 전환하지 않는다.
+코드·지침·검증·인계 기록은 현재 루트에서 함께 관리한다. 같은 파일 동시 쓰기는 금지한다.

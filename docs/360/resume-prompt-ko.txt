@@ -24,7 +24,7 @@
 저장소: https://github.com/wing-kim/all
 작업 브랜치: codex/tower-360-validation
 Draft PR: https://github.com/wing-kim/all/pull/1
-로컬: /Users/jaehwak/Documents/Kapehorn/pm/문서 작성/kapehorn-all
+로컬: /Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower
 먼저 docs/360/next-session-handoff.txt, docs/360/deployment-and-resume.txt, docs/360/cafe-implementation.md를 읽고 git status/log와 원격 변경을 확인해줘. 마지막 구현 기준은 8a6f095이며 그 이후 인계 문서 커밋도 읽어줘. 사용자 변경은 보존해줘.
 
 [사용량과 중단·재개]
