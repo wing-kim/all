@@ -223,7 +223,7 @@
   return extra;
   }
   let interiors=await dressBuilding();
-  const extra=new T.Group();extra.name='persistent-neighbourhood';scene.add(extra);
+  const extra=new T.Group();extra.name='persistent-neighbourhood';scene.add(extra);C.persistentNeighborhood=extra;
   let seed=7231;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
   // Fine surface relief, rather than painting lighting into albedo.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d'),pixels=ctx.createImageData(256,256);
@@ -359,7 +359,7 @@
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=doll-2');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=doll-3');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

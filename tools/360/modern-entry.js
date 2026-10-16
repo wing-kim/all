@@ -73,7 +73,7 @@ export async function start(C){
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
+  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.persistentNeighborhood||p===C.R3D.street||p===C.R3D.props)n.userData.outdoorEnhancement=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
  });}
  function syncSourceVisibility(){const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed}
  copyRoot(C.scene);

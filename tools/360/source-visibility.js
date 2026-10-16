@@ -14,15 +14,18 @@ export function bindSourceVisibility(copy,source){
 export function syncCopiedVisibility(T,scene,C,renderer){
  const doll=!!C.dollMode,level=doll?C.levels().find(l=>l.key===C.interiorFloorKey):null;
  const cap=level?C.ceilOf(level)-.1:Infinity,bounds=new T.Box3();
+ const hideOutdoors=doll&&level?.kind==='base';
  let changed=0;
  for(const object of scene.children){
   const source=object.sourceVisibilityObject;
   if(!source){
    const kind=object.userData.contextKind;
-   if(kind&&object.visible!==C[kind].visible){object.visible=C[kind].visible;changed++}
+   const visible=(kind?C[kind].visible:true)&&!(hideOutdoors&&object.userData.outdoorEnhancement);
+   if((kind||object.userData.outdoorEnhancement)&&object.visible!==visible){object.visible=visible;changed++}
    continue;
   }
   let visible=sourceVisible(source);
+  if(hideOutdoors&&object.userData.outdoorEnhancement)visible=false;
   if(visible&&level&&object.userData.interiorDressing){
    if(source.isInstancedMesh&&source.userData.legacyInteriorFoliage)visible=false;
    else{bounds.setFromObject(source);if(bounds.min.y>=cap)visible=false}

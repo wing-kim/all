@@ -9,7 +9,7 @@ export function batchStaticSurroundings(T,mergeGeometries,scene){
   const m=o.material,key=JSON.stringify([m.color.toArray(),m.emissive.toArray(),m.emissiveIntensity,m.roughness,m.metalness,m.side,m.opacity,m.alphaTest,m.clearcoat,m.clearcoatRoughness,m.normalScale.toArray(),m.bumpScale,m.polygonOffset,m.polygonOffsetFactor,m.polygonOffsetUnits,...['map','normalMap','roughnessMap','metalnessMap','bumpMap','emissiveMap','alphaMap'].map(k=>m[k]?.uuid)]);
   if(!palette.has(key))palette.set(key,m);o.material=palette.get(key);
   const center=new T.Vector3();o.geometry.computeBoundingBox();o.geometry.boundingBox.getCenter(center).applyMatrix4(o.matrix);
-  const groupKey=[o.material.uuid,o.castShadow,o.receiveShadow,o.visible,o.userData.contextKind||'',Math.floor(center.x/48),Math.floor(center.z/48)].join(':');
+  const groupKey=[o.material.uuid,o.castShadow,o.receiveShadow,o.visible,o.userData.contextKind||'',!!o.userData.outdoorEnhancement,Math.floor(center.x/48),Math.floor(center.z/48)].join(':');
   if(!batches.has(groupKey))batches.set(groupKey,[]);batches.get(groupKey).push(o);
  }
  let batchedObjects=0,batchBoundsDelta=0;

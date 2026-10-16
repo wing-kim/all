@@ -34,4 +34,12 @@ C.dollMode=false;first.visible=third.visible=lowerCeiling.visible=upperCeiling.v
 syncCopiedVisibility(T,scene,C,renderer);
 assert.deepEqual(visibility(),[true,true,true,true,true],'walk mode restores every source mesh');
 assert.equal(scene.children.every(object=>object.geometry===geometry),true,'visibility changes never rebuild geometry');
+const outdoorSource=new T.Mesh(geometry,material),outdoorScene=new T.Scene(),outdoorCopy=new T.Mesh(geometry,material),outdoorBatch=new T.Mesh(geometry,material);
+bindSourceVisibility(outdoorCopy,outdoorSource);outdoorCopy.userData.outdoorEnhancement=true;outdoorBatch.userData.outdoorEnhancement=true;
+outdoorScene.add(outdoorCopy,outdoorBatch);
+C.levels=()=>[{key:'B1',kind:'base'}];C.ceilOf=()=>0;C.dollMode=true;C.interiorFloorKey='B1';
+syncCopiedVisibility(T,outdoorScene,C,renderer);
+assert.deepEqual(outdoorScene.children.map(object=>object.visible),[false,false],'basement doll hides both copied and batched outdoor additions');
+C.dollMode=false;syncCopiedVisibility(T,outdoorScene,C,renderer);
+assert.deepEqual(outdoorScene.children.map(object=>object.visible),[true,true],'outdoor additions return on exit');
 console.log('source visibility: floor, dollhouse, core and walk transitions passed');
