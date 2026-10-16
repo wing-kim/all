@@ -262,8 +262,9 @@
     const level=C.levels().find(l=>l.key===key);if(!level)return false;
     const visibilityKey=JSON.stringify(visibility||{});
     const displayChanged=!C.cafeMode||C.interiorFloorKey!==key||C.dollMode!==!!doll||lastVisibilityKey!==visibilityKey;
-    cancel();C.cafeMode=true;C.dollMode=!!doll;C.interiorFloorKey=key;
+    C.cafeMode=true;C.dollMode=!!doll;C.interiorFloorKey=key;
     if(displayChanged){if(doll)window.TOWER_CINEMA?.cancelPrecision();C.syncInteriorDisplay?.(key,doll,visibility);window.TOWER_CINEMA?.syncSourceVisibility();lastVisibilityKey=visibilityKey}
+    cancel(); // Original enterInt/placeLevel/setDoll can start a fly-to; the forwarded pose wins.
     camera.near=doll ? .2 : .08;camera.fov=T.MathUtils.clamp(fov,35,100);camera.updateProjectionMatrix();controls.minDistance=doll ? 3 : .15;controls.maxDistance=doll ? 300 : .8;controls.enableZoom=!!doll;controls.minPolarAngle=.1;controls.maxPolarAngle=doll ? Math.PI*.49 : Math.PI-.1;controls.autoRotate=false;
     camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
   }
