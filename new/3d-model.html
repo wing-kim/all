@@ -242,6 +242,11 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 .ph-nav:hover span{opacity:1;background:rgba(15,20,18,.7)}.ph-nav:active span{opacity:1}
 .ph-nav[hidden]{display:none}
 .ph-img.on{opacity:1}
+.ph-img{transform-origin:0 0;will-change:transform}
+.ph.zoomed .ph-nav{display:none}.ph.zoomed{cursor:grab}.ph.zoomed.panning{cursor:grabbing}
+.ph-zoom{position:absolute;right:14px;bottom:96px;z-index:2;display:flex;flex-direction:column;gap:4px;padding:4px;border-radius:8px;background:rgba(15,20,18,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.ph-zoom button{min-width:40px;padding:6px 0!important;font-size:15px!important;text-align:center}.ph-zoom button[data-z="0"]{font-size:11.5px!important}
+@media (max-width:1100px),(pointer:coarse){.ph-zoom{right:8px;bottom:64px}}
 .ph.fill .ph-img{object-fit:cover}
 .ph-rot{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% + 34vw));color:rgba(255,255,255,.75);font:500 12px var(--font);white-space:nowrap;pointer-events:none}
 @media (orientation:portrait) and (max-width:760px){.ph-rot{display:block}.ph.fill .ph-rot{display:none}}
@@ -7660,7 +7665,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v92';
+  window.CH_VER='v93';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -7683,9 +7688,18 @@ let last=performance.now();
       <div class="ph-title" id="phTitle"></div><div class="ph-vars" id="phVars"></div></div><div class="ph-floors" id="phFloors"></div>
     <div class="ph-empty" id="phEmpty" hidden></div><div class="ph-load" id="phLoad" hidden>불러오는 중…</div>
     <div class="ph-nav l" id="phPrev" title="이전 사진" hidden><span>‹</span></div><div class="ph-nav r" id="phNext" title="다음 사진" hidden><span>›</span></div>
-    <div class="ph-bar" id="phBar"></div><div class="ph-hint">화면 왼쪽·오른쪽을 누르거나 ←→ 키로 돌려 보기</div><div class="ph-rot">휴대폰을 가로로 돌리거나 [⤢ 크게]를 누르면 크게 보입니다</div>`;
+    <div class="ph-zoom" id="phZoom"><button data-z="+" title="확대">+</button><button data-z="0" title="원래 크기로">1×</button><button data-z="-" title="축소">−</button></div>
+    <div class="ph-bar" id="phBar"></div><div class="ph-hint">왼쪽·오른쪽 누르기 / ←→ 키로 넘기기 · 휠·두 손가락으로 확대, 끌어서 이동</div><div class="ph-rot">휴대폰을 가로로 돌리거나 [⤢ 크게]를 누르면 크게 보입니다</div>`;
   viewer.appendChild(el);
   const imgs=[...el.querySelectorAll('.ph-img')];let front=0;
+  // 확대·이동 (2026.10.16): 휠 / 두 손가락 / + − 버튼으로 확대, 확대 중에는 끌어서 이동, 두 번 누르면 확대↔원래대로. 사진이 바뀌면 원래 크기로
+  const Z=window.PHZ={s:1,x:0,y:0,moved:false,hd:false};
+  function zApply(){const w=el.clientWidth,h=el.clientHeight;Z.s=Math.min(6,Math.max(1,Z.s));Z.x=Math.min(0,Math.max(w-w*Z.s,Z.x));Z.y=Math.min(0,Math.max(h-h*Z.s,Z.y));
+    const t=Z.s===1?'':`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;imgs.forEach(i=>i.style.transform=t);el.classList.toggle('zoomed',Z.s>1.001);
+    const zb=el.querySelector('[data-z="0"]');if(zb)zb.textContent=Z.s>1.001?Z.s.toFixed(1)+'×':'1×';
+    if(Z.s>1.4&&!Z.hd&&PH.cur&&SRC.hd&&el.dataset.q!=='hd'){Z.hd=true;show(PH.cur)}}
+  function zAt(px,py,ns){ns=Math.min(6,Math.max(1,ns));const k=ns/Z.s;Z.x=px-(px-Z.x)*k;Z.y=py-(py-Z.y)*k;Z.s=ns;if(ns===1){Z.x=0;Z.y=0}zApply()}
+  function zReset(){Z.s=1;Z.x=0;Z.y=0;Z.hd=false;zApply()}
   // views buttons that make sense on photos stay visible in photo mode
   document.querySelectorAll('.views button').forEach(b=>{if(b.dataset.v==='int'||VIEW2ANG[b.dataset.v]!=null)b.dataset.ph='1'});
   function b64url(rel){const s=document.getElementById('ph:'+rel);if(!s)return null;
@@ -7695,7 +7709,7 @@ let last=performance.now();
     const T=(PH.man&&PH.man.tiers)||{},v=PH.man&&PH.man.h&&PH.man.h[rel],q=v?'?v='+v:'';
     if(tier==='hd')return SRC.hd?SRC.hd+(T.hd||'hd/')+rel+q:null;
     return SRC.base+(T[tier]||tier+'/')+rel+q}
-  const wantHD=()=>!!SRC.hd&&(el.classList.contains('fill')||(!matchMedia('(pointer:coarse)').matches&&el.clientWidth*(devicePixelRatio||1)>1500));
+  const wantHD=()=>!!SRC.hd&&(Z.s>1.4||el.classList.contains('fill')||(!matchMedia('(pointer:coarse)').matches&&el.clientWidth*(devicePixelRatio||1)>1500));
   function tryScript(u){return new Promise(res=>{const t=document.createElement('script');let done=false;const fin=()=>{if(!done){done=true;res()}};
     t.src=u;t.onload=t.onerror=fin;setTimeout(fin,8000);document.head.appendChild(t)})}
   let manP=null;
@@ -7712,7 +7726,7 @@ let last=performance.now();
     const put=url=>new Promise(res=>{if(!url)return res(false);const im=imgs[1-front];
       im.onload=()=>{if(t!==tok)return res(false);imgs[front].classList.remove('on');im.classList.add('on');front=1-front;res(true)};
       im.onerror=()=>res(false);im.src=url;im.alt=label||''});
-    const std=src(rel,'std'),th=src(rel,'thumb'),hd=wantHD()?src(rel,'hd'):null;PH.cur=rel;
+    const std=src(rel,'std'),th=src(rel,'thumb'),hd=wantHD()?src(rel,'hd'):null;if(rel!==PH.cur)zReset();PH.cur=rel;
     ld.hidden=!!PH.seen[std];
     (async()=>{if(th&&!PH.seen[std])await put(th);if(t!==tok)return;const ok=await put(std);if(t!==tok)return;ld.hidden=true;
       if(ok){PH.seen[std]=1;if(hd&&await put(hd))el.dataset.q='hd';else el.dataset.q='std'}})()}
@@ -7781,7 +7795,28 @@ let last=performance.now();
   PH.view=v=>{if(v==='int'){PH.mode='int';render();return true}if(VIEW2ANG[v]!=null){PH.mode='ext';PH.ang=VIEW2ANG[v];render();return true}return false};
   el.querySelectorAll('.ph-seg button').forEach(b=>b.onclick=()=>{PH.mode=b.dataset.m;render()});
   // 화면 왼쪽·오른쪽을 눌러 한 장씩 넘기기 (드래그로 빠르게 돌아가던 방식은 멀미가 나서 뺌, 2026.10.16)
-  let lastNav=0;const nav=(d,e)=>{if(e)e.stopPropagation();const t=Date.now();if(!PH.step||t-lastNav<350)return;lastNav=t;PH.step(d)};
+  let lastNav=0;const nav=(d,e)=>{if(e)e.stopPropagation();const t=Date.now();if(!PH.step||t-lastNav<350||Z.s>1.001||Z.moved)return;lastNav=t;PH.step(d)};
+  // 확대 제스처
+  const noZ=t=>t.closest&&t.closest('button,.ph-top,.ph-bar,.ph-floors,.ph-zoom');
+  const rel0=e=>{const r=el.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  el.addEventListener('wheel',e=>{if(!PH.on||noZ(e.target))return;e.preventDefault();const [px,py]=rel0(e);zAt(px,py,Z.s*Math.exp(-e.deltaY*0.0015))},{passive:false});
+  const P=new Map();let pinch=null,pan=null,lastTap=0;
+  el.addEventListener('pointerdown',e=>{if(!PH.on||noZ(e.target))return;P.set(e.pointerId,rel0(e));Z.moved=false;
+    if(P.size===2){const [a,b]=[...P.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:Z.s,c:[(a[0]+b[0])/2,(a[1]+b[1])/2]};pan=null}
+    else if(P.size===1&&Z.s>1.001){pan={p:rel0(e),x:Z.x,y:Z.y};el.classList.add('panning')}
+    if(P.size===1)pan0=rel0(e)},true);
+  let pan0=null;
+  el.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,rel0(e));
+    if(pinch&&P.size>=2){const [a,b]=[...P.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),c=[(a[0]+b[0])/2,(a[1]+b[1])/2];zAt(c[0],c[1],Z.s*d/Math.max(1,pinch.d));pinch.d=d;Z.moved=true;return}
+    if(pan){const q=rel0(e);Z.x=pan.x+q[0]-pan.p[0];Z.y=pan.y+q[1]-pan.p[1];if(Math.hypot(q[0]-pan.p[0],q[1]-pan.p[1])>5)Z.moved=true;zApply()}},true);
+  const up=e=>{if(!P.has(e.pointerId))return;P.delete(e.pointerId);if(P.size<2)pinch=null;if(!P.size){pan=null;el.classList.remove('panning');
+      const q=rel0(e),tap=pan0&&Math.hypot(q[0]-pan0[0],q[1]-pan0[1])<8&&!Z.moved,now=Date.now(),side=e.target.closest&&e.target.closest('.ph-nav');
+      if(tap&&!side&&now-lastTap<320){zAt(q[0],q[1],Z.s>1.001?1:2.5);lastTap=0}else if(tap)lastTap=now;
+      setTimeout(()=>{Z.moved=false},0)}};
+  el.addEventListener('pointerup',up,true);el.addEventListener('pointercancel',up,true);
+  el.querySelectorAll('.ph-zoom button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const w=el.clientWidth/2,h=el.clientHeight/2,z=b.dataset.z;
+    if(z==='0')zReset();else zAt(w,h,Z.s*(z==='+'?1.5:1/1.5))}));
+  addEventListener('resize',()=>{if(PH.on)zApply()});
   document.getElementById('phPrev').addEventListener('click',e=>nav(-1,e));document.getElementById('phNext').addEventListener('click',e=>nav(1,e));
   addEventListener('keydown',e=>{if(!PH.on||!PH.step||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight'){PH.step(1);e.preventDefault();e.stopImmediatePropagation()}if(e.key==='ArrowLeft'){PH.step(-1);e.preventDefault();e.stopImmediatePropagation()}},true);
 })();
