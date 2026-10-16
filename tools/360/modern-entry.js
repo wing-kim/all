@@ -7,6 +7,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { copyGeometry } from './geometry-copy.js';
 import { summarizeSamples } from './performance-stats.js';
+import { createSourceSky } from './sky-background.js';
 import * as T from 'three/webgpu';
 import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
@@ -80,7 +81,7 @@ export async function start(C){
  const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;
  timings.hdrMs=performance.now()-bootAt;
  function skyGradient(top,horizon,bottom){const canvas=document.createElement('canvas');canvas.width=4;canvas.height=256;const ctx=canvas.getContext('2d'),gradient=ctx.createLinearGradient(0,0,0,256);gradient.addColorStop(0,top);gradient.addColorStop(.48,horizon);gradient.addColorStop(1,bottom);ctx.fillStyle=gradient;ctx.fillRect(0,0,4,256);const map=new T.CanvasTexture(canvas);map.mapping=T.EquirectangularReflectionMapping;map.colorSpace=T.SRGBColorSpace;return map}
- const daySky=skyGradient('#729fbc','#d8e6e9','#c5d5d9'),nightSky=skyGradient('#080e1a','#233047','#202938');
+ const nightSky=skyGradient('#080e1a','#233047','#202938'),sourceSky=createSourceSky(T,renderer);
  const sun=new T.DirectionalLight(C.sun.color.getHex(),C.sun.intensity);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
  // The HDR is ambient reflection only. Its fixed bright texel cannot represent
  // the source solar elevation, so never show it as a second visible sun.
@@ -90,7 +91,7 @@ export async function start(C){
   const azimuth=Math.atan2(daylight.direction[2],daylight.direction[0]);
   scene.environmentRotation.y=.5967185264875144-azimuth;
   scene.environmentIntensity=daylight.night ? .025 : .32;
-  scene.background=daylight.night?nightSky:daySky;
+  scene.background=daylight.night?nightSky:sourceSky.update(daylight);
  }
  alignDaylight();
  // Keep moving-preview glass reflections tied to the actual surrounding scene.
@@ -199,8 +200,8 @@ export async function start(C){
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
   resetPerformance,
-  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
- stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();daySky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
+ stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
