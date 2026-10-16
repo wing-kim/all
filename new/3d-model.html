@@ -255,9 +255,11 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 .ph .ph-seg button{border:0;border-radius:0}
 .ph-title{color:#fff;font:600 13px var(--font);background:rgba(15,20,18,.55);padding:6px 10px;border-radius:6px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .ph-title small{font-weight:500;opacity:.75;margin-left:6px}
-.ph-floors{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;flex-basis:100%;max-width:100%;padding-bottom:2px}.ph-floors::-webkit-scrollbar{display:none}
+.ph-floors{position:absolute;left:12px;top:112px;bottom:76px;z-index:2;display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:4px;overflow-y:auto;scrollbar-width:none;width:max-content;max-width:40%;padding:4px;border-radius:8px;background:rgba(15,20,18,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);height:max-content;max-height:calc(100% - 188px)}.ph-floors::-webkit-scrollbar{display:none}
+.ph-floors button{text-align:left;white-space:nowrap}
+.ph[data-mode="int"] .ph-nav.l{left:auto;right:70%;padding-left:0}
 .ph-floors:empty,.ph-vars:empty{display:none}
-.ph-vars{display:flex;gap:4px;align-items:center;flex-basis:100%;flex-wrap:wrap}.ph-vars b{color:#fff;font:600 12px var(--font);opacity:.8;margin-right:2px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.ph-vars{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.ph-vars b{color:#fff;font:600 12px var(--font);opacity:.8;margin-right:2px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .ph-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#e3e8e6;font:500 14px var(--font);text-align:center;padding:24px}
 .ph-hint{position:absolute;right:14px;bottom:62px;color:rgba(255,255,255,.7);font:500 11.5px var(--font);z-index:2;pointer-events:none}
 .ph-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font:500 13px var(--font);opacity:.8;pointer-events:none}
@@ -270,7 +272,7 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 /* 실사 모드: 사진에 반영되지 않는 설정은 회색 비활성 */
 .phlock{opacity:.38;filter:grayscale(1);pointer-events:none;user-select:none}
 .ph-note{margin-top:8px;font-size:12px;line-height:1.5;color:#6b5200;background:#fff5d6;border:1px solid #efd894;border-radius:8px;padding:7px 9px}
-@media (max-width:1100px),(pointer:coarse){.ph-top{top:48px;left:8px;right:8px}.ph-hint{display:none}.ph-bar{bottom:10px}.ph button{padding:7px 9px;font-size:12px}}
+@media (max-width:1100px),(pointer:coarse){.ph-top{top:48px;left:8px;right:8px}.ph-floors{left:8px;top:96px;bottom:auto;max-height:calc(100% - 160px)}.ph-floors button{padding:6px 8px!important;font-size:11.5px!important}.ph-hint{display:none}.ph-bar{bottom:10px}.ph button{padding:7px 9px;font-size:12px}}
 </style>
 
 </head>
@@ -294,15 +296,15 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       <div class="chips cat" id="catTabs" role="tablist" aria-label="내부 메뉴"><button data-cat="space" aria-pressed="true">공간 이동</button><button data-cat="show" aria-pressed="false">표시</button><button data-cat="win" aria-pressed="false">창밖</button></div>
       <div class="chips tx" data-row="show" role="group" aria-label="내부 표시">
         <span class="wvl">표시</span>
-        <button data-iv="dim" aria-pressed="true">외벽 치수</button><button data-iv="ht" aria-pressed="true">천장고</button><button data-iv="rm" aria-pressed="true">실 이름</button><button data-iv="pk" aria-pressed="true">주차 대수</button><button data-iv="rp" aria-pressed="true" title="층 단면 보기에서 끄면 위층 램프(이 층 바닥보다 위에만 있는 램프)를 숨겨 아래 실이 보이게 함 · 이 층으로 내려오는 램프와 아래층으로 내려가는 램프는 그대로">램프</button><button data-iv="rw" aria-pressed="true" title="램프 폭·회전 여유 설명">램프 설명</button><button data-iv="lb" aria-pressed="true" title="끄면 이 층의 글자 라벨을 모두 숨김">라벨 전체</button><button data-iv="up" aria-pressed="false" title="천장에 바로 위층 평면(외곽·벽·코어·실·기둥·램프/계단 구멍)을 투명하게 겹쳐, 위층의 어디 아래에 있는지 보여줌">윗층 투시</button>
+        <button data-iv="lb" aria-pressed="true" title="끄면 이 층의 글자 라벨을 모두 숨기고 아래 항목도 모두 해제 · 다시 켜면 모두 표시">라벨 전체</button><button data-iv="up" aria-pressed="false" title="천장에 바로 위층 평면(외곽·벽·코어·실·기둥·램프/계단 구멍)을 투명하게 겹쳐, 위층의 어디 아래에 있는지 보여줌">윗층 투시</button><button data-iv="dim" aria-pressed="true">외벽 치수</button><button data-iv="ht" aria-pressed="true">천장고</button><button data-iv="rm" aria-pressed="true">실 이름</button><button data-iv="pk" aria-pressed="true">주차 대수</button><button data-iv="rp" aria-pressed="true" title="층 단면 보기에서 끄면 위층 램프(이 층 바닥보다 위에만 있는 램프)를 숨겨 아래 실이 보이게 함 · 이 층으로 내려오는 램프와 아래층으로 내려가는 램프는 그대로">램프</button><button data-iv="rw" aria-pressed="true" title="램프 폭·회전 여유 설명">램프 설명</button>
       </div>
       <div class="chips tx" data-row="space" role="group" aria-label="공간 보기">
         <span class="wvl">공간</span>
-        <button data-c="nw" title="북서 모서리에서 보기">↖ 모서리</button><button data-c="ne">↗ 모서리</button><button data-c="se">↘ 모서리</button><button data-c="sw">↙ 모서리</button>
-        <button id="dollBtn" aria-pressed="false">층 단면 보기</button>
+        <button id="exitInt">외부로 나가기</button><button id="dollBtn" aria-pressed="false">층 단면 보기</button>
         <button id="secBtn" aria-pressed="false">종단면 6F~PH2</button><button id="secAllBtn" aria-pressed="false">종단면 전체 (지하~옥상)</button>
-        <button id="rampWalk" title="지하층에서 누르면 위로, 1층 이상에서 누르면 아래로">🚶 램프 자동 걷기</button><button id="rampStep" title="↑ 누르는 동안 램프를 따라 한 걸음씩, ↓ 뒤로">👣 램프 직접 걷기</button><button id="coreTop">코어 확대</button><button id="coreHall">엘리베이터 홀</button>
-        <button id="exitInt">외부로 나가기</button>
+        <button data-c="nw" title="북서 모서리에서 보기">↖ 모서리</button><button data-c="ne">↗ 모서리</button><button data-c="se">↘ 모서리</button><button data-c="sw">↙ 모서리</button>
+        <button id="coreTop">코어 확대</button><button id="coreHall">엘리베이터 홀</button>
+        <button id="rampWalk" hidden style="display:none">🚶 램프 자동 걷기</button><button id="rampStep" hidden style="display:none">👣 램프 직접 걷기</button>
       </div>
 
       <div class="chips tx wv" data-row="win" role="group" aria-label="창밖 보기">
@@ -6777,13 +6779,17 @@ function chips(){const c=document.getElementById('floorChips');c.innerHTML='';
 const IV={dim:true,ht:true,rm:true,pk:true,rp:true,rw:true,lb:true,up:false};let RTAIL=null;
 function applyIV(){if(typeof htG!=='undefined'&&htG)htG.visible=IV.ht&&IV.lb;const on=IV.rw&&IV.lb;bld.traverse(o=>{if(o.material===MRW||o.material===G90SW||o.material===G90OK)o.visible=on})}
 // one switch for every text label (exterior tags + interior labels); phones start with labels off so the building is not covered (2026.10.09)
-function setLabels(on){const t=document.getElementById('t-labels');t.checked=on;IV.lb=on;document.getElementById('lblBtn').setAttribute('aria-pressed',on);
-  const c=document.querySelector('[data-iv="lb"]');if(c)c.setAttribute('aria-pressed',on);applyIV()}
+const IVTXT=['dim','ht','rm','pk','rw'];   // 글자 라벨 항목 (램프·윗층 투시는 모양 표시라 따로)
+function syncIVBtns(){document.querySelectorAll('[data-iv]').forEach(b=>b.setAttribute('aria-pressed',!!IV[b.dataset.iv]));const t=document.getElementById('t-labels');if(t)t.checked=IV.lb;const lb=document.getElementById('lblBtn');if(lb)lb.setAttribute('aria-pressed',IV.lb)}
+function setLabels(on){IV.lb=on;IVTXT.forEach(k=>IV[k]=on);syncIVBtns();applyIV();if(typeof I!=='undefined'&&I.on&&typeof interiorLabels==='function')interiorLabels()}
 document.getElementById('lblBtn').addEventListener('click',()=>setLabels(!document.getElementById('t-labels').checked));
 document.getElementById('t-labels').addEventListener('change',e=>setLabels(e.target.checked));
 if(matchMedia('(max-width:1100px),(pointer:coarse)').matches)setLabels(false);
 addEventListener('viewmodechange',()=>setLabels(!matchMedia('(max-width:1100px),(pointer:coarse)').matches));   // 화면 모드를 바꾸면 그 모드의 기본값으로: PC 화면 = 라벨 켬, 모바일 화면 = 끔
-document.querySelectorAll('[data-iv]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.iv;IV[k]=!IV[k];b.setAttribute('aria-pressed',IV[k]);applyIV();if(k==='lb'){document.getElementById('t-labels').checked=IV.lb;document.getElementById('lblBtn').setAttribute('aria-pressed',IV.lb)}if(k==='rp')applyDollVis();if(k==='up'&&I.on)interiorLabels()}));
+document.querySelectorAll('[data-iv]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.iv;
+  if(k==='lb'){setLabels(!(IV.lb&&IVTXT.every(x=>IV[x])));return}   // 일부만 켜져 있으면 누를 때 모두 켜고, 모두 켜져 있으면 모두 끔
+  IV[k]=!IV[k];if(IVTXT.includes(k)){if(IV[k])IV.lb=true;else if(!IVTXT.some(x=>IV[x]))IV.lb=false}
+  syncIVBtns();applyIV();if(k==='rp')applyDollVis();if((k==='up'||IVTXT.includes(k))&&I.on)interiorLabels()}));
 let inLabels=[];
 function clearIn(){inLabels.forEach(l=>{l.el.remove();const k=labels.indexOf(l);if(k>=0)labels.splice(k,1)});inLabels=[]}
 function interiorLabels(){clearIn();const L=Lv(),y=floorTop(L)+1.4;
@@ -7654,7 +7660,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v91';
+  window.CH_VER='v92';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -7669,12 +7675,12 @@ let last=performance.now();
   const ivFull=v=>{if(IV[v])return IV[v];const p=ivp(v);return p?`${p.pre?p.pre+' · ':''}${p.t}`:v};
   const ivShort=v=>{if(IV[v])return IV[v];const p=ivp(v);return p?(p.pre?p.pre+'-'+p.n:p.n):v};
   const ivSort=(a,b)=>{const ia=IVO.indexOf(a),ib=IVO.indexOf(b);if(ia>=0||ib>=0)return(ia<0?99:ia)-(ib<0?99:ib);return a.localeCompare(b,undefined,{numeric:true})};
-  const PH=window.PH={on:false,mode:'ext',man:null,ang:45,floor:null,vi:0,iv:'000',cur:null,urls:{},seen:{},extra:null,src:SRC};
+  const PH=window.PH={on:false,mode:'ext',man:null,ang:0,floor:null,vi:0,iv:'000',cur:null,urls:{},seen:{},extra:null,src:SRC};
   const app=document.querySelector('.app'),viewer=document.getElementById('viewer');
   const el=document.createElement('div');el.className='ph';el.id='ph';el.hidden=true;
   el.innerHTML=`<img class="ph-img" alt=""><img class="ph-img" alt="">
     <div class="ph-top"><div class="ph-seg"><button data-m="ext" aria-pressed="true">외부</button><button data-m="int" aria-pressed="false">내부</button></div>
-      <div class="ph-title" id="phTitle"></div><div class="ph-floors" id="phFloors"></div><div class="ph-vars" id="phVars"></div></div>
+      <div class="ph-title" id="phTitle"></div><div class="ph-vars" id="phVars"></div></div><div class="ph-floors" id="phFloors"></div>
     <div class="ph-empty" id="phEmpty" hidden></div><div class="ph-load" id="phLoad" hidden>불러오는 중…</div>
     <div class="ph-nav l" id="phPrev" title="이전 사진" hidden><span>‹</span></div><div class="ph-nav r" id="phNext" title="다음 사진" hidden><span>›</span></div>
     <div class="ph-bar" id="phBar"></div><div class="ph-hint">화면 왼쪽·오른쪽을 누르거나 ←→ 키로 돌려 보기</div><div class="ph-rot">휴대폰을 가로로 돌리거나 [⤢ 크게]를 누르면 크게 보입니다</div>`;
@@ -7718,8 +7724,8 @@ let last=performance.now();
     if(items.length>1){const n=document.createElement('button');n.textContent='▶';n.setAttribute('aria-label','다음 방향');n.onclick=()=>step(1);b.appendChild(n)}
     if(items.length){const z=document.createElement('button');z.textContent=el.classList.contains('fill')?'⤡ 전체':'⤢ 크게';z.title='화면 꽉 채우기 / 사진 전체 보기';z.onclick=()=>{el.classList.toggle('fill');z.textContent=el.classList.contains('fill')?'⤡ 전체':'⤢ 크게';if(PH.cur&&wantHD())show(PH.cur)};b.appendChild(z)}
     PH.step=step;document.getElementById('phPrev').hidden=document.getElementById('phNext').hidden=items.length<2}
-  function render(){if(!PH.on)return;const M=PH.man;el.querySelectorAll('.ph-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===PH.mode));
-    const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';document.getElementById('phVars').innerHTML='';
+  function render(){if(!PH.on)return;const M=PH.man;el.dataset.mode=PH.mode;el.querySelectorAll('.ph-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===PH.mode));
+    const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';F.hidden=true;document.getElementById('phVars').innerHTML='';
     if(!M){T.textContent='실사';bar([],null,()=>{});empty('실사 사진 목록을 불러오지 못했습니다.<br>인터넷 연결 또는 사진 저장소(kapehorn-media)를 확인해 주세요.<br><button id="phTo3d">3D로 보기</button>');document.getElementById('phTo3d').onclick=()=>off3d();return}
     if(PH.mode==='ext'){const [g,k]=design(),d=M.ext[g]&&M.ext[g][k],nm=(PH.extra&&PH.extra[1]===k&&d&&d.name)||(window.CH.dname&&window.CH.dname())||(d&&d.name)||k;
       if(!d||!Object.keys(d.img||{}).length){T.innerHTML=`${nm}<small>실사 준비 중</small>`;bar([],null,()=>{});empty(`'${nm}' — 360° 실사 사진 준비 중입니다.<br><button id="phTo3d">3D로 보기</button>`);document.getElementById('phTo3d').onclick=()=>off3d();return}
@@ -7730,13 +7736,13 @@ let last=performance.now();
     if(PH.mode!=='ext'){const fl=Object.entries(M.int).filter(([k,e])=>e.status!=='hide').sort((a,b)=>a[1].order-b[1].order);if(!fl.length){empty('내부 실사 사진이 없습니다.');return}
       if(!PH.floor||!fl.some(([k])=>k===PH.floor)){PH.floor=fl[0][0];PH.vi=0}
       fl.forEach(([k,e])=>{const b=document.createElement('button');b.textContent=e.name;b.setAttribute('aria-pressed',k===PH.floor);b.onclick=()=>{if(PH.floor!==k)PH.vi=0;PH.floor=k;render()};F.appendChild(b)});
-      {const sel=F.querySelector('[aria-pressed="true"]');if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:'nearest',inline:'nearest'})}
+      {const sel=F.querySelector('[aria-pressed="true"]');if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:'nearest',inline:'nearest'})}F.hidden=false;
       // 같은 층 디자인 시안이 여러 개면 시안 버튼 (보던 사진 번호는 그대로 유지)
       const e0=M.int[PH.floor],VV=e0.vars&&e0.vars.length>1?e0.vars:null,VB=document.getElementById('phVars');VB.innerHTML='';
       if(VV){if(!(PH.vi>=0&&PH.vi<VV.length))PH.vi=0;VB.insertAdjacentHTML('beforeend','<b>디자인 시안</b>');VV.forEach((x,i)=>{const b=document.createElement('button');b.textContent=x.name;b.setAttribute('aria-pressed',i===PH.vi);b.onclick=()=>{PH.vi=i;render()};VB.appendChild(b)})}
       const e=VV?Object.assign({},e0,VV[PH.vi]):e0,IA=(e.alt&&e.alt[window.CH.state.scheme])||{},ii=v=>IA[v]||e.img[v],ks=[...new Set(Object.keys(e.img).concat(Object.keys(IA)))],vs=ks.slice().sort(ivSort);if(!vs.includes(PH.iv))PH.iv=vs[0];
       const nm=e0.name+(VV?' · '+VV[PH.vi].name:'');
-      empty('');T.innerHTML=`${nm}<small>${vs.indexOf(PH.iv)+1}/${vs.length} · ${ivFull(PH.iv)}</small>`;show(ii(PH.iv),nm);bar(vs.map(v=>[v,ivShort(v)]),PH.iv,v=>{PH.iv=v;render()});vs.forEach(v=>{const i=new Image();i.src=src(ii(v))})}}
+      empty('');T.innerHTML=`${nm}<small>${vs.indexOf(PH.iv)+1}/${vs.length} · ${ivFull(PH.iv)}</small>`;show(ii(PH.iv),nm);bar(vs.map(v=>[v,ivShort(v)]),PH.iv,v=>{PH.iv=v;render()});vs.forEach(v=>{const i=new Image();i.src=src(ii(v))});{const er=el.getBoundingClientRect(),tb=el.querySelector('.ph-top').getBoundingClientRect(),top=Math.round(tb.bottom-er.top+8);F.style.top=top+'px';F.style.maxHeight=Math.max(120,er.height-top-70)+'px'}}}
   function off3d(){const r=document.getElementById('vm-sketch');r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}))}
   // 실사 모드 잠금: 사진은 '신축 · 자주식3' 기준이라 외부 디자인(마감재·추천 시안)만 바뀜. 나머지 설정은 회색 비활성.
   // 나중에 주차 안별 사진이 생기면 manifest에 "basis":{"sch":["alt4","mech",...]} 를 넣으면 그 버튼이 다시 활성화됨
@@ -7756,7 +7762,7 @@ let last=performance.now();
       {const M=PH.man||{},bs=(M.basis&&M.basis.base)||B.sch[0],nm=k=>(M.sch&&M.sch[k])||SCHN[k]||k,ex=B.sch.filter(k=>k!==bs);note.innerHTML=`실사 모드 — 외부 디자인(마감재 · 추천 시안)만 사진에 반영됩니다. 사진 기준: 신축 · ${nm(bs)}${ex.length?` (${ex.map(nm).join('·')}은 달라지는 사진만 교체)`:''}. 회색 설정은 스케치업·렌더에서 바꿀 수 있어요.`}note.hidden=false}
     else{if(PH.extra){const x=PH.extra;PH.extra=null;pick(x[0]==='preset'?'dsg-'+s.pdesign:'sty-'+s.cfin)}(PH.locked||[]).forEach(e=>{e.classList.remove('phlock');e.removeAttribute('aria-disabled')});document.querySelectorAll('[data-phd]').forEach(c=>{c.disabled=false;delete c.dataset.phd});PH.locked=null;note.hidden=true;
       const p=PH.prev;PH.prev=null;if(p){if(p.sch!==s.scheme)pick('sch-'+p.sch);if(p.era!==s.era)pick('era-'+p.era)}}}
-  PH.set=async function(on){if(on===PH.on)return;PH.on=on;el.hidden=!on;app.classList.toggle('photo',on);if(on){await loadMan();applyCat();if(PH.on){lock(true);render()}}else lock(false)};
+  PH.set=async function(on){if(on===PH.on)return;PH.on=on;if(on)PH.ang=0;el.hidden=!on;app.classList.toggle('photo',on);if(on){await loadMan();applyCat();if(PH.on){lock(true);render()}}else lock(false)};
   PH.sync=()=>{if(PH.on)render()};
   // 목록(00_목록.xlsx → catalog.js) 반영: '보관' 시안 버튼 숨김, 3D 없이 사진만 있는 시안은 실사 모드에서만 버튼 표시
   function applyCat(){const M=PH.man;if(!M||SRC.legacy||PH.catDone)return;PH.catDone=true;
