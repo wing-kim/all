@@ -128,9 +128,9 @@
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
     if(event.target.closest('#floorChips button'))requestAnimationFrame(()=>syncInterior(true));
-    if(event.target.closest('[data-c],#coreTop,#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(event.target.closest('#coreTop'))showNotice('코어 상부 시점 · 단면 절단은 실사 3D 연결 준비 중입니다.');if(!following){following=true;requestAnimationFrame(followPose);}}
+    if(event.target.closest('[data-c],#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#exitInt'))requestAnimationFrame(()=>syncInterior(true));
-    if(event.target.closest('#dollBtn,#secBtn,#secAllBtn,[data-iv]')){event.preventDefault();event.stopImmediatePropagation();showNotice('단면·표시 도구는 실사 3D 연결 준비 중입니다.');return;}
+    if(event.target.closest('#coreTop,#dollBtn,#secBtn,#secAllBtn,[data-iv]')){event.preventDefault();event.stopImmediatePropagation();showNotice(event.target.closest('#coreTop')?'코어 상부 시점 · 단면 절단은 실사 3D 연결 준비 중입니다.':'단면·표시 도구는 실사 3D 연결 준비 중입니다.');return;}
     if(event.target.closest('#capBtn')){
       event.stopImmediatePropagation();
       const w=frame?.contentWindow,canvas=w?.TOWER_CINEMA?.captureCanvas||w?.TOWER_CINEMA?.renderer.domElement||w?.TOWER_LAB_CONTEXT?.renderer.domElement;
