@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {copyGeometry} from './geometry-copy.js';
+import {copyGeometry,copySourceLine} from './geometry-copy.js';
 // A side-only glass extrusion must not grow its removed caps back in the BVH.
 const glass=new T.BoxGeometry(2,4,.08).toNonIndexed();glass.setDrawRange(12,24);glass.clearGroups();
 const expected=Array.from(glass.attributes.position.array.slice(36,108));
@@ -17,3 +17,14 @@ const ordinary=new T.BoxGeometry(1,2,3),full=copyGeometry(T,ordinary);
 assert.deepEqual(Array.from(full.index.array),Array.from(ordinary.index.array));
 assert.deepEqual(full.groups,ordinary.groups);
 console.log('Authored draw-range copies passed: nonindexed glass, indexed groups, full geometry.');
+const sourceLine=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(0,0,0),new T.Vector3(3,0,0),new T.Vector3(3,0,4)]),new T.LineDashedMaterial({color:0xc8322b,dashSize:.6,gapSize:.4,scale:1.5}));
+sourceLine.position.set(2,1,-3);sourceLine.updateMatrixWorld(true);sourceLine.computeLineDistances();
+const line=copySourceLine(T,sourceLine);
+assert.equal(line.material.isLineDashedMaterial,true);
+assert.equal(line.material.dashSize,.6);assert.equal(line.material.gapSize,.4);assert.equal(line.material.scale,1.5);
+assert.equal(line.material.color.getHex(),sourceLine.material.color.getHex());
+assert.deepEqual(Array.from(line.geometry.getAttribute('lineDistance').array),Array.from(sourceLine.geometry.getAttribute('lineDistance').array));
+assert.deepEqual(line.matrix.elements,sourceLine.matrixWorld.elements);
+const missingDistances=new T.Line(sourceLine.geometry.clone(),sourceLine.material);missingDistances.geometry.deleteAttribute('lineDistance');missingDistances.updateMatrixWorld(true);
+assert.deepEqual(Array.from(copySourceLine(T,missingDistances).geometry.getAttribute('lineDistance').array),[0,3,7], 'dashed line distances are reconstructed when absent');
+console.log('Authored dashed line copy passed: dash settings, distances, and world transform.');

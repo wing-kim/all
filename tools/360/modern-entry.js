@@ -5,7 +5,7 @@ import { batchStaticSurroundings, createPrecisionScene } from './static-batching
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { copyGeometry } from './geometry-copy.js';
+import { copyGeometry, copySourceLine } from './geometry-copy.js';
 import { summarizeSamples } from './performance-stats.js';
 import { createSourceSky } from './sky-background.js';
 import { createCafeAmbientStudy } from './cafe-ambient.js';
@@ -88,7 +88,7 @@ export async function start(C){
  function syncSourceVisibility(){const overlaysChanged=refreshOverlayCopies();if(overlaysChanged)cancelPrecision();const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed+overlaysChanged}
  const limitLines=[];
  C.limits.updateWorldMatrix(true,true);
- C.limits.traverse(source=>{if(!source.isLine)return;const copy=new (source.isLineSegments?T.LineSegments:T.Line)(geometry(source.geometry),new T.LineBasicMaterial({color:source.material.color.getHex(),opacity:source.material.opacity,transparent:source.material.transparent,depthTest:source.material.depthTest,depthWrite:source.material.depthWrite}));copy.matrix.copy(source.matrixWorld);copy.matrixAutoUpdate=false;copy.visible=C.limits.visible;copy.userData.reviewLimit=true;scene.add(copy);limitLines.push(copy)});
+ C.limits.traverse(source=>{if(!source.isLine)return;const copy=copySourceLine(T,source);copy.visible=C.limits.visible;copy.userData.reviewLimit=true;scene.add(copy);limitLines.push(copy)});
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  timings.sceneCopyMs=performance.now()-bootAt;
  let improved=new URLSearchParams(location.search).get('bake')!=='off';
