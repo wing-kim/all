@@ -31,6 +31,6 @@ export function batchStaticSurroundings(T,mergeGeometries,scene){
 // Keep geometry sharing for the BVH; raster batches are a draw-call optimization only.
 export function createPrecisionScene(T,scene,sources){
  const result=new T.Scene();result.environment=scene.environment;result.environmentIntensity=scene.environmentIntensity;result.environmentRotation.copy(scene.environmentRotation);result.background=scene.background;result.backgroundIntensity=scene.backgroundIntensity;result.backgroundRotation.copy(scene.backgroundRotation);
- for(const object of scene.children)for(const source of sources.get(object)||[object]){const copy=source.clone(false);copy.visible=object.visible;result.add(copy);}
+ for(const object of scene.children)for(const source of sources.get(object)||[object]){if(source.userData.reviewLimit)continue;const copy=source.clone(false);copy.visible=object.visible;result.add(copy);}
  return result;
 }

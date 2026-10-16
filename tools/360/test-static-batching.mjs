@@ -40,3 +40,5 @@ for(let i=0;i<2;i++){const guide=new T.Mesh(box,material);guide.userData.sourceO
 const overlayAudit=batchStaticSurroundings(T,mergeGeometries,overlayScene);
 assert.equal(overlayAudit.sources.size,0,'replaceable guide copies stay out of static batches');
 assert.equal(overlayScene.children.length,2);
+const limitScene=new T.Scene(),limit=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(0,0,0),new T.Vector3(1,0,0)]),new T.LineBasicMaterial({color:0xff0000}));limit.userData.reviewLimit=true;limitScene.add(limit);
+assert.equal(createPrecisionScene(T,limitScene,new Map()).children.length,0,'drawing guides stay out of geometry tracing');

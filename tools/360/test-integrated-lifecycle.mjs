@@ -13,7 +13,8 @@ function element(id=''){
     get dataset(){return this._dataset||{}},set dataset(value){this._dataset=value},
   };
 }
-for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','t-labels','t-cxlab','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','t-labels','t-cxlab','t-limits','t-b1','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+ids.get('t-limits').checked=true;
 ids.get('sec-time').hidden=true;
 const views=element('views'),group=element('group');
 for(const [id,view,pressed] of [['v-corner','corner','true'],['v-front','front','false'],['v-int','int','false']]){
@@ -57,11 +58,12 @@ review.disable();
 assert.deepEqual(C.camera.position.toArray(),[10,20,30],'cafe camera does not strand original viewer inside building');
 assert.equal(ids.get('v-corner').getAttribute('aria-pressed'),'true','original exterior selection is restored');
 assert.equal(ids.get('v-int').getAttribute('aria-pressed'),'false');
-let daylight={time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff},lightCalls=[],floorCalls=[];
+let daylight={time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff},lightCalls=[],floorCalls=[],limitCalls=[];
 C.sourceDaylight=()=>daylight;
 review.enable();const daylightFrame=review.frame,childListeners=new Map();
-daylightFrame.contentWindow={TOWER360:{telemetry:()=>({environment:'ready',camera:[10,20,30],target:[2,3,4]}),quality(){},view(){},light:value=>lightCalls.push(value),interiorPose:(...args)=>floorCalls.push(args)},TOWER_CINEMA:{status:()=>({mode:'interactive',firstFrameMs:1}),pause(){}},TOWER_LAB_CONTEXT:{cafeMode:false},addEventListener(type,fn){childListeners.set(type,fn)}};
+daylightFrame.contentWindow={TOWER360:{telemetry:()=>({environment:'ready',camera:[10,20,30],target:[2,3,4]}),quality(){},view(){},light:value=>lightCalls.push(value),limits:value=>limitCalls.push(value),interiorPose:(...args)=>floorCalls.push(args)},TOWER_CINEMA:{status:()=>({mode:'interactive',firstFrameMs:1}),pause(){}},TOWER_LAB_CONTEXT:{cafeMode:false},addEventListener(type,fn){childListeners.set(type,fn)}};
 interval();daylight={...daylight,direction:[-1,1,0],intensity:1.7};interval();
+assert.deepEqual(limitCalls,[true],'initial authored limit-line state reaches the child');
 assert.equal(review.frame,daylightFrame,'daylight-only change keeps the building frame');
 assert.equal(lightCalls.length,1,'daylight-only change updates light once');
 assert.equal(lightCalls[0].intensity,1.7);
@@ -77,6 +79,11 @@ for(const id of ['t-labels','t-cxlab']){
   assert.equal(C.controls.enabled,false,`${id} remains in the continuous viewer`);
   assert.equal(review.frame,daylightFrame,`${id} preserves the renderer frame`);
 }
+ids.get('t-limits').checked=false;
+listeners.get('change')({target:ids.get('t-limits'),stopImmediatePropagation(){}});
+assert.equal(limitCalls.at(-1),false,'limit-line toggle reaches the child without a model rebuild');
+assert.equal(review.frame,daylightFrame);
+assert.equal(C.controls.enabled,false,'limit-line toggle keeps the continuous viewer active');
 let selectedFloor='1F',sourcePose={camera:[0,1.6,2],target:[0,1.6,1.7],fov:72,spin:false,doll:false};C.interiorState=()=>({on:true,key:selectedFloor,...sourcePose});
 interval();assert.equal(floorCalls.length,1);assert.equal(floorCalls[0][0],'1F');
 selectedFloor='2F';interval();assert.equal(floorCalls.length,2);assert.equal(floorCalls[1][0],'2F');

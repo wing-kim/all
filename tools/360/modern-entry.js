@@ -86,6 +86,9 @@ export async function start(C){
   overlaySources=next;copyRoot(C.ovl);return stale.length+next.size;
  }
  function syncSourceVisibility(){const overlaysChanged=refreshOverlayCopies();if(overlaysChanged)cancelPrecision();const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);return changed+overlaysChanged}
+ const limitLines=[];
+ C.limits.updateWorldMatrix(true,true);
+ C.limits.traverse(source=>{if(!source.isLine)return;const copy=new (source.isLineSegments?T.LineSegments:T.Line)(geometry(source.geometry),new T.LineBasicMaterial({color:source.material.color.getHex(),opacity:source.material.opacity,transparent:source.material.transparent,depthTest:source.material.depthTest,depthWrite:source.material.depthWrite}));copy.matrix.copy(source.matrixWorld);copy.matrixAutoUpdate=false;copy.visible=C.limits.visible;copy.userData.reviewLimit=true;scene.add(copy);limitLines.push(copy)});
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  timings.sceneCopyMs=performance.now()-bootAt;
  let improved=new URLSearchParams(location.search).get('bake')!=='off';
@@ -111,7 +114,7 @@ export async function start(C){
  // Path tracing continues to use geometric reflections and the original lighting HDR.
  const probeTarget=new T.CubeRenderTarget(256,{type:T.HalfFloatType});
  const probe=new T.CubeCamera(.5,1500,probeTarget);probe.position.set(-3,18,0);
- const primary=scene.children.filter(o=>o.userData.primary),primaryVisibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);
+ const primary=scene.children.filter(o=>o.userData.primary||o.userData.reviewLimit),primaryVisibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);
  try {probe.update(renderer,scene);for(const m of materials.values())if(m.transmission>0){m.envMap=probeTarget.texture;m.envMapIntensity=1;m.needsUpdate=true;}}
  finally {primary.forEach((o,i)=>o.visible=primaryVisibility[i]);}
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
@@ -195,7 +198,7 @@ export async function start(C){
   cachedContext.drawImage(renderer.domElement,0,0);cachedPreview.style.display='block';previewCached=true;
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
- function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary),visibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach((o,i)=>o.visible=visibility[i])}}
+ function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary||o.userData.reviewLimit),visibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach((o,i)=>o.visible=visibility[i])}}
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
   ambientStudy.clear();
@@ -212,6 +215,7 @@ export async function start(C){
  }
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  window.TOWER_CINEMA={scene,camera,renderer,get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
+ limits:on=>{cancelPrecision();for(const line of limitLines)line.visible=!!on},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},

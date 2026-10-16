@@ -54,7 +54,7 @@
   let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
   const timings=[];
   const api=()=>frame?.contentWindow?.TOWER360;
-  function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},daylight:C.sourceDaylight(),floor:C.interiorState(),visibility:C.interiorVisibility?.()||{}};}
+  function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},limits:document.getElementById('t-limits').checked,daylight:C.sourceDaylight(),floor:C.interiorState(),visibility:C.interiorVisibility?.()||{}};}
   const modelKey=config=>JSON.stringify({state:config.state,display:config.display});
   function copyPose(){const floor=C.interiorState();if(floor.on)api()?.interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,C.interiorVisibility?.()||{});else api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
   function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;const visibility=C.interiorVisibility?.()||{},visibilityKey=JSON.stringify(visibility);if(floor.on){if(force||currentFloorKey!==floor.key||currentDoll!==floor.doll||currentVisibilityKey!==visibilityKey){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,visibility);currentFloorKey=floor.key;currentDoll=!!floor.doll;currentVisibilityKey=visibilityKey;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;currentDoll=false;currentVisibilityKey='';}}
@@ -130,12 +130,13 @@
     lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
     if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
     active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;document.getElementById('sec-time').hidden=false;
-    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
+    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();api()?.limits(config.limits);if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
     else rebuild();
   }
   document.addEventListener('change',event=>{
     const el=event.target;
-    if(active&&(['t-limits','t-b1'].includes(el.id)||el.name==='era')){
+    if(active&&el.id==='t-limits')api()?.limits(el.checked);
+    if(active&&(el.id==='t-b1'||el.name==='era')){
       disable();document.getElementById('vm-sketch').checked=true;
     }
     if(el.name==='vmode'){
@@ -179,7 +180,7 @@
     if(ready&&nextDaylight!==daylightKey){api()?.light(config.daylight);daylightKey=nextDaylight;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}
     const w=frame.contentWindow;
-    if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});w.addEventListener('tower-navigation-home',()=>{document.getElementById('v-corner').click();poseUntil=0;currentFloorKey=null;currentDoll=false;});w.addEventListener('tower-navigation-walk',()=>{C.walkFromDoll?.();requestAnimationFrame(()=>syncInterior(true))});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);syncInterior(true);}
+    if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});w.addEventListener('tower-navigation-home',()=>{document.getElementById('v-corner').click();poseUntil=0;currentFloorKey=null;currentDoll=false;});w.addEventListener('tower-navigation-walk',()=>{C.walkFromDoll?.();requestAnimationFrame(()=>syncInterior(true))});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);api().limits(document.getElementById('t-limits').checked);syncInterior(true);}
     else syncInterior();
     const renderState=w.TOWER_CINEMA?.status();
     const floor=C.interiorState(),inCafe=floor.on&&floor.key==='1F';

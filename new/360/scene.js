@@ -13,7 +13,7 @@
   else state.scheme='alt4';
   if(initial.daylight?.time)R3D.time=initial.daylight.time;
   if(initial.daylight?.season)R3D.season=initial.daylight.season;
-  C.setRender(true);C.hideGuides();
+  C.setRender(true);C.hideGuides();C.limits.visible=initial.limits!==false;
   window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
   if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
   // Remove the drafting north marker only in the opt-in continuous viewer.
@@ -307,7 +307,7 @@
       for(const key of Object.keys(state))if(Object.prototype.hasOwnProperty.call(config.state,key))state[key]=config.state[key];
       // Preserve the neighbourhood and GPU renderer. Only rebuild the authored building.
       if(config.daylight)applySourceLight(config.daylight);
-      C.build();C.hideGuides();finishLighting();
+      C.build();C.hideGuides();C.limits.visible=config.limits!==false;finishLighting();
       const old=interiors;scene.remove(old);interiors=await dressBuilding();
       await C.enhanceBuildingDetails?.(interiors);
       if(config.display){document.getElementById('t-city').checked=config.display.city!==false;document.getElementById('t-ctx').checked=config.display.ctx!==false}
@@ -326,6 +326,7 @@
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
     light:value=>{window.TOWER_CINEMA?.cancelPrecision();applySourceLight(value);window.TOWER_CINEMA?.light(value)},
+    limits:on=>{C.limits.visible=!!on;window.TOWER_CINEMA?.limits(!!on)},
     telemetry:()=>({fps,quality,floor:C.cafeMode?C.interiorFloorKey:null,doll:!!C.dollMode,assetStatus:C.cafeMode?(C.interiorFloorKey==='1F'?'provisional':'provisional-unmapped'):null,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');
@@ -359,7 +360,7 @@
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=labels-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=limits-1');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
