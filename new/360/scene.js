@@ -17,7 +17,7 @@
   window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
   if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
   // Remove the drafting north marker only in the opt-in continuous viewer.
-  C.site.children.filter(o=>o.children.some(c=>c.geometry?.type==='RingGeometry')).forEach(o=>o.visible=false);
+  C.site.children.filter(o=>o.children.some(c=>c.geometry?.type==='RingGeometry')).forEach(o=>{o.userData.reviewExcluded=true;o.visible=false});
   // Separate ground strata physically; prevent coplanar asphalt intersections from fighting.
   C.site.traverse(o=>{
     if(!o.isMesh)return;

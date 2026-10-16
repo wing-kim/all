@@ -6856,7 +6856,7 @@ function overlay(){}
 function applyDollVis(){const on=I.on&&I.doll,L=Lv();
   LG.forEach((g,i)=>{g.visible=!on||i<=I.li;g.traverse(o=>{if(o.userData.ceil)o.visible=!(on&&i===I.li)})});
   const under=on&&L.kind==='base';
-  siteDyn.visible=!under;if(typeof R3D!=='undefined'){R3D.street.visible=R3D.on&&!under;R3D.props.visible=R3D.on&&!under;if(R3D.sky)R3D.sky.visible=!under}site.children.forEach(c=>{if(c!==siteDyn&&c!==limits)c.visible=!under});
+  siteDyn.visible=!under;if(typeof R3D!=='undefined'){R3D.street.visible=R3D.on&&!under;R3D.props.visible=R3D.on&&!under;if(R3D.sky)R3D.sky.visible=!under}site.children.forEach(c=>{if(c!==siteDyn&&c!==limits)c.visible=!under&&!(window.TOWER_ORBIT_ONLY&&c.userData.reviewExcluded)});
   city.visible=document.getElementById('t-city').checked&&!under;ctx.visible=document.getElementById('t-ctx').checked&&!under;
   frG.visible=state.frame&&state.form==='portal'&&state.design==='none'&&!on;
   const cap=ceilOf(L)-0.1;extG.children.forEach(c=>{if(c.userData.minY==null)c.userData.minY=new THREE.Box3().setFromObject(c).min.y;
