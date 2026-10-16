@@ -235,8 +235,18 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 
 /* ---------- 실사 보기 (2026.10.13) ---------- */
 .ph{position:absolute;inset:0;z-index:3;background:#0f1412;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .28s ease;pointer-events:none}
+.ph-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .45s ease;pointer-events:none}
+.ph-nav{position:absolute;top:0;bottom:0;width:30%;z-index:1;cursor:pointer;display:flex;align-items:center;-webkit-tap-highlight-color:transparent}
+.ph-nav.l{left:0;justify-content:flex-start;padding-left:14px}.ph-nav.r{right:0;justify-content:flex-end;padding-right:14px}
+.ph-nav span{width:44px;height:44px;border-radius:50%;background:rgba(15,20,18,.45);color:#fff;font:600 20px/44px var(--font);text-align:center;opacity:.35;transition:opacity .2s,background .2s;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.ph-nav:hover span{opacity:1;background:rgba(15,20,18,.7)}.ph-nav:active span{opacity:1}
+.ph-nav[hidden]{display:none}
 .ph-img.on{opacity:1}
+.ph-img{transform-origin:0 0;will-change:transform}
+.ph.zoomed .ph-nav{display:none}.ph.zoomed{cursor:grab}.ph.zoomed.panning{cursor:grabbing}
+.ph-zoom{position:absolute;right:14px;bottom:96px;z-index:2;display:flex;flex-direction:column;gap:4px;padding:4px;border-radius:8px;background:rgba(15,20,18,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.ph-zoom button{min-width:40px;padding:6px 0!important;font-size:15px!important;text-align:center}.ph-zoom button[data-z="0"]{font-size:11.5px!important}
+@media (max-width:1100px),(pointer:coarse){.ph-zoom{right:8px;bottom:64px}}
 .ph.fill .ph-img{object-fit:cover}
 .ph-rot{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,calc(-50% + 34vw));color:rgba(255,255,255,.75);font:500 12px var(--font);white-space:nowrap;pointer-events:none}
 @media (orientation:portrait) and (max-width:760px){.ph-rot{display:block}.ph.fill .ph-rot{display:none}}
@@ -250,9 +260,13 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 .ph .ph-seg button{border:0;border-radius:0}
 .ph-title{color:#fff;font:600 13px var(--font);background:rgba(15,20,18,.55);padding:6px 10px;border-radius:6px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .ph-title small{font-weight:500;opacity:.75;margin-left:6px}
-.ph-floors{display:flex;gap:4px;flex-wrap:wrap}
+.ph-floors{position:absolute;left:12px;top:112px;bottom:76px;z-index:2;display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:4px;overflow-y:auto;scrollbar-width:none;width:max-content;max-width:40%;padding:4px;border-radius:8px;background:rgba(15,20,18,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);height:max-content;max-height:calc(100% - 188px)}.ph-floors::-webkit-scrollbar{display:none}
+.ph-floors button{text-align:left;white-space:nowrap}
+.ph[data-mode="int"] .ph-nav.l{left:auto;right:70%;padding-left:0}
+.ph-floors:empty,.ph-vars:empty{display:none}
+.ph-vars{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.ph-vars b{color:#fff;font:600 12px var(--font);opacity:.8;margin-right:2px;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .ph-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#e3e8e6;font:500 14px var(--font);text-align:center;padding:24px}
-.ph-hint{position:absolute;right:14px;bottom:16px;color:rgba(255,255,255,.7);font:500 11.5px var(--font);z-index:2;pointer-events:none}
+.ph-hint{position:absolute;right:14px;bottom:62px;color:rgba(255,255,255,.7);font:500 11.5px var(--font);z-index:2;pointer-events:none}
 .ph-load{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fff;font:500 13px var(--font);opacity:.8;pointer-events:none}
 .app.photo .compass,.app.photo .labels,.app.photo #mini,.app.photo .pad,.app.photo .ihud,.app.photo .uphud,.app.photo .hint,.app.photo .hqtag,.app.photo .intui,.app.photo #lblBtn{display:none!important}
 .app.photo .views{z-index:4}
@@ -263,7 +277,7 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 /* 실사 모드: 사진에 반영되지 않는 설정은 회색 비활성 */
 .phlock{opacity:.38;filter:grayscale(1);pointer-events:none;user-select:none}
 .ph-note{margin-top:8px;font-size:12px;line-height:1.5;color:#6b5200;background:#fff5d6;border:1px solid #efd894;border-radius:8px;padding:7px 9px}
-@media (max-width:1100px),(pointer:coarse){.ph-top{top:48px;left:8px;right:8px}.ph-hint{display:none}.ph-bar{bottom:10px}.ph button{padding:7px 9px;font-size:12px}}
+@media (max-width:1100px),(pointer:coarse){.ph-top{top:48px;left:8px;right:8px}.ph-floors{left:8px;top:96px;bottom:auto;max-height:calc(100% - 160px)}.ph-floors button{padding:6px 8px!important;font-size:11.5px!important}.ph-hint{display:none}.ph-bar{bottom:10px}.ph button{padding:7px 9px;font-size:12px}}
 </style>
 
 </head>
@@ -287,15 +301,15 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       <div class="chips cat" id="catTabs" role="tablist" aria-label="내부 메뉴"><button data-cat="space" aria-pressed="true">공간 이동</button><button data-cat="show" aria-pressed="false">표시</button><button data-cat="win" aria-pressed="false">창밖</button></div>
       <div class="chips tx" data-row="show" role="group" aria-label="내부 표시">
         <span class="wvl">표시</span>
-        <button data-iv="dim" aria-pressed="true">외벽 치수</button><button data-iv="ht" aria-pressed="true">천장고</button><button data-iv="rm" aria-pressed="true">실 이름</button><button data-iv="pk" aria-pressed="true">주차 대수</button><button data-iv="rp" aria-pressed="true" title="층 단면 보기에서 끄면 위층 램프(이 층 바닥보다 위에만 있는 램프)를 숨겨 아래 실이 보이게 함 · 이 층으로 내려오는 램프와 아래층으로 내려가는 램프는 그대로">램프</button><button data-iv="rw" aria-pressed="true" title="램프 폭·회전 여유 설명">램프 설명</button><button data-iv="lb" aria-pressed="true" title="끄면 이 층의 글자 라벨을 모두 숨김">라벨 전체</button><button data-iv="up" aria-pressed="false" title="천장에 바로 위층 평면(외곽·벽·코어·실·기둥·램프/계단 구멍)을 투명하게 겹쳐, 위층의 어디 아래에 있는지 보여줌">윗층 투시</button>
+        <button data-iv="lb" aria-pressed="true" title="끄면 이 층의 글자 라벨을 모두 숨기고 아래 항목도 모두 해제 · 다시 켜면 모두 표시">라벨 전체</button><button data-iv="up" aria-pressed="false" title="천장에 바로 위층 평면(외곽·벽·코어·실·기둥·램프/계단 구멍)을 투명하게 겹쳐, 위층의 어디 아래에 있는지 보여줌">윗층 투시</button><button data-iv="dim" aria-pressed="true">외벽 치수</button><button data-iv="ht" aria-pressed="true">천장고</button><button data-iv="rm" aria-pressed="true">실 이름</button><button data-iv="pk" aria-pressed="true">주차 대수</button><button data-iv="rp" aria-pressed="true" title="층 단면 보기에서 끄면 위층 램프(이 층 바닥보다 위에만 있는 램프)를 숨겨 아래 실이 보이게 함 · 이 층으로 내려오는 램프와 아래층으로 내려가는 램프는 그대로">램프</button><button data-iv="rw" aria-pressed="true" title="램프 폭·회전 여유 설명">램프 설명</button>
       </div>
       <div class="chips tx" data-row="space" role="group" aria-label="공간 보기">
         <span class="wvl">공간</span>
-        <button data-c="nw" title="북서 모서리에서 보기">↖ 모서리</button><button data-c="ne">↗ 모서리</button><button data-c="se">↘ 모서리</button><button data-c="sw">↙ 모서리</button>
-        <button id="dollBtn" aria-pressed="false">층 단면 보기</button>
+        <button id="exitInt">외부로 나가기</button><button id="dollBtn" aria-pressed="false">층 단면 보기</button>
         <button id="secBtn" aria-pressed="false">종단면 6F~PH2</button><button id="secAllBtn" aria-pressed="false">종단면 전체 (지하~옥상)</button>
-        <button id="rampWalk" title="지하층에서 누르면 위로, 1층 이상에서 누르면 아래로">🚶 램프 자동 걷기</button><button id="rampStep" title="↑ 누르는 동안 램프를 따라 한 걸음씩, ↓ 뒤로">👣 램프 직접 걷기</button><button id="coreTop">코어 확대</button><button id="coreHall">엘리베이터 홀</button>
-        <button id="exitInt">외부로 나가기</button>
+        <button data-c="nw" title="북서 모서리에서 보기">↖ 모서리</button><button data-c="ne">↗ 모서리</button><button data-c="se">↘ 모서리</button><button data-c="sw">↙ 모서리</button>
+        <button id="coreTop">코어 확대</button><button id="coreHall">엘리베이터 홀</button>
+        <button id="rampWalk" hidden style="display:none">🚶 램프 자동 걷기</button><button id="rampStep" hidden style="display:none">👣 램프 직접 걷기</button>
       </div>
 
       <div class="chips tx wv" data-row="win" role="group" aria-label="창밖 보기">
@@ -436,6 +450,7 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       <label class="chk" hidden><input type="checkbox" id="t-cclean"> 코너 면 클린 글라스 (테두리 없음)</label>
       <div class="glab">최상층 (6F 위)</div>
       <label class="chk"><input type="checkbox" id="t-use7"> PH1 대신 7층으로 사용 (7F 바닥·천장 설치)</label>
+      <label class="chk" id="lb-nost"><input type="checkbox" id="t-nost" disabled> 6·7층 분리 임대 (내부 계단 없음, 7F 바닥 막음)</label>
       <div class="glab">자주식3 외부계단</div>
       <label class="chk" id="lb-a4park"><input type="checkbox" id="t-a4park"> 외부계단 없애고 그 자리 B1 주차 1대 추가</label>
     </div>
@@ -5621,10 +5636,10 @@ const MECH={};
     const skinG=(g,l,top)=>{if(SK&&v.cut)glassPx(g,v.cut[0],v.cut[1],floorTop(l),top||ceilOf(l))};   // 외피 옵션: inner glass on the cut floor edge so nobody steps into the void
     for(let f=2;f<=n;f++){const top=f===n,y=h1+(f-2)*ht;
       L.push(Object.assign({},{key:f+'F',name:f+'F',kind:'upper',y,h:ht,poly:U,area:aT,use:top?'근린생활 · 복층 하부':'근린생활',approx:U!==UPPER,cols:CF,blocks:CORE,center:[620,700],label:true,assumed:f>6,extra:(g,l)=>skinG(g,l)},SK?{env:[{poly:UPPER,y0:y,y1:y+ht-0.38}],tags:[['외피만 각진 코너 (내부 바닥 없음)',[400,1150],1.2]]}:{},
-        top?Object.assign({dup:'lo',view:{pos:[480,560],look:TOPST.mid,h:1.7},extra:(g,l)=>{dupStair(g,floorTop(l),y+ht+0.015);skinG(g,l,PH1?y+2*ht-0.38:0)},obst:[TOPST.obst]},
+        top?Object.assign({dup:'lo',view:{pos:[480,560],look:TOPST.mid,h:1.7},extra:(g,l)=>{if(!NOST())dupStair(g,floorTop(l),y+ht+0.015);skinG(g,l,PH1?y+2*ht-0.38:0)},obst:NOST()?[]:[TOPST.obst]},
           PH1?{use:'근린생활 · 복층 (PH1 천장까지 오픈)',env:[{poly:SK?UPPER:U,y0:y,y1:y+ht-0.38,noCap:true}],colTop:q=>q[0]<XV?y+2*ht-0.38:y+ht-0.38,htTop:y+2*ht-0.38,
             htNote:' (PH1 천장까지 오픈)',clearTxt:`${(2*ht-0.38-0.015).toFixed(2)}m 오픈 (테라스·홀 아래 ${(ht-0.38-0.015).toFixed(2)}m)`,
-            tags:(SK?[['외피만 각진 코너 (내부 바닥 없음)',[400,1150],1.2]]:[]).concat([['PH1 테라스 계단 ↑',TOPST.mid,0],['오픈 (PH1 천장까지)',[480,700],2.6]])}:{tags:(SK?[['외피만 각진 코너 (내부 바닥 없음)',[400,1150],1.2]]:[]).concat([['7F 계단 ↑',TOPST.mid,0]])}):{}))}
+            tags:(SK?[['외피만 각진 코너 (내부 바닥 없음)',[400,1150],1.2]]:[]).concat([['PH1 테라스 계단 ↑',TOPST.mid,0],['오픈 (PH1 천장까지)',[480,700],2.6]])}:Object.assign({tags:(SK?[['외피만 각진 코너 (내부 바닥 없음)',[400,1150],1.2]]:[]).concat(NOST()?[]:[['7F 계단 ↑',TOPST.mid,0]])},NOST()?{use:'근린생활 (6층 단독 임대)'}:{})):{}))}
     // 2F: opening in the slab over the upper flight of the external stair (1F notch → 2F), guards round it, arrival onto the 2F floor at the west side of the top step (2026.10.08)
     if(!A3){const L2=L.find(l=>l.key==='2F'),H2=rectP([875,915,945,1004]),ex=L2.extra;L2.slabHoles=(L2.slabHoles||[]).concat([H2]);L2.obst=(L2.obst||[]).concat([rectP([873,913,947,1012])]);L2.walkX=(L2.walkX||[]).concat([rectP([830,968,876,1004])]);
       L2.extra=(g,l)=>{if(ex)ex(g,l);const ft=floorTop(l);gLine(g,[875,915],[945,915],ft);gLine(g,[945,915],[945,1004],ft);gLine(g,[875,915],[875,970],ft)};
@@ -5632,13 +5647,13 @@ const MECH={};
     const yP1=h1+(n-1)*ht,yP2=yP1+ht,roofY=yP2;
     if(['corner','cdoor','skin'].includes(st.g1)&&U!==UPPER&&!SK&&v.cut)FXOPT.cutPx={a:v.cut[0],b:v.cut[1],poly:U,y0:h1-0.38,y1:yP1+ht-0.38,lv:[h1].concat(Array.from({length:n-1},(_,k)=>h1+(k+1)*ht))};
     // top floor + 7F = duplex: 6F is a full plate like the floors below; 7F encloses only the west part (stair opening), the hall and the south terrace stay out of its area
-    const OPEN=TOPST.open,a7=PH1?0:polyArea(WEST)-polyArea(OPEN);
+    const OPEN=TOPST.open,a7=PH1?0:polyArea(WEST)-(NOST()?0:polyArea(OPEN));
     if(PH1)L.push({key:'PH1',name:'PH1',dup:'hi',kind:'upper',noCore:true,lite:true,y:yP1,h:ht,poly:TOPST.land,area:polyArea(TOPST.land),areaTxt:'PH1 계단참',use:'테라스 레벨 · 계단참 (6F 오픈, 면적 미산입)',approx:true,cols:[],blocks:LITE,hall:[[955,705],[1265,705],[1265,790],[955,790]],center:centroid(TOPST.land),label:false,
       env:[{poly:WESTX,y0:yP1-0.38,y1:yP1+ht-0.38,noCap:true},{poly:HALLPH,y0:yP1,y1:yP1+ht-0.38}],view:{pos:centroid(TOPST.land),look:[900,TOPST.door[0]+20],h:1.7},
       extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:yP1,XV,dt:ht-0.5,ph1:true,cols:CF}),tags:[['테라스 출입문',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[930,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[880,640],0],['계단 ↓ '+n+'F',TOPST.mid,0]]});
-    else L.push({key:(n+1)+'F',name:(n+1)+'F',dup:'hi',kind:'upper',noCore:true,lite:true,y:yP1,h:ht,poly:WEST,area:a7,use:'복층 상부 (홀·테라스 제외)',approx:true,cols:CF.filter(q=>q[0]<XV+5),blocks:LITE,hall:[[955,705],[1265,705],[1265,790],[955,790]],center:[560,640],label:true,
-      slabHoles:[OPEN],obst:[OPEN],env:[{poly:WESTX,y0:yP1,y1:yP1+ht-0.38},{poly:HALLPH,y0:yP1,y1:yP1+ht-0.38}],view:{pos:[460,480],look:TOPST.mid,h:1.7},
-      extra:(g,l)=>{topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:yP1,XV,dt:ht-0.5,ph1:false});skinG(g,l)},tags:[['테라스 출입문',[800,645],0.4],['테라스 출입문 (계단 쪽)',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[930,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[880,760],0],['내부 계단 ↓ '+n+'F',TOPST.mid,0]]});
+    else L.push({key:(n+1)+'F',name:(n+1)+'F',dup:'hi',kind:'upper',noCore:true,lite:true,y:yP1,h:ht,poly:WEST,area:a7,use:NOST()?'7층 단독 임대 (홀·테라스 제외)':'복층 상부 (홀·테라스 제외)',approx:true,cols:CF.filter(q=>q[0]<XV+5),blocks:LITE,hall:[[955,705],[1265,705],[1265,790],[955,790]],center:[560,640],label:true,
+      slabHoles:NOST()?[]:[OPEN],obst:NOST()?[]:[OPEN],env:[{poly:WESTX,y0:yP1,y1:yP1+ht-0.38},{poly:HALLPH,y0:yP1,y1:yP1+ht-0.38}],view:{pos:[460,480],look:TOPST.mid,h:1.7},
+      extra:(g,l)=>{topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:yP1,XV,dt:ht-0.5,ph1:false});skinG(g,l)},tags:[['테라스 출입문',[800,645],0.4],['테라스 출입문 (계단 쪽)',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[930,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[880,760],0]].concat(NOST()?[]:[['내부 계단 ↓ '+n+'F',TOPST.mid,0]])});
     L.push({key:'PH2',name:'PH2',kind:'roof',lite:true,y:yP2,h:3.6,poly:GARDEN,area:polyArea(GARDEN),areaTxt:'PH2 옥상정원',use:'옥상정원 (면적 미산입)',approx:true,cols:[],blocks:LITE,hall:[[955,705],[1265,705],[1265,790],[955,790]],center:[560,700],finish:M.deck,
       railSkip:i=>{const a=GARDEN[i],b=GARDEN[(i+1)%GARDEN.length];return Math.abs(a[0]-955)<1&&Math.abs(b[0]-955)<1},extra:(g,l)=>roofExtra(g,l,{hall:HALLPH,hd:[955,612,688],dt:3.6-0.5,keep:[[XV-40,560,960,740]]}),
       env:[{poly:HALLPH,y0:yP2,y1:yP2+3.6-0.38}],label:true,tags:[['퍼걸러 (태양광 프레임)',[560,520],1.8]]});
@@ -5779,16 +5794,16 @@ const SELF={};
     L.push({key:'1F',name:'1F',kind:'ground',y:0,h:6.0,poly:G,area:353.13,use:'휴게음식점',cols:COLS,blocks:CORE,center:[640,700],label:true});
     for(let f=2;f<=5;f++)L.push(Object.assign({key:f+'F',name:f+'F',kind:'upper',y:6+(f-2)*4.2,h:4.2,poly:U,area:372.53,use:'의원',cols:COLS,blocks:CORE,center:[640,700],label:true},f===2?{walkX:[[[836,yWall(836)+52],[879,yWall(879)+52],[879,yWall(879)-34],[836,yWall(836)-34]]],tags:[['외부 계단 출입문',[857,yWall(857)-40],0.3]]}:{}));
     const PH1=!state.use7;TOPST=topStair(U,788,COLS);const LITE=[{n:'계단',r:[1032,393,1249,514]},{n:'승강기',r:[1068,514,1249,608],face:'s'},{n:'EPS',r:[1032,514,1068,608]}],HD=[965,614,682],HALLB=[[965,608],[1249,608],[1249,688],[965,688]];
-    L.push(Object.assign({key:'6F',name:'6F',dup:'lo',kind:'upper',y:22.8,h:4.2,poly:U,area:372.53,use:'의원 · 복층 하부',cols:COLS,blocks:CORE,center:[600,700],label:true,view:{pos:[480,560],look:TOPST.mid,h:1.7},extra:(g,l)=>dupStair(g,floorTop(l),27.015),obst:[TOPST.obst],tags:[['7F 계단 ↑',TOPST.mid,0]]},
+    L.push(Object.assign({key:'6F',name:'6F',dup:'lo',kind:'upper',y:22.8,h:4.2,poly:U,area:372.53,use:'의원 · 복층 하부',cols:COLS,blocks:CORE,center:[600,700],label:true,view:{pos:[480,560],look:TOPST.mid,h:1.7},extra:(g,l)=>{if(!NOST())dupStair(g,floorTop(l),27.015)},obst:NOST()?[]:[TOPST.obst],tags:NOST()?[]:[['7F 계단 ↑',TOPST.mid,0]]},NOST()?{use:'의원 (6층 단독 임대)'}:{},
       PH1?{use:'의원 · 복층 (PH1 천장까지 오픈)',env:[{poly:U,y0:22.8,y1:26.62,noCap:true}],colTop:q=>q[0]<788?30.67:26.62,htTop:30.67,htNote:' (PH1 천장까지 오픈)',clearTxt:'7.86m 오픈 (테라스·홀 아래 3.81m)',
         tags:[['PH1 테라스 계단 ↑',TOPST.mid,0],['오픈 (PH1 천장까지)',[480,700],2.6]]}:{}));
-    const OPEN=TOPST.open,a7=PH1?0:polyArea(WEST)-polyArea(OPEN);
+    const OPEN=TOPST.open,a7=PH1?0:polyArea(WEST)-(NOST()?0:polyArea(OPEN));
     if(PH1)L.push({key:'PH1',name:'PH1',dup:'hi',kind:'upper',noCore:true,lite:true,y:27.0,h:4.05,poly:TOPST.land,area:polyArea(TOPST.land),areaTxt:'PH1 계단참',use:'테라스 레벨 · 계단참 (6F 오픈, 면적 미산입)',approx:true,cols:[],blocks:LITE,hall:HALLB,center:centroid(TOPST.land),label:false,
       env:[{poly:WEST,y0:26.62,y1:30.67,noCap:true},{poly:HALLPH,y0:27.0,y1:30.67}],view:{pos:centroid(TOPST.land),look:[900,TOPST.door[0]+20],h:1.7},
       extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:27.0,XV:788,dt:3.55,ph1:true,cols:COLS}),tags:[['테라스 출입문',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[940,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[870,700],0],['계단 ↓ 6F',TOPST.mid,0]]});
-    else L.push({key:'7F',name:'7F',dup:'hi',kind:'upper',noCore:true,lite:true,y:27.0,h:4.05,poly:WEST,area:a7,use:'복층 상부 (홀·테라스 제외)',approx:true,cols:COLS.filter(q=>q[0]<790),blocks:LITE,hall:HALLB,center:[560,640],label:true,
-      slabHoles:[OPEN],obst:[OPEN],env:[{poly:WEST,y0:27.0,y1:30.67},{poly:HALLPH,y0:27.0,y1:30.67}],view:{pos:[460,480],look:TOPST.mid,h:1.7},
-      extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:27.0,XV:788,dt:3.55,ph1:false}),tags:[['테라스 출입문',[800,645],0.4],['테라스 출입문 (계단 쪽)',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[940,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[870,700],0],['내부 계단 ↓ 6F',TOPST.mid,0]]});
+    else L.push({key:'7F',name:'7F',dup:'hi',kind:'upper',noCore:true,lite:true,y:27.0,h:4.05,poly:WEST,area:a7,use:NOST()?'7층 단독 임대 (홀·테라스 제외)':'복층 상부 (홀·테라스 제외)',approx:true,cols:COLS.filter(q=>q[0]<790),blocks:LITE,hall:HALLB,center:[560,640],label:true,
+      slabHoles:NOST()?[]:[OPEN],obst:NOST()?[]:[OPEN],env:[{poly:WEST,y0:27.0,y1:30.67},{poly:HALLPH,y0:27.0,y1:30.67}],view:{pos:[460,480],look:TOPST.mid,h:1.7},
+      extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:27.0,XV:788,dt:3.55,ph1:false}),tags:[['테라스 출입문',[800,645],0.4],['테라스 출입문 (계단 쪽)',[800,(TOPST.door[0]+TOPST.door[1])/2],0.4],['엘리베이터 홀 출입문',[940,(HD[1]+HD[2])/2],0.4],['테라스 (면적 미산입)',[870,700],0]].concat(NOST()?[]:[['내부 계단 ↓ 6F',TOPST.mid,0]])});
     L.push({key:'PH2',name:'PH2',kind:'roof',lite:true,y:31.05,h:3.9,poly:GARDEN,area:polyArea(GARDEN),areaTxt:'PH2 옥상정원',use:'옥상정원 (면적 미산입)',approx:true,cols:[],blocks:LITE,hall:HALLB,center:[560,700],finish:M.deck,
       railSkip:i=>{const a=GARDEN[i],b=GARDEN[(i+1)%GARDEN.length];return Math.abs(a[0]-965)<1&&Math.abs(b[0]-965)<1},extra:(g,l)=>roofExtra(g,l,{hall:HALLPH,hd:[965,512,606],dt:3.9-0.5,keep:[[745,460,970,660]]}),
       env:[{poly:HALLPH,y0:31.05,y1:34.57}],label:true,tags:[['퍼걸러 (태양광 프레임)',[560,520],1.8]]});
@@ -5858,7 +5873,7 @@ const FM={
   terra:SM({map:TEX.terra,color:0xffffff,roughness:.85}),terraBand:SM({color:0x8f4a31,roughness:.8}),
   stone:SM({map:TEX.stone,color:0xffffff,roughness:.75}),stoneDark:SM({color:0x8d877d,roughness:.7}),
   bronze:SM({color:0x5a4a3a,metalness:.6,roughness:.4}),bronzeL:SM({color:0x7a6650,metalness:.55,roughness:.45}),
-  brick:SM({map:TEX.brick,color:0xffffff,roughness:.95}),brickHead:SM({color:0x5e3227,roughness:.9}),
+  brick:SM({map:TEX.brick,color:0xffffff,roughness:.95}),brickHead:SM({color:0x5e3227,roughness:.9}),winFrame:SM({color:0x1d1f22,metalness:.45,roughness:.45}),fascia:SM({color:0x222326,metalness:.35,roughness:.5}),
   white:SM({color:0xeeebe4,roughness:.6}),
   spandrel:SM({color:0x2f4552,metalness:.7,roughness:.12,transparent:true,opacity:.92}),
   silver:SM({color:0xc9cfd3,metalness:.85,roughness:.25}),
@@ -5880,7 +5895,7 @@ const STYLES={
     desc:'프레임 없이 전 면을 유리로 감싼 커튼월. 층간 슬래브는 짙은 스팬드럴 유리로 가리고, 1.5m 간격의 얇은 은색 멀리언만 남깁니다. 옥상은 1.5m 유리 난간으로 마감해 덩어리가 하나의 유리 볼륨으로 읽힙니다.',
     pros:'가장 가볍고 현대적인 인상, 압구정로 교차로에서 반사·야간 조명 효과 큼, 내부 개방감 최대',cons:'서향 일사로 냉방 부하 큼(로이·고성능 유리 필수), 유지관리(세척)·커튼월 단가 높음, 프라이버시 필요한 의원 층은 필름/블라인드 필요'},
   brick:{name:'벽돌 피어 + 깊은 창',glass:0xa9bcc4,glass1:0x627178,
-    desc:'적벽돌 피어(2.4m 간격)와 창 위 짙은 벽돌 띠, 1층은 넓은 상점창. 신사동 가로수길 일대 벽돌 건물 맥락을 잇는 안.',
+    desc:'적벽돌 피어(3.6m 간격) 사이에 4분할 검정 프레임 큰 창, 층마다 벽돌과 같은 색의 수평 벽돌 띠와 꼭대기 벽돌 코니스, 1층은 검정 파시아 아래 통유리 상점창. 신사동 가로수길 일대 벽돌 건물 맥락을 잇는 안 (2026.10.15 실사 기준으로 수정).',
     pros:'동네 맥락과 잘 어울림, 친근한 근생 이미지, 부분 보수 쉬움',cons:'고층부에서 무거워 보일 수 있음, 습식 공정으로 공기 증가'},
 };
 // clad one envelope (polygon extruded y0→y1) — elements on every exterior edge, offset outward
@@ -5905,7 +5920,7 @@ function facade(g,poly,y0,y1,style,ground,crownOnly,noV){
       if(style==='terra'){for(let s=0.35;s<L-0.2;s+=0.75)B(s-0.05,s+0.05,y0,y0+3.0,0.02,0.45,FM.terra,0.1,1.2);B(0,L,y0+2.85,y0+3.05,0,0.5,FM.terraBand)}
       else if(style==='stone'){B(0,L,y0,y0+1.2,0,0.35,FM.stone,1.2,0.6);B(0,L,y0+1.2,y0+1.35,-0.05,0.45,FM.stoneDark)}
       else if(style==='metal'){B(0,L,y0,y0+1.4,0,0.6,FM.bronze)}
-      else if(style==='brick'){B(0,L,y0,y0+1.1,0,0.3,FM.brick,0.9,0.3);B(0,L,y0+1.1,y0+1.25,-0.03,0.36,FM.brickHead)}
+      else if(style==='brick'){B(0,L,y0,y0+1.1,0,0.3,FM.brick,0.9,0.3);B(0,L,y0+0.95,y0+1.25,-0.03,0.44,FM.brick,0.9,0.3)}
       else if(style==='glass'){B(0,L,y0,y0+1.5,0.02,0.05,FM.gpar);B(0,L,y0-0.1,y0+0.05,0,0.1,FM.silver)}
       continue}
     if(mode!=='base'&&!ground){                                        // big openings: one pane per floor ('big') or one pane per whole face ('mega')
@@ -5936,11 +5951,17 @@ function facade(g,poly,y0,y1,style,ground,crownOnly,noV){
       const sp=big?3:1.5;for(let s=sp;s<L-0.2;s+=sp)B(s-0.025,s+0.025,y0-0.38,y1,0.01,0.12,FM.silver);
       if(ground)B(0,L,y1-0.02,y1+0.38,0.01,0.06,FM.spandrel);
     }else if(style==='brick'){
-      const step=ground?4.8:(big?3.6:2.4),pw=big?0.24:0.32,n=Math.max(1,Math.round(L/step));
-      if(!noV||ground)for(let k=0;k<=n;k++){const s=Math.min(Math.max(k*L/n,pw),L-pw);B(s-pw,s+pw,y0-0.38,y1,0,0.32,FM.brick,0.9,0.3)}
-      if(!ground)B(0,L,y0-0.38,y0+(big?0.45:0.9),0,0.28,FM.brick,0.9,0.3);
-      B(0,L,y1-(big?0.25:0.45),y1+0.0,-0.01,0.34,FM.brickHead);
-      if(ground)B(0,L,y1,y1+0.38,0,0.3,FM.brick,0.9,0.3);
+      // 2026.10.15 (실사 0° 기준): wide bays (3.6m) with 0.9m brick piers, 4-pane black-framed windows (centre mullion + transom),
+      // same-colour brick bands at every slab (no dark band), black metal fascia over the 1F shopfront
+      const step=ground?4.8:3.6,pw=ground?0.32:0.45,n=Math.max(1,Math.round(L/step)),sill=y0+0.5,head=y1-0.38;
+      const ps=[];for(let k=0;k<=n;k++)ps.push(Math.min(Math.max(k*L/n,pw),L-pw));
+      if(!noV||ground)ps.forEach(s=>B(s-pw,s+pw,y0-0.38,y1,0,0.32,FM.brick,0.9,0.3));
+      if(!ground){B(0,L,y0-0.38,sill,0,0.28,FM.brick,0.9,0.3);
+        B(0,L,head,y1+0.0,-0.01,0.38,FM.brick,0.9,0.3);
+        if(!noV)for(let k=0;k<n;k++){const a=ps[k]+pw,b=ps[k+1]-pw;if(b-a<0.6)continue;const m=(a+b)/2,tr=sill+(head-sill)*0.68;
+          B(m-0.035,m+0.035,sill,head,0.04,0.12,FM.winFrame);B(a,b,tr-0.035,tr+0.035,0.04,0.12,FM.winFrame);
+          B(a,a+0.06,sill,head,0.04,0.14,FM.winFrame);B(b-0.06,b,sill,head,0.04,0.14,FM.winFrame);B(a,b,sill,sill+0.06,0.04,0.14,FM.winFrame);B(a,b,head-0.06,head,0.04,0.14,FM.winFrame)}}
+      else{B(0,L,y1-0.2,y1+0.38,-0.01,0.4,FM.fascia)}
     }
   }
 }
@@ -6147,7 +6168,7 @@ function cornerLantern(g,poly,yF,r){const k=cornerOf(poly),C=poly[k],A=poly[(k-1
 // Drawing north arrow: north points to the upper-left of the plan, ~36° above horizontal
 const NORTH_DEG=36,NV=[-Math.cos(NORTH_DEG*Math.PI/180),-Math.sin(NORTH_DEG*Math.PI/180)],EV=[-NV[1],NV[0]];
 // ================= build =================
-const state={era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
+const state={era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
 window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?[...e.parentElement.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
 const bld=new THREE.Group();scene.add(bld);
 const extG=new THREE.Group(),frG=new THREE.Group();
@@ -6325,7 +6346,7 @@ function roofGarden(g,poly,y,keep){
 // so the tenant floor stays one open plate (사용자 첨부 입면처럼 외벽 유리면을 따라 오르는 계단). Flight band 0.43~1.54m in from the facade line,
 // 1.1m wide × 6.0m (24 risers). Where the 6F plate is cut back on that side (1층 안 '기준층 같은 선' / 외피 옵션) it falls back to a straight
 // flight along the terrace wall.
-let TOPST=null;
+let TOPST=null;const NOST=()=>state.use7&&state.nost;
 // 2026.10.08: compact spiral stair (지름 약 2.1m) in the corner by the terrace wall — top step lands on a small landing right at the terrace door
 function spiralTop(U,XV,cols){const R=44,cx=XV-2-40-R,ins=q=>inPoly(q,U),far=(q,r)=>!(cols||[]).some(k=>Math.hypot(k[0]-q[0],k[1]-q[1])<r);
   for(let cy=Math.min(yWall(cx)-R-12,yWall(XV)-8-12);cy>500;cy-=4){
@@ -6394,7 +6415,7 @@ function hallAccess(g,L,o){const ft=floorTop(L),[x,y0,y1]=o.hd,w=y1-y0;
 // top level (PH1 landing or 7F): terrace slab, guards, terrace doors, and walking — the terrace wall blocks except at the doors,
 // the terrace itself is walkable (walkX), core blocks stay solid
 function topExtra(g,L,o){terrace7(g,o.terr,o.hall,o.y,L.coreHole);const ft=floorTop(L),T=TOPST,gaps=[T.door].concat(o.ph1?[]:[[590,700]]);
-  if(o.ph1)landGuard(g,ft);else openGuard7(g,ft);
+  if(o.ph1)landGuard(g,ft);else if(!NOST())openGuard7(g,ft);
   gaps.forEach(([a,b])=>g.add(door([[o.XV,b],[o.XV,a]],o.dt,(b-a)/S-0.15,false).translateY(ft)));
   const ys=L.poly.filter(q=>Math.abs(q[0]-o.XV)<3).map(q=>q[1]);
   if(ys.length&&WREC){const y0=Math.min(...ys),y1=Math.max(...ys);let c=y0;gaps.slice().sort((p,q)=>p[0]-q[0]).forEach(([a,b])=>{if(b<y0||a>y1)return;if(a>c)WREC.push([o.XV,c,o.XV,a]);c=Math.max(c,b)});if(y1>c)WREC.push([o.XV,c,o.XV,y1])}
@@ -6529,7 +6550,7 @@ function buildLevel0(L,i){
     if(L.kind==='terrace'||L.kind==='roof')railAround(g,L.poly,floorTop(L),L.railSkip);
     const env=L.env||(L.kind==='ground'?[{poly:L.poly,y0:0,y1:L.h-0.38}]:L.kind==='upper'?[{poly:L.poly,y0:L.y,y1:L.y+L.h-0.38}]:[]);
     FXOPT.up=L.kind==='upper';const mull=[];env.forEach(e=>{const gl=L.kind==='ground';g.add(prism(e.poly,e.y0,e.y1-e.y0,gl?M.glass1:M.glass,{edges:true,shadow:false,edgeMat:gl?LM.edge1:LM.edge,noCaps:!!e.noCap}));
-      mullions(e.poly,e.y0,e.y1-e.y0,gl?1.8:({base:1.25,big:3,front:2.5,mega:6})[state.win],mull)});
+      mullions(e.poly,e.y0,e.y1-e.y0,gl?1.8:(state.style==='brick'&&state.win==='base'&&!state.skinOn?999:({base:1.25,big:3,front:2.5,mega:6})[state.win]),mull)});
     if(mull.length){if(R3D.on){const n=mull.length/6,im=new THREE.InstancedMesh(new THREE.BoxGeometry(0.07,1,0.14),L.kind==='ground'?R3D.mullD:R3D.mullM,n),o=new THREE.Object3D();
         for(let k=0;k<n;k++){const a=k*6;o.position.set(mull[a],(mull[a+1]+mull[a+4])/2,mull[a+2]);o.scale.set(1,mull[a+4]-mull[a+1],1);o.updateMatrix();im.setMatrixAt(k,o.matrix)}im.castShadow=true;g.add(im);
         env.forEach(e=>{const W=e.poly.map(q=>P(...q));for(let k=0;k<W.length;k++){if(onCut(W[k],W[(k+1)%W.length]))continue;const t=seg(W[k],W[(k+1)%W.length],e.y1-0.12,e.y1+0.05,0.16,L.kind==='ground'?R3D.mullD:R3D.mullM);t.castShadow=true;g.add(t)}})}
@@ -6598,7 +6619,7 @@ function build(){deriveExt();
       :state.g1==='straight'?`1층 남측 벽을 압구정로와 직각으로 정리했습니다. 빠진 삼각형 약 ${c.toFixed(1)}㎡는 외부 테라스입니다. ${over2}${skTxt}`:'원안: 1층 남측 벽이 6M도로 건축한계선을 따라 사선으로 나 있습니다.')}
   document.getElementById('tbl').innerHTML=LEVELS.slice().reverse().map(L=>`<tr><td>${L.name}${L.assumed?' (가정)':''} <span style="color:var(--muted)">${L.use||''}</span></td><td>${L.approx?'≈':''}${(L.area/3.3058).toFixed(1)}평 <span style="color:var(--muted);font-size:11px">${L.area.toFixed(1)}㎡</span></td></tr>`).join('');
   set('foot-note','대지 윤곽과 평면은 도면 이미지를 41.6px/m로 축척해 읽은 값이라 ±0.5m 정도 오차가 있습니다. 램프 곡선과 주차 구획·실 배치는 도면 형태를 따라 단순화했고, ≈ 표시는 모델에서 계산한 면적입니다. 옥상: 모든 안에 태양광 퍼걸러('+(PVST[state.style]||PVST.glass).name+', 외장 마감재에 따라 바뀜)와 코어 지붕 태양광, 최상층(6F)은 기준층과 같은 면적이고, '+(state.use7?'테라스 쪽 내부 계단으로 7F(복층 상부, 서측만 실내 · 홀·테라스 제외)와 이어지고 7F에서 테라스로 나갑니다.':'6F 서측은 PH1 천장까지 열린 복층이고 테라스 쪽 내부 계단으로 PH1 테라스로 바로 나갑니다.'));
-  {const t6=LEVELS.find(l=>l.dup==='lo'),p1=LEVELS.find(l=>l.dup==='hi');set('top-note',state.use7?`7층 사용: 6F → 7F 계단은 ${TOPST.kind==='spiral'?'테라스 출입문 옆 구석의 나선 계단(지름 약 2.1m · 약 1.2바퀴)':TOPST.kind==='south'?'6M도로 쪽 외벽 유리를 따라 동쪽으로 올라가는 직선 계단(폭 1.1m · 길이 6.0m)':'테라스 쪽 벽을 따라 올라가는 직선 계단(이 1층 안에서는 6M도로 쪽 바닥이 잘려 대체 배치)'}으로, 끝의 계단참 옆 테라스 출입문으로 나갑니다(기존 7F 테라스 출입문도 유지). 테라스에서 엘리베이터 홀 출입문으로 코어(승강기·비상계단)에 들어갑니다. 6F 천장고 ${(ceilOf(t6)-floorTop(t6)).toFixed(2)}m · 7F 천장고 ${(ceilOf(p1)-floorTop(p1)).toFixed(2)}m. 7F 바닥 약 ${(p1.area/3.3058).toFixed(1)}평은 연면적에 산입됩니다.`:`PH1 사용 (기본): 6F 서측은 7층 바닥 없이 PH1 천장까지 열린 복층(천장고 약 ${(t6.htTop-floorTop(t6)).toFixed(2)}m, 테라스·홀 아래는 ${(ceilOf(t6)-floorTop(t6)).toFixed(2)}m). 6F → PH1 계단은 ${TOPST.kind==='spiral'?'테라스 출입문 옆 구석에서 돌아 올라가는 나선 계단(지름 약 2.1m · 약 1.2바퀴, 임대 공간을 거의 차지하지 않음)':TOPST.kind==='south'?'6M도로 쪽 외벽 유리를 따라 동쪽으로 올라가는 직선 계단(폭 1.1m · 길이 6.0m)':'테라스 쪽 벽을 따라 올라가는 직선 계단(이 1층 안에서는 대체 배치)'}이고, 계단참 옆 테라스 출입문으로 나가 테라스 → 엘리베이터 홀 출입문으로 코어에 들어갑니다. 계단이 테라스 쪽 계단참에 도착해 테라스 출입문으로 바로 나갑니다. 7층 바닥이 없어 연면적에서 빠집니다.`)}
+  {const t6=LEVELS.find(l=>l.dup==='lo'),p1=LEVELS.find(l=>l.dup==='hi');set('top-note',NOST()?`6·7층 분리 임대: 6F와 7F 사이 내부 계단이 없고 7F 바닥이 막혀 있습니다. 각 층은 엘리베이터 홀(코어)로 따로 출입하고, 7F는 테라스 출입문으로 테라스에 나갑니다. 6F 천장고 ${(ceilOf(t6)-floorTop(t6)).toFixed(2)}m · 7F 천장고 ${(ceilOf(p1)-floorTop(p1)).toFixed(2)}m. 7F 바닥 약 ${(p1.area/3.3058).toFixed(1)}평은 연면적에 산입됩니다.`:state.use7?`7층 사용: 6F → 7F 계단은 ${TOPST.kind==='spiral'?'테라스 출입문 옆 구석의 나선 계단(지름 약 2.1m · 약 1.2바퀴)':TOPST.kind==='south'?'6M도로 쪽 외벽 유리를 따라 동쪽으로 올라가는 직선 계단(폭 1.1m · 길이 6.0m)':'테라스 쪽 벽을 따라 올라가는 직선 계단(이 1층 안에서는 6M도로 쪽 바닥이 잘려 대체 배치)'}으로, 끝의 계단참 옆 테라스 출입문으로 나갑니다(기존 7F 테라스 출입문도 유지). 테라스에서 엘리베이터 홀 출입문으로 코어(승강기·비상계단)에 들어갑니다. 6F 천장고 ${(ceilOf(t6)-floorTop(t6)).toFixed(2)}m · 7F 천장고 ${(ceilOf(p1)-floorTop(p1)).toFixed(2)}m. 7F 바닥 약 ${(p1.area/3.3058).toFixed(1)}평은 연면적에 산입됩니다.`:`PH1 사용 (기본): 6F 서측은 7층 바닥 없이 PH1 천장까지 열린 복층(천장고 약 ${(t6.htTop-floorTop(t6)).toFixed(2)}m, 테라스·홀 아래는 ${(ceilOf(t6)-floorTop(t6)).toFixed(2)}m). 6F → PH1 계단은 ${TOPST.kind==='spiral'?'테라스 출입문 옆 구석에서 돌아 올라가는 나선 계단(지름 약 2.1m · 약 1.2바퀴, 임대 공간을 거의 차지하지 않음)':TOPST.kind==='south'?'6M도로 쪽 외벽 유리를 따라 동쪽으로 올라가는 직선 계단(폭 1.1m · 길이 6.0m)':'테라스 쪽 벽을 따라 올라가는 직선 계단(이 1층 안에서는 대체 배치)'}이고, 계단참 옆 테라스 출입문으로 나가 테라스 → 엘리베이터 홀 출입문으로 코어에 들어갑니다. 계단이 테라스 쪽 계단참에 도착해 테라스 출입문으로 바로 나갑니다. 7층 바닥이 없어 연면적에서 빠집니다.`)}
   makeLabels();
   applyB1See();
   if(window.PH)PH.sync();
@@ -6663,7 +6684,8 @@ document.querySelectorAll('input[name=sch]').forEach(r=>r.addEventListener('chan
 document.querySelectorAll('input[name=g1]').forEach(r=>r.addEventListener('change',e=>{state.g1=e.target.value;build()}));
 document.getElementById('t-upstraight').addEventListener('change',e=>{state.upSt=e.target.checked;build()});
 document.getElementById('t-skin').addEventListener('change',e=>{state.skin=e.target.checked;build()});
-document.getElementById('t-use7').addEventListener('change',e=>{state.use7=e.target.checked;build()});
+document.getElementById('t-use7').addEventListener('change',e=>{state.use7=e.target.checked;const x=document.getElementById('t-nost');x.disabled=!state.use7;if(!state.use7){x.checked=false;state.nost=false}build()});
+document.getElementById('t-nost').addEventListener('change',e=>{state.nost=e.target.checked&&state.use7;build()});
 document.getElementById('t-a4park').addEventListener('change',e=>{state.a4park=e.target.checked;build()});
 document.getElementById('t-limits').addEventListener('change',e=>limits.visible=e.target.checked);
 document.getElementById('t-frame').addEventListener('change',e=>{state.frame=e.target.checked;frG.visible=state.frame&&state.form==='portal'&&state.design==='none'&&!I.doll});
@@ -6762,13 +6784,17 @@ function chips(){const c=document.getElementById('floorChips');c.innerHTML='';
 const IV={dim:true,ht:true,rm:true,pk:true,rp:true,rw:true,lb:true,up:false};let RTAIL=null;
 function applyIV(){if(typeof htG!=='undefined'&&htG)htG.visible=IV.ht&&IV.lb;const on=IV.rw&&IV.lb;bld.traverse(o=>{if(o.material===MRW||o.material===G90SW||o.material===G90OK)o.visible=on})}
 // one switch for every text label (exterior tags + interior labels); phones start with labels off so the building is not covered (2026.10.09)
-function setLabels(on){const t=document.getElementById('t-labels');t.checked=on;IV.lb=on;document.getElementById('lblBtn').setAttribute('aria-pressed',on);
-  const c=document.querySelector('[data-iv="lb"]');if(c)c.setAttribute('aria-pressed',on);applyIV()}
+const IVTXT=['dim','ht','rm','pk','rw'];   // 글자 라벨 항목 (램프·윗층 투시는 모양 표시라 따로)
+function syncIVBtns(){document.querySelectorAll('[data-iv]').forEach(b=>b.setAttribute('aria-pressed',!!IV[b.dataset.iv]));const t=document.getElementById('t-labels');if(t)t.checked=IV.lb;const lb=document.getElementById('lblBtn');if(lb)lb.setAttribute('aria-pressed',IV.lb)}
+function setLabels(on){IV.lb=on;IVTXT.forEach(k=>IV[k]=on);syncIVBtns();applyIV();if(typeof I!=='undefined'&&I.on&&typeof interiorLabels==='function')interiorLabels()}
 document.getElementById('lblBtn').addEventListener('click',()=>setLabels(!document.getElementById('t-labels').checked));
 document.getElementById('t-labels').addEventListener('change',e=>setLabels(e.target.checked));
 if(matchMedia('(max-width:1100px),(pointer:coarse)').matches)setLabels(false);
 addEventListener('viewmodechange',()=>setLabels(!matchMedia('(max-width:1100px),(pointer:coarse)').matches));   // 화면 모드를 바꾸면 그 모드의 기본값으로: PC 화면 = 라벨 켬, 모바일 화면 = 끔
-document.querySelectorAll('[data-iv]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.iv;IV[k]=!IV[k];b.setAttribute('aria-pressed',IV[k]);applyIV();if(k==='lb'){document.getElementById('t-labels').checked=IV.lb;document.getElementById('lblBtn').setAttribute('aria-pressed',IV.lb)}if(k==='rp')applyDollVis();if(k==='up'&&I.on)interiorLabels()}));
+document.querySelectorAll('[data-iv]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.iv;
+  if(k==='lb'){setLabels(!(IV.lb&&IVTXT.every(x=>IV[x])));return}   // 일부만 켜져 있으면 누를 때 모두 켜고, 모두 켜져 있으면 모두 끔
+  IV[k]=!IV[k];if(IVTXT.includes(k)){if(IV[k])IV.lb=true;else if(!IVTXT.some(x=>IV[x]))IV.lb=false}
+  syncIVBtns();applyIV();if(k==='rp')applyDollVis();if((k==='up'||IVTXT.includes(k))&&I.on)interiorLabels()}));
 let inLabels=[];
 function clearIn(){inLabels.forEach(l=>{l.el.remove();const k=labels.indexOf(l);if(k>=0)labels.splice(k,1)});inLabels=[]}
 function interiorLabels(){clearIn();const L=Lv(),y=floorTop(L)+1.4;
@@ -6859,7 +6885,7 @@ function setSection(on){
   const elev=v=>(v>=0?'+':'')+v.toFixed(2);
   if(on==='top'){
     const ym=(y6+p2.y+3.5)/2;controls.minDistance=6;flyTo(new THREE.Vector3(xc+3,ym+3,zc+36),new THREE.Vector3(xc,ym,zc),true);
-    if(state.use7){add(`${t6.name} 복층 하부 (기준층과 같은 면적)`,520,y6+1.3);add(`${p1.name} 복층 상부`,520,p1.y+1.3)}else add(`${t6.name} 복층 (PH1 천장까지 오픈)`,520,y6+1.3);add(`내부 계단 ${t6.name} → ${p1.name}${state.use7?'':' 테라스'}`,700,y6+2.6);add(`${p1.name} 테라스`,880,p1.y+1.3);add('홀 · 승강기',1120,y6+1.6);add('홀',1120,p1.y+1.6);
+    if(state.use7){add(`${t6.name} 복층 하부 (기준층과 같은 면적)`,520,y6+1.3);add(`${p1.name} 복층 상부`,520,p1.y+1.3)}else add(`${t6.name} 복층 (PH1 천장까지 오픈)`,520,y6+1.3);if(!NOST())add(`내부 계단 ${t6.name} → ${p1.name}${state.use7?'':' 테라스'}`,700,y6+2.6);add(`${p1.name} 테라스`,880,p1.y+1.3);add('홀 · 승강기',1120,y6+1.6);add('홀',1120,p1.y+1.6);
     add('PH2 옥상정원 · 태양광 퍼걸러',560,p2.y+1.6);add('승강기 기계실 · 태양광',1150,p2.y+4.8);return}
   // whole building: every level's name, use and floor level on the cut, plus a level ruler at the 압구정로 edge
   const lo=Math.min(...LEVELS.map(l=>l.y))-0.6,ym=(lo+roof)/2,span=roof-lo;
@@ -7596,7 +7622,7 @@ buildContext();existBuilding();
 // first open: browsers can restore old radio/checkbox states, so set every control from the defaults in state (1층 3안 등)
 {const chk=(n,v)=>{const r=document.querySelector(`input[name=${n}][value="${v}"]`);if(r)r.checked=true};
   chk('era',state.era);chk('sch',state.scheme);chk('g1',state.g1);chk('emode',state.mode);chk('cfin',state.cfin);chk('form',state.cform);chk('dsg',state.pdesign);chk('win',state.win);chk('vmode','sketch');chk('mixq','50');
-  ['t-upstraight','t-skin','t-use7','t-cglass','t-cclean','t-cmpol','t-cmpspin','t-a4park'].forEach(id=>{const x=document.getElementById(id);if(x)x.checked=false});
+  ['t-upstraight','t-skin','t-use7','t-nost','t-cglass','t-cclean','t-cmpol','t-cmpspin','t-a4park'].forEach(id=>{const x=document.getElementById(id);if(x)x.checked=false});
   document.getElementById('ext-combo').hidden=false;document.getElementById('ext-preset').hidden=true;document.getElementById('c-mix').value=CMP.v}
 {const mix=document.getElementById('c-mix'),setMix=v=>{CMP.v=+v;mix.value=CMP.v;document.querySelectorAll('input[name=mixq]').forEach(r=>r.checked=+r.value===CMP.v);applyCmp()};
   mix.addEventListener('input',()=>setMix(mix.value));document.querySelectorAll('input[name=mixq]').forEach(r=>r.addEventListener('change',()=>setMix(r.value)));
@@ -7650,7 +7676,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v87';
+  window.CH_VER='v93';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -7658,16 +7684,33 @@ let last=performance.now();
   const ANG={0:'전면 (압구정로)',45:'코너',90:'측면 (6M도로)',135:'후측면 (6M도로 쪽)',180:'후면',225:'후측면 (북측)',270:'북측면',315:'전면 코너 (북측)'};
   const IV={'000':'0°','090':'90°','180':'180°','270':'270°','center':'가운데','road':'도로변'},IVO=['000','090','180','270','center','road'];
   const VIEW2ANG={front:0,corner:45,side:90,stair:135};
-  const PH=window.PH={on:false,mode:'ext',man:null,ang:45,floor:null,iv:'000',cur:null,urls:{},seen:{},extra:null,src:SRC};
+  // 내부 사진 이름(frame_1_back_mid …) → 화면 이름. 6·7F 같이 사용은 frame_6F_1_… / frame_7F_1_… (2026.10.16)
+  const IVN={back_mid:'입구에서 창 쪽',back_right:'안쪽 북측에서 코너 창 쪽',front_right:'창가 북측에서 안쪽',front_mid:'창가에서 입구 쪽',front_left:'코너 창가에서 북측',back_left:'안쪽 남측에서 창가',hall:'엘리베이터 홀',
+    ramp_north:'램프 (북측)',north_to_south:'북 → 남',mid:'가운데',ramp_south:'램프 (남측)',south_to_north:'남 → 북',bridge_front:'다리 건너 정면',corner:'코너에서 홀 쪽',west_to_hall:'압구정로 쪽에서 홀 정면'};
+  const ivp=v=>{const m=/^(?:(\d+f)_)?(\d+)_(.+)$/i.exec(v);return m?{pre:m[1]?m[1].toUpperCase():'',n:m[2],t:IVN[m[3]]||m[3].replace(/_/g,' ')}:null};
+  const ivFull=v=>{if(IV[v])return IV[v];const p=ivp(v);return p?`${p.pre?p.pre+' · ':''}${p.t}`:v};
+  const ivShort=v=>{if(IV[v])return IV[v];const p=ivp(v);return p?(p.pre?p.pre+'-'+p.n:p.n):v};
+  const ivSort=(a,b)=>{const ia=IVO.indexOf(a),ib=IVO.indexOf(b);if(ia>=0||ib>=0)return(ia<0?99:ia)-(ib<0?99:ib);return a.localeCompare(b,undefined,{numeric:true})};
+  const PH=window.PH={on:false,mode:'ext',man:null,ang:0,floor:null,vi:0,iv:'000',cur:null,urls:{},seen:{},extra:null,src:SRC};
   const app=document.querySelector('.app'),viewer=document.getElementById('viewer');
   const el=document.createElement('div');el.className='ph';el.id='ph';el.hidden=true;
   el.innerHTML=`<img class="ph-img" alt=""><img class="ph-img" alt="">
     <div class="ph-top"><div class="ph-seg"><button data-m="ext" aria-pressed="true">외부</button><button data-m="int" aria-pressed="false">내부</button></div>
-      <div class="ph-title" id="phTitle"></div><div class="ph-floors" id="phFloors"></div></div>
+      <div class="ph-title" id="phTitle"></div><div class="ph-vars" id="phVars"></div></div><div class="ph-floors" id="phFloors"></div>
     <div class="ph-empty" id="phEmpty" hidden></div><div class="ph-load" id="phLoad" hidden>불러오는 중…</div>
-    <div class="ph-bar" id="phBar"></div><div class="ph-hint">드래그 · ←→ 로 돌려 보기</div><div class="ph-rot">휴대폰을 가로로 돌리거나 [⤢ 크게]를 누르면 크게 보입니다</div>`;
+    <div class="ph-nav l" id="phPrev" title="이전 사진" hidden><span>‹</span></div><div class="ph-nav r" id="phNext" title="다음 사진" hidden><span>›</span></div>
+    <div class="ph-zoom" id="phZoom"><button data-z="+" title="확대">+</button><button data-z="0" title="원래 크기로">1×</button><button data-z="-" title="축소">−</button></div>
+    <div class="ph-bar" id="phBar"></div><div class="ph-hint">왼쪽·오른쪽 누르기 / ←→ 키로 넘기기 · 휠·두 손가락으로 확대, 끌어서 이동</div><div class="ph-rot">휴대폰을 가로로 돌리거나 [⤢ 크게]를 누르면 크게 보입니다</div>`;
   viewer.appendChild(el);
   const imgs=[...el.querySelectorAll('.ph-img')];let front=0;
+  // 확대·이동 (2026.10.16): 휠 / 두 손가락 / + − 버튼으로 확대, 확대 중에는 끌어서 이동, 두 번 누르면 확대↔원래대로. 사진이 바뀌면 원래 크기로
+  const Z=window.PHZ={s:1,x:0,y:0,moved:false,hd:false};
+  function zApply(){const w=el.clientWidth,h=el.clientHeight;Z.s=Math.min(6,Math.max(1,Z.s));Z.x=Math.min(0,Math.max(w-w*Z.s,Z.x));Z.y=Math.min(0,Math.max(h-h*Z.s,Z.y));
+    const t=Z.s===1?'':`translate(${Z.x}px,${Z.y}px) scale(${Z.s})`;imgs.forEach(i=>i.style.transform=t);el.classList.toggle('zoomed',Z.s>1.001);
+    const zb=el.querySelector('[data-z="0"]');if(zb)zb.textContent=Z.s>1.001?Z.s.toFixed(1)+'×':'1×';
+    if(Z.s>1.4&&!Z.hd&&PH.cur&&SRC.hd&&el.dataset.q!=='hd'){Z.hd=true;show(PH.cur)}}
+  function zAt(px,py,ns){ns=Math.min(6,Math.max(1,ns));const k=ns/Z.s;Z.x=px-(px-Z.x)*k;Z.y=py-(py-Z.y)*k;Z.s=ns;if(ns===1){Z.x=0;Z.y=0}zApply()}
+  function zReset(){Z.s=1;Z.x=0;Z.y=0;Z.hd=false;zApply()}
   // views buttons that make sense on photos stay visible in photo mode
   document.querySelectorAll('.views button').forEach(b=>{if(b.dataset.v==='int'||VIEW2ANG[b.dataset.v]!=null)b.dataset.ph='1'});
   function b64url(rel){const s=document.getElementById('ph:'+rel);if(!s)return null;
@@ -7677,7 +7720,7 @@ let last=performance.now();
     const T=(PH.man&&PH.man.tiers)||{},v=PH.man&&PH.man.h&&PH.man.h[rel],q=v?'?v='+v:'';
     if(tier==='hd')return SRC.hd?SRC.hd+(T.hd||'hd/')+rel+q:null;
     return SRC.base+(T[tier]||tier+'/')+rel+q}
-  const wantHD=()=>!!SRC.hd&&(el.classList.contains('fill')||(!matchMedia('(pointer:coarse)').matches&&el.clientWidth*(devicePixelRatio||1)>1500));
+  const wantHD=()=>!!SRC.hd&&(Z.s>1.4||el.classList.contains('fill')||(!matchMedia('(pointer:coarse)').matches&&el.clientWidth*(devicePixelRatio||1)>1500));
   function tryScript(u){return new Promise(res=>{const t=document.createElement('script');let done=false;const fin=()=>{if(!done){done=true;res()}};
     t.src=u;t.onload=t.onerror=fin;setTimeout(fin,8000);document.head.appendChild(t)})}
   let manP=null;
@@ -7694,7 +7737,7 @@ let last=performance.now();
     const put=url=>new Promise(res=>{if(!url)return res(false);const im=imgs[1-front];
       im.onload=()=>{if(t!==tok)return res(false);imgs[front].classList.remove('on');im.classList.add('on');front=1-front;res(true)};
       im.onerror=()=>res(false);im.src=url;im.alt=label||''});
-    const std=src(rel,'std'),th=src(rel,'thumb'),hd=wantHD()?src(rel,'hd'):null;PH.cur=rel;
+    const std=src(rel,'std'),th=src(rel,'thumb'),hd=wantHD()?src(rel,'hd'):null;if(rel!==PH.cur)zReset();PH.cur=rel;
     ld.hidden=!!PH.seen[std];
     (async()=>{if(th&&!PH.seen[std])await put(th);if(t!==tok)return;const ok=await put(std);if(t!==tok)return;ld.hidden=true;
       if(ok){PH.seen[std]=1;if(hd&&await put(hd))el.dataset.q='hd';else el.dataset.q='std'}})()}
@@ -7705,20 +7748,26 @@ let last=performance.now();
     items.forEach(([k,t])=>{const x=document.createElement('button');x.textContent=t;x.setAttribute('aria-pressed',k===cur);x.onclick=()=>onPick(k);b.appendChild(x)});
     if(items.length>1){const n=document.createElement('button');n.textContent='▶';n.setAttribute('aria-label','다음 방향');n.onclick=()=>step(1);b.appendChild(n)}
     if(items.length){const z=document.createElement('button');z.textContent=el.classList.contains('fill')?'⤡ 전체':'⤢ 크게';z.title='화면 꽉 채우기 / 사진 전체 보기';z.onclick=()=>{el.classList.toggle('fill');z.textContent=el.classList.contains('fill')?'⤡ 전체':'⤢ 크게';if(PH.cur&&wantHD())show(PH.cur)};b.appendChild(z)}
-    PH.step=step}
-  function render(){if(!PH.on)return;const M=PH.man;el.querySelectorAll('.ph-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===PH.mode));
-    const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';
+    PH.step=step;document.getElementById('phPrev').hidden=document.getElementById('phNext').hidden=items.length<2}
+  function render(){if(!PH.on)return;const M=PH.man;el.dataset.mode=PH.mode;el.querySelectorAll('.ph-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===PH.mode));
+    const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';F.hidden=true;document.getElementById('phVars').innerHTML='';
     if(!M){T.textContent='실사';bar([],null,()=>{});empty('실사 사진 목록을 불러오지 못했습니다.<br>인터넷 연결 또는 사진 저장소(kapehorn-media)를 확인해 주세요.<br><button id="phTo3d">3D로 보기</button>');document.getElementById('phTo3d').onclick=()=>off3d();return}
     if(PH.mode==='ext'){const [g,k]=design(),d=M.ext[g]&&M.ext[g][k],nm=(PH.extra&&PH.extra[1]===k&&d&&d.name)||(window.CH.dname&&window.CH.dname())||(d&&d.name)||k;
       if(!d||!Object.keys(d.img||{}).length){T.innerHTML=`${nm}<small>실사 준비 중</small>`;bar([],null,()=>{});empty(`'${nm}' — 360° 실사 사진 준비 중입니다.<br><button id="phTo3d">3D로 보기</button>`);document.getElementById('phTo3d').onclick=()=>off3d();return}
       empty('');const A=(d.alt&&d.alt[window.CH.state.scheme])||{},im=a=>A[String(a)]||d.img[String(a)],angs=[...new Set(Object.keys(d.img).concat(Object.keys(A)))].map(Number).sort((a,b)=>a-b);if(!angs.includes(PH.ang))PH.ang=angs.reduce((p,a)=>Math.abs(a-PH.ang)<Math.abs(p-PH.ang)?a:p,angs[0]);
       T.innerHTML=`${nm}<small>${d.r360?'360° · ':''}${ANG[PH.ang]||PH.ang+'°'}</small>`;
       show(im(PH.ang),nm);bar(angs.map(a=>[a,a+'°']),PH.ang,a=>{PH.ang=a;render()});angs.forEach(a=>{const i=new Image();i.src=src(im(a))})}
-    else{const fl=Object.entries(M.int).filter(([k,e])=>e.status!=='hide').sort((a,b)=>a[1].order-b[1].order);if(!fl.length){empty('내부 실사 사진이 없습니다.');return}
-      if(!PH.floor||!fl.some(([k])=>k===PH.floor))PH.floor=fl[0][0];
-      fl.forEach(([k,e])=>{const b=document.createElement('button');b.textContent=e.name;b.setAttribute('aria-pressed',k===PH.floor);b.onclick=()=>{PH.floor=k;render()};F.appendChild(b)});
-      const e=M.int[PH.floor],IA=(e.alt&&e.alt[window.CH.state.scheme])||{},ii=v=>IA[v]||e.img[v],ks=[...new Set(Object.keys(e.img).concat(Object.keys(IA)))],vs=IVO.filter(v=>ks.includes(v)).concat(ks.filter(v=>!IVO.includes(v)));if(!vs.includes(PH.iv))PH.iv=vs[0];
-      empty('');T.innerHTML=`${e.name}<small>${IV[PH.iv]||PH.iv}</small>`;show(ii(PH.iv),e.name);bar(vs.map(v=>[v,IV[v]||v]),PH.iv,v=>{PH.iv=v;render()});vs.forEach(v=>{const i=new Image();i.src=src(ii(v))})}}
+    else{}
+    if(PH.mode!=='ext'){const fl=Object.entries(M.int).filter(([k,e])=>e.status!=='hide').sort((a,b)=>a[1].order-b[1].order);if(!fl.length){empty('내부 실사 사진이 없습니다.');return}
+      if(!PH.floor||!fl.some(([k])=>k===PH.floor)){PH.floor=fl[0][0];PH.vi=0}
+      fl.forEach(([k,e])=>{const b=document.createElement('button');b.textContent=e.name;b.setAttribute('aria-pressed',k===PH.floor);b.onclick=()=>{if(PH.floor!==k)PH.vi=0;PH.floor=k;render()};F.appendChild(b)});
+      {const sel=F.querySelector('[aria-pressed="true"]');if(sel&&sel.scrollIntoView)sel.scrollIntoView({block:'nearest',inline:'nearest'})}F.hidden=false;
+      // 같은 층 디자인 시안이 여러 개면 시안 버튼 (보던 사진 번호는 그대로 유지)
+      const e0=M.int[PH.floor],VV=e0.vars&&e0.vars.length>1?e0.vars:null,VB=document.getElementById('phVars');VB.innerHTML='';
+      if(VV){if(!(PH.vi>=0&&PH.vi<VV.length))PH.vi=0;VB.insertAdjacentHTML('beforeend','<b>디자인 시안</b>');VV.forEach((x,i)=>{const b=document.createElement('button');b.textContent=x.name;b.setAttribute('aria-pressed',i===PH.vi);b.onclick=()=>{PH.vi=i;render()};VB.appendChild(b)})}
+      const e=VV?Object.assign({},e0,VV[PH.vi]):e0,IA=(e.alt&&e.alt[window.CH.state.scheme])||{},ii=v=>IA[v]||e.img[v],ks=[...new Set(Object.keys(e.img).concat(Object.keys(IA)))],vs=ks.slice().sort(ivSort);if(!vs.includes(PH.iv))PH.iv=vs[0];
+      const nm=e0.name+(VV?' · '+VV[PH.vi].name:'');
+      empty('');T.innerHTML=`${nm}<small>${vs.indexOf(PH.iv)+1}/${vs.length} · ${ivFull(PH.iv)}</small>`;show(ii(PH.iv),nm);bar(vs.map(v=>[v,ivShort(v)]),PH.iv,v=>{PH.iv=v;render()});vs.forEach(v=>{const i=new Image();i.src=src(ii(v))});{const er=el.getBoundingClientRect(),tb=el.querySelector('.ph-top').getBoundingClientRect(),top=Math.round(tb.bottom-er.top+8);F.style.top=top+'px';F.style.maxHeight=Math.max(120,er.height-top-70)+'px'}}}
   function off3d(){const r=document.getElementById('vm-sketch');r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}))}
   // 실사 모드 잠금: 사진은 '신축 · 자주식3' 기준이라 외부 디자인(마감재·추천 시안)만 바뀜. 나머지 설정은 회색 비활성.
   // 나중에 주차 안별 사진이 생기면 manifest에 "basis":{"sch":["alt4","mech",...]} 를 넣으면 그 버튼이 다시 활성화됨
@@ -7738,7 +7787,7 @@ let last=performance.now();
       {const M=PH.man||{},bs=(M.basis&&M.basis.base)||B.sch[0],nm=k=>(M.sch&&M.sch[k])||SCHN[k]||k,ex=B.sch.filter(k=>k!==bs);note.innerHTML=`실사 모드 — 외부 디자인(마감재 · 추천 시안)만 사진에 반영됩니다. 사진 기준: 신축 · ${nm(bs)}${ex.length?` (${ex.map(nm).join('·')}은 달라지는 사진만 교체)`:''}. 회색 설정은 스케치업·렌더에서 바꿀 수 있어요.`}note.hidden=false}
     else{if(PH.extra){const x=PH.extra;PH.extra=null;pick(x[0]==='preset'?'dsg-'+s.pdesign:'sty-'+s.cfin)}(PH.locked||[]).forEach(e=>{e.classList.remove('phlock');e.removeAttribute('aria-disabled')});document.querySelectorAll('[data-phd]').forEach(c=>{c.disabled=false;delete c.dataset.phd});PH.locked=null;note.hidden=true;
       const p=PH.prev;PH.prev=null;if(p){if(p.sch!==s.scheme)pick('sch-'+p.sch);if(p.era!==s.era)pick('era-'+p.era)}}}
-  PH.set=async function(on){if(on===PH.on)return;PH.on=on;el.hidden=!on;app.classList.toggle('photo',on);if(on){await loadMan();applyCat();if(PH.on){lock(true);render()}}else lock(false)};
+  PH.set=async function(on){if(on===PH.on)return;PH.on=on;if(on)PH.ang=0;el.hidden=!on;app.classList.toggle('photo',on);if(on){await loadMan();applyCat();if(PH.on){lock(true);render()}}else lock(false)};
   PH.sync=()=>{if(PH.on)render()};
   // 목록(00_목록.xlsx → catalog.js) 반영: '보관' 시안 버튼 숨김, 3D 없이 사진만 있는 시안은 실사 모드에서만 버튼 표시
   function applyCat(){const M=PH.man;if(!M||SRC.legacy||PH.catDone)return;PH.catDone=true;
@@ -7756,10 +7805,30 @@ let last=performance.now();
   loadMan().then(applyCat);
   PH.view=v=>{if(v==='int'){PH.mode='int';render();return true}if(VIEW2ANG[v]!=null){PH.mode='ext';PH.ang=VIEW2ANG[v];render();return true}return false};
   el.querySelectorAll('.ph-seg button').forEach(b=>b.onclick=()=>{PH.mode=b.dataset.m;render()});
-  // drag / swipe to turn
-  let sx=null;el.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;sx=e.clientX;el.setPointerCapture(e.pointerId)});
-  el.addEventListener('pointermove',e=>{if(sx==null||!PH.step)return;const dx=e.clientX-sx;if(Math.abs(dx)>70){PH.step(dx<0?1:-1);sx=e.clientX}});
-  ['pointerup','pointercancel'].forEach(t=>el.addEventListener(t,()=>sx=null));
+  // 화면 왼쪽·오른쪽을 눌러 한 장씩 넘기기 (드래그로 빠르게 돌아가던 방식은 멀미가 나서 뺌, 2026.10.16)
+  let lastNav=0;const nav=(d,e)=>{if(e)e.stopPropagation();const t=Date.now();if(!PH.step||t-lastNav<350||Z.s>1.001||Z.moved)return;lastNav=t;PH.step(d)};
+  // 확대 제스처
+  const noZ=t=>t.closest&&t.closest('button,.ph-top,.ph-bar,.ph-floors,.ph-zoom');
+  const rel0=e=>{const r=el.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+  el.addEventListener('wheel',e=>{if(!PH.on||noZ(e.target))return;e.preventDefault();const [px,py]=rel0(e);zAt(px,py,Z.s*Math.exp(-e.deltaY*0.0015))},{passive:false});
+  const P=new Map();let pinch=null,pan=null,lastTap=0;
+  el.addEventListener('pointerdown',e=>{if(!PH.on||noZ(e.target))return;P.set(e.pointerId,rel0(e));Z.moved=false;
+    if(P.size===2){const [a,b]=[...P.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:Z.s,c:[(a[0]+b[0])/2,(a[1]+b[1])/2]};pan=null}
+    else if(P.size===1&&Z.s>1.001){pan={p:rel0(e),x:Z.x,y:Z.y};el.classList.add('panning')}
+    if(P.size===1)pan0=rel0(e)},true);
+  let pan0=null;
+  el.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,rel0(e));
+    if(pinch&&P.size>=2){const [a,b]=[...P.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),c=[(a[0]+b[0])/2,(a[1]+b[1])/2];zAt(c[0],c[1],Z.s*d/Math.max(1,pinch.d));pinch.d=d;Z.moved=true;return}
+    if(pan){const q=rel0(e);Z.x=pan.x+q[0]-pan.p[0];Z.y=pan.y+q[1]-pan.p[1];if(Math.hypot(q[0]-pan.p[0],q[1]-pan.p[1])>5)Z.moved=true;zApply()}},true);
+  const up=e=>{if(!P.has(e.pointerId))return;P.delete(e.pointerId);if(P.size<2)pinch=null;if(!P.size){pan=null;el.classList.remove('panning');
+      const q=rel0(e),tap=pan0&&Math.hypot(q[0]-pan0[0],q[1]-pan0[1])<8&&!Z.moved,now=Date.now(),side=e.target.closest&&e.target.closest('.ph-nav');
+      if(tap&&!side&&now-lastTap<320){zAt(q[0],q[1],Z.s>1.001?1:2.5);lastTap=0}else if(tap)lastTap=now;
+      setTimeout(()=>{Z.moved=false},0)}};
+  el.addEventListener('pointerup',up,true);el.addEventListener('pointercancel',up,true);
+  el.querySelectorAll('.ph-zoom button').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const w=el.clientWidth/2,h=el.clientHeight/2,z=b.dataset.z;
+    if(z==='0')zReset();else zAt(w,h,Z.s*(z==='+'?1.5:1/1.5))}));
+  addEventListener('resize',()=>{if(PH.on)zApply()});
+  document.getElementById('phPrev').addEventListener('click',e=>nav(-1,e));document.getElementById('phNext').addEventListener('click',e=>nav(1,e));
   addEventListener('keydown',e=>{if(!PH.on||!PH.step||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight'){PH.step(1);e.preventDefault();e.stopImmediatePropagation()}if(e.key==='ArrowLeft'){PH.step(-1);e.preventDefault();e.stopImmediatePropagation()}},true);
 })();
 </script>
