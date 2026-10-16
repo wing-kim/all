@@ -15,9 +15,9 @@
     #precision-status{position:absolute;left:16px;bottom:18px;z-index:9;background:#172126e8;color:#fff;padding:9px 13px;border-radius:8px;font-size:12px;pointer-events:none;max-width:85%}
     .precision-on:has(#pad:not([hidden])) #precision-status{left:150px;max-width:calc(100% - 380px);font-size:11px}
     @media(max-width:600px){.precision-on:has(#pad:not([hidden])) #precision-status{left:8px;bottom:175px;max-width:calc(100% - 16px)}}
-    #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:55px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px}
-    #cafe-reference img{width:100%;height:calc(100% - 44px);object-fit:contain} #cafe-reference p{font-size:12px;margin:8px 0}
-    .precision-on.cafe-compare #cafe-reference{display:block}
+    #cafe-reference{display:none;position:absolute;left:0;top:55px;bottom:55px;width:50%;z-index:3;background:#171b1c;color:white;box-sizing:border-box;padding:10px;flex-direction:column;overflow:auto}
+    #cafe-reference img{display:block;width:100%;height:auto;min-height:0;flex:1;object-fit:contain} #cafe-reference p{font-size:12px;margin:8px 0;flex:none}
+    .precision-on.cafe-compare #cafe-reference{display:flex}
     .precision-on.cafe-compare #precision-frame{left:50%;width:50%}
     #precision-settings{padding:10px 0;font-size:12px} #precision-settings select{padding:5px;margin:4px}
   `;document.head.appendChild(style);
@@ -28,10 +28,14 @@
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
   const compareLabel=document.createElement('label');compareLabel.style.display='block';compareLabel.style.marginTop='10px';compareLabel.innerHTML='<input type="checkbox" id="precision-cafe-compare"> 1층 실사와 나란히 비교';settings.appendChild(compareLabel);
   const referencePanel=document.createElement('section');referencePanel.id='cafe-reference';referencePanel.innerHTML='<p>원본 실사 · AI 인테리어 시안 <select aria-label="카페 실사 시점" id="cafe-photo-angle"></select></p><img id="cafe-reference-image" alt="기존 1층 카페 실사 이미지"><p>구조는 기존 모델 기준 · 가구 배치는 검토용 예시입니다.</p>';host.appendChild(referencePanel);
+  const compareBox=document.getElementById('precision-cafe-compare');
+  function layoutReference(){if(!compareBox.checked)return;const toolbar=document.getElementById('intui'),base=host.getBoundingClientRect().top;const bottom=toolbar&&!toolbar.hidden?toolbar.getBoundingClientRect().bottom-base:0;referencePanel.style.top=Math.max(55,Math.ceil(bottom+10))+'px';}
+  if(typeof ResizeObserver==='function'){const observer=new ResizeObserver(layoutReference);observer.observe(host);observer.observe(document.getElementById('intui'))}
+  addEventListener('resize',layoutReference);
   const photoKeys=['1_back_mid','2_back_right','3_front_right','4_front_mid','5_front_left','6_back_left','7_hall'];const photoSelect=document.getElementById('cafe-photo-angle');photoKeys.forEach((key,i)=>photoSelect.add(new Option('시점 '+(i+1),key)));
   function cafePhoto(){const key=photoSelect.value,entry=window.PH?.man?.int?.f1;document.getElementById('cafe-reference-image').src=(window.PH?.src?.base||'https://wing-kim.github.io/kapehorn-media/')+(window.PH?.man?.tiers?.std||'std/')+(entry?.img?.[key]||'int/f1/'+key+'.webp');}
   photoSelect.onchange=cafePhoto;
-  document.getElementById('precision-cafe-compare').onchange=e=>{host.classList.toggle('cafe-compare',e.target.checked);if(e.target.checked){cafePhoto();document.getElementById('precision-cafe').click();}};
+  compareBox.onchange=e=>{host.classList.toggle('cafe-compare',e.target.checked);if(e.target.checked){cafePhoto();document.getElementById('precision-cafe').click();requestAnimationFrame(layoutReference)}};
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
   reference.onclick=()=>{clearComparison();C.cancel();if(C.interior())document.getElementById('v-corner').click();poseUntil=0;if(!active)enable();api()?.view('reference');currentFloorKey=null;currentDoll=false;};
@@ -45,7 +49,7 @@
   function clearComparison(){host.classList.remove('cafe-compare');document.getElementById('precision-cafe-compare').checked=false;}
   const reviewParams=new URLSearchParams(location.search);
   let pendingView=reviewParams.get('view')==='cafe'?'cafe':null;
-  if(reviewParams.get('compare')==='1'){document.getElementById('precision-cafe-compare').checked=true;host.classList.add('cafe-compare');cafePhoto();pendingView='cafe';}
+  if(reviewParams.get('compare')==='1'){compareBox.checked=true;host.classList.add('cafe-compare');cafePhoto();pendingView='cafe';requestAnimationFrame(layoutReference);}
   if(pendingView==='cafe')C.selectInteriorFloor('1F');
   addEventListener('keydown',event=>{if(!active)return;api()?.navigateKey(event);if(['Home','Enter','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)&&!event.target?.closest?.('input,textarea,select,[contenteditable=true]'))event.stopImmediatePropagation()},true);
 

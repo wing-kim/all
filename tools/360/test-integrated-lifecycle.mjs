@@ -13,8 +13,11 @@ function element(id=''){
     get dataset(){return this._dataset||{}},set dataset(value){this._dataset=value},
   };
 }
-for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','t-labels','t-cxlab','t-limits','t-b1','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+for(const id of ['viewer','intui','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','t-labels','t-cxlab','t-limits','t-b1','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
 ids.get('t-limits').checked=true;
+ids.get('viewer').getBoundingClientRect=()=>({top:100,bottom:820});
+let toolbarBottom=294,resizeObserved;
+ids.get('intui').getBoundingClientRect=()=>({top:110,bottom:toolbarBottom});
 ids.get('sec-time').hidden=true;
 const views=element('views'),group=element('group');
 for(const [id,view,pressed] of [['v-corner','corner','true'],['v-front','front','false'],['v-int','int','false']]){
@@ -29,11 +32,17 @@ const document={head:element(),activeElement:null,
 };
 function vector(initial){let values=[...initial];return {toArray:()=>[...values],fromArray(v){values=[...v]},update(){}}}
 const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3]),fov:45,updateProjectionMatrix(){this.projectionUpdates=(this.projectionUpdates||0)+1}},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,interiorState:()=>({on:false,key:'1F',camera:C.camera.position.toArray(),target:C.controls.target.toArray()}),setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
-let interval,now=100;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>now},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(fn){frames.push(fn)},addEventListener(){},console};
+let interval,now=100;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},ResizeObserver:class{constructor(callback){resizeObserved=callback}observe(){}},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>now},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(fn){frames.push(fn)},addEventListener(){},console};
 vm.runInNewContext(readFileSync(new URL('../../new/360/integrated.js',import.meta.url),'utf8'),context);
 const review=context.window.TOWER_REVIEW;
 assert.equal(C.controls.enabled,false,'precision owns host controls while active');
 assert.equal(ids.get('sec-time').hidden,false,'the original time controls remain visible in precision mode');
+const comparison=ids.get('precision-cafe-compare'),referencePanel=ids.get('viewer').children.find(child=>child.id==='cafe-reference');
+comparison.checked=true;comparison.onchange({target:comparison});frames.splice(0).forEach(fn=>fn());
+assert.equal(referencePanel.style.top,'204px','photo selector clears the original interior toolbar');
+toolbarBottom=338;resizeObserved();
+assert.equal(referencePanel.style.top,'248px','photo panel follows a wrapped or resized original toolbar');
+assert.match(document.head.children[0].textContent,/#cafe-reference img\{[^}]*flex:1/,'photo and caption share the remaining panel height');
 const frame=review.frame;
 let pauses=[];
 frame.contentWindow={TOWER360:{telemetry:()=>({camera:[10,20,30],target:[2,3,4]})},TOWER_LAB_CONTEXT:{cafeMode:false},TOWER_CINEMA:{pause:v=>pauses.push(v),stop(){}}};
