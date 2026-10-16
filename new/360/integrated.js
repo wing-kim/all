@@ -61,7 +61,7 @@
     key=JSON.stringify(snapshot());ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }

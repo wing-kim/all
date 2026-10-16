@@ -20,7 +20,7 @@ export async function start(C){
  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
  if(!adapter)throw new Error('WebGPU adapter unavailable');
  const limit=512*1024*1024;
- const renderer=new T.WebGPURenderer({antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(compactTouch?1:1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();
+ const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(compactTouch?1:1.25);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
  renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
@@ -109,8 +109,9 @@ export async function start(C){
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  const hazeColor=new T.Color('#bdcbd5');
  const whiteBalance=uniform(new T.Vector3(.97,1,1.025)),colorSaturation=uniform(1.03);
- const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),colorSaturation),node.a);
- const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(previewPass.mul(filteredAO.r.mul(.65).add(.35))));
+ // Final presentation is opaque: AO must never expose the legacy input canvas below.
+ const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),colorSaturation),1);
+ const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(vec4(previewPass.rgb.mul(filteredAO.r.mul(.65).add(.35)),1)));
  const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=fxaa(atmospheric(previewPass));
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
