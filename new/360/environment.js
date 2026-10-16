@@ -8,7 +8,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
     const assetCache=new Map();
     const cachedAsset=url=>{if(!assetCache.has(url))assetCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject)));return assetCache.get(url)};
-    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf','dining-chair-02/dining-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
+    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
     return {cachedAsset};
   })();
   const loader=new T.TextureLoader(),pendingTextures=[];
@@ -426,21 +426,26 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   }catch(error){console.warn('Lounge chair asset unavailable; retaining simple furnishings',error)}
   // CC0 dining-height furniture replaces only the low-chair fallback, at the
   // same authored illustrative positions. Preserve shared geometry and textures.
+  // 2026-10-17: AI 실사 시안의 원목 프레임·코냑 가죽 분위기에 맞춰 Modern Arm Chair 01을 쓴다.
+  // 라운지 의자와 형상은 공유하고, 식탁용은 재질만 복제해 쿠션을 코냑 가죽색으로 바꾼다(노멀맵 유지).
   try{
-    const asset=await cachedAsset('360/assets/dining-chair-02/dining-chair.gltf');
-    const bounds=new T.Box3().setFromObject(asset.scene),center=bounds.getCenter(new T.Vector3());
-    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;}});
+    const asset=await cachedAsset('360/assets/modern-arm-chair/modern-arm-chair.gltf');
+    const source=asset.scene.clone(true),cognac=new Map();
+    source.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.receiveShadow=true;
+      if(!cognac.has(o.material)){const m=o.material.clone();if(/pillow/.test(m.name)){m.map=null;m.color.set('#a3653c').convertSRGBToLinear();m.roughness=.62;m.name='Cafe cognac leather (illustrative)';}cognac.set(o.material,m)}
+      o.material=cognac.get(o.material)});
+    const bounds=new T.Box3().setFromObject(source),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),scale=.68/size.x;
     const anchors=[];extra.traverse(o=>{if(o.userData.diningAnchor)anchors.push(o)});
-    const audit={source:'Poly Haven Dining Chair 02 / CC0',replaced:0,rejected:0};
+    const audit={source:'Poly Haven Modern Arm Chair 01 / CC0, cognac cushion colour (illustrative)',replaced:0,rejected:0};
     for(const fallback of anchors){
-      const a=fallback.userData.diningAnchor,root=new T.Group(),model=asset.scene.clone(true);
-      // Source dimensions are already metres, including its dining-height seat.
-      model.position.set(-center.x,-bounds.min.y,0);root.add(model);
+      const a=fallback.userData.diningAnchor,root=new T.Group(),model=source.clone(true);
+      // Scaled to a 0.68 m wide cafe armchair; the seat front faces the table (+Z).
+      model.scale.setScalar(scale);model.position.set(-center.x*scale,-bounds.min.y*scale,-center.z*scale);root.add(model);
       root.position.set(a.x,a.y,a.z);root.rotation.y=a.angle;root.updateMatrixWorld(true);
       const b=new T.Box3().setFromObject(root);
       const inside=[b.min.x,b.max.x].every(x=>[b.min.z,b.max.z].every(z=>C.inPoly([x*41.6+914,z*41.6+770],a.poly)));
       if(!inside){audit.rejected++;continue;}
-      root.name='CC0 dining chair';root.userData.illustrativeFurniture=true;
+      root.name='CC0 cafe armchair';root.userData.illustrativeFurniture=true;
       fallback.parent.add(root);fallback.visible=false;audit.replaced++;
     }
     if(extra.userData.cafe)extra.userData.cafe.diningAsset=audit;

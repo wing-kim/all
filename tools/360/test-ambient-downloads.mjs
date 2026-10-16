@@ -8,4 +8,6 @@ assert.deepEqual(started,['a','b'],'both requests start before either finishes')
 pending.forEach(resolve=>resolve());await verification;
 await assert.rejects(verifyFurnitureManifest({a:'wrong'},async()=>({ok:true,arrayBuffer:async()=>data.buffer})),/furniture-mismatch:a/);
 await assert.rejects(verifyFurnitureManifest({a:hash},async()=>({ok:false})),/furniture-unavailable:a/);
+const options=[];await verifyFurnitureManifest({a:hash},async(path,init)=>{options.push(init);return {ok:true,arrayBuffer:async()=>data.buffer}});
+assert.equal(options[0]?.cache,'no-cache','furniture hashes are checked against the server, not a stale HTTP cache');
 console.log('parallel asset validation preserves fail-closed checks');

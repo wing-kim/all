@@ -38,3 +38,6 @@
 - `furniture-veneer_*.jpg`: Poly Haven [Oak Veneer 01](https://polyhaven.com/a/oak_veneer_01), Jenelle van Heerden, CC0. Original 1K diffuse/OpenGL normal/roughness, source width 1.8 m; illustrative desk and coffee-table tops. Replaces stretched floorboard maps on this furniture only. Download hashes: `docs/360/furniture-veneer-source.json`.
 
 - `interior-foliage.glb`: stem and leaves from Poly Haven [Potted Plant 01](https://polyhaven.com/a/potted_plant_01), Rico Cilliers, CC0, 1K PBR maps. Original decorative pot/gravel omitted; stem-foot anchor and Draco level 6 applied with `tools/360/prepare_interior_plant.py`. Kept inside the existing illustrative square planters. Source file checksums and derivative metadata: `docs/360/interior-plant-source-study.json`, `docs/360/interior-foliage-source.json`.
+
+- 1F 카페 식탁 의자(2026-10-17): 기존 `modern-arm-chair/` (Poly Haven Modern Arm Chair 01, CC0)를 0.68 m 폭으로 재사용하고, 쿠션은 원본 노멀맵을 유지한 채 코냑 가죽색(#a3653c)으로 바꿨습니다. AI 실사 시안의 원목·가죽 분위기를 따른 예시이며 승인된 가구 사양이 아닙니다. 이전 `dining-chair-02/`는 파일만 남기고 카페에서는 쓰지 않습니다.
+- `cafe-ambient-slots/`: 원본 앱의 계절·시간대 버튼 조합별 카페 바닥·천장 베이크(현재 봄·오후). 하늘빛 + 태양 반사광, Blender Cycles로 생성. 원본 자료와 재현 명령은 `tools/360/ambient-slots/`, `tools/360/bake-cafe-ambient.py`.

@@ -236,9 +236,7 @@ for obj in src['objects']:
 assert not texture_missing, f'Unresolved albedo textures: {texture_missing}'
 furniture_files = ['360/cafe.js', '360/environment.js', '360/assets/interior-foliage.glb',
                    '360/assets/modern-arm-chair/modern-arm-chair.gltf',
-                   '360/assets/modern-arm-chair/modern_arm_chair_01.bin',
-                   '360/assets/dining-chair-02/dining-chair.gltf',
-                   '360/assets/dining-chair-02/dining_chair_02.bin']
+                   '360/assets/modern-arm-chair/modern_arm_chair_01.bin']
 furniture_manifest = {name: hashlib.sha256((root / 'new' / name).read_bytes()).hexdigest() for name in furniture_files}
 proof = {'source': str(args.source), 'sourceSha256': source_hash,
          'sourceObjects': len(src['objects']), 'sourceVertices': src['vertices'],

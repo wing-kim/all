@@ -15,7 +15,8 @@ export const triangleKey=points=>points.map(point=>point.map(fixed).join(',')).s
 // Parallel requests avoid adding every network round trip to the first frame.
 export async function verifyFurnitureManifest(entries,fetchAsset=fetch){
  await Promise.all(Object.entries(entries).map(async ([path,expected])=>{
-  const result=await fetchAsset(path);if(!result.ok)throw Error('furniture-unavailable:'+path);
+  // Revalidate with the server: a cached old furniture script must never validate a stale bake.
+  const result=await fetchAsset(path,{cache:'no-cache'});if(!result.ok)throw Error('furniture-unavailable:'+path);
   const digest=await crypto.subtle.digest('SHA-256',await result.arrayBuffer());
   const actual=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
   if(actual!==expected)throw Error('furniture-mismatch:'+path);

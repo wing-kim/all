@@ -1,8 +1,8 @@
 {
-  "source": "tools/360/cafe-ambient-source.json.gz",
-  "sourceSha256": "23623442e63a1c34fc712f54f63ff3d772986e96bfae41c27ff982838b67c6e7",
-  "sourceObjects": 599,
-  "sourceVertices": 1929081,
+  "source": "cafe-ambient-source.json.gz",
+  "sourceSha256": "6de85e1cd56ae097977f7132217cb82f47685a41073efc56ef5797f3b90024a7",
+  "sourceObjects": 604,
+  "sourceVertices": 1298063,
   "sourceSkipped": [],
   "sourceState": {
     "era": "new",
@@ -37,13 +37,11 @@
   "sourceCafeFloor": 0.07,
   "sourceCafeCeiling": 5.0200000000000005,
   "furnitureManifest": {
-    "360/cafe.js": "eb6d60606ce731ad2b04a16f50b43df4b29e7d131c7d7b1b1191213cda2533bf",
-    "360/environment.js": "306ba2ed87898ade35e995ceba6029befddb0fc30a10249d33d1c23f981085ac",
+    "360/cafe.js": "759fa15dd29d9e3422873c65dbeaa3481945daf0d21faa06fefc93ce7e6bf918",
+    "360/environment.js": "959a8728948d4b059a44fe81490b16c19dd2f542fc942cb9d77435d6b29e70a9",
     "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
     "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
-    "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6",
-    "360/assets/dining-chair-02/dining-chair.gltf": "88352a44a17319846f61fe03ce75c79fb1849aa508b6a262366c149c1bbd06b8",
-    "360/assets/dining-chair-02/dining_chair_02.bin": "c7f1ef858f73815176d2ab304472a69ccf6097e971e5258eb924a75f841d4af5"
+    "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6"
   },
   "receiverGeometry": {
     "floor": {
@@ -87,11 +85,11 @@
       "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
       "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
       "preview": "floor-ambient-preview.png",
-      "redChannelCoveredPixels": 143387,
+      "redChannelCoveredPixels": 143193,
       "redChannelCoveredMinMaxMean": [
-        0.0010002299677580595,
-        0.534024178981781,
-        0.14871439903276654
+        0.0010002072667703032,
+        0.533746600151062,
+        0.14519339621347488
       ]
     },
     "ceiling": {
@@ -141,11 +139,11 @@
       "runtimeEncoding": "linear RGB8 divided by 255; NoColorSpace; lightMapIntensity pi",
       "runtimeFilter": "separable bilateral radius 4px, spatial sigma 2px, linear-red range sigma 0.22; uncovered atlas texels excluded",
       "preview": "ceiling-ambient-preview.png",
-      "redChannelCoveredPixels": 159839,
+      "redChannelCoveredPixels": 159705,
       "redChannelCoveredMinMaxMean": [
-        0.0010015012230724096,
+        0.0010004867799580097,
         0.6028186082839966,
-        0.16771982774796415
+        0.1670076608558249
       ]
     }
   },
@@ -158,7 +156,7 @@
     "new/360/assets/roof-concrete_color.jpg"
   ],
   "settings": {
-    "engine": "Cycles CPU",
+    "engine": "Cycles GPU",
     "samples": 256,
     "atlasSize": 512,
     "bake": "DIFFUSE direct+indirect, color OFF",

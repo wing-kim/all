@@ -59,7 +59,9 @@ window.dressTowerCafe=async function(C,root,timber){
  }
  root.userData.cafe={floor,ceiling,tables,fixtures,keepouts,structuralSource:'original LEVELS; fit-out is illustrative'};
  // Reuse the licensed scanned indoor plants loaded by environment.js.
- for(const [x,z] of [[-11.8,-11.7],[-11.8,5.7],[-3.9,6.2]])if(inside(x,z,.55)&&!blocked(x,z,.55)){
+ // AI 실사 시안처럼 창가·기둥 주변에 화분을 더 둔다. 테이블·통로와 겹치는 후보는 건너뛴다.
+ const nearKeepout=(x,z)=>keepouts.some(o=>o.r?Math.hypot(x-o.x,z-o.z)<o.r+.75:Math.abs(x-o.x)<o.w/2+.75&&Math.abs(z-o.z)<o.d/2+.75);
+ for(const [x,z] of [[-11.8,-11.7],[-11.8,5.7],[-3.9,6.2],[-12.2,-6],[-12.2,2],[-8,8.6],[-0.6,8.4],[1.2,-6.5],[1.2,1.5]])if(inside(x,z,.55)&&!blocked(x,z,.55)&&!nearKeepout(x,z)){
   cylinder(cream,x,floor+.28,z,.30,.54);root.userData.interiorPlantAnchors.push({x,y:floor+.48,z,height:1.55,floor:L.key,poly:L.poly});
  }
  C.cafeIsWalkable=(x,z)=>inside(x,z,.22)&&!blocked(x,z,.25)&&!keepouts.some(o=>o.r?Math.hypot(x-o.x,z-o.z)<o.r+.22:Math.abs(x-o.x)<o.w/2+.22&&Math.abs(z-o.z)<o.d/2+.22);

@@ -1,11 +1,55 @@
 {
   "date": "2026-10-17",
   "slot": "spring-pm (original app 봄 + 오후 buttons)",
-  "bake": {"device": "Cycles Metal GPU", "size": 512, "samples": 256, "seconds": 21, "floorMeanRed": {"neutralStudy": 0.149, "springPm": 0.158}, "ceilingMeanRed": {"neutralStudy": 0.168, "springPm": 0.186}},
-  "runtime": {"loadMs": 231, "status": "active, slot spring-pm", "otherTime": "spring am -> reason unbaked-time, label '실시간 빛'"},
+  "bake": {
+    "device": "Cycles Metal GPU",
+    "size": 512,
+    "samples": 256,
+    "seconds": 21,
+    "floorMeanRed": {
+      "neutralStudy": 0.149,
+      "springPm": 0.158
+    },
+    "ceilingMeanRed": {
+      "neutralStudy": 0.168,
+      "springPm": 0.186
+    }
+  },
+  "runtime": {
+    "loadMs": 231,
+    "status": "active, slot spring-pm",
+    "otherTime": "spring am -> reason unbaked-time, label '실시간 빛'"
+  },
   "rotation5s": {
-    "baked": {"p50": 39.9, "p95": 51.7, "max": 56.7, "over100": 0, "frames": 127},
-    "ambientBakeOff": {"p50": 39.6, "p95": 55.3, "max": 56.1, "over100": 0},
+    "baked": {
+      "p50": 39.9,
+      "p95": 51.7,
+      "max": 56.7,
+      "over100": 0,
+      "frames": 127
+    },
+    "ambientBakeOff": {
+      "p50": 39.6,
+      "p95": 55.3,
+      "max": 56.1,
+      "over100": 0
+    },
     "note": "Claude app built-in browser, emulated 3200x1000 viewport, 3D canvas 1600x1000, synthetic E-key rotation; geometry/probe/precision updates 0 during rotation. Single machine, not a device guarantee."
+  },
+  "furnitureUpdate": {
+    "chairs": "20 dining anchors -> Poly Haven Modern Arm Chair 01 (CC0), 0.68 m wide, cushion cognac #a3653c with original normal map; rejected 0",
+    "plants": "interior plant anchors 3 -> 9 (CC0 interior-foliage, existing asset)",
+    "snapshot": "re-exported: 604 objects, 1,298,063 vertices; previous tufted-chair snapshot kept locally as cafe-ambient-source.2026-10-16-tufted-chairs.json.gz",
+    "rebake": "neutral study + spring-pm, Metal GPU 512/256, 27 s total",
+    "staleGuard": "furniture hash check now uses fetch cache:'no-cache'; before rebake the stale bake was rejected with furniture-mismatch:360/cafe.js",
+    "rotation5s": {
+      "p50": 39.2,
+      "p95": 51.2,
+      "max": 54.7,
+      "over100": 0,
+      "frames": 128
+    },
+    "firstFrameMs": 3242,
+    "bakeLoadMs": 218
   }
 }

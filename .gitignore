@@ -1,5 +1,5 @@
 # Reproducible local geometry snapshot and Blender study output; never web assets.
-/tools/360/cafe-ambient-source.json.gz
+/tools/360/cafe-ambient-source*.json.gz
 /tools/360/ambient-study/
 
 # Python bytecode from Blender bake helpers
