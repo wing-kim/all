@@ -13,7 +13,8 @@ function element(id=''){
     get dataset(){return this._dataset||{}},set dataset(value){this._dataset=value},
   };
 }
-for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+for(const id of ['viewer','v-corner','v-front','v-int','vm-sketch','vm-precision','precision-light','precision-quality','precision-bake','precision-cafe-compare','precision-cafe','precision-cancel','precision-render','t-city','t-ctx','sec-time','cafe-photo-angle','cafe-reference-image'])ids.set(id,element(id));
+ids.get('sec-time').hidden=true;
 const views=element('views'),group=element('group');
 for(const [id,view,pressed] of [['v-corner','corner','true'],['v-front','front','false'],['v-int','int','false']]){
   const button=ids.get(id);button.dataset={v:view};button.setAttribute('aria-pressed',pressed);views.appendChild(button);
@@ -25,11 +26,12 @@ const document={head:element(),activeElement:null,
   addEventListener(){},
 };
 function vector(initial){let values=[...initial];return {toArray:()=>[...values],fromArray(v){values=[...v]},update(){}}}
-const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},camera:{position:vector([1,2,3])},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
-const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>100},setTimeout:()=>1,clearTimeout(){},setInterval(){},requestAnimationFrame(){},addEventListener(){},console};
+const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff}),camera:{position:vector([1,2,3])},controls:{enabled:true,target:vector([4,5,6]),update(){}},interior:()=>false,setRender(){throw Error('sketch entry should not rebuild')},cancel(){C.cancelled=true}};
+let interval;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>100},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(){},addEventListener(){},console};
 vm.runInNewContext(readFileSync(new URL('../../new/360/integrated.js',import.meta.url),'utf8'),context);
 const review=context.window.TOWER_REVIEW;
 assert.equal(C.controls.enabled,false,'precision owns host controls while active');
+assert.equal(ids.get('sec-time').hidden,false,'the original time controls remain visible in precision mode');
 const frame=review.frame;
 let pauses=[];
 frame.contentWindow={TOWER360:{telemetry:()=>({camera:[10,20,30],target:[2,3,4]})},TOWER_LAB_CONTEXT:{cafeMode:false},TOWER_CINEMA:{pause:v=>pauses.push(v),stop(){}}};
@@ -37,6 +39,7 @@ review.disable();
 assert.deepEqual(C.camera.position.toArray(),[10,20,30],'exterior camera returns to host');
 assert.deepEqual(C.controls.target.toArray(),[2,3,4]);
 assert.equal(C.controls.enabled,true);
+assert.equal(ids.get('sec-time').hidden,true,'original sketch mode hides time controls on exit');
 assert.deepEqual(pauses,[true]);
 
 C.controls.enabled=false;context.window.TOWER_MODERN_ACTIVE=true;
@@ -47,10 +50,18 @@ assert.equal(context.window.TOWER_MODERN_ACTIVE,true,'inactive adapter leaves re
 C.controls.enabled=true;context.window.TOWER_MODERN_ACTIVE=false;
 review.enable();
 const cafeFrame=review.frame;
-cafeFrame.contentWindow={TOWER360:{telemetry:()=>({camera:[99,99,99],target:[98,98,98]})},TOWER_LAB_CONTEXT:{cafeMode:true},TOWER_CINEMA:{pause(){}}};
+cafeFrame.contentWindow={TOWER360:{telemetry:()=>({camera:[99,99,99],target:[98,98,98]})},TOWER_LAB_CONTEXT:{cafeMode:true},TOWER_CINEMA:{pause(){},stop(){}}};
 ids.get('v-corner').setAttribute('aria-pressed','false');ids.get('v-int').setAttribute('aria-pressed','true');
 review.disable();
 assert.deepEqual(C.camera.position.toArray(),[10,20,30],'cafe camera does not strand original viewer inside building');
 assert.equal(ids.get('v-corner').getAttribute('aria-pressed'),'true','original exterior selection is restored');
 assert.equal(ids.get('v-int').getAttribute('aria-pressed'),'false');
+let daylight={time:'pm',season:'spring',direction:[1,1,0],intensity:2.6,color:0xffffff},lightCalls=[];
+C.sourceDaylight=()=>daylight;
+review.enable();const daylightFrame=review.frame;
+daylightFrame.contentWindow={TOWER360:{telemetry:()=>({environment:'ready'}),quality(){},light:value=>lightCalls.push(value)},TOWER_CINEMA:{status:()=>({mode:'interactive',firstFrameMs:1}),pause(){}},TOWER_LAB_CONTEXT:{cafeMode:false},addEventListener(){}};
+interval();daylight={...daylight,direction:[-1,1,0],intensity:1.7};interval();
+assert.equal(review.frame,daylightFrame,'daylight-only change keeps the building frame');
+assert.equal(lightCalls.length,1,'daylight-only change updates light once');
+assert.equal(lightCalls[0].intensity,1.7);
 console.log('integrated lifecycle: passed');

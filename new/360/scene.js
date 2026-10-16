@@ -11,8 +11,8 @@
   try{initial=JSON.parse(new URLSearchParams(location.hash.slice(1)).get('config')||'{}')}catch(error){console.warn('Invalid review configuration',error)}
   if(initial.state){for(const key of Object.keys(state)){const value=initial.state[key];if(Object.prototype.hasOwnProperty.call(initial.state,key))state[key]=value;}}
   else state.scheme='alt4';
-  if(['am','pm','sunset'].includes(initial.time))R3D.time=initial.time;
-  if(initial.season)R3D.season=initial.season;
+  if(initial.daylight?.time)R3D.time=initial.daylight.time;
+  if(initial.daylight?.season)R3D.season=initial.daylight.season;
   C.setRender(true);C.hideGuides();
   window.TOWER_SOURCE_AUDIT={state:JSON.parse(JSON.stringify(state)),levels:C.levels().map(l=>({key:l.key,y:l.y,h:l.h,poly:l.poly.map(p=>p.slice())}))};
   if(C.contextBuildings){C.contextBuildings.current.visible=true;C.contextBuildings.future.visible=false;C.contextBuildings.outline.visible=false;}
@@ -209,6 +209,17 @@
   const relief=new T.CanvasTexture(canvas);relief.wrapS=relief.wrapT=T.RepeatWrapping;relief.repeat.set(2,2);
   [RMAT.road,RMAT.walk,RMAT.site].forEach(m=>{m.bumpMap=relief;m.bumpScale=m===RMAT.road?.035:.012;m.needsUpdate=true});
   let env=null,skyTexture=null,environmentStatus='불러오는 중';
+  let sourceLight=initial.daylight||C.sourceDaylight();
+  function applySourceLight(value){
+    if(!value||!Array.isArray(value.direction)||value.direction.length!==3)return;
+    sourceLight=value;
+    C.reviewDaylight=value;
+    const direction=new T.Vector3(...value.direction).normalize();
+    C.sun.target.position.set(-3,12,0);C.sun.position.copy(C.sun.target.position).add(direction.multiplyScalar(140));scene.add(C.sun.target);
+    C.sun.color.setHex(value.color);C.sun.intensity=value.intensity;
+    C.hemi.intensity=value.hemisphereIntensity;
+    R3D.sky.material.uniforms.sunPosition.value.copy(C.sun.position).normalize();
+  }
   function finishLighting(){
     M.glass.color.set('#698994').convertSRGBToLinear();M.glass.metalness=.38;M.glass.roughness=.085;M.glass.opacity=.38;M.glass.depthWrite=false;M.glass.side=T.FrontSide;M.glass1.side=T.FrontSide;
     M.glass1.color.copy(M.glass.color);M.glass1.metalness=.38;M.glass1.roughness=.1;M.glass1.opacity=.38;M.glass1.depthWrite=false;
@@ -216,13 +227,11 @@
     R3D.grade.uniforms.vig.value=.08;R3D.grade.uniforms.sat.value=1;R3D.grade.uniforms.con.value=1.01;
     renderer.toneMappingExposure=1.02;renderer.outputEncoding=T.LinearEncoding;
     // Tight receiver volume: the legacy city-wide shadow frustum caused banding at this scale.
-    C.sun.position.set(...(R3D.time==='am'?[65,100,-40]:R3D.time==='sunset'?[-100,20,50]:[-65,90,-70]));C.sun.target.position.set(-3,12,0);scene.add(C.sun.target);
+    applySourceLight(sourceLight);
     Object.assign(C.sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});
     C.sun.shadow.camera.updateProjectionMatrix();C.sun.shadow.bias=-.0003;C.sun.shadow.normalBias=.18;
-    C.sun.intensity=R3D.time==='sunset'?1.4:1.65;C.hemi.intensity=.16;
     if(skyTexture){scene.background=skyTexture;R3D.sky.visible=false;}
     R3D.sky.material.uniforms.turbidity.value=2;
-    R3D.sky.material.uniforms.sunPosition.value.copy(C.sun.position).normalize();
     bld.traverse(o=>{if(o.material===M.glass||o.material===M.glass1)o.castShadow=false});
   }
   finishLighting();
@@ -264,6 +273,7 @@
       const before=performance.now();window.TOWER_CINEMA.cancelPrecision();
       for(const key of Object.keys(state))if(Object.prototype.hasOwnProperty.call(config.state,key))state[key]=config.state[key];
       // Preserve the neighbourhood and GPU renderer. Only rebuild the authored building.
+      if(config.daylight)applySourceLight(config.daylight);
       C.build();C.hideGuides();finishLighting();
       const old=interiors;scene.remove(old);interiors=await dressBuilding();
       await C.enhanceBuildingDetails?.(interiors);
@@ -279,7 +289,7 @@
     pose:(position,target)=>{C.cafeMode=false;controls.enableZoom=true;camera.near=2;camera.fov=45;camera.updateProjectionMatrix();flight=null;C.cancel();controls.minDistance=8;controls.maxDistance=1800;camera.position.fromArray(position);controls.target.fromArray(target);controls.update()},
     context:show=>{C.city.visible=C.ctx.visible=show;window.TOWER_CINEMA?.context(show)},
     spin:on=>{cancel();controls.autoRotate=!!on;controls.autoRotateSpeed=.65},
-    light:value=>{R3D.time=value;C.applyTime();finishLighting();window.TOWER_CINEMA?.light()},
+    light:value=>{window.TOWER_CINEMA?.cancelPrecision();applySourceLight(value);window.TOWER_CINEMA?.light(value)},
     telemetry:()=>({fps,quality,environment:window.TOWER_CINEMA?({interactive:'실시간 탐색 · 회전 후 대기 없음',preparing:'정밀 렌더 준비 중…',rendering:'정밀 렌더 계산 중…',complete:'정밀 렌더 완료'})[window.TOWER_CINEMA.status().mode]:window.TOWER_CINEMA_FAILURE?'실시간 화면':environmentStatus,camera:camera.position.toArray(),target:controls.target.toArray(),meshes:bld.children.length,geometryCount:renderer.info.memory.geometries}),
     exportModel:async(scope='building')=>{
       await load('360/assets/GLTFExporter.js');

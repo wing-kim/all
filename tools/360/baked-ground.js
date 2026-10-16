@@ -11,8 +11,9 @@ export async function applyBakedGround(T,scene){
   const original=o.material,g=o.geometry.clone(),p=g.attributes.position,uv=new Float32Array(p.count*2);
   for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);uv[i*2]=(point.x+extent)/(extent*2);uv[i*2+1]=(point.z+extent)/(extent*2)}
   g.setAttribute('uv1',new T.BufferAttribute(uv,2));o.geometry=g;
-  const baked=original.clone();baked.aoMap=ao;baked.aoMapIntensity=.85;baked.lightMap=bounce;baked.lightMapIntensity=.6;o.material=baked;
-  bindings.push({object:o,original,baked});
+  const aoOnly=original.clone();aoOnly.aoMap=ao;aoOnly.aoMapIntensity=.85;
+  const baked=aoOnly.clone();baked.lightMap=bounce;baked.lightMapIntensity=.6;o.material=aoOnly;
+  bindings.push({object:o,original,aoOnly,baked});
  });
- let enabled=true;return {materials:bindings.flatMap(b=>[b.original,b.baked]),count:bindings.length,loadMs:performance.now()-started,setEnabled(value){enabled=value;for(const b of bindings)b.object.material=value?b.baked:b.original},get enabled(){return enabled}};
+ let enabled=true;return {materials:bindings.flatMap(b=>[b.original,b.aoOnly,b.baked]),count:bindings.length,loadMs:performance.now()-started,setEnabled(value){enabled=value;for(const b of bindings)b.object.material=value?b.aoOnly:b.original},get enabled(){return enabled},sunlightBakeValid:false};
 }

@@ -9,5 +9,5 @@ const before=Array.from(source.attributes.position.array),api=await applyBakedGr
 assert.equal(api.count,1);assert.equal(tower.geometry,source);assert.equal(tower.material,material);assert.equal(roof.material,material);assert.deepEqual(Array.from(source.attributes.position.array),before);assert.notEqual(ground.geometry,source);assert.equal(source.attributes.uv1,undefined);
 const point=new T.Vector3().fromBufferAttribute(ground.geometry.attributes.position,0).add(ground.position),uv=ground.geometry.attributes.uv1;
 assert.ok(Math.abs(uv.getX(0)-(point.x+112)/224)<1e-6);assert.ok(Math.abs(uv.getY(0)-(point.z+112)/224)<1e-6);
-assert.equal(ground.material.aoMap.channel,1);assert.equal(ground.material.lightMap.channel,1);api.setEnabled(false);assert.equal(ground.material,material);api.setEnabled(true);assert.notEqual(ground.material,material);
+assert.equal(ground.material.aoMap.channel,1);assert.equal(ground.material.lightMap,null,'unvalidated sun bounce must not remain active');assert.equal(api.sunlightBakeValid,false);api.setEnabled(false);assert.equal(ground.material,material);api.setEnabled(true);assert.notEqual(ground.material,material);
 console.log('Baked ground: primary geometry untouched; only ground receivers; world UV alignment; before/after materials restored.');

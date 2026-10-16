@@ -7151,6 +7151,12 @@ function solar(n,hour){const lat=37.52*Math.PI/180,lon=127.02,dec=23.44*Math.PI/
   const H=(st-12)*15*Math.PI/180,el=Math.asin(Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(H));
   let az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(lat)-Math.tan(dec)*Math.cos(lat))*180/Math.PI+180;
   return {el:el*180/Math.PI,az:(az+360)%360,clock:hour}}
+// Read-only daylight contract for the opt-in renderer. Keep the original time handlers authoritative.
+function sourceDaylight(){const base=TIMES[R3D.time],position=R3D.custom?solar(R3D.cn,R3D.ch):base.night?null:solar(SEASONS[R3D.season].n,R3D.time==='sunset'?'sunset':CLOCK[R3D.time]);
+  const mood=R3D.custom?(position.el<-2?TIMES.night:position.el<7?TIMES.sunset:R3D.ch<12?TIMES.am:TIMES.pm):base;
+  const daylight=position&&position.el>=-2,el=daylight?Math.max(position.el,.8):mood.el,az=daylight?position.az:mood.az,a=az*Math.PI/180,ce=Math.cos(el*Math.PI/180);
+  const direction=el>0?[(NV[0]*Math.cos(a)+EV[0]*Math.sin(a))*ce,Math.sin(el*Math.PI/180),(NV[1]*Math.cos(a)+EV[1]*Math.sin(a))*ce]:[-.4,.6,.3].map(v=>v/Math.hypot(.4,.6,.3));
+  return {time:R3D.time,season:R3D.season,custom:!!R3D.custom,date:R3D.custom&&R3D.cdate?ymd(R3D.cdate):null,hour:R3D.custom?R3D.ch:position?.clock??null,azimuth:position?.az??null,elevation:position?.el??null,night:!daylight,direction,color:mood.sun,intensity:mood.si,hemisphereIntensity:mood.hemi,exposure:mood.exp};}
 function setText(id,h){const e=document.getElementById(id);if(e)e.innerHTML=h}
 const fmtClock=h=>{const m=Math.round(h*60);return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 const azName=a=>['북','북동','동','남동','남','남서','서','북서'][Math.round(a/45)%8];
@@ -7285,10 +7291,10 @@ const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 {const t=new Date();sunUI.d.value=ymd(t)}
 function sunCustom(refl){const v=sunUI.d.value||ymd(new Date()),[y,m,dd]=v.split('-').map(Number),d=new Date(y,m-1,dd);R3D.cdate=d;R3D.cn=Math.round((d-new Date(y,0,0))/864e5);R3D.ch=+sunUI.h.value;R3D.custom=true;
   sunUI.o.value=fmtClock(R3D.ch);sunUI.a.setAttribute('aria-pressed',true);document.querySelectorAll('input[name=tod],input[name=season]').forEach(r=>r.checked=false);
-  if(!R3D.on){setRender(true);return}applyTime();if(refl)updateReflections()}
-sunUI.h.addEventListener('input',()=>{sunUI.o.value=fmtClock(+sunUI.h.value);if(R3D.custom&&R3D.on)sunCustom(false)});
+  if(!R3D.on){if(!window.TOWER_MODERN_ACTIVE)setRender(true);return}applyTime();if(refl)updateReflections()}
+sunUI.h.addEventListener('input',()=>{sunUI.o.value=fmtClock(+sunUI.h.value);if(R3D.custom&&(R3D.on||window.TOWER_MODERN_ACTIVE))sunCustom(false)});
 sunUI.h.addEventListener('change',()=>{if(R3D.custom&&R3D.on)updateReflections()});
-sunUI.d.addEventListener('change',()=>{if(R3D.custom&&R3D.on)sunCustom(true)});
+sunUI.d.addEventListener('change',()=>{if(R3D.custom&&(R3D.on||window.TOWER_MODERN_ACTIVE))sunCustom(true)});
 sunUI.a.addEventListener('click',()=>sunCustom(true));
 document.getElementById('sun-today').addEventListener('click',()=>{const t=new Date();sunUI.d.value=ymd(t);sunUI.h.value=Math.min(20,Math.max(5,t.getHours()+t.getMinutes()/60));sunUI.o.value=fmtClock(+sunUI.h.value);sunCustom(true)});
 let playT=null;function stopPlay(){if(playT){clearInterval(playT);playT=null}sunUI.p.textContent='▶ 하루 재생';sunUI.p.setAttribute('aria-pressed',false)}
@@ -7633,7 +7639,7 @@ build();go('corner',true);
 // Opt-in validation only. Ordinary v87 pages keep their original rendering path.
 if(['360','verify','review'].includes(new URLSearchParams(location.search).get('lab'))) {
   window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,sun,hemi,P,inPoly,
-    interior:()=>I.on,levels:()=>LEVELS,floorTop,ceilOf,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,updateReflections,resizeR,
+    interior:()=>I.on,levels:()=>LEVELS,floorTop,ceilOf,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};

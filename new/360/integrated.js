@@ -17,7 +17,7 @@
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
-  settings.innerHTML='<label>조명 <select id="precision-light"><option value="pm">맑은 오후</option><option value="am">오전</option><option value="sunset">석양</option></select></label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 1층 카페는 실시간 실내 보기로, 다른 층 단면은 스케치업으로 확인합니다.</div>';
+  settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced">균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>회전·시안 변경은 실시간으로 표시합니다. 정밀 이미지는 버튼을 눌러 계산하며, 회전하면 탐색으로 돌아갑니다. 1층 카페는 실시간 실내 보기로, 다른 층 단면은 스케치업으로 확인합니다.</div>';
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
   const compareLabel=document.createElement('label');compareLabel.style.display='block';compareLabel.style.marginTop='10px';compareLabel.innerHTML='<input type="checkbox" id="precision-cafe-compare"> 1층 실사와 나란히 비교';settings.appendChild(compareLabel);
   const referencePanel=document.createElement('section');referencePanel.id='cafe-reference';referencePanel.innerHTML='<p>원본 실사 · AI 인테리어 시안 <select aria-label="카페 실사 시점" id="cafe-photo-angle"></select></p><img id="cafe-reference-image" alt="기존 1층 카페 실사 이미지"><p>구조는 기존 모델 기준 · 가구 배치는 검토용 예시입니다.</p>';host.appendChild(referencePanel);
@@ -42,11 +42,12 @@
   addEventListener('keydown',event=>{if(active)api()?.navigateKey(event)});
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
-  let frame=null,active=false,key='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false;
+  let frame=null,active=false,key='',daylightKey='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false;
   let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
   const timings=[];
   const api=()=>frame?.contentWindow?.TOWER360;
-  function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},time:document.getElementById('precision-light').value,season:C.R3D.season};}
+  function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},daylight:C.sourceDaylight()};}
+  const modelKey=config=>JSON.stringify({state:config.state,display:config.display});
   function copyPose(){api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
   function followPose(){
     if(!active||performance.now()>=poseUntil){following=false;return;}
@@ -57,14 +58,14 @@
     if(updating){queued=true;return;}
     const config=snapshot(),previous=api()?.telemetry();
     if(ready&&api()?.applyConfig&&frame.contentWindow.TOWER_CINEMA){
-      updating=true;const current=frame,begin=performance.now();key=JSON.stringify(config);
+      updating=true;const current=frame,begin=performance.now();key=modelKey(config);daylightKey=JSON.stringify(config.daylight);
       try{await api().applyConfig(config);timings.push({kind:'switch',ms:performance.now()-begin,state:{...config.state}})}
       catch(error){console.warn('Model update failed',error);status.textContent='시안 적용 실패 · 다시 선택해 주세요';}
       finally{updating=false;if(queued&&active&&frame===current){queued=false;rebuild();}}
       return;
     }
     config.camera=previous?.camera||C.camera.position.toArray();config.target=previous?.target||C.controls.target.toArray();
-    key=JSON.stringify(snapshot());ready=false;started=performance.now();
+    key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
     const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
@@ -86,7 +87,7 @@
     }
     child?.TOWER_CINEMA?.pause(true);
     if(frame)frame.style.display='none';
-    C.controls.enabled=hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;
+    C.controls.enabled=hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;document.getElementById('sec-time').hidden=!C.R3D.on;
     if(document.activeElement===frame)document.getElementById('vm-sketch').focus({preventScroll:true});
   }
   function enable(){
@@ -94,8 +95,8 @@
     hostControlsEnabled=C.controls.enabled;hostModernActive=!!window.TOWER_MODERN_ACTIVE;
     lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
     if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
-    active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;
-    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);if(JSON.stringify(snapshot())!==key)rebuild();}
+    active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;document.getElementById('sec-time').hidden=false;
+    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
     else rebuild();
   }
   document.addEventListener('change',event=>{
@@ -130,13 +131,14 @@
   document.getElementById('precision-bake').onchange=e=>api()?.appearance(e.target.checked);
   document.getElementById('precision-render').onclick=()=>api()?.requestPrecision();
   document.getElementById('precision-cancel').onclick=()=>api()?.cancelPrecision();
-  document.getElementById('precision-light').onchange=e=>{api()?.cancelPrecision();api()?.light(e.target.value);key=JSON.stringify(snapshot());};
   document.getElementById('precision-quality').onchange=e=>api()?.quality(e.target.value);
   setInterval(()=>{
     if(!active){frame?.contentWindow?.TOWER_CINEMA?.pause(true);return;}
     if(C.interior()){disable();document.getElementById('vm-sketch').checked=true;return;}
-    const next=JSON.stringify(snapshot());
+    const config=snapshot(),next=modelKey(config);
     if(next!==key){key=next;clearTimeout(timer);timer=setTimeout(rebuild,120);status.textContent='변경한 시안 적용 중…';return;}
+    const nextDaylight=JSON.stringify(config.daylight);
+    if(ready&&nextDaylight!==daylightKey){api()?.light(config.daylight);daylightKey=nextDaylight;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}
     const w=frame.contentWindow;
     if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);}
