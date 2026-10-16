@@ -22,7 +22,7 @@ Actual Chrome: current model/source state matched after switching to `alt4`; `us
 
 Observed initial preparation 17,573.5 ms; preceding run 17,286.7 ms. Two model switches 409.6 / 449.6 ms before the final comparison UI addition. Local browser/cache measurements, not a controlled cold-start benchmark; initial loading remains unresolved. The renderer's `frameMs` includes shader compilation and is not FPS.
 
-Manual precision rendering completed at 64/64 samples with denoising and no reported GPU error; captured separately in `cafe-precision.png`. It improves reflections but does not solve default realtime quality. Original photo UI was tested: 6/7 combined → classic selected `int/f67/v2/6f_1_back_mid.webp`.
+Manual precision rendering completed at 64/64 samples with denoising and no reported GPU error; captured separately in `cafe-precision.jpg`. It improves reflections but does not solve default realtime quality. Original photo UI was tested: 6/7 combined → classic selected `int/f67/v2/6f_1_back_mid.webp`.
 
 Final direct-link test opened cafe + split comparison automatically. Actual mouse drag changed the look direction; Home restored outdoor mode, near=2 and wheel zoom. Photo comparison angle 2 resolved the expected catalog image. Original photo + zoom displayed 1.5×. Final Chrome error log was empty.
 
