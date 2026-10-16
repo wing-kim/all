@@ -1,27 +1,32 @@
-# Cape Horn photoreal mode handoff
+# 케이프혼 실사 3D 작업 지침
 
-Read `AGENTS.md` first, then `docs/360/PROJECT_BRIEF.md`,
-`docs/360/VIEWER_CONTRACT.md`, and the latest section of
-`docs/360/WORK_STATE.md`. These are the current project contract and evidence.
-Older resume/checkpoint TXT files are history, not current implementation status.
+모든 사용자 응답·질문·진행 보고·인계 설명은 한글로 작성한다.
 
-Use `docs/360/handoff/claude-code/README.md` and `PROMPT.md` for the handoff.
-Before editing, verify no Codex agent is still writing this checkout. Preserve
-uncommitted changes. Work on `codex/tower-360-validation`; do not merge or deploy
-over the production `main` branch. The public review has a separate repository.
+이 폴더는 실제 코드와 지침을 함께 관리하는 프로젝트 루트다.
+`START_HERE_KO.md` → `AGENTS.md` → `docs/360/PROJECT_BRIEF.md` →
+`docs/360/VIEWER_CONTRACT.md` → `docs/360/WORK_STATE.md`의 최신 요약 및
+마지막 체크포인트를 읽는다. 과거 TXT와 이력은 최신 구현 상태가 아니다.
 
-This is an additional renderer for the existing architectural/interior decision
-application, not a separate cafe demo. Preserve authored structure and original
-controls. Verify real browser output, both exterior and interior, and distinguish
-functional success from photoreal quality. Report limitations honestly.
+상세 인수 지침은 `docs/360/handoff/claude-code/PROMPT.md`, 실행/배포 안내는
+같은 폴더의 README.md를 따른다. 실제 작업 경로·브랜치·커밋부터 확인한다.
+현재 브랜치는 `codex/tower-360-validation`이다. 사용자 변경을 보존하고
+main 병합/운영 배포 변경은 별도 승인 없이 하지 않는다. 검토 사이트는 별도 저장소다.
 
-The Codex weekly budget is not a Claude spending authorization. Use the user's
-current instructions for Claude usage and paid services.
+## 첫 인수 승인
 
-## Initial handoff approval gate
-The user's current handoff instruction requires a read-only intake report and
-explicit plan approval before implementation, installs, commits, pushes or
-deployment. Read handoff/claude-code/PROMPT.md under docs/360 for the report
-requirements. After that initial approval, continue authorized work autonomously;
-do not repeat routine permission questions. This gate takes precedence over
-older resume instructions to implement immediately.
+최초 인수에서는 읽기 중심으로 전체 목적·상태·가능성·계획·검증·자원 사용안을
+보고하고 사용자 명시 승인을 기다린다. 승인 전 구현·설치·커밋·푸시·배포 금지.
+이 조건은 과거의 즉시 자율 구현 재개 지침보다 우선한다.
+승인 후에는 합의된 범위를 계속 진행한다. 승인 여부와 범위를 WORK_STATE에 남기고,
+정상적인 세션 재개/컨텍스트 압축 때 같은 승인을 반복 요구하지 않는다.
+
+## 목적과 연속성
+
+독립 카페 데모가 아니라 기존 건축·인테리어 의사결정 앱에 실사 표현 모드를 더한다.
+확정 구조와 기존 조작 의미를 보존하고, 실내 및 외부 실제 화면을 검증한다.
+기능 성공과 실사 품질 성공을 구분하며 한계를 숨기지 않는다.
+각 작업 단위 후 기능 대응표와 최신 WORK_STATE 요약/체크포인트를 갱신한다.
+새 세션/압축 후에는 이 기록을 다시 읽고 코드·실행 결과와 대조한다.
+
+Codex와 Claude의 같은 파일 동시 쓰기를 금지한다. Codex 주간 예산은 Claude의
+지출 승인이 아니다. 모델과 비용은 현재 사용자 지시 및 실제 계정 조건을 따른다.

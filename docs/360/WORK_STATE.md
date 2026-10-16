@@ -173,3 +173,6 @@
 
 ## Claude 시작 절차 사용자 정정 — 2026-10-16
 사용자는 Claude가 먼저 전체 목적/계획/가능성/자원 계획을 보고하고 최초 승인을 받은 뒤 계속 작업하기를 요청했다. handoff/claude-code/PROMPT.md를 이 조건으로 교체했고 root CLAUDE.md에 초기 승인 gate를 추가했다. 과거의 즉시 구현 재개 지침보다 우선한다. 권장 시작: claude --model opusplan --permission-mode plan. 로컬2.1.138 설치 확인, 인증/계정 모델 접근은 사용자 실행 시 확인.
+
+## Claude Code 앱의 지정 폴더와 지속 문서 — 2026-10-16
+사용자는 터미널이 아니라 Claude Code 앱을 사용한다. 지정 폴더는 현재 Git 루트 kapehorn-all이며 지침은 이미 해당 루트/하위 docs에서 Git으로 관리해 왔다. START_HERE_KO.md에 앱의 작업폴더 선택, 첫 메시지, 문서 역할 및 매 단계/압축 후 갱신 절차를 추가했다. CLAUDE.md를 한글로 정리하고 한글 응답과 최초 승인/승인 후 자율 진행의 구분을 명시했다. 앱에 CLI 옵션/opusplan UI가 반드시 존재한다고 가정하지 않는다. 별도 빈 폴더나 중복 소스 사본을 만들지 않는다.
