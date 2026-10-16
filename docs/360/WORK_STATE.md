@@ -125,3 +125,10 @@
 - cafe-ambient-performance.json:5sec mean32.18/p9535.6/max44ms,0 over100; geometry/probe/precision increments0. Firstframe4531ms and studyload1145ms; not controlled startup benchmark, no speedup claim.
 - e3a3948 original interior text labels and toggles now visible in modern mode. Source/child camera exact afterQ (rotation, unchangedheight/location); A/Dstrafe, Q/E/arrowsrotate likeoriginal. Roomlabeltoggle staysmodern. Screenshotinterior-labels-navigation.jpg. Height/ramp3Dguides, upperoverlay, sections stillunmapped. Compare split hides labels to avoidincorrectprojection.
 - Current weekly measured22%; ongoing section/clipping feasibility audit bysameSol, parentvisualQA. Continue boundedimplementation; broaderphotorealquality notpassed.
+
+### 추가 실제 검증 / 예산24%
+- g1 straight 변경→ambientStudy source-state-mismatch/receivers0, skin복귀→active2. 야간off/오후on확인. 구조 보존하면서 오래된베이크무효화 확인.
+- 외부전체5초 high평균39.94/p9542.1/max60ms (~25fps), balanced평균30.20/p9532.2/max36.2ms (~33fps); 각geometry/probe/precision0,100ms초과0. 카메라각도가 동일하지 않아 엄밀한속도향상비교아님. 다음기본품질balanced권고, 수동high유지. exterior-current-review.jpg. 외관/환경은원본사진수준미달.
+- 실제preview 유리58mesh중29개castShadow=true. 임시runtime에서순수유리castShadow제거실험, 현재카페AM/PM구도차이미미. 소스변경안함. 유리투과그림자/주변가림추가검토필요; 관찰근거없이전체광량을높이지않음.
+- 단면감사: 원본LG/ceil/extG/well/ramp가시성은modernflatten에서연결누락. Sol은층단면+coreTop만bounded구현중. 종단면은WebGPUClippingGroup/정밀호환영향이커미완명시유지.
+- 현재전체품질/기능목표를50%내완성할수있다고확약할근거없음. 현재단면단위검증후잔여범위재판정,45%전인계정리. Claude폴더가있으며사용자추가조작없이Codex구현계속.

@@ -91,6 +91,10 @@ def main():
     dirty = bool(git('status', '--porcelain'))
     timestamp = dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
     paths = [Path('new/3d-model.html')]
+    # Only this visual review page and its three images are public; other project
+    # documents and offline bake sources remain outside the deployment artifact.
+    paths += [Path('docs/360') / name for name in (
+        'cafe-review.html', 'cafe-ambient-before.jpg', 'cafe-ambient-denoised.jpg')]
     paths += [Path('new/360') / name for name in sorted(RUNTIME_FILES)]
     for directory in ('assets', 'renderer-chunks'):
         paths += sorted(p.relative_to(ROOT) for p in (ROOT / 'new/360' / directory).rglob('*')
@@ -108,7 +112,10 @@ def main():
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / rel, out / rel)
     links = [('통합 실사 3D 검토', 'new/3d-model.html?lab=review'),
-             ('카페 실사 3D 검토', 'new/3d-model.html?lab=360&engine=cinema&model=cafe-2'),
+             ('카페 · 원본 UI와 연결된 3D', 'new/3d-model.html?lab=review&view=cafe'),
+             ('카페 · 원본 실사와 나란히 비교', 'new/3d-model.html?lab=review&view=cafe&compare=1'),
+             ('간접광 베이크 시험 · 호환 구조에서만 적용', 'new/3d-model.html?lab=review&view=cafe&ambientBake=study'),
+             ('화면·성능 비교 기록', 'docs/360/cafe-review.html'),
              ('기존 모드 검토', 'new/3d-model.html')]
     buttons = ''.join(f'<a href="{html.escape(url, quote=True)}">{label}</a>' for label, url in links)
     (out / 'index.html').write_text(f'''<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cape Horn · 실험 검토</title><style>body{{font:18px system-ui;background:#111b23;color:#ecf1f5;max-width:780px;margin:10vh auto;padding:24px}}a{{display:block;background:#d9ecda;color:#13241b;padding:20px;margin:14px 0;border-radius:8px;text-decoration:none}}small{{overflow-wrap:anywhere}}</style><main><h1>Cape Horn · 실험 검토</h1><p>기존 앱에 추가하는 실사 3D 모드의 격리된 검토본입니다. 기능 연결 및 시각 품질은 검증 중이며 기존 운영 사이트는 변경하지 않습니다.</p>{buttons}<small>Source commit: {commit}<br>Build UTC: {timestamp}<br>Working tree changes: {str(dirty).lower()}</small></main></html>''')

@@ -19,7 +19,7 @@
 ## 실행/검증
 저장소 루트에서 `python3 -m http.server 8765 --bind 127.0.0.1`.
 http://127.0.0.1:8765/new/3d-model.html?lab=review
-카페는 같은 화면의1층 카페3D 버튼. 기존 모드는 query없는URL.
+카페는 같은 화면의1층 카페3D 버튼 또는 `?lab=review&view=cafe`. 베이크 시험은 `&ambientBake=study`를 추가한다(기본 꺼짐). 기존 모드는 query없는URL.
 렌더러 빌드: `npm --prefix tools/360 run build` (의존성이 없으면 해당 디렉터리에서 npm ci --ignore-scripts).
 테스트: `node tools/360/test-performance-stats.mjs`, `node tools/360/test-integrated-lifecycle.mjs`, 추가 단위별 테스트 및 git diff --check.
 브라우저는 사용 가능한 실제 도구로 검증한다. Codex CUA 전용 코드가 Claude에서 실행된다고 가정하지 않는다. 기본 UI와 TOWER_REVIEW.frame.contentWindow.TOWER_CINEMA.status()/resetPerformance() 계측을 사용할 수 있다.
