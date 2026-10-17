@@ -4,18 +4,17 @@
 
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
-## 최신 재개 요약 — 2026-10-17, S-2 봄·오후 시간대 베이크 배포 완료 (Claude Code)
+## 최신 재개 요약 — 2026-10-17, S-3 카페 전체 베이크 배포 완료 (Claude Code)
 
-이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 2026-10-16 요약은 과거 기록이다.
+이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 이전 요약은 과거 기록이다.
 
-- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1, 병합 금지. 로컬 커밋은 origin보다 앞서 있으며 push하지 않음.
-- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 b6b9461(소스 06ec66c). Pages built, 공개 Chrome(앱 내장 브라우저)에서 봄+오후 베이크 active, 의자 20개 교체, 안내 문구 확인.
-- **S-2 결과:** 원본 계절·시간대 버튼 중 봄+오후에 카페 바닥·천장 하늘빛+태양 반사광 베이크(`new/360/assets/cafe-ambient-slots/spring-pm`). 다른 조합·사용자 일시·야간은 실시간과 "실시간 빛" 표시. 베이크는 첫 화면을 막지 않고 비동기 결합. 가구: 식탁 의자 Modern Arm Chair 01 코냑 쿠션, 화분 9곳.
-- **측정:** 회전 5초 p95 51.2ms(베이크 끔 55.3ms), 100ms 초과 0. 공개 첫 화면 3.4초(캐시 데워짐), 베이크 0.5초 뒤 적용. 굽기 27초(Metal GPU).
-- **정정 기록:** 석양 직사광 "결함"은 오판(스냅샷 ±60m로 서쪽 건물 누락). 기존 12개 시간대 모두 카페 시점 1에 햇빛 무늬 거의 없음(최대 봄 15시 11%).
-- **사용자 지시(2026-10-17):** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단해 진행. 가구는 AI 시안 분위기 기준으로 교체 가능.
-- **미완료:** 벽·기둥·가구 수신면 베이크, 실내 조명 베이크, 다른 시간대 슬롯, 스냅샷 범위 확대(먼 주변 건물), 재질 텍스처 보강, 정밀 이미지 오류(readRenderTargetPixels), 콜드 로딩·모바일 측정, 기존 VIEWER_CONTRACT 미완료 행(종단면·윗층투시·지하투시 등). 사진 수준 품질은 아직 아님.
-- **예산:** Claude 주간 전체 모델 14%(인수 시점 10%), 추가 과금 꺼짐. Codex 수치와 별개.
+- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1 (6c774d1까지 push됨, 이후 로컬 커밋은 push 안 함), 병합 금지.
+- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 7421428(소스 f9f358b). Pages built, 공개 화면에서 봄+오후 카페 전체 베이크 active 확인.
+- **현재 동작:** 원본 봄+오후 버튼에서 카페 바닥·천장·벽·기둥·카운터·테이블·의자에 하늘빛+태양 반사광(day)과 천장 조명(lights) 두 라이트맵 적용(`new/360/assets/cafe-room-bake/spring-pm`). 실시간 카페 천장 조명 6개와 보조광은 베이크 중 끔. 다른 시간대·사용자 일시·야간은 실시간과 "실시간 빛" 표시. 이전 바닥·천장 모듈은 `ambientBake=study` 진단 전용.
+- **측정:** 공개 회전 p50 27ms·p95 38ms·100ms 초과 0, 첫 화면 3.8초, 베이크 결합 0.3초(최대 조각 51ms), 면적 일치 97.5%(미일치: 런타임에서 다시 만드는 둥근 멀리언 28개). 굽기 36초.
+- **사용자 지시:** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단. 가구는 AI 시안 분위기 기준 교체 가능.
+- **미완료:** 다른 시간대 슬롯(야간 포함), 반사(광택) 처리, 재질 텍스처 보강, 화분·유리 베이크 제외, 정밀 이미지 오류(readRenderTargetPixels), 콜드 로딩·모바일 측정, 기존 VIEWER_CONTRACT 미완료 행. 사진 수준 품질은 아직 아님.
+- **예산:** Claude 주간 전체 모델 사용량은 get_usage로 확인(추가 과금 꺼짐). Codex 수치와 별개.
 
 ## 초기 감사 이력 — 현재 상태가 아님
 - Repo wing-kim/all, branch codex/tower-360-validation. 기준 main25b111a(이번 fetch로 확인). 이번 문서 수정 전 HEAD427e254, 작업 트리 깨끗했음.
@@ -202,3 +201,9 @@
 - 가구를 바꾸면 export-cafe-bake.js로 스냅샷 재추출(로컬, gitignore) → 기준·슬롯 재베이크 필수. 이전 스냅샷은 `cafe-ambient-source.2026-10-16-tufted-chairs.json.gz`로 로컬 보관.
 - 증거: docs/360/evidence/s2/, 비공개 비교 페이지 https://claude.ai/artifact/7j6n9aQFJjvSt9dCB7tkYJ (S-2 결과 절).
 - **다음 첫 행동:** 수신면을 벽·기둥까지 늘리는 베이크(아틀라스 UV 생성) 설계와 실내 조명 베이크 검토. 병행으로 정밀 이미지 오류 원인 확인. 원본 main 설정 범위 안이면 사용자에게 묻지 않고 진행.
+
+## S-3 카페 전체 베이크 체크포인트 — 2026-10-17 (Claude Code)
+- 커밋 f9f358b, 배포 7421428. 비교 페이지 S-3 절, 증거 docs/360/evidence/s3/.
+- 재현: (1) 리뷰 페이지에서 `tools/360/export-cafe-bake.js`를 실행해 스냅샷을 `tools/360/cafe-ambient-source.json.gz`로 저장(gitignore, 내보내기 상자 x -15～10, z -15～14.5) (2) `blender --background --factory-startup --python tools/360/bake-cafe-room.py -- tools/360/cafe-ambient-source.json.gz tools/360/room-bake/spring-pm --slot spring-pm --sun 0.0758,0.6412,0.7636 --sun-strength 2.6 --sun-color 1,0.8714,0.7379 --lights tools/360/cafe-room-lights.json --size 2048 --samples 256 --device GPU` (3) manifest.json·uv.bin·day/lights PNG를 `new/360/assets/cafe-room-bake/spring-pm/`로 복사 (4) `node tools/360/test-cafe-room-bake.mjs`로 188/188 객체 일치 확인.
+- 작업 중 잡은 문제: 스냅샷 상자가 카페 동쪽 5m를 잘라 천장 미일치 → 상자 확대·면적 기준 거부 규칙. 노드 재질 캐시 키가 같아 라이트맵 없는 원래 셰이더가 재사용됨 → customProgramCacheKey 지정. TSL uniform이 첫 값에 고정 → 조명 세기별 재질 교체.
+- **다음 첫 행동:** 원본 시간대 버튼 중 야간(봄·야간 또는 기본 계절 야간)을 같은 방식으로 추가해 실내 조명 채널의 가치를 확인하고, 반사(광택) 근사와 재질 텍스처 보강을 검토. 원본 설정 범위 안이면 묻지 않고 진행.
