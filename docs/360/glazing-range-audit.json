@@ -1,0 +1,23 @@
+{
+  "active": true,
+  "checked": [
+    {
+      "count": 48,
+      "exact": true,
+      "matchingMeshes": 1,
+      "sourceCount": 84,
+      "start": 36
+    },
+    {
+      "count": 24,
+      "exact": true,
+      "matchingMeshes": 1,
+      "sourceCount": 36,
+      "start": 12
+    }
+  ],
+  "failure": null,
+  "glassCoatings": [
+    0
+  ]
+}

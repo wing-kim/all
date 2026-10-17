@@ -1,0 +1,33 @@
+{
+  "markings": {
+    "maxGap": 0.003999999903142454,
+    "minGap": 0.003999999091029166,
+    "offsets": [
+      "{\"factor\":-1,\"units\":-1}",
+      "{\"factor\":-2,\"units\":-2}"
+    ],
+    "quads": 1581,
+    "unsupported": 0,
+    "vertexSamples": 6324
+  },
+  "geometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "render": {
+    "active": true,
+    "complete": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.707329506282859
+      }
+    }
+  }
+}

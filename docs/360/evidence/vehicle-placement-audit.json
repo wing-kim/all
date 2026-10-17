@@ -1,0 +1,283 @@
+{
+  "result": {
+    "type": "object",
+    "value": [
+      {
+        "crosswalkClear": true,
+        "forward": [
+          4.440892098500626e-16,
+          0,
+          -1
+        ],
+        "heading": "-Z",
+        "insideRoad": true,
+        "laneOffsetPx": 342.5,
+        "name": "Road vehicle 1",
+        "position": [
+          -27.295673076923077,
+          0.012,
+          -69
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -262.5442460014872,
+          -180.77540021292884
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          4.440892098500626e-16,
+          0,
+          -1
+        ],
+        "heading": "-Z",
+        "insideRoad": true,
+        "laneOffsetPx": 68.5,
+        "name": "Road vehicle 2",
+        "position": [
+          -33.88221153846154,
+          0.012,
+          -49
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -536.5442460014872,
+          -454.7754002129288
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          0,
+          0,
+          1
+        ],
+        "heading": "+Z",
+        "insideRoad": true,
+        "laneOffsetPx": -205.5,
+        "name": "Road vehicle 3",
+        "position": [
+          -40.46875,
+          0.012,
+          -38
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -810.2245997870714,
+          -728.455753998513
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          4.440892098500626e-16,
+          0,
+          -1
+        ],
+        "heading": "-Z",
+        "insideRoad": true,
+        "laneOffsetPx": 205.5,
+        "name": "Road vehicle 4",
+        "position": [
+          -30.588942307692307,
+          0.012,
+          -16
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -399.5442460014872,
+          -317.77540021292884
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          0,
+          0,
+          1
+        ],
+        "heading": "+Z",
+        "insideRoad": true,
+        "laneOffsetPx": -68.5,
+        "name": "Road vehicle 5",
+        "position": [
+          -37.17548076923077,
+          0.012,
+          2
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -673.2245997870714,
+          -591.4557539985128
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          0,
+          0,
+          1
+        ],
+        "heading": "+Z",
+        "insideRoad": true,
+        "laneOffsetPx": -342.5,
+        "name": "Road vehicle 6",
+        "position": [
+          -43.762019230769226,
+          0.012,
+          21
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -947.2245997870712,
+          -865.4557539985128
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          4.440892098500626e-16,
+          0,
+          -1
+        ],
+        "heading": "-Z",
+        "insideRoad": true,
+        "laneOffsetPx": 342.5,
+        "name": "Road vehicle 7",
+        "position": [
+          -27.295673076923077,
+          0.012,
+          40
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -262.5442460014872,
+          -180.77540021292884
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          4.440892098500626e-16,
+          0,
+          -1
+        ],
+        "heading": "-Z",
+        "insideRoad": true,
+        "laneOffsetPx": 68.5,
+        "name": "Road vehicle 8",
+        "position": [
+          -33.88221153846154,
+          0.012,
+          61
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -536.5442460014872,
+          -454.7754002129288
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          0,
+          0,
+          1
+        ],
+        "heading": "+Z",
+        "insideRoad": true,
+        "laneOffsetPx": -205.5,
+        "name": "Road vehicle 9",
+        "position": [
+          -40.46875,
+          0.012,
+          79
+        ],
+        "road": "main",
+        "roadRangePx": [
+          -810.2245997870714,
+          -728.455753998513
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          -0.9407674250350704,
+          0,
+          0.33905257998263877
+        ],
+        "heading": "toward-main",
+        "insideRoad": true,
+        "laneOffsetPx": 70,
+        "name": "Road vehicle 10",
+        "position": [
+          -1.5384615384615383,
+          0.022,
+          10.614230769230767
+        ],
+        "road": "side",
+        "roadRangePx": [
+          26.71129898491836,
+          113.6284727864138
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          0.9407674250350702,
+          0,
+          -0.33905257998263894
+        ],
+        "heading": "away-from-main",
+        "insideRoad": true,
+        "laneOffsetPx": 196,
+        "name": "Road vehicle 11",
+        "position": [
+          11.682692307692308,
+          0.022,
+          8.878173076923074
+        ],
+        "road": "side",
+        "roadRangePx": [
+          152.37152721358598,
+          239.2887010150814
+        ],
+        "vertices": 162766
+      },
+      {
+        "crosswalkClear": true,
+        "forward": [
+          -0.9407674250350704,
+          0,
+          0.33905257998263877
+        ],
+        "heading": "toward-main",
+        "insideRoad": true,
+        "laneOffsetPx": 70,
+        "name": "Road vehicle 12",
+        "position": [
+          32.11538461538461,
+          0.022,
+          -1.5146153846153856
+        ],
+        "road": "side",
+        "roadRangePx": [
+          26.71129898491847,
+          113.62847278641392
+        ],
+        "vertices": 162766
+      }
+    ]
+  }
+}

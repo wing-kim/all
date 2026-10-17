@@ -1,0 +1,222 @@
+{
+  "count": 24,
+  "rows": [
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 14.2,
+      "keptFacade": false,
+      "kind": "grey",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 18.4,
+      "keptFacade": false,
+      "kind": "band",
+      "storey": 3.6,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 18.6,
+      "keptFacade": false,
+      "kind": "ribbon",
+      "storey": 3.7,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 19.5,
+      "keptFacade": false,
+      "kind": "wrib",
+      "storey": 3.8,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 17,
+      "keptFacade": true,
+      "kind": "cw",
+      "storey": 3.6,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 26,
+      "keptFacade": false,
+      "kind": "esm",
+      "storey": 3.7,
+      "windowWidth": 1.1
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 22.5,
+      "keptFacade": false,
+      "kind": "wrib",
+      "storey": 3.7,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 11,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 14,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 8,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 12,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 13,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 15.2,
+      "keptFacade": false,
+      "kind": "tile",
+      "storey": 3.55,
+      "windowWidth": 1.6
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 11,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 6.5,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 11,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 13,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 2,
+      "height": 12,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 1,
+      "height": 9,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 10,
+      "keptFacade": false,
+      "kind": "shop",
+      "storey": 3.4,
+      "windowWidth": 2.14
+    },
+    {
+      "existingParapet": true,
+      "existingRoofEquipment": 3,
+      "height": 12,
+      "keptFacade": false,
+      "kind": "office",
+      "storey": 3.4,
+      "windowWidth": 2.98
+    },
+    {
+      "existingParapet": false,
+      "existingRoofEquipment": 0,
+      "height": 44,
+      "keptFacade": false,
+      "kind": "apt",
+      "storey": 2.9,
+      "windowWidth": 2.65
+    },
+    {
+      "existingParapet": false,
+      "existingRoofEquipment": 0,
+      "height": 44,
+      "keptFacade": false,
+      "kind": "apt",
+      "storey": 2.9,
+      "windowWidth": 2.65
+    },
+    {
+      "existingParapet": false,
+      "existingRoofEquipment": 0,
+      "height": 7,
+      "keptFacade": false,
+      "kind": "tower",
+      "storey": 3.5,
+      "windowWidth": 2.14
+    }
+  ],
+  "url": "http://127.0.0.1:8765/new/3d-model.html?lab=360&engine=cinema&model=v87-context-1"
+}

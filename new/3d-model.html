@@ -6856,7 +6856,7 @@ function overlay(){}
 function applyDollVis(){const on=I.on&&I.doll,L=Lv();
   LG.forEach((g,i)=>{g.visible=!on||i<=I.li;g.traverse(o=>{if(o.userData.ceil)o.visible=!(on&&i===I.li)})});
   const under=on&&L.kind==='base';
-  siteDyn.visible=!under;if(typeof R3D!=='undefined'){R3D.street.visible=R3D.on&&!under;R3D.props.visible=R3D.on&&!under;if(R3D.sky)R3D.sky.visible=!under}site.children.forEach(c=>{if(c!==siteDyn&&c!==limits)c.visible=!under});
+  siteDyn.visible=!under;if(typeof R3D!=='undefined'){R3D.street.visible=R3D.on&&!under;R3D.props.visible=R3D.on&&!under;if(R3D.sky)R3D.sky.visible=!under}site.children.forEach(c=>{if(c!==siteDyn&&c!==limits)c.visible=!under&&!(window.TOWER_ORBIT_ONLY&&c.userData.reviewExcluded)});
   city.visible=document.getElementById('t-city').checked&&!under;ctx.visible=document.getElementById('t-ctx').checked&&!under;
   frG.visible=state.frame&&state.form==='portal'&&state.design==='none'&&!on;
   const cap=ceilOf(L)-0.1;extG.children.forEach(c=>{if(c.userData.minY==null)c.userData.minY=new THREE.Box3().setFromObject(c).min.y;
@@ -6955,7 +6955,7 @@ const cv=renderer.domElement;
 // click on the building / ground in the outside views → walk there (no need to press 내부 보기 first)
 {let XD=null;cv.addEventListener('pointerdown',e=>{XD=I.on?null:{x:e.clientX,y:e.clientY,t:performance.now()}});
   cv.addEventListener('pointerup',e=>{if(!XD||I.on)return;const d=XD;XD=null;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>5||performance.now()-d.t>500||e.button!==0||state.era==='now')return;extGo(e)})}
-function extGo(e){const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+function extGo(e){if(window.TOWER_ORBIT_ONLY)return;const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
   let hit=null;for(const x of ray.intersectObject(bld,true)){const m=x.object;if(!m.isMesh||!visDeep(m))continue;const mt=Array.isArray(m.material)?m.material[0]:m.material;if(!mt||mt.depthTest===false||(mt.transparent&&mt.opacity<0.35))continue;hit=x.point.clone();break}
   const gp=new THREE.Vector3(),gOk=ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),0),gp);
   if(gOk&&(!hit||gp.distanceTo(camera.position)<hit.distanceTo(camera.position)-0.3))hit=gp;if(!hit)return;
@@ -7151,6 +7151,12 @@ function solar(n,hour){const lat=37.52*Math.PI/180,lon=127.02,dec=23.44*Math.PI/
   const H=(st-12)*15*Math.PI/180,el=Math.asin(Math.sin(lat)*Math.sin(dec)+Math.cos(lat)*Math.cos(dec)*Math.cos(H));
   let az=Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(lat)-Math.tan(dec)*Math.cos(lat))*180/Math.PI+180;
   return {el:el*180/Math.PI,az:(az+360)%360,clock:hour}}
+// Read-only daylight contract for the opt-in renderer. Keep the original time handlers authoritative.
+function sourceDaylight(){const base=TIMES[R3D.time],position=R3D.custom?solar(R3D.cn,R3D.ch):base.night?null:solar(SEASONS[R3D.season].n,R3D.time==='sunset'?'sunset':CLOCK[R3D.time]);
+  const mood=R3D.custom?(position.el<-2?TIMES.night:position.el<7?TIMES.sunset:R3D.ch<12?TIMES.am:TIMES.pm):base;
+  const daylight=position&&position.el>=-2,el=daylight?Math.max(position.el,.8):mood.el,az=daylight?position.az:mood.az,a=az*Math.PI/180,ce=Math.cos(el*Math.PI/180);
+  const direction=el>0?[(NV[0]*Math.cos(a)+EV[0]*Math.sin(a))*ce,Math.sin(el*Math.PI/180),(NV[1]*Math.cos(a)+EV[1]*Math.sin(a))*ce]:[-.4,.6,.3].map(v=>v/Math.hypot(.4,.6,.3));
+  return {time:R3D.time,season:R3D.season,custom:!!R3D.custom,date:R3D.custom&&R3D.cdate?ymd(R3D.cdate):null,hour:R3D.custom?R3D.ch:position?.clock??null,azimuth:position?.az??null,elevation:position?.el??null,night:!daylight,direction,color:mood.sun,intensity:mood.si,hemisphereIntensity:mood.hemi,exposure:mood.exp};}
 function setText(id,h){const e=document.getElementById(id);if(e)e.innerHTML=h}
 const fmtClock=h=>{const m=Math.round(h*60);return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
 const azName=a=>['북','북동','동','남동','남','남서','서','북서'][Math.round(a/45)%8];
@@ -7203,7 +7209,7 @@ function makeComposer(){if(R3D.composer||!THREE.EffectComposer)return;const w=ho
     fragmentShader:'uniform sampler2D tDiffuse;uniform float vig,sat,con;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,sat);c.rgb=(c.rgb-.5)*con+.5;vec2 d=vUv-.5;c.rgb*=1.0-vig*dot(d,d)*1.6;gl_FragColor=vec4(clamp(c.rgb,0.,1.),c.a);}'});
   c.addPass(R3D.grade);
   R3D.fxaa=new THREE.ShaderPass(THREE.FXAAShader);c.addPass(R3D.fxaa);R3D.composer=c;resizeR()}
-function updateReflections(){if(typeof HQ!=='undefined')hqMark();if(!R3D.on)return;
+function updateReflections(){if(window.TOWER_MODERN_ACTIVE)return;if(typeof HQ!=='undefined')hqMark();if(!R3D.on)return;
   if(!R3D.cube){R3D.cube=new THREE.WebGLCubeRenderTarget(512,{format:THREE.RGBAFormat,generateMipmaps:true,minFilter:THREE.LinearMipmapLinearFilter});R3D.cubeCam=new THREE.CubeCamera(0.5,1500,R3D.cube);scene.add(R3D.cubeCam)}
   const up=LEVELS.find(l=>l.kind==='upper'),[cx,cz]=P(...centroid(up.poly));R3D.cubeCam.position.set(cx,up.y+8,cz);
   const vis=[bld.visible,city.visible,ovl.visible];bld.visible=false;ovl.visible=false;city.visible=document.getElementById('t-city').checked;
@@ -7285,10 +7291,10 @@ const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 {const t=new Date();sunUI.d.value=ymd(t)}
 function sunCustom(refl){const v=sunUI.d.value||ymd(new Date()),[y,m,dd]=v.split('-').map(Number),d=new Date(y,m-1,dd);R3D.cdate=d;R3D.cn=Math.round((d-new Date(y,0,0))/864e5);R3D.ch=+sunUI.h.value;R3D.custom=true;
   sunUI.o.value=fmtClock(R3D.ch);sunUI.a.setAttribute('aria-pressed',true);document.querySelectorAll('input[name=tod],input[name=season]').forEach(r=>r.checked=false);
-  if(!R3D.on){setRender(true);return}applyTime();if(refl)updateReflections()}
-sunUI.h.addEventListener('input',()=>{sunUI.o.value=fmtClock(+sunUI.h.value);if(R3D.custom&&R3D.on)sunCustom(false)});
+  if(!R3D.on){if(!window.TOWER_MODERN_ACTIVE)setRender(true);return}applyTime();if(refl)updateReflections()}
+sunUI.h.addEventListener('input',()=>{sunUI.o.value=fmtClock(+sunUI.h.value);if(R3D.custom&&(R3D.on||window.TOWER_MODERN_ACTIVE))sunCustom(false)});
 sunUI.h.addEventListener('change',()=>{if(R3D.custom&&R3D.on)updateReflections()});
-sunUI.d.addEventListener('change',()=>{if(R3D.custom&&R3D.on)sunCustom(true)});
+sunUI.d.addEventListener('change',()=>{if(R3D.custom&&(R3D.on||window.TOWER_MODERN_ACTIVE))sunCustom(true)});
 sunUI.a.addEventListener('click',()=>sunCustom(true));
 document.getElementById('sun-today').addEventListener('click',()=>{const t=new Date();sunUI.d.value=ymd(t);sunUI.h.value=Math.min(20,Math.max(5,t.getHours()+t.getMinutes()/60));sunUI.o.value=fmtClock(+sunUI.h.value);sunCustom(true)});
 let playT=null;function stopPlay(){if(playT){clearInterval(playT);playT=null}sunUI.p.textContent='▶ 하루 재생';sunUI.p.setAttribute('aria-pressed',false)}
@@ -7349,6 +7355,7 @@ function wm(kind,col,rv){const k=kind+col+(rv||'');if(!wmat[k]){const t=kind==='
 // one context block: px polygon extruded h metres; caps = roof colour, walls = window texture
 function mass(poly,h,col,kind,label,grp,opt={}){const sh=shape(poly);const geo=new THREE.ExtrudeGeometry(sh,{depth:h,bevelEnabled:false});geo.rotateX(-Math.PI/2);
   const m=new THREE.Mesh(geo,[CM2.roof,opt.mat||wm(kind,col,opt.rv)]);m.position.y=opt.y0||0;m.castShadow=true;m.receiveShadow=true;
+  m.userData.contextKind=kind;m.userData.contextStoreyHeight=opt.rv||3.4;m.userData.contextShop=opt.shop!==false;m.userData.customContextMaterial=!!opt.mat;
   m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo,20),LM.edge));(grp||city).add(m);m.updateMatrixWorld(true);m.userData.box=new THREE.Box3().setFromObject(m);if(!opt.noOcc)OCC.push(m);
   if(opt.detail!==false&&!opt.y0&&kind!=='apt'&&kind!=='tower'&&h<30)massDetail(m,poly,h,opt);
   if(label)CTXLAB.push([label,opt.at||centroid(poly),(opt.y0||0)+h+1.6,m]);return m}
@@ -7629,14 +7636,32 @@ buildContext();existBuilding();
   document.getElementById('t-cmpapt').addEventListener('change',e=>{CMP.apt=e.target.checked;applyCmp()});
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
+// Opt-in validation only. Ordinary v87 pages keep their original rendering path.
+if(['360','verify','review'].includes(new URLSearchParams(location.search).get('lab'))) {
+  window.TOWER_LAB_CONTEXT={THREE,scene,camera,controls,renderer,state,M,FM,R3D,RMAT,HQ,bld,city,site,ctx,ovl,limits,sun,hemi,P,inPoly,
+    interior:()=>I.on,interiorState:()=>({on:I.on,key:I.key||'1F',camera:camera.position.toArray(),target:controls.target.toArray(),fov:camera.fov,spin:I.spin,doll:I.doll,look:I.look}),
+    enterInterior:enterInt,exitInterior:exitInt,selectInteriorFloor:key=>{const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return false;if(!I.on)enterInt();placeLevel(index,true);return true},
+    // The opt-in child renderer asks the original interior controller to apply
+    // its authored floor/doll visibility, then mirrors the visible mesh state.
+    interiorVisibility:()=>({...IV}),
+    walkFromDoll:()=>{if(I.on&&I.doll)walkIn();return {on:I.on,doll:I.doll,key:I.key}},
+    syncInteriorDisplay:(key,doll,visibility)=>{if(!key){if(I.on)exitInt();return {on:false,doll:false,key:null}}const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return null;if(!I.on)enterInt();if(I.li!==index)placeLevel(index,true);if(I.doll!==!!doll)setDoll(!!doll);if(visibility){for(const name of Object.keys(IV))if(name in visibility)IV[name]=!!visibility[name];applyIV();applyDollVis()}return {on:I.on,doll:I.doll,key:I.key}},
+    restoreInteriorPose:(position,target,fov,key)=>{if(!I.on)return;if(key&&key!==I.key){const index=LEVELS.findIndex(level=>level.key===key);if(index>=0)placeLevel(index,true)}anim=null;camera.position.fromArray(position);controls.target.fromArray(target);const d=controls.target.clone().sub(camera.position),length=d.length();if(length>1e-6)controls.target.copy(camera.position).add(d.multiplyScalar(THREE.MathUtils.clamp(length,controls.minDistance,controls.maxDistance)/length));if(Number.isFinite(fov)){camera.fov=fov;camera.updateProjectionMatrix()}controls.update()},
+    levels:()=>LEVELS,floorTop,ceilOf,walkable,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
+    hideGuides:()=>{limits.visible=false;setLabels(false)},
+    transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
+    cancel:()=>{anim=null}};
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=time-slot-1';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=time-slot-3';document.head.appendChild(script);}
+}
 let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;
   if(I.on&&!I.doll){if(anim){let t=Math.min(1,(now-anim.s)/800);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-    step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
+    step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}if(!window.TOWER_MODERN_ACTIVE)drawFrame();placeLabels();drawMini();drawCompass();return}
   if(I.on&&I.doll)step(dt);
   if(anim){let t=Math.min(1,(now-anim.s)/900);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-  controls.update();occl();drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
+  controls.update();occl();if(!window.TOWER_MODERN_ACTIVE)drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
 })(performance.now());
 })();
 </script>

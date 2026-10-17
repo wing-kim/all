@@ -1,0 +1,23 @@
+{
+  "initial": {
+    "background": 1.55,
+    "color": "fff3dd",
+    "environment": 1
+  },
+  "morning": "fff4e6",
+  "returnAfternoon": "fff3dd",
+  "native": {
+    "active": true,
+    "failure": null,
+    "status": {
+      "materials": 1601,
+      "objects": 2754,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.1895065235356665
+      }
+    }
+  }
+}

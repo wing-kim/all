@@ -1,0 +1,52 @@
+{
+  "alignment": {
+    "aligned": 432,
+    "changed": 292,
+    "count": 432,
+    "glassEdges": 64,
+    "maxCenterDelta": 0,
+    "minNormalDot": 0.9999999999999998,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 63.948695638031424,
+        "max": 64,
+        "min": 57,
+        "samplesPerSecond": 3.893446798911264
+      }
+    }
+  },
+  "sourceGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "closeRender": {
+    "complete": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.3170074373526135
+      }
+    }
+  },
+  "wideRender": {
+    "complete": true,
+    "status": {
+      "materials": 1617,
+      "objects": 2799,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 4.017602119291131
+      }
+    }
+  }
+}

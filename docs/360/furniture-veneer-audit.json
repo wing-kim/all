@@ -1,0 +1,41 @@
+{
+  "render": {
+    "complete": true,
+    "edges": {
+      "addedTriangles": 22464,
+      "count": 78,
+      "maxBoundsDelta": 1.937150939657073e-9,
+      "radiusMetres": 0.006,
+      "textureWidthMetres": 1.8
+    },
+    "failure": null,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.1103443248365856
+      }
+    }
+  },
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "camera": [
+    -18,
+    15.8,
+    -5
+  ],
+  "target": [
+    -10,
+    14.7,
+    -7.5
+  ],
+  "temporaryMinDistance": 1,
+  "productionMinDistance": 28
+}

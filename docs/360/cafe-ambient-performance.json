@@ -1,0 +1,26 @@
+{
+  "environment": "IAB local 1280x720 high, 5 second spin, cache disabled; not GPU timing or controlled cold-network benchmark",
+  "ambientStudy": {
+    "requested": true,
+    "valid": true,
+    "enabled": true,
+    "receivers": 2,
+    "loadMs": 1144.7
+  },
+  "rendererFirstFrameMs": 4531.1,
+  "rotation": {
+    "frames": 156,
+    "intervalSamples": 155,
+    "meanMs": 32.1813,
+    "p50Ms": 32.4,
+    "p95Ms": 35.6,
+    "maxMs": 44,
+    "over100Ms": 0,
+    "over200Ms": 0,
+    "geometryUpdates": 0,
+    "probeRefreshes": 0,
+    "precisionSamples": 0,
+    "precisionRequests": 0
+  },
+  "comparison": "Earlier non-baked cafe mean34.66/p9538.4ms; different run, not an isolated speedup benchmark."
+}

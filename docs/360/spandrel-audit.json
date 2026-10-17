@@ -1,0 +1,32 @@
+{
+  "audit": {
+    "complete": true,
+    "failure": null,
+    "material": {
+      "clearcoat": 1,
+      "clearcoatRoughness": 0.06,
+      "color": "41494d",
+      "metalness": 0.05,
+      "opacity": 1,
+      "roughness": 0.35,
+      "transparent": false
+    },
+    "objects": 70,
+    "status": {
+      "materials": 1601,
+      "objects": 2754,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.9501783752538824
+      }
+    }
+  },
+  "primary": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  }
+}

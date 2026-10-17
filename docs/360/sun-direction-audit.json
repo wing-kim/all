@@ -1,0 +1,98 @@
+{
+  "beforePosition": [
+    -65,
+    105,
+    70
+  ],
+  "afterPosition": [
+    -65,
+    90,
+    -70
+  ],
+  "referenceView": {
+    "complete": true,
+    "failure": null,
+    "renderSun": [
+      -65,
+      90,
+      -70
+    ],
+    "sourceSun": [
+      -65,
+      90,
+      -70
+    ],
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 4.039256524345988
+      }
+    }
+  },
+  "rearView": {
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.843843843843844
+      }
+    }
+  },
+  "modeSwitches": [
+    {
+      "mode": "am",
+      "render": [
+        65,
+        100,
+        -40
+      ],
+      "source": [
+        65,
+        100,
+        -40
+      ]
+    },
+    {
+      "mode": "sunset",
+      "render": [
+        -100,
+        20,
+        50
+      ],
+      "source": [
+        -100,
+        20,
+        50
+      ]
+    },
+    {
+      "mode": "pm",
+      "render": [
+        -65,
+        90,
+        -70
+      ],
+      "source": [
+        -65,
+        90,
+        -70
+      ]
+    }
+  ],
+  "originalGeometry": {
+    "hash": 3710930476,
+    "meshes": 3234,
+    "scheme": "alt4",
+    "vertices": 119173
+  },
+  "limitation": "Art-directed light, not a surveyed solar study. Original geometry signature does not assert AI image geometry agreement."
+}

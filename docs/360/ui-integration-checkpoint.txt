@@ -1,0 +1,21 @@
+UI integration checkpoint — 2026-10-16
+
+Scope: new/360/integrated.js only. No geometry, material, rendering or ordinary-page changes.
+- In ?lab=review with real-time360 active, original 내부 보기 enters supported1F cafe through the existing cafe entry. Capture-phase stopImmediatePropagation prevents original enterInt() from changing host scene/clipping/controls under the modern iframe.
+- Added 다른 층 · 기존 내부 보기, explicitly disabling modern, selecting sketch and invoking unchanged original floor UI. Original floor selection and6/7F photo functionality remain in their original UI.
+- Home, exterior preset and reference return clear cafe split comparison. Periodic cafe state updates 내부 보기 pressed state; keyboard Home returning from cafe also clears comparison.
+- Existing cafe/counter entries and existing snapshot/config model state remain authoritative. No extra scene state introduced.
+
+Validation
+- node --check new/360/integrated.js passed.
+- git diff --check passed.
+- Actual Chrome via Cua, localhost127.0.0.1:8765/new/3d-model.html?lab=review.
+- Original 내부 보기: modern iframe retained, cafe status and pressed state confirmed; screenshot showed cafe, no obvious double canvas.
+- Home: exterior status and unchecked cafe/inside buttons confirmed; screenshot showed building overview.
+- Other floors entry: original floor chips/mini-map/walk controls appeared.6F selected and floor label confirmed; original exit restored exterior.
+- Cafe reentry after original interior exit and repeated original 내부 보기/Home route confirmed.
+- Screenshots saved outside repo: /tmp/tower-ui-cafe.png and /tmp/tower-ui-exterior.png (960x521 browser viewport). First screenshot attempt timed out; retry succeeded.
+
+Limits / next step
+Functional route verified; no claim of photorealistic quality, performance gate, comparison complete regression, deployed validation or full UI integration. Need retain facade/options across compare and photo changes, verify touch/key/wheel navigation and ordinary no-query page, then evaluate both representative indoor and outdoor quality gates before expanding. Original floor UI remains an explicit sketch path.
+Local HTTP server spawned as exec session46140 on127.0.0.1:8765 for verification.

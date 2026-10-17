@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "failure": null,
+  "status": {
+    "materials": 1601,
+    "objects": 2754,
+    "samples": {
+      "avg": 256,
+      "max": 256,
+      "min": 256,
+      "samplesPerSecond": 3.280751599687793
+    }
+  }
+}

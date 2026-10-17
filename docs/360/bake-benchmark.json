@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "enabled": false,
+      "meanMs": 118.8944444441133,
+      "medianMs": 118.10000002384186,
+      "p95Ms": 136.69999998807907
+    },
+    {
+      "enabled": true,
+      "meanMs": 125.58333333498902,
+      "medianMs": 123.9000000357628,
+      "p95Ms": 179.10000002384186
+    },
+    {
+      "enabled": false,
+      "meanMs": 123.2111111117734,
+      "medianMs": 123.9000000357628,
+      "p95Ms": 135
+    },
+    {
+      "enabled": true,
+      "meanMs": 121.43055555555556,
+      "medianMs": 119.80000001192091,
+      "p95Ms": 138.70000004768372
+    }
+  ],
+  "status": {
+    "bake": {
+      "enabled": true,
+      "loadMs": 287.80000001192093,
+      "receivers": 36
+    },
+    "batchBoundsDelta": 0,
+    "batchedObjects": 1347,
+    "error": null,
+    "firstFrameMs": 5826.399999976158,
+    "frameIntervalMs": 123.02833333412806,
+    "frameMs": 58.6616666679581,
+    "improved": true,
+    "lastUpdateMs": null,
+    "materials": 1624,
+    "mode": "interactive",
+    "objects": 1396
+  },
+  "timings": [
+    {
+      "kind": "initial",
+      "ms": 16132
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+[
+  {
+    "complete": false,
+    "failure": null,
+    "levelsEqual": true,
+    "state": {
+      "a4park": false,
+      "cfin": "glass",
+      "cform": "none",
+      "cgl": "none",
+      "design": "arch",
+      "dl": [
+        "arch"
+      ],
+      "dsgC": "#e8dcc4",
+      "era": "new",
+      "finC": null,
+      "floors": 6,
+      "form": "none",
+      "formC": null,
+      "formD": null,
+      "frame": true,
+      "g1": "skin",
+      "h1": 5.4,
+      "ht": 4.2,
+      "mode": "preset",
+      "pdesign": "arch",
+      "scheme": "mech",
+      "skin": false,
+      "skinD": null,
+      "skinOn": true,
+      "style": "glass",
+      "upSt": false,
+      "use7": false,
+      "win": "base"
+    },
+    "stateEqual": true,
+    "status": {
+      "materials": 1622,
+      "objects": 2656,
+      "samples": {
+        "avg": 9.246657471264369,
+        "max": 10,
+        "min": 7,
+        "samplesPerSecond": 1.6719992534300916
+      }
+    }
+  },
+  {
+    "colour": "#e8dcc4",
+    "complete": true,
+    "design": "none",
+    "failure": null,
+    "finish": "glass",
+    "levelsEqual": true,
+    "scheme": "alt3",
+    "stateEqual": true,
+    "status": {
+      "materials": 1610,
+      "objects": 2788,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 1.4670318964825615
+      }
+    }
+  },
+  {
+    "colour": "#e8dcc4",
+    "complete": false,
+    "design": "none",
+    "failure": null,
+    "finish": "terra",
+    "levelsEqual": true,
+    "scheme": "self",
+    "stateEqual": true,
+    "status": {
+      "materials": 1613,
+      "objects": 2552,
+      "samples": {
+        "avg": 2.0909241768746596,
+        "max": 3,
+        "min": 1,
+        "samplesPerSecond": 1.7846741011765828
+      }
+    }
+  },
+  {
+    "colour": null,
+    "complete": true,
+    "design": "none",
+    "failure": null,
+    "finish": "glass",
+    "levelsEqual": true,
+    "scheme": "mech",
+    "stateEqual": true,
+    "status": {
+      "materials": 1624,
+      "objects": 2742,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 1.32242607328209
+      }
+    }
+  },
+  {
+    "colour": null,
+    "complete": true,
+    "design": "none",
+    "failure": null,
+    "finish": "glass",
+    "levelsEqual": true,
+    "scheme": "alt4",
+    "stateEqual": true,
+    "status": {
+      "materials": 1615,
+      "objects": 2766,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 1.070359406619504
+      }
+    }
+  }
+]

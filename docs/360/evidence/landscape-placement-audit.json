@@ -1,0 +1,492 @@
+{
+  "beds": [
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -12.740384615384617
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -3.846153846153846
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        6.009615384615384
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        11.538461538461538
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        15.288461538461538,
+        0,
+        10.198846153846151
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -35.09615384615385
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -42.54807692307692
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -54.56730769230769
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        -13.701923076923077
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        -2.8846153846153846
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        6.730769230769231
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        -35.09615384615385
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        22.5,
+        0,
+        7.599807692307693
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        30.913461538461537,
+        0,
+        4.567596153846155
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        39.32692307692307,
+        0,
+        1.5353846153846142
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        56.15384615384615,
+        0,
+        -4.529038461538459
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        18.75
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        30.769230769230766
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        -42.54807692307692
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -51.77884615384615,
+        0,
+        -54.56730769230769
+      ],
+      "roadHits": 0
+    },
+    {
+      "checkedVertices": 360,
+      "crosswalkHits": 0,
+      "position": [
+        -19.08653846153846,
+        0,
+        -66.58653846153845
+      ],
+      "roadHits": 0
+    }
+  ],
+  "corrections": [
+    {
+      "position": [
+        -9.030094175371952,
+        0,
+        10.718061325419436
+      ],
+      "type": "Group"
+    },
+    {
+      "position": [
+        0.16597697056030386,
+        0,
+        7.403797284425452
+      ],
+      "type": "Group"
+    },
+    {
+      "position": [
+        4.5085818296929405,
+        0,
+        5.83872249319405
+      ],
+      "type": "Group"
+    },
+    {
+      "position": [
+        13.60576923076923,
+        4,
+        3.2331730769230766
+      ],
+      "type": "Mesh"
+    },
+    {
+      "position": [
+        13.60576923076923,
+        7.95,
+        4.0331730769230765
+      ],
+      "type": "Mesh"
+    },
+    {
+      "position": [
+        13.60576923076923,
+        7.835,
+        4.833173076923076
+      ],
+      "type": "Mesh"
+    },
+    {
+      "position": [
+        13.60576923076923,
+        7.734999999999999,
+        4.833173076923076
+      ],
+      "type": "Mesh"
+    },
+    {
+      "position": [
+        13.60576923076923,
+        7.5,
+        4.833173076923076
+      ],
+      "type": "PointLight"
+    }
+  ],
+  "trees": [
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -12.740384615384617
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -3.846153846153846
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        6.009615384615384
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        11.538461538461538
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        15.288461538461538,
+        0.16,
+        10.198846153846151
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -35.09615384615385
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -42.54807692307692
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -54.56730769230769
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        -13.701923076923077
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        -2.8846153846153846
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        6.730769230769231
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        -35.09615384615385
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        22.5,
+        0.16,
+        7.599807692307693
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        30.913461538461537,
+        0.16,
+        4.567596153846155
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        39.32692307692307,
+        0.16,
+        1.5353846153846142
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        56.15384615384615,
+        0.16,
+        -4.529038461538459
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        18.75
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        30.769230769230766
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        -42.54807692307692
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -51.77884615384615,
+        0.16,
+        -54.56730769230769
+      ],
+      "separatedByBounds": true
+    },
+    {
+      "checkedVertices": 0,
+      "intrudingVertices": 0,
+      "position": [
+        -19.08653846153846,
+        0.16,
+        -66.58653846153845
+      ],
+      "separatedByBounds": true
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "asset": "potted_plant_01",
+  "source": "https://polyhaven.com/a/potted_plant_01",
+  "author": "Rico Cilliers",
+  "license": "CC0",
+  "derivative": "stem and leaves only, anchor at bottom 15 mm of stem, Draco level 6",
+  "bytes": 2326032,
+  "sha256": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
+  "sourceHeightMetres": 0.9254279136657715,
+  "sourcePolygonCount": 113908,
+  "preparedWith": "Blender 5.1.1",
+  "script": "tools/360/prepare_interior_plant.py"
+}

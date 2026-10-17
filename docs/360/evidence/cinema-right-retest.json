@@ -1,0 +1,32 @@
+{
+  "result": {
+    "type": "object",
+    "value": {
+      "camera": [
+        -3,
+        57.47581336059188,
+        46.08423706732432
+      ],
+      "complete": true,
+      "geometry": {
+        "hash": 3710930476,
+        "meshes": 3234,
+        "scheme": "alt4",
+        "vertices": 119173
+      },
+      "precisionCamera": [
+        -3,
+        57.47581336059188,
+        46.08423706732432
+      ],
+      "radius": 62,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 1.2879258959649968
+      },
+      "view": "right"
+    }
+  }
+}

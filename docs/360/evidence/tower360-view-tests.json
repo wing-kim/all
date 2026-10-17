@@ -1,0 +1,132 @@
+{
+  "result": {
+    "type": "object",
+    "value": {
+      "allStable": true,
+      "baseline": 2367554452,
+      "transitionsClear": true,
+      "views": [
+        {
+          "camera": [
+            -81.00780992141972,
+            28.48124958742715,
+            4.7766007364380905e-15
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 52,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "front",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        },
+        {
+          "camera": [
+            75.00780992141972,
+            28.48124958742715,
+            4.7766007364380905e-15
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 60,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "back",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        },
+        {
+          "camera": [
+            -2.9999999999999902,
+            28.48124958742715,
+            -78.00780992141972
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 60,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "left",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        },
+        {
+          "camera": [
+            -3,
+            28.48124958742715,
+            78.00780992141972
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 60,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "right",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        },
+        {
+          "camera": [
+            -51.077868936564585,
+            49.6545082555952,
+            52.88565583022105
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 60,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "aerial",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        },
+        {
+          "camera": [
+            -56.49573662567879,
+            22.419488395081448,
+            57.77539555573309
+          ],
+          "environment": "HDRI 적용 · 현장 촬영 아님",
+          "fps": 60,
+          "geometryCount": 3371,
+          "meshes": 13,
+          "minDistance": 78.99999999999997,
+          "name": "corner",
+          "quality": "balanced",
+          "signature": 2367554452,
+          "target": [
+            -3,
+            16,
+            0
+          ]
+        }
+      ]
+    }
+  }
+}

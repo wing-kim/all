@@ -1,0 +1,61 @@
+{
+  "initial": [
+    {
+      "kind": "initial",
+      "ms": 14044.599999964237
+    }
+  ],
+  "status": {
+    "mode": "interactive",
+    "error": null,
+    "objects": 2743,
+    "materials": 1624,
+    "firstFrameMs": 4105.199999988079,
+    "lastUpdateMs": null,
+    "frameIntervalMs": null,
+    "frameMs": 709.0499999821186
+  },
+  "photoReturn": {
+    "sameFrame": true,
+    "sameRenderer": true,
+    "visible": "block"
+  },
+  "precision": {
+    "mode": "complete",
+    "error": null,
+    "samples": {
+      "min": 64,
+      "max": 64,
+      "avg": 64,
+      "samplesPerSecond": 1.7412549550935374
+    },
+    "objects": 2743,
+    "materials": 1624,
+    "firstFrameMs": 4105.199999988079,
+    "lastUpdateMs": null,
+    "frameIntervalMs": null,
+    "frameMs": 481.79999999205273
+  },
+  "dragAfterPrecision": {
+    "mode": "interactive",
+    "error": null,
+    "samples": {
+      "min": 0,
+      "max": 0,
+      "avg": 0,
+      "samplesPerSecond": 0
+    },
+    "objects": 2743,
+    "materials": 1624,
+    "firstFrameMs": 4105.199999988079,
+    "lastUpdateMs": null,
+    "frameIntervalMs": 55.90999999841054,
+    "frameMs": 88.0882352906115
+  },
+  "timings": [
+    {
+      "kind": "initial",
+      "ms": 14044.599999964237
+    }
+  ]
+}

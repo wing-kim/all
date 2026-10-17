@@ -1,0 +1,64 @@
+{
+  "appearance": {
+    "backgroundRotation": -1.7224558478309002,
+    "camera": [
+      -50.44764626272472,
+      23.54057632729045,
+      45.07526394958848
+    ],
+    "complete": true,
+    "failure": null,
+    "glass": [
+      {
+        "clearcoat": 1,
+        "ior": 1.8,
+        "metalness": 0,
+        "transmission": 1
+      }
+    ],
+    "skyRotation": -1.7224558478309002,
+    "status": {
+      "materials": 1616,
+      "objects": 2788,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 3.627665483899017
+      }
+    },
+    "target": [
+      -3,
+      15,
+      0
+    ]
+  },
+  "camera": {
+    "cameraDistance": 0,
+    "childCamera": [
+      -81.99430099595968,
+      15.482035514168246,
+      -0.9999999999999952
+    ],
+    "failure": null,
+    "parentCamera": [
+      -81.99430099595968,
+      15.482035514168246,
+      -0.9999999999999952
+    ],
+    "stateEqual": true,
+    "targetDistance": 0
+  },
+  "drag": {
+    "before": [
+      -54,
+      22.450769230769232,
+      61.2676923076923
+    ],
+    "after": [
+      -73.62546904695226,
+      22.450769230769232,
+      -34.2879279356647
+    ]
+  }
+}

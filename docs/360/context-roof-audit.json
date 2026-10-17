@@ -1,0 +1,703 @@
+{
+  "active": true,
+  "failure": null,
+  "renderedCount": 23,
+  "rows": [
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "grey",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "band",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "ribbon",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "wrib",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "cw",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "esm",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "wrib",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.685,
+        1.035,
+        1.15
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 2
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "tile",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "shop",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.785,
+        1,
+        1.415
+      ],
+      "kind": "office",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 1
+    },
+    {
+      "color": [
+        0.925,
+        1.11,
+        1.6
+      ],
+      "kind": "apt",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 0
+    },
+    {
+      "color": [
+        1.06,
+        1.225,
+        1.715
+      ],
+      "kind": "apt",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": true,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 3
+    },
+    {
+      "color": [
+        0.685,
+        1.035,
+        1.15
+      ],
+      "kind": "tower",
+      "maps": [
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        },
+        {
+          "height": 1024,
+          "width": 1024
+        }
+      ],
+      "maxUVError": 0,
+      "rendered": false,
+      "repeat": [
+        0.5,
+        0.5
+      ],
+      "variant": 2
+    }
+  ]
+}

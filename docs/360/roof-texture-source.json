@@ -1,0 +1,26 @@
+{
+  "asset": "concrete_floor_worn_02",
+  "author": "Dimitrios Savva",
+  "license": "CC0",
+  "dimensionsMetres": [
+    2,
+    2
+  ],
+  "files": {
+    "color": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_02/concrete_floor_worn_02_diff_1k.jpg",
+      "md5": "ccd9c2b165411c6aec1270fc6226d335",
+      "bytes": 708284
+    },
+    "normal": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_02/concrete_floor_worn_02_nor_gl_1k.jpg",
+      "md5": "4fb1700c31672f2c1d50553238035d41",
+      "bytes": 1163338
+    },
+    "rough": {
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_worn_02/concrete_floor_worn_02_rough_1k.jpg",
+      "md5": "579be67d20f4362704ff7f575462214b",
+      "bytes": 253558
+    }
+  }
+}

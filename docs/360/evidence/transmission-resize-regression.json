@@ -1,0 +1,10 @@
+{
+  "scenario": "1600x1000 comparison, converged capture repeated; stable scrollbar gutter",
+  "result": {
+    "active": true,
+    "complete": true,
+    "samples": 64
+  },
+  "originalFailure": "Destroyed texture tower-transmission-front used in renderContext_8 submit",
+  "fix": "Allocate before encoding and change transmission material program cache key on resize"
+}

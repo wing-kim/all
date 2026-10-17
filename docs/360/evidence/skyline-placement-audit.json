@@ -1,0 +1,43 @@
+{
+  "buildings": 1912,
+  "layers": [
+    {
+      "count": 945
+    },
+    {
+      "count": 387
+    },
+    {
+      "count": 149
+    },
+    {
+      "count": 406
+    },
+    {
+      "count": 25
+    }
+  ],
+  "officeMaps": [
+    {
+      "height": 1024,
+      "url": "http://127.0.0.1:8765/new/360/assets/facade-office_color.jpg",
+      "width": 1024
+    },
+    {
+      "height": 1024,
+      "url": "http://127.0.0.1:8765/new/360/assets/facade-office_normal.jpg",
+      "width": 1024
+    },
+    {
+      "height": 1024,
+      "url": "http://127.0.0.1:8765/new/360/assets/facade-office_rough.jpg",
+      "width": 1024
+    },
+    {
+      "height": 1024,
+      "url": "http://127.0.0.1:8765/new/360/assets/facade-office_metal.jpg",
+      "width": 1024
+    }
+  ],
+  "overlaps": 0
+}

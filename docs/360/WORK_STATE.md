@@ -1,0 +1,204 @@
+# 작업 상태와 다음 행동
+
+현재 지정 작업 루트: `/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`. 이전 pm/문서 작성/kapehorn-all 경로의 기록은 과거 위치다.
+
+갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
+
+## 최신 재개 요약 — 2026-10-17, S-2 봄·오후 시간대 베이크 배포 완료 (Claude Code)
+
+이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 2026-10-16 요약은 과거 기록이다.
+
+- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1, 병합 금지. 로컬 커밋은 origin보다 앞서 있으며 push하지 않음.
+- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 b6b9461(소스 06ec66c). Pages built, 공개 Chrome(앱 내장 브라우저)에서 봄+오후 베이크 active, 의자 20개 교체, 안내 문구 확인.
+- **S-2 결과:** 원본 계절·시간대 버튼 중 봄+오후에 카페 바닥·천장 하늘빛+태양 반사광 베이크(`new/360/assets/cafe-ambient-slots/spring-pm`). 다른 조합·사용자 일시·야간은 실시간과 "실시간 빛" 표시. 베이크는 첫 화면을 막지 않고 비동기 결합. 가구: 식탁 의자 Modern Arm Chair 01 코냑 쿠션, 화분 9곳.
+- **측정:** 회전 5초 p95 51.2ms(베이크 끔 55.3ms), 100ms 초과 0. 공개 첫 화면 3.4초(캐시 데워짐), 베이크 0.5초 뒤 적용. 굽기 27초(Metal GPU).
+- **정정 기록:** 석양 직사광 "결함"은 오판(스냅샷 ±60m로 서쪽 건물 누락). 기존 12개 시간대 모두 카페 시점 1에 햇빛 무늬 거의 없음(최대 봄 15시 11%).
+- **사용자 지시(2026-10-17):** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단해 진행. 가구는 AI 시안 분위기 기준으로 교체 가능.
+- **미완료:** 벽·기둥·가구 수신면 베이크, 실내 조명 베이크, 다른 시간대 슬롯, 스냅샷 범위 확대(먼 주변 건물), 재질 텍스처 보강, 정밀 이미지 오류(readRenderTargetPixels), 콜드 로딩·모바일 측정, 기존 VIEWER_CONTRACT 미완료 행(종단면·윗층투시·지하투시 등). 사진 수준 품질은 아직 아님.
+- **예산:** Claude 주간 전체 모델 14%(인수 시점 10%), 추가 과금 꺼짐. Codex 수치와 별개.
+
+## 초기 감사 이력 — 현재 상태가 아님
+- Repo wing-kim/all, branch codex/tower-360-validation. 기준 main25b111a(이번 fetch로 확인). 이번 문서 수정 전 HEAD427e254, 작업 트리 깨끗했음.
+- 실제 사용량 초기화0% 확인 후 계획/감사 진행. 실행 시작마다 현재 수치 재확인. 총 주간50% 상한,45% 정리,48% 산출물 완료. 문서화도 예산 포함.
+- 운영 Pages는 main:/ legacy 배포. 별도 private 저장소 evyfjae/kapehorn-3d-preview 생성 및 공개 Pages 활성화 성공. API public:true/https_enforced:true 확인, 첫 빌드와 IAB 브라우저 렌더 검증 완료. CLI evyfjae의 private-source Pages 사용 가능함을 실제 API로 확인했다.
+- 카페 진입/복귀, 이중상 수정, lightMap 전달, 무료 의자 후보 확보 완료. 전체 기능 통합/실내외 품질 성공 아님.
+- 현재 다른 층은 스케치 우회, 실사 진입은1F 고정. 날짜/시간/계절 연결이 불완전하고 고정 태양 사용. 이 상태로 채광 의사결정 기능 완료라고 보고하지 말 것.
+- Blender5.1.1 사용 가능. cafe-gi-study.json.gz는171객체/248139정점,13배치 누락, 텍스처/외부차폐/조명 미포함. 베이크 적용 금지. 자세한 구현 이력은 rendering-checkpoint.txt/ui-integration-checkpoint.txt.
+- 원본 평가 보고 docs/360/assessment.md 등은 존재했지만 제품 목적·전체 기능 계약·재개 우선순위를 통합한 기준 문서가 없었음. 이번에 root AGENTS.md와3개 기준 md로 보완.
+
+## 최신 범위 정정과 배포 착수
+실사3D 모드만 추가하고 기존 main 기능은 비간섭 보존, 최종 main 병합 가능한 PR이 목표. 원본 상태관리 전면 재작성은 하지 않는다. evyfjae/kapehorn-3d-preview private 저장소 생성 완료. Pages 활성화/첫 빌드/공개 브라우저 접속 및 외관·카페 렌더 확인 완료. 소스 f8f0831의 패키지를 배포 repo 6426fc9로 push했다. 부모가 GitHub/브라우저 검증, Sol이 모드 진입/이탈 비간섭 수정을 담당. 원본 new/index.html의 업무 문서는 배포 패키지에서 제외한다.
+
+## 다음 실행 순서 / 사용량 관리
+1. 0~3% 목표: 기존 운영본 보호하며 온라인 검토 배포. URL·버전·실제 접속/렌더 검증. 사용자 검토 환경 확보가 첫 구현 단계.
+2. 3~7% 목표: 원본 상태/명령 계약 확정과 핵심 adapter 연결(층·단면·일시). 소수 성공 사례 조사도 이 단계에서 수행. UI만 보기 좋게 새로 만들지 않는다.
+3. 7~10% 목표: 원본 태양/구조 상태를 따르는 실내·외부 대표 검증. 10%1차/최대15%한차례 보완은 기존 지침 유지(배포·연결·조사 포함 총량). UI/채광 기반이 미완이면 미완이라고 판정하고 일정 조정 근거 기록.
+4. 15~32%: 검증된 방법으로 기능 대응표 완성, 구조만 있는 층까지 연결, 대표 카페2안/외관환경 품질 확장. 모든 층 고급 가구 제작은 선택 범위.
+5. 32~40%: 기존 기능과 모드 왕복·일시·단면·후보·성능·배포 회귀검증.
+6. 40~45%: 필수 결함 수정.45~48%:최종 배포/증거/후속 담당자 프롬프트.48~50%예비.
+수치는 시간 추정이나 성공 보장이 아닌 관리 경계다. 기능 연결 미완을 ‘자산 미제작’이라고 포장하지 않는다. 품질 실패 시 같은 수치 조정 반복 대신 사례/대안/자료 부족 검토. 예산 내 결과와 한계를 인계한다.
+
+## Sol 분담
+기본 Sol1개 순차 실행. 구현 단위: 배포 패키지/갱신 → 상태adapter+테스트 → 태양·베이크유효성 → 층/단면/표시 → 대표자산·조명 → 회귀/인계. 각 단위는 담당파일·기준상태·불변조건·완료증거만 전달한다. 전체 대화 복제/중복감사/재귀위임 금지. 부모는 주요diff·구조/채광 일치·대표화면 판단을 맡는다. 실제 모델 정체와 실행 분담은 구분한다.
+
+## 작업 단위 완료 시 기록 양식
+- 커밋/변경 파일:
+- 기능 계약 행과 상태(완료/부분/미완/미검증):
+- 검증 명령·브라우저·캡처·배포URL:
+- 사용량 확인값:
+- 미해결/추정/베이크 유효성:
+- 다음 첫 행동(파일/재현법):
+
+지속 목적은 PROJECT_BRIEF, 계약은 VIEWER_CONTRACT, 변하는 상태는 이 파일에 기록한다. 과거 기록을 반복해서 앞에 붙이지 않는다. 컨텍스트 압축/새 세션에서는 AGENTS의3파일 읽기 순서 후 git/usage를 확인한다. 다음 담당자 최종 프롬프트는 완료 시 final-handoff-prompt-ko.txt에 별도 작성한다.
+
+## 현재 실행 체크포인트
+- 원본 작업 커밋96cc17d: additive-only/최종 병합 원칙, f8f0831: allowlist 패키징.
+- 패키지 /private/tmp/kapehorn-preview-f8f0831, 80 runtime files/68,225,660 bytes, 정적 참조33개 누락0. new/index.html 업무 자료 제외.
+- 검토 URL(실제 접속 확인): https://evyfjae.github.io/kapehorn-3d-preview/
+- 운영 Pages API 재확인: wing-kim/all main:/, built, 설정 변경 없음.
+- 최신 주간 사용량2%. 다음: 공개 브라우저 검증 후 상태 기록, Sol lifecycle diff 검수/모드 왕복 테스트.
+
+### 배포 검증 결과
+- GitHub Pages build6426fc9: built, error:null. HTTPS modern.js200.
+- IAB 공개 URL에서 실시간360 외관 렌더 완료 → 카페 전환 → 스케치업 이탈 → 기존 내부 층 목록 B2~PH2 표시 확인.
+- 증거: deployed-preview-exterior.jpg, deployed-preview-cafe.jpg. 초기 로딩은 여전히 길었으며 정확한 성능 계측/Chrome/전체 기능 회귀는 미완.
+- 공개 배포 성공은 기능 대응/실사 품질 성공이 아니다. 유리의 세로 반사와 가구 단순함/실내외 균일한 명암은 다음 품질 검토 대상.
+
+### 모드 비간섭 수정 / 다음 구현
+- a7f0703: 새 모드 비활성 때 disable 무동작, 원본 컨트롤/렌더 소유권 복원, 외관 카메라 전달, 카페 이탈 시 외관 버튼 선택 복구. 원본 HTML/기존 핸들러 변경 없음.
+- node tools/360/test-integrated-lifecycle.mjs 통과. IAB 최신 로컬에서 카페→스케치 전환 후 v-int=false/v-corner=true, 기존 내부 진입→렌더 전환 후 v-int=true 및 B2~PH2 층 목록 확인. 증거 lifecycle-original-interior.jpg. 전체 회귀 완료는 아님.
+- 격리 배포 업데이트: 소스8a0ba56(수정a7f0703 포함), 배포8c36fc8.
+- 다음 첫 작업: VIEWER_CONTRACT의 날짜/시간/계절 전달 및 현재 고정 태양 덮어쓰기 해결을 bounded Sol 작업으로 진행. integrated.js snapshot → scene.js applyConfig/light → tools/360/modern-entry.js alignDaylight 경로. 원본 R3D 태양 계산/기존 applyTime은 변경하지 말고 읽기/adapter로 전달. 이어서 층·단면 연결.
+
+## 2026-10-16 추가 요구: 시점 변경 대기 금지
+다음 단계 우선순위를 수정한다. 채광/층 연결 확장 전에 탐색 성능을 계측하고 통과시킨다. 기본 탐색은 카메라 이동/정지 후 정밀 누적을 기다리지 않는 동일 실시간 경로여야 한다. 사진처럼 보이는 품질은 탐색 화면 자체에서 검증하고 정밀 버튼으로 대체하지 않는다.
+- 1단계: 회전/이동/휠의 프레임 간격 p50/p95, 200ms 이상 stall, 지오메트리 재생성·probe·정밀요청 횟수 계측. 최초 다운로드/첫 프레임과 반복 탐색을 구분한다. 외부/카페 모두 검사. 목표 데스크톱 탐색 약30fps 이상, 지속100ms+ stall 없음; 측정 환경과 미달을 공개한다. 이는 보장값이 아니라 통과 기준이다.
+- 2단계: 고정 간접광+실시간 직사광/반사의 대표 구간 품질 검증. 구조·일시가 바뀌면 오래된 베이크 무효화. 회전만으로 베이크/모델 재계산 금지.
+- 3단계: 원본 상태·채광·층·단면 연결, 필요한 변경만 갱신. 기존 모드 비간섭 회귀 유지.
+- 4단계: 실내외 품질 확대, 성능 재검증, 격리 배포와 인계. 각 단계 종료 시 수치/화면/미완 보고. 통과 못한 접근을 목표 달성 가능하다고 확약하거나 전체 확대하지 않는다.
+- 공식 참고: https://doc.babylonjs.com/guidedLearning/lightmaps/ (베이크 제작/적용), https://threejs.org/examples/webgpu_loader_gltf_compressed (압축 자산 경로). 참고 사례만으로 이 프로젝트 목표 품질을 증명하지 않는다.
+- 현재 배포8c36fc8 IAB 첫 계측: parent 초기준비7999ms, renderer 첫프레임3349.8ms. 4초 외관 자동회전 평균 프레임간격34.87ms, CPU 제출31.69ms(초기샘플 포함). 정밀mode interactive, 시안재생성timing 없음. 기존 통계는200ms 이상 간격을 제외하므로 합격 판단 불가; 새 계측 추가 중. Chrome 커넥터 현재 이용 불가, IAB로 검증 중.
+
+### 탐색 성능 1차 결과 (수정75f0907/4835134)
+- 비활성 tracer reset/updateCamera 반복을 제거. 기본 카메라 이동은 지오메트리/probe/정밀 누적을 갱신하지 않음을 카운터로 확인.
+- 전체5초/고품질/IAB/local: 외관142간격 평균35.16ms,p9537.4ms,max40.4ms; 카페151간격 평균32.84ms,p9534.7ms,max37.1ms. 100ms 이상0. 각 구간 buildingUpdates/probeRefreshes/precisionRequests/precisionSamples 증가0.
+- 초기부모준비7299.6ms, renderer첫프레임3303.8ms(콜드 네트워크 벤치마크 아님). GPU시간이 아닌 프레임 간격/CPU 제출 측정이다. docs/360/navigation-performance.json에 원자료.
+- 정밀 생성 후 즉시 취소→이동 시험: tracer생성 확인, 추가정밀샘플0이지만543.8ms 간격1회. 정밀 준비 취소 직후 잔여 지연 문제는 미해결. 일반탐색 전체성공/완전성능통과로 보고하지 않는다.
+- 계측 버퍼600개로 확장해5초 전체구간을 보존. 긴 간격을 버리지 않고 idle시만 연속측정종료. stats테스트[16,17,500] 통과. lifecycle test도 통과.
+- 공식 사례 후보: https://playcanvas.com/project/391368/overview/sponza-lightmap-demo (lightmap성능 시연), https://editor.babylonjs.com/experiments/mansion (고품질 자산/desktop한계 안내). 아직 우리앱과 동등기능/성능 비교 검증은 안했음.
+
+### 정밀 준비 구간 진단 정정
+추가 소스 감사: 위543.8ms는 정밀 준비와 취소를 가로질러 이어진 preview 타임스탬프 구간이므로 ‘취소 후 회전만의543ms’로 해석할 수 없다. 라이브러리 setScene은 메인스레드에서 BVH를 동기 생성하며 텍스처 패킹/빛 준비도 한다. precisionSamples0은 이 준비 비용을 제외하지 않는다. 다음 구현은 requestPrecision 경계에서 프레임 구간을 끊고 준비/취소 소요시간을 별도로 기록한 뒤 검증. 실제 긴 준비를 취소 가능하게 하려면 worker/단계별 준비가 필요하며 기본 탐색에 이 경로를 자동 사용하지 않는다.
+- 탐색계측 배포 d607851 (소스8002343), 작업브랜치 push 완료. 이후 코드 수정은 없는 진단 기록이다.
+
+## 사용자 지정 단계 종료 보고 규칙
+2026-10-16 추가 요청. 모든 단계 종료 보고에 다음을 포함한다.
+1. 전체 계획/현재 위치: 0격리배포 → 1탐색성능 → 2실내외 대표 품질 → 3원본 기능 연결 → 4품질확대·회귀·배포·인계. 완료/진행/예정과 통과 근거 표시.
+2. 목적 적합성: 기존 main을 보존하며 구조·채광·후보·인테리어 판단에 실사3D가 기여하는지. 보기 좋은 독립 데모로 이탈하지 않았는지.
+3. 레퍼런스: 링크, 확인 깊이(발견/문서확인/실제구동/적용검증), 채택한 방법과 미적용 이유. 단순 검색을 실증이라고 보고하지 않는다.
+4. 구현 가능성: 실제 화면·성능·형상/기능 일치 근거, 실내/외부 각각, 미검증·실패·자료부족. 기술 성공과 시각 품질 성공 구분.
+5. 자원: 최신 주간 계정 사용률과50%까지의 잔여 여유, 이번 단계 사용률 차이(측정했을 때만), Sol 분담과 중복 방지. 사용률을 토큰 수로 환산하지 않는다.
+6. 판단: 계속/방법변경/확대보류 중 하나와 이유, 다음 작업/통과기준/배포URL/커밋. 필요한 후속 작업은 기존 승인 범위에서 계속한다.
+현재0완료,1진행(기본 외부/카페 짧은 탐색검증 통과, 초기준비/정밀준비/광범위기기 검증 미완),2~4예정. 레퍼런스는 공식문서/데모 후보를 검색 확인한 수준이며 동등조건 직접비교는 미완. 마지막 실제 주간 조회5%, 다음 단계 경계에서 재조회.
+
+## Goal 상태 확인과 재개용 최신 목표
+앱 get_goal 실제 상태 blocked, 과거65% 한도 목표가 남아 있음. 목표 도구는 blocked→active 재개나 objective 수정을 지원하지 않으며 사용자 UI 조작이 필요하다. 이 상태를 완료로 바꿔 우회하지 않는다. 현재 대화의 승인된 구현은 계속할 수 있으나 자동 연속 실행 재개를 확인했다고 보고하지 않는다.
+재설정할 목표: 기존 main의 구조·시안·층·채광·단면·사진 등 작동하는 기능을 보존하면서 동일 UI에 연결되는 실사3D 표현 모드를 분리 브랜치에 추가한다. 회전 후 누적 대기 없는 기본 탐색, 실내외 대표 품질 검증, 격리 공개 배포, 회귀 테스트와 main 병합 가능한 PR 및 후속 담당자 인계 프롬프트까지 주간 사용량50% 이내에 마무리한다. 단계마다 전체 계획/현재 위치/레퍼런스 적용/타당성/미완/사용량을 보고한다.45% 정리,48% 산출물 완료,50% 상한.
+이번 재개 작업: 정밀 준비의 module/scene/tracer/total/cancel CPU 시간을 별도 계측하고 해당 경계에서 탐색 프레임 타임스탬프를 끊었다. 카메라만 움직일 때는 프레임 연속성을 유지한다. 이 변경은 측정 정확도 개선이며 초기 로딩 자체가 빨라졌다는 뜻은 아니다. 브라우저 재측정은 다음 검증에 포함한다.
+
+## 2026-10-16 지속 작업 재개
+- 사용자 추가 조작 없이 현재 승인 작업 계속. 보고만 하고 턴을 끝내는 방식으로 중단하지 않는다. Goal 자동재개 상태와 실제 개발 가능 여부를 구분한다.
+- 실제 주간 사용률6%. 50% 초과 예상 시 미리 Claude 전환 준비. docs/360/handoff/claude-code/README.md/PROMPT.md 생성, 원본 저장소/분리브랜치를 이어받는 방식. 아직 도구전환 필요 판정 아님.
+- 준비/회전 분리 실제검증: precision-preparation-performance.json. tracer초기화4393.7ms/전체4455.5ms, 이후4초회전평균27.02ms,p9530.9,max59.7,100ms이상0. 일반탐색과 명시적 정밀준비 비용 분리 확인. 정밀준비동기차단 및 초기로딩 최적화는 남음.
+- 실증 레퍼런스: PlayCanvas Sponza Dynamic→Lightmapped 실제 실행/화면 비교 완료. reference-method-review.md에 적용/미적용/한계 정리. 베이크를 카메라 독립 조명으로 사용하는 원리 확인, 우리목표 전체달성 증거는 아님.
+- Sol 현재 작업: daylight_adapter, 원본 일시/계절/태양 벡터와 실사모드 연결, 조명만 바꿀 때 geometry재생성 금지. 부모 CUA 검증 예정. 기존main핸들러 보존.
+
+## 채광 연결 및 유리 검수 체크포인트
+- d95cce4 원본 태양/일시/계절 연결: 겨울오전과 사용자2026-06-21 11시 및 야간 source/render 방향·강도 일치. 하루재생 시 geometry 재생성0, light polling200ms. 베이크는 검증된AO만 사용, sunlightBakeValid=false.
+- 6b20293 source-aligned analytic sky256cube. 실제 외관 표시 확인. 회전5초 동안 captures1 유지/probeRefresh증가0/geometry0/precision0. 평균38.73ms,p9542.6,max198.7ms,100ms초과1회: 완전 성능 통과 아님. 하늘 captureCPU12.9ms는 GPU완료 시간이 아니다.
+- 유리 분리 비교로 밝은 diffuse alpha 층이 불투명 흰 패턴을 강화함 확인. 형상은 유지하고 alpha 근사의 색/opacity/Fresnel/clearcoat를 완화. glass-preview-after.jpg와 daylight-sky-exterior.jpg; 내부 시야도 직접 확인. 물리적 투과/측정 유리 사양이 아닌 실시간 근사이며 실사 목표 미달.
+- 증거 daylight-custom-day.jpg/daylight-night.jpg/daylight-cafe-reference-comparison.jpg: 원본 실사 대비 가구·간접광·창밖 명암 개선 필요.
+- 실제 주간 사용률10%,50%까지40%p. 다음 Sol: 원본v-int/층 UI 상태와 실사 카메라 연결, 상세자산 없는층 구조보기 유지. 부모: 유리수정 commit 및 통합 검수 후 격리배포. Claude 인계폴더는 준비됨, 지금 전환 필요는 없음.
+
+## 층 연결/자산 단계 체크포인트
+- 496d3c4 원본 내부진입/층 선택을 실사모드 유지하며 전달. 실제IAB 1F→3F→B1 floor/camera/target 일치, buildingUpdates0. f5579d0 공간명령/카메라복원 후속 구현, 부모검증 진행. 단면/주석/미니맵 아직미완.
+- 9b85423 PolyHaven Dining Chair02(CC0)1K0.9MB공식파일checksum검증. 기존20개 낮은의자 위치 대체, 바스툴유지, 외곽검사20통과, 브라우저크기·방향확인. cafe-dining-asset.jpg. 원본실사와동일제품이아닌검토용예시.
+- 새카페5초회전 IAB고품질: 평균34.66ms,p9538.4,max44.5,100ms초과0; geometry/probe/precision증가0. cafe-dining-performance.json. 정확한fps표시는프레임측정사용(telemetry의rafFPS는idle시렌더FPS가아님).
+- 주간실측13%. 다음: 공간명령/모드왕복/Home검수, 격리배포갱신. 병행Sol은 실제ambient-only floor/ceiling베이크가능성검증. 새exporter큰batch삼각형필터링, snapshot1946173vertices559objects/skipped0, 로컬37MB는.gitignore로배포/커밋제외. tools/360/cafe-ambient-source.json.gz. bake적용완료아님.
+
+## 공개 배포와 공간 이동 검수
+- source affaaba → isolated deployment c98ee69, Pages built/error:null, 공개 ?lab=review&view=cafe 실제카페/원본UI 확인. deployed-connected-cafe.jpg. 원본main배포 변경없음.
+- f5579d0 원본3F엘리베이터홀 camera/target/FOV 일치. 실제키d 이동→스케치복귀 floor/pose/FOV보존, Home키실내UI해제 및 공중전체시점 확인.
+- coreTop은doll/단면에 의존, 최초연결은.8m거리제한에걸려벽속카메라버그발견. affaaba에서실사모드에서는예고와함께차단, 원본모드그대로동작(일반URL query없음에서3F코어단면직접확인, original-mode-core-regression.jpg). 연결완료아님.
+- 9c88dc7 미니맵/패드/나침반연결: 카메라읽어원본미니맵갱신, 원본패드전진/미니맵좌표클릭→실사카메라이동실제확인. 후속fixed-orbitdistance보정/CSS 상태표시위치 변경은 다음로드재검증예정. 원본라벨/단면전체대응여전히미완.
+- 221ec21/4f88863 offlineambientproof: 정확한원본바닥11삼각형336.47㎡/천장14삼각형357.09㎡, Cycles32sample256EXR출력. 공개적용아님. 후속Sol512/256samples와 opt-in study runtime연결진행. 원본전형적출처UVrepeat/alpha/유리전달근사한계명시.
+- 마지막실제주간조회18%. 잔여32%p(50상한); 계속진행, 전체기능/실사목표성공확약은아님. Claude핸드오프폴더준비완료,45정리48완료원칙유지.
+
+## Ambient study / interior navigation checkpoint
+- bffc4a4: exact floor/ceiling indirect-light atlas, Cycles512/256 samples, offline linear bilateral denoise; sourceEXRs retained, runtime~168KB +8KBmanifest. Query ambientBake=study only, default off. Source-state/furniture/receiver checks; night disabled. Direct sun remains source-controlled. Not quantitative daylight/complete GI.
+- Actual IAB matched1Fcorner before/after screenshots cafe-ambient-before.jpg, cafe-ambient-after.jpg(raw noisy), cafe-ambient-denoised.jpg. Noise reduced; ceiling/floor shading is calmer but image-reference realism remains unmet. Walls/furniture still have approximate lighting; do not claim whole-interior baking.
+- cafe-ambient-performance.json:5sec mean32.18/p9535.6/max44ms,0 over100; geometry/probe/precision increments0. Firstframe4531ms and studyload1145ms; not controlled startup benchmark, no speedup claim.
+- e3a3948 original interior text labels and toggles now visible in modern mode. Source/child camera exact afterQ (rotation, unchangedheight/location); A/Dstrafe, Q/E/arrowsrotate likeoriginal. Roomlabeltoggle staysmodern. Screenshotinterior-labels-navigation.jpg. Height/ramp3Dguides, upperoverlay, sections stillunmapped. Compare split hides labels to avoidincorrectprojection.
+- Current weekly measured22%; ongoing section/clipping feasibility audit bysameSol, parentvisualQA. Continue boundedimplementation; broaderphotorealquality notpassed.
+
+### 추가 실제 검증 / 예산24%
+- g1 straight 변경→ambientStudy source-state-mismatch/receivers0, skin복귀→active2. 야간off/오후on확인. 구조 보존하면서 오래된베이크무효화 확인.
+- 외부전체5초 high평균39.94/p9542.1/max60ms (~25fps), balanced평균30.20/p9532.2/max36.2ms (~33fps); 각geometry/probe/precision0,100ms초과0. 카메라각도가 동일하지 않아 엄밀한속도향상비교아님. 다음기본품질balanced권고, 수동high유지. exterior-current-review.jpg. 외관/환경은원본사진수준미달.
+- 실제preview 유리58mesh중29개castShadow=true. 임시runtime에서순수유리castShadow제거실험, 현재카페AM/PM구도차이미미. 소스변경안함. 유리투과그림자/주변가림추가검토필요; 관찰근거없이전체광량을높이지않음.
+- 단면감사: 원본LG/ceil/extG/well/ramp가시성은modernflatten에서연결누락. Sol은층단면+coreTop만bounded구현중. 종단면은WebGPUClippingGroup/정밀호환영향이커미완명시유지.
+- 현재전체품질/기능목표를50%내완성할수있다고확약할근거없음. 현재단면단위검증후잔여범위재판정,45%전인계정리. Claude폴더가있으며사용자추가조작없이Codex구현계속.
+
+## Chrome 공개 검증과 마지막 연결 보완 — 2026-10-16
+- 공개 배포33f87ad, 소스727f0a8: Pages built, Chrome 카페 렌더/ambient valid2면 확인. chrome-public-cafe.png.
+- 공개 시험 firstFrame13995.6ms, ambientLoad7918.4ms. 초기 자산 검증이 순차 fetch라 c44bd41에서 병렬화, 모든 해시 일치 후에만 활성화하는 실패 시 해제 계약 유지. test-ambient-downloads.mjs는 동시 시작과 불일치/다운로드실패를 검증.
+- 변경 후 로컬 IAB firstFrame3442.3ms/ambientLoad250.9ms/valid2면. 공개 전후의 동일조건 비교가 아니므로 4배 개선이라고 주장하지 말 것.
+- d7ea3bc/64b044e: 한계선 원본3개 선을 정확히 복사하고 점선/거리/간격 유지, 토글 시 모드 유지 및3개 선 hide 실제 IAB 확인. t-b1은 legacy M→RMAT→배치/베이크 clone 재질 경로가 달라 아직 스케치 복귀. 무작정 투명도만 변경해 동일기능이라고 주장하지 않는다.
+- 나란히 비교 실제 IAB: modern 유지, HTML라벨 hidden, 원본사진 표시. cafe-latest-comparison.png. 사진의 강한 자연광/재질·가구 디테일에 미달. 사진시점 메뉴가 상단 원본 버튼 아래 겹치는 배치 문제를 발견, 후속 UI 정리 필요. 높이3D가이드는 토글로 해제 가능.
+- 사용자 요청 Claude Code 준비 완료: root CLAUDE.md, handoff/claude-code/README.md의 실제 실행명령 및 PROMPT.md, 독립 인간인계 final-handoff-prompt-ko.txt. 같은 checkout/branch에서 Codex 쓰기 중지 후 시작. 별도 코드사본 불필요.
+- 현재36%, 50%까지 여유14%p. 남은 모든 기능+실내외 사진품질 완료를 보장할 수 없으며 Claude 전환 준비가 필요하다고 판단. 우선 공개 검토본 검증/정확한 남은 항목을 남긴다.
+
+## 검토 UI/배포 캐시 보완
+- db4a9a7: 사진시점 선택기가 원본 실내 툴바 아래 보이도록 위치 측정/ResizeObserver 적용. 실제 IAB selector 접근 확인. 하단 설명은 이동패드 위로 여유 확보.
+- 공개46a260a 검증에서 parent integrated=limits-1인데 child modern=labels-1로 이전 HTML 캐시가 섞임. integrated child iframe URL에 revision=compare-layout-1 추가, parent loader 토큰도 갱신. 앞으로 해당 release token을 함께 갱신해야 함.
+- 공개 warmed reload에서 베이크 valid2면/937.2ms, 첫화면5095.5ms였으나 캐시 구버전 혼합이 발견돼 새버전 성능 증거로 사용하지 않는다. 최신 공개검증을 마지막 체크포인트에 기록할 것.
+
+## 최종 공개 검토 및 인계 준비 체크포인트 — 2026-10-16
+- 공개 배포 fcb73ec, 소스220429e. Pages built/error null. Chrome public 실제 카페/원본사진 비교 렌더 확인. chrome-public-final-comparison.png.
+- child URL revision=compare-layout-1 확인. 원본3개 LineDashedMaterial dash=.6/gap=.4 확인. ambient requested/valid/enabled=true,2면. 캐시 혼합 오류 이후 새버전 동작 확인.
+- 공개 Chrome 이번 초기 renderer firstFrame9322.1ms, ambientLoad2532.3ms. 네트워크/캐시/뷰포트가 이전14초와 통제된 비교가 아니므로 개선율로 인용하지 않는다. 전체 페이지 초기 자산 준비는 이 시간 외에도 존재하며 아직 빠르다고 판정하지 않는다.
+- 로컬 비교 메뉴 사진2 선택 실제조작 성공, toolbarBottom194.5/photoTop205. 하단설명도 이동패드 위. cafe-comparison-controls-fixed.png.
+- 원본 운영 Pages source main:/ 보존 재확인. 원본HTMLdiff는 additive opt-in hook 중심(+33/-8 시점), 기존 기능 전체 회귀 완료 아님.
+- 최신 실제 주간38%. 50%까지12%p,45%정리/48%산출물완료 정책 유지. Claude 진입파일/실행절차/현재 근거가 준비됨. 이 문서 최신요약과 마지막 체크포인트가 역사 기록보다 우선.
+- **다음 첫 행동:** git/usage 확인 → VIEWER_CONTRACT 미완료 목록 기반으로 단면/윗층투시/지하투시 adapter를 한 단위씩 선택. 사진수준 전체품질 미달을 숨기지 말 것. 전환 시 Codex/Claude 동시쓰기 금지, 동일 branch를 사용. main merge 금지.
+
+## Claude 시작 절차 사용자 정정 — 2026-10-16
+사용자는 Claude가 먼저 전체 목적/계획/가능성/자원 계획을 보고하고 최초 승인을 받은 뒤 계속 작업하기를 요청했다. handoff/claude-code/PROMPT.md를 이 조건으로 교체했고 root CLAUDE.md에 초기 승인 gate를 추가했다. 과거의 즉시 구현 재개 지침보다 우선한다. 권장 시작: claude --model opusplan --permission-mode plan. 로컬2.1.138 설치 확인, 인증/계정 모델 접근은 사용자 실행 시 확인.
+
+## Claude Code 앱의 지정 폴더와 지속 문서 — 2026-10-16
+사용자는 터미널이 아니라 Claude Code 앱을 사용한다. 지정 폴더는 현재 Git 루트 kapehorn-all이며 지침은 이미 해당 루트/하위 docs에서 Git으로 관리해 왔다. START_HERE_KO.md에 앱의 작업폴더 선택, 첫 메시지, 문서 역할 및 매 단계/압축 후 갱신 절차를 추가했다. CLAUDE.md를 한글로 정리하고 한글 응답과 최초 승인/승인 후 자율 진행의 구분을 명시했다. 앱에 CLI 옵션/opusplan UI가 반드시 존재한다고 가정하지 않는다. 별도 빈 폴더나 중복 소스 사본을 만들지 않는다.
+
+## 독립 작업 공간 이전 — 2026-10-16
+- 사용자 지정 `/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower`에 --no-hardlinks 독립 clone 생성. 작업브랜치 codex/tower-360-validation, 이전 기준 e694ac2 및 전체 조상 이력 보존. origin은 https://github.com/wing-kim/all.git로 설정. 공유 git worktree/alternates 아님.
+- Git 제외 tools/360/node_modules와 cafe-ambient-source.json.gz도 새 위치로 이동. 베이크 입력 SHA256 이동 전후 동일 확인.
+- 기존 저장소는 미커밋 변경 없음을 확인한 뒤 원래 local main0f250ee로 복귀. 작업 시작 checkout reflog와 일치하며 diff/ignored status도 비어 있음. 원격 최신main으로 임의 갱신하지 않음. 기존 작업 브랜치/이력도 안전을 위해 삭제하지 않음.
+- 지침·인계 프롬프트·시작 안내의 실행경로를 새 위치로 변경. GPT/Claude는 새 폴더에서 시작하고 이전 폴더에 타워 기능 수정 금지. 앱의 현재 대화 프로젝트 선택을 도구로 자동 이동했다고 주장하지 말 것.
+- 이전 후 검증: integrated lifecycle 및 cafe ambient guard 테스트 통과. localhost8765 서버를 새 루트에서 재시작하고 START_HERE HTTP 응답이 새 파일과 바이트 일치, viewer HTTP200 확인. 렌더 코드 변경 없는 경로 이전이며 전체 시각 회귀를 다시 수행했다는 뜻은 아님.
+
+## Claude 인수 승인과 S-1 실현 가능성 검증 — 2026-10-17
+- Claude Code(Opus 5.5) 인수 검토 보고 후, 사용자가 구현 전에 "실제 사례로 화질 상한을 먼저 확인"하도록 순서를 바꿨다. 승인 범위: S-1(사례 조사, 데모 실행·측정, 로컬 Cycles 상한 렌더, 비교 페이지, 문서화). S0～S8 구현 계획 자체의 최초 승인은 아직 받지 않았다.
+- 사용자 지시: **무료 구현만**. 유료 스트리밍·유료 제작 도구·유료 에셋은 참고 사례로만 둔다.
+- 결과: docs/360/s1-feasibility.md, evidence/s1/(우리 측 이미지 3장), tools/360/render_cafe_reference.py. 비공개 비교 페이지 https://claude.ai/artifact/7j6n9aQFJjvSt9dCB7tkYJ (타사 캡처 포함, 저장소 미포함).
+- 핵심: 베이크·스플랫 사례는 회전 대기 없이 사진급(Shapespark p95 9.3ms, CG 학습 스플랫 약 30fps)이나 조명 고정. 동적 태양 사진급 무료 웹 사례 없음. 우리 카페 Cycles 256샘플(39초)도 AI 사진 미달, 주원인은 자산·재질·조명 연출.
+- 새 결함/확인: 정밀 이미지 readRenderTargetPixels 오류(내장 브라우저), 가을15시 실시간 창가 햇빛 자국 vs Cycles 실내 직사광 없음 불일치, GLB 내보내기 유리 불투명, 스냅샷 의자 텍스처 누락.
+- Claude 사용량: 주간 전체 모델 10%(인수 시점), 추가 과금 꺼짐.
+- **다음 첫 행동:** 사용자에게 S-2(카페 한 장면 무료 실증: 재질 보강 + 두 시간대 Cycles 간접광 베이크 + 동일 구도 비교)와 결함 2건 원인 확인 순서를 승인받는다. 승인 전 구현 금지.
+- 2026-10-17 추가: 고정 시간대 전체 빛 베이크 방향과 정적 배포(컴퓨터 상시 가동 불필요) 설명. 실시간 석양 실내 직사광 누락 결함 발견(유리 castShadow 추정, 미확정), 창가 밝은 띠는 직사광 아님으로 정정. 가구·재질은 AI 사진 분위기 기준 무료 자산 교체 허용. 상세 s1-feasibility.md 추가 절.
+- **다음 첫 행동(갱신):** S-2 승인 시 (1) 실시간 직사광 누락 원인 확인·수정 (2) 카페 가구·재질 무료 자산 교체 (3) 사용자가 고른 시간대 전체 빛 베이크 웹 적용 (4) 목표 스틸과 동일 구도 비교·회전 측정. 시간대 선택은 사용자 확인 필요.
+- 2026-10-17 정정: "실시간 석양 직사광 누락 결함"은 오판(스냅샷 ±60m로 서쪽 도시 건물 누락). 기존 12개 시간대 모두 카페 시점 1에 햇빛 무늬가 거의 없음(최대 봄 15시 바닥 11%). 사용자는 원본 시간대 버튼 중 하나로 실증을 요청했고, 후보를 봄+오후로 제시하고 확인 대기. 베이크 대상은 하늘빛·태양 반사광·실내 조명 간접광으로 조정 제안.
+
+## S-2 시간대 베이크 체크포인트 — 2026-10-17 (Claude Code)
+- 커밋: bcce974(슬롯 베이크·런타임·표시), 405fc64(가구 교체·재베이크·캐시 우회 해시 검증), 06ec66c(비동기 결합). 배포 9160b8e→b6b9461.
+- 베이크 재현: `blender --background --factory-startup --python tools/360/bake-cafe-ambient.py -- tools/360/cafe-ambient-source.json.gz tools/360/ambient-slots/spring-pm --size 512 --samples 256 --slot spring-pm --sun 0.0758,0.6412,0.7636 --sun-strength 2.6 --sun-color 1,0.8714,0.7379 --device GPU` 후 linear PNG와 manifest를 `new/360/assets/cafe-ambient-slots/spring-pm/`로 복사, index.json에 키 등록.
+- 가구를 바꾸면 export-cafe-bake.js로 스냅샷 재추출(로컬, gitignore) → 기준·슬롯 재베이크 필수. 이전 스냅샷은 `cafe-ambient-source.2026-10-16-tufted-chairs.json.gz`로 로컬 보관.
+- 증거: docs/360/evidence/s2/, 비공개 비교 페이지 https://claude.ai/artifact/7j6n9aQFJjvSt9dCB7tkYJ (S-2 결과 절).
+- **다음 첫 행동:** 수신면을 벽·기둥까지 늘리는 베이크(아틀라스 UV 생성) 설계와 실내 조명 베이크 검토. 병행으로 정밀 이미지 오류 원인 확인. 원본 main 설정 범위 안이면 사용자에게 묻지 않고 진행.

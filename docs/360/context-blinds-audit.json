@@ -1,0 +1,34 @@
+{
+  "placement": {
+    "buildings": 20,
+    "minFrameInset": 0.015999999999994886,
+    "minPaneGap": 0.0059999999999909015,
+    "openingViolations": 0,
+    "slats": 2313,
+    "windows": 459
+  },
+  "runtime": {
+    "camera": [
+      -18,
+      10,
+      12.999999999999996
+    ],
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1603,
+      "objects": 2785,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 4.564874715579145
+      }
+    },
+    "target": [
+      -3,
+      9,
+      25
+    ]
+  }
+}

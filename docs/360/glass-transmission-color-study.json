@@ -1,0 +1,24 @@
+{
+  "trialLinearColor": [
+    0.8,
+    0.83,
+    0.86
+  ],
+  "originalSRGB": "f3f9fc",
+  "adopted": false,
+  "reason": "Darker interior without a sufficient improvement in overlapping structure or reference appearance.",
+  "trialRuntime": {
+    "complete": true,
+    "failure": null,
+    "status": {
+      "materials": 1615,
+      "objects": 2779,
+      "samples": {
+        "avg": 64,
+        "max": 64,
+        "min": 64,
+        "samplesPerSecond": 4.051992123943367
+      }
+    }
+  }
+}
