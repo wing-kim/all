@@ -104,7 +104,10 @@ assert.deepEqual(floorCalls.at(-1).slice(0,4),['2F',sourcePose.camera,sourcePose
 sourcePose={...sourcePose,doll:true};click('#coreTop');interval();
 const status=ids.get('viewer').children.find(child=>child.id==='precision-status');
 assert.equal(floorCalls.at(-1)[4],true,'core top enters the original dollhouse visibility mode');
-assert.match(status.textContent,/원본 층별 가시성 · 절단면 미지원/,'dollhouse visibility does not claim a geometric section cut');
+assert.match(status.textContent,/원본 층별 가시성/);assert.doesNotMatch(status.textContent,/종단면 절단/,'dollhouse visibility alone does not claim a section cut');
+// 원본 secBtn이 부모 렌더러에 절단면을 걸면 같은 평면이 실사 장면으로 전달되고 상태 문구에 표시된다.
+C.renderer={clippingPlanes:[{normal:{x:0,y:0,z:-1},constant:6.78}]};click('#secBtn');frames.splice(0).forEach(fn=>fn());interval();
+assert.match(status.textContent,/원본 종단면 절단/,'section cut is reported only while the original applies one');C.renderer={clippingPlanes:[]};
 sourcePose={camera:[3,2,4],target:[3,2,3.7],fov:72,spin:false,doll:false};click('#coreHall');interval();
 assert.equal(floorCalls.at(-1)[4],false,'walking back out clears dollhouse visibility');
 selectedFloor='3F';interval();sourcePose={...sourcePose,doll:true};click('#dollBtn');interval();

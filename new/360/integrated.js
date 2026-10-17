@@ -23,6 +23,11 @@
   `;document.head.appendChild(style);
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
+  // 실사 3D는 신축 시안 전용이다. 현황·비교(기존 동광빌딩·현황 아파트·겹침 윤곽)는 원본 렌더로 보여 주고,
+  // 실사 3D에서 넘어간 경우 신축으로 돌아오면 실사 3D를 복원한다.
+  const eraNote=document.createElement('small');eraNote.id='precision-era-note';eraNote.textContent=' · 신축 전용(현황·비교는 원본 화면)';label.appendChild(eraNote);
+  let eraReturn=false;
+  const syncEraNote=()=>{const isNew=(document.querySelector('input[name="era"]:checked')?.value||'new')==='new';eraNote.hidden=isNew;document.getElementById('vm-precision').disabled=!isNew;return isNew};syncEraNote();
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
   settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced" selected>균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>원본 층 선택과 층별 형상 표시를 사용합니다. 1F 카페에는 검토용 가구가 있고 다른 층은 원본 구조와 임시 가구가 표시됩니다. 실내 시안·정밀 단면 절단은 준비 중입니다.</div>';
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
@@ -61,7 +66,9 @@
   function snapshot(){return {state:{...C.state},display:{city:document.getElementById('t-city').checked,ctx:document.getElementById('t-ctx').checked},limits:document.getElementById('t-limits').checked,daylight:C.sourceDaylight(),floor:C.interiorState(),visibility:C.interiorVisibility?.()||{}};}
   const modelKey=config=>JSON.stringify({state:config.state,display:config.display});
   function copyPose(){const floor=C.interiorState();if(floor.on)api()?.interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,C.interiorVisibility?.()||{});else api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
-  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;const visibility=C.interiorVisibility?.()||{},visibilityKey=JSON.stringify(visibility);if(floor.on){if(force||currentFloorKey!==floor.key||currentDoll!==floor.doll||currentVisibilityKey!==visibilityKey){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,visibility);currentFloorKey=floor.key;currentDoll=!!floor.doll;currentVisibilityKey=visibilityKey;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;currentDoll=false;currentVisibilityKey='';}}
+  // 원본 종단면은 부모 렌더러 전역 절단면으로 표현된다. 같은 평면을 실사 장면에 넘긴다(같은 값이면 자식이 무시).
+  const sectionPlanes=()=>(C.renderer?.clippingPlanes||[]).map(p=>[p.normal.x,p.normal.y,p.normal.z,p.constant]);
+  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;api().section?.(sectionPlanes());api().undergroundSee?.(document.getElementById('t-b1')?.checked&&!floor.on);const visibility=C.interiorVisibility?.()||{},visibilityKey=JSON.stringify(visibility);if(floor.on){if(force||currentFloorKey!==floor.key||currentDoll!==floor.doll||currentVisibilityKey!==visibilityKey){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,visibility);currentFloorKey=floor.key;currentDoll=!!floor.doll;currentVisibilityKey=visibilityKey;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;currentDoll=false;currentVisibilityKey='';}}
   function followPose(){
     if(!active||(performance.now()>=poseUntil&&!C.interiorState().spin)){following=false;return;}
     copyPose();requestAnimationFrame(followPose);
@@ -104,7 +111,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=ext-6';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=sec-5';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -138,16 +145,21 @@
     lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
     if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
     active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;document.getElementById('sec-time').hidden=false;
-    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();api()?.limits(config.limits);if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
+    if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();api()?.limits(config.limits);api()?.section?.(sectionPlanes());api()?.undergroundSee?.(document.getElementById('t-b1')?.checked&&!C.interior());if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
     else rebuild();
   }
   document.addEventListener('change',event=>{
     const el=event.target;
     if(active&&el.id==='t-limits')api()?.limits(el.checked);
-    if(active&&(el.id==='t-b1'||el.name==='era')){
-      disable();document.getElementById('vm-sketch').checked=true;
+    // 지하층 투시: 원본처럼 외부 보기에서만 지면을 반투명으로(실내 진입 중에는 원본도 끔).
+    if(active&&el.id==='t-b1')api()?.undergroundSee?.(el.checked&&!C.interior());
+    if(el.name==='era'){
+      const isNew=syncEraNote();
+      if(active&&!isNew){eraReturn=true;disable();document.getElementById('vm-sketch').checked=true;}
+      else if(isNew&&eraReturn&&!active){eraReturn=false;document.getElementById('vm-precision').checked=true;enable();}
     }
     if(el.name==='vmode'){
+      eraReturn=false;// 사용자가 보기 방식을 직접 고르면 자동 복원하지 않는다
       if(el.value==='precision'){event.stopImmediatePropagation();enable();}
       else disable();
     }
@@ -169,7 +181,9 @@
     if(event.target.closest('[data-c],#coreHall,[data-w]')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
     if(event.target.closest('#exitInt'))requestAnimationFrame(()=>syncInterior(true));
     if(event.target.closest('#coreTop,#dollBtn')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose)}requestAnimationFrame(()=>syncInterior(true));return;}
-    if(event.target.closest('#secBtn,#secAllBtn,[data-iv="up"],[data-iv="rp"]')){event.preventDefault();event.stopImmediatePropagation();showNotice('정밀 단면 절단·추가 형상 표시 연결은 준비 중입니다.');return;}
+    // 종단면: 원본 setSection()이 층·단면 보기·라벨·절단면을 정하고, 그 절단면을 실사 장면에 그대로 넘긴다.
+    if(event.target.closest('#secBtn,#secAllBtn')){poseUntil=performance.now()+3200;if(!following){following=true;requestAnimationFrame(followPose)}requestAnimationFrame(()=>syncInterior(true));return;}
+    if(event.target.closest('[data-iv="up"],[data-iv="rp"]')){requestAnimationFrame(()=>syncInterior(true));return;}
     if(event.target.closest('#capBtn')){
       event.stopImmediatePropagation();
       const w=frame?.contentWindow,canvas=w?.TOWER_CINEMA?.captureCanvas||w?.TOWER_CINEMA?.renderer.domElement||w?.TOWER_LAB_CONTEXT?.renderer.domElement;
@@ -201,7 +215,7 @@
     document.getElementById('precision-render').disabled=!ready||updating||floor.doll||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
     status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState)+' · WASD 이동':' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
-    if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성 · 절단면 미지원';
+    if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성'+((C.renderer?.clippingPlanes||[]).length?' · 원본 종단면 절단':'');
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;
   },200);
   window.TOWER_REVIEW={enable,disable,snapshot,timings,get frame(){return frame}};

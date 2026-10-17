@@ -7645,14 +7645,14 @@ if(['360','verify','review'].includes(new URLSearchParams(location.search).get('
     // its authored floor/doll visibility, then mirrors the visible mesh state.
     interiorVisibility:()=>({...IV}),
     walkFromDoll:()=>{if(I.on&&I.doll)walkIn();return {on:I.on,doll:I.doll,key:I.key}},
-    syncInteriorDisplay:(key,doll,visibility)=>{if(!key){if(I.on)exitInt();return {on:false,doll:false,key:null}}const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return null;if(!I.on)enterInt();if(I.li!==index)placeLevel(index,true);if(I.doll!==!!doll)setDoll(!!doll);if(visibility){for(const name of Object.keys(IV))if(name in visibility)IV[name]=!!visibility[name];applyIV();applyDollVis()}return {on:I.on,doll:I.doll,key:I.key}},
+    syncInteriorDisplay:(key,doll,visibility)=>{if(!key){if(I.on)exitInt();return {on:false,doll:false,key:null}}const index=LEVELS.findIndex(level=>level.key===key);if(index<0)return null;if(!I.on)enterInt();/* 윗층 투시 오버레이는 층 배치 때 만들어지므로 값이 바뀌면 같은 층을 다시 배치한다 */const upChanged=!!visibility&&'up' in visibility&&IV.up!==!!visibility.up;if(visibility)for(const name of Object.keys(IV))if(name in visibility)IV[name]=!!visibility[name];if(I.li!==index||upChanged)placeLevel(index,true);if(I.doll!==!!doll)setDoll(!!doll);if(visibility){applyIV();applyDollVis()}return {on:I.on,doll:I.doll,key:I.key}},
     restoreInteriorPose:(position,target,fov,key)=>{if(!I.on)return;if(key&&key!==I.key){const index=LEVELS.findIndex(level=>level.key===key);if(index>=0)placeLevel(index,true)}anim=null;camera.position.fromArray(position);controls.target.fromArray(target);const d=controls.target.clone().sub(camera.position),length=d.length();if(length>1e-6)controls.target.copy(camera.position).add(d.multiplyScalar(THREE.MathUtils.clamp(length,controls.minDistance,controls.maxDistance)/length));if(Number.isFinite(fov)){camera.fov=fov;camera.updateProjectionMatrix()}controls.update()},
     levels:()=>LEVELS,floorTop,ceilOf,walkable,contextBuildings:{current:APT_NOW,future:APT_NEW,outline:APT_OL},build,setRender,applyTime,sourceDaylight,updateReflections,resizeR,
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=ext-6';document.head.appendChild(script);}
-  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=ext-6';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=sec-5';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=sec-5';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){

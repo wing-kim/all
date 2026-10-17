@@ -2,6 +2,7 @@ import { copyMaterialTextures } from './material-textures.js';
 import { glazingSides } from './glazing-sides.js';
 import { applyBakedGround, exportGroundSource } from './baked-ground.js';
 import { createExteriorNight, DAY_HAZE } from './exterior-night.js';
+import { createSectionClip } from './section-clip.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -167,6 +168,7 @@ export async function start(C){
  // Protect the nearby architecture and leave the photographic sky untouched.
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
  // 헤이즈 색은 시간대를 따른다(낮 색 고정이면 야간 원경 건물이 하얗게 뜬다).
+ const sectionClip=createSectionClip(T,scene);
  const hazeColor=uniform(new T.Color(DAY_HAZE));
  const exteriorNight=createExteriorNight(T,scene,C.R3D?.lamps||[]);exteriorNight.apply(C.reviewDaylight?.night,hazeColor);
  const whiteBalance=uniform(new T.Vector3(.97,1,1.025)),colorSaturation=uniform(1.03);
@@ -216,8 +218,20 @@ export async function start(C){
  }
  let lastW=host.clientWidth,lastH=host.clientHeight,lastMotion=performance.now(),signature='';host.appendChild(renderer.domElement);host.appendChild(cachedPreview);window.TOWER_MODERN_ACTIVE=true;
  function refreshProbe(){const primary=scene.children.filter(o=>o.userData.primary||o.userData.reviewLimit),visibility=primary.map(o=>o.visible);primary.forEach(o=>o.visible=false);try{probe.update(renderer,scene);counts.probeRefreshes++}finally{primary.forEach((o,i)=>o.visible=visibility[i])}}
+ // 지하층 투시(원본 t-b1): 원본 applyB1See와 같이 지면·대지·도로·보도 재질을 반투명(0.3)·깊이 기록 끔으로 바꾼다.
+ // 배칭 메시와 하늘 가림 복제 재질도 같은 원본 재질에서 왔으므로 재질 단위로 처리한다.
+ let undergroundSee=false;
+ function applyUndergroundSee(value){
+  const on=!!value;if(on===undergroundSee)return false;undergroundSee=on;
+  const sources=[C.M.ground,C.M.site,C.M.road,C.M.walk,C.RMAT?.ground,C.RMAT?.site,C.RMAT?.road,C.RMAT?.walk].filter(Boolean);
+  const ids=new Set(sources.map(m=>materials.get(m)?.uuid).filter(Boolean)),seen=new Set();
+  scene.traverse(o=>{if(!o.isMesh)return;for(const m of [].concat(o.material)){if(!m||seen.has(m))continue;seen.add(m);if(ids.has(m.uuid)||ids.has(m.userData?.groundBakeSource)){m.transparent=on;m.opacity=on?.3:1;m.depthWrite=!on;m.needsUpdate=true}}});
+  return true;
+ }
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
+  // 종단면 중이면 감싸기를 잠시 풀어 기존 복사본 제거·새 복사본 추가가 장면 직계에서 일어나게 한다.
+  sectionClip.suspend();
   ambientStudy.clear();roomBake.clear();
   scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
@@ -228,13 +242,15 @@ export async function start(C){
   copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
   const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
-  renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
+  sectionClip.resume();renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
  }
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
  window.TOWER_CINEMA={scene,camera,renderer,groundSource:()=>exportGroundSource(T,scene),get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
  limits:on=>{cancelPrecision();for(const line of limitLines)line.visible=!!on},
+ section:planes=>{if(sectionClip.set(planes)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
+ undergroundSee:on=>{if(applyUndergroundSee(on)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
- context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
+ context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));sectionClip.objects().forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
  light:daylight=>{cancelPrecision();alignDaylight(daylight);exteriorNight.apply(daylight?.night,hazeColor);ambientStudy.light(daylight);roomBake.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
@@ -242,7 +258,7 @@ export async function start(C){
  // Separately baked cafe ceiling lights (room bake lights channel); realtime lights are unaffected.
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
-  status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
+  status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}

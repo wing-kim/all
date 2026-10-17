@@ -93,7 +93,7 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
   for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);uv[i*2]=(point.x+extent)/(extent*2);uv[i*2+1]=(point.z+extent)/(extent*2)}
   // 원본 기하는 건드리지 않고 복제본에 UV1만 더해 교체한다(위치 동일, 정밀 렌더도 같은 기하 사용).
   g.setAttribute('uv1',new T.BufferAttribute(uv,2));o.geometry=g;
-  const baked=original.clone();baked.aoMap=ao;baked.aoMapIntensity=.85;
+  const baked=original.clone();baked.aoMap=ao;baked.aoMapIntensity=.85;baked.userData.groundBakeSource=original.uuid;
   bindings.push({object:o,original,baked});
  });
  // 주변 건물 외벽: 재질별로 한 번만 복제해 aoNode를 단다(배칭 메시가 재질을 공유, 다중 재질은 그룹별).
