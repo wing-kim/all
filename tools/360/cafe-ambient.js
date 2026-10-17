@@ -39,11 +39,11 @@ export function sameReceivers(a,b){
  });
 }
 
-// Default review mode loads the time-slot bakes. ambientBake=study adds the neutral study,
-// ambientBake=off keeps the original realtime path without any bake request.
+// ambientBake=study loads the neutral floor/ceiling study and any floor/ceiling slots; otherwise nothing is requested.
 export async function createCafeAmbientStudy(T,scene,C){
  const mode=new URLSearchParams(location.search).get('ambientBake');
- const studyRequested=mode==='study',slotsRequested=mode!=='off',requested=studyRequested||slotsRequested;
+ // The whole-cafe room bake (cafe-room-bake.js) is the default; this floor/ceiling module is the diagnostic study.
+ const studyRequested=mode==='study',slotsRequested=studyRequested,requested=studyRequested;
  let reason=requested?'loading':'not-requested',valid=false,enabled=false,precisionActive=false,assetsReady=false,bindings=[],sets=[],active=null,loadMs=null;
  const started=performance.now();
  const base=()=>sets[0]?.manifest||null;

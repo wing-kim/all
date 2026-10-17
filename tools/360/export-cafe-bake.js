@@ -2,9 +2,10 @@
 // Filter triangles of large material batches instead of dropping entire batches.
 (()=>{
  const w=document.querySelector('#precision-frame')?.contentWindow||window,C=w.TOWER_LAB_CONTEXT,T=C.THREE;
- const room=new T.Box3(new T.Vector3(-14,-.2,-14),new T.Vector3(3,5.6,11));
+ // Whole 1F cafe (floor extends to x 8.44, z 13.46). The room bake box must stay inside this box.
+ const room=new T.Box3(new T.Vector3(-15,-.2,-15),new T.Vector3(10,5.6,14.5));
  const surroundings=new T.Box3(new T.Vector3(-60,-1,-60),new T.Vector3(60,70,60));
- const out={version:2,state:{...C.state},daylight:C.reviewDaylight,geometries:{},materials:{},objects:[],skipped:[],floor:C.interiorDressing?.userData.cafe?.floor,ceiling:C.interiorDressing?.userData.cafe?.ceiling,camera:{position:C.camera.position.toArray(),quaternion:C.camera.quaternion.toArray(),fov:C.camera.fov},scope:'Cafe and nearby exterior triangle-filtered geometry, UVs and texture references. Ambient-only bake preparation; no direct sun is baked. No completed bake implied.'};
+ const out={version:2,state:{...C.state},daylight:C.reviewDaylight,geometries:{},materials:{},objects:[],skipped:[],floor:C.interiorDressing?.userData.cafe?.floor,ceiling:C.interiorDressing?.userData.cafe?.ceiling,camera:{position:C.camera.position.toArray(),quaternion:C.camera.quaternion.toArray(),fov:C.camera.fov},roomBox:{min:room.min.toArray(),max:room.max.toArray()},scope:'Cafe and nearby exterior triangle-filtered geometry, UVs and texture references. Ambient-only bake preparation; no direct sun is baked. No completed bake implied.'};
  let vertices=0,serial=0;const v=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),triBox=new T.Box3(),normal=new T.Vector3();
  const imageURL=t=>t?.image?.currentSrc||t?.image?.src||null;
  for(const root of [C.bld,C.interiorDressing,C.city,C.ctx]){if(!root)continue;const region=(root===C.bld||root===C.interiorDressing)?room:surroundings;root.updateMatrixWorld(true);root.traverse(o=>{

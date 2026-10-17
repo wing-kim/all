@@ -104,14 +104,14 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=time-slot-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=room-bake-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   const SEASON_NAMES={spring:'봄',summer:'여름',autumn:'가을',winter:'겨울'},TIME_NAMES={am:'오전',pm:'오후',sunset:'석양',night:'야간'};
   // 원본 계절·시간대 버튼 조합 중 미리 구운 빛이 있는 경우만 표시를 바꾼다.
-  function bakeLabel(bake){const slot=bake?.slot;if(!slot)return '실시간 빛';const [season,time]=slot.split('-');return '미리 계산한 빛('+(SEASON_NAMES[season]||season)+'·'+(TIME_NAMES[time]||time)+')'}
+  function bakeLabel(state){const room=state?.roomBake?.slot,slot=room||state?.ambientStudy?.slot;if(!slot)return '실시간 빛';const [season,time]=slot.split('-');return '미리 계산한 빛('+(SEASON_NAMES[season]||season)+'·'+(TIME_NAMES[time]||time)+(room?' · 카페 전체':'')+')'}
   function disable(){
     if(!active)return;
     active=false;padHeld=false;poseUntil=0;following=false;clearTimeout(timer);
@@ -198,7 +198,7 @@
     if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||floor.doll||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState?.ambientStudy)+' · WASD 이동':' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState)+' · WASD 이동':' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
     if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성 · 절단면 미지원';
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;

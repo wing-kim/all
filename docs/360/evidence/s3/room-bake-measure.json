@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-17",
+  "slot": "spring-pm (original app 봄 + 오후 buttons)",
+  "bake": {"script": "tools/360/bake-cafe-room.py", "device": "Cycles Metal GPU", "atlas": 2048, "samples": 256, "seconds": 35.7,
+    "receivers": {"triangles": 241758, "objects": 188, "areaM2": 3211.41}, "passes": ["sky direct+indirect", "sun indirect only", "cafe ceiling lights direct+indirect (separate texture)"],
+    "files": {"day-lightmap.png": "3.5 MB", "lights-lightmap.png": "2.9 MB", "uv.bin": "2.9 MB"}},
+  "parity": "node test reproduces 188/188 objects and 241,758 triangles from the snapshot with the runtime filter/hash",
+  "runtime": {"coverageArea": 0.9747, "unmatched": "28 rounded curtain-wall mullions (re-instanced at runtime), ~2.1 m2 each, stay realtime",
+    "bindMs": 277, "maxSliceMs": 51, "firstFrameMs": 2937, "label": "미리 계산한 빛(봄·오후 · 카페 전체)"},
+  "interiorLights": {"meanBrightnessOn": 124.75, "meanBrightnessOff": 108.46, "method": "material swap per light scale (TSL uniform kept first uploaded value)"},
+  "rotation5s": {"roomBake": {"p50": 29.3, "p95": 38.3, "max": 41.0, "over100": 0}, "ambientBakeOff": {"p50": 36.7, "p95": 52.4, "max": 56.5, "over100": 0},
+    "note": "app built-in browser, 3D canvas 1600x1000, synthetic E-key rotation; baked mode hides 6 realtime cafe RectAreaLights, which also lowers frame cost"},
+  "fixedDuringWork": ["snapshot export box widened to the whole cafe (x to 10 m) after the ceiling slab failed to match",
+    "coverage measured by area and any unmatched surface >= 20 m2 rejects the bake",
+    "baked node materials get a distinct customProgramCacheKey; otherwise the original pipeline (no lightmap) was reused",
+    "old floor/ceiling module limited to ambientBake=study so both bakes never bind together"]
+}

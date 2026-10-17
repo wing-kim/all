@@ -95,19 +95,24 @@ try{
  const slotManifest={...fixture.studyManifest,slot};
  assert.equal(sameReceivers(fixture.studyManifest,slotManifest),true);
  assert.equal(sameReceivers(fixture.studyManifest,{...slotManifest,sourceSha256:'other'}),false);
+ // Default review mode now uses the whole-cafe room bake; this module loads nothing.
  globalThis.location={search:'?lab=360'};
+ globalThis.fetch=()=>{throw Error('default mode must not load floor/ceiling assets')};
+ const idle=await createCafeAmbientStudy(fakeThree,fixture.scene,fixture.context);
+ assert.equal(idle.status().requested,false);idle.dispose();
+ globalThis.location={search:'?ambientBake=study'};
  globalThis.fetch=route(fixture.studyManifest,{'spring-pm':slotManifest});
  fixture.context.reviewDaylight=springPm;
  const slotted=await createCafeAmbientStudy(fakeThree,fixture.scene,fixture.context);
- assert.equal(slotted.status().study,false,'default review mode loads slots without the neutral study');
+ assert.equal(slotted.status().study,true,'study mode loads the neutral study and floor/ceiling slots');
  assert.deepEqual(slotted.status().slots,['spring-pm']);
  assert.equal(slotted.status().enabled,true);assert.equal(slotted.status().slot,'spring-pm');
  slotted.light({...springPm,time:'sunset',direction:[-.5,.11,.86]});
- assert.equal(slotted.status().enabled,false);assert.equal(slotted.status().reason,'unbaked-time','other times keep the realtime path');
- slotted.light({...springPm,night:true});assert.equal(slotted.status().reason,'night');
+ assert.equal(slotted.status().slot,null,'other times fall back to the neutral study, not the slot');
+ slotted.light({...springPm,night:true});assert.equal(slotted.status().enabled,false);
  slotted.light(springPm);assert.equal(slotted.status().slot,'spring-pm','returning to the baked pair re-enables the slot');
  slotted.dispose();
- const mismatched=recoveryFixture(false);
+ const mismatched=recoveryFixture(false);globalThis.location={search:'?ambientBake=study'};
  globalThis.fetch=route(mismatched.studyManifest,{'spring-pm':{...slotManifest,slot:{...slot,key:'summer-pm'}}});
  const rejected=await createCafeAmbientStudy(fakeThree,mismatched.scene,mismatched.context);
  assert.equal(rejected.status().reason,'slot-key-mismatch:spring-pm');assert.equal(rejected.status().enabled,false);

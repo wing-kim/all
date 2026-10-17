@@ -1,4 +1,4 @@
 {
-  "slots": ["spring-pm"],
-  "note": "Original app season/time button pairs with a baked sky + sun-indirect lightmap. Other pairs use the realtime path."
+  "slots": [],
+  "note": "Superseded by cafe-room-bake (whole cafe). Floor/ceiling slot assets kept for reference; the neutral study still uses this module with ambientBake=study."
 }
