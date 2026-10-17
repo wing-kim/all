@@ -7651,8 +7651,8 @@ if(['360','verify','review'].includes(new URLSearchParams(location.search).get('
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=room-bake-16';document.head.appendChild(script);}
-  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=room-bake-16';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='review'){const script=document.createElement('script');script.src='360/integrated.js?v=ext-5';document.head.appendChild(script);}
+  if(new URLSearchParams(location.search).get('lab')==='360'){const script=document.createElement('script');script.src='360/scene.js?v=ext-5';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){

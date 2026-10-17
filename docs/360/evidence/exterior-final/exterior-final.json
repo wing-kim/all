@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-18",
+  "scope": "Exterior finished product within the decided method (realtime original sun/sky + time-independent precomputed sky occlusion)",
+  "camera": "실사 근사 구도 (precision-reference, same framing as the AI exterior image), 1600x1000",
+  "ground": {
+    "sidewalk": "Poly Haven Concrete Pavement 02 (CC0), 1.8 m, neutral tint [1.2,1.42,1.72] -> linear albedo ~0.29",
+    "openGround": "Poly Haven Concrete Floor 03 (CC0), 2.5 m, neutral tint [0.8,1.05,1.43] -> linear ~0.22 (original page: plain 0x8f9488)",
+    "curb": "same concrete maps, neutral granite tint [0.9,1.2,1.65]",
+    "road": "asphalt_02 unchanged; tower plaza pavement_04 unchanged"
+  },
+  "skyOcclusion": {
+    "source": "exportGroundSource() from the running scene: 408 context meshes, 321,218 triangles, tower excluded",
+    "signature": "3f490e5c (bbox cm + triangle count, order independent); mismatch keeps realtime lighting",
+    "bake": "512x512 over +-112 m, 32 rays, 24 m, 6.3 s; meanAO 0.883 (was 0.932 with the old 172k-triangle snapshot)",
+    "receivers": "36 ground surfaces (aoMap) + 335 context facade bindings (aoNode derived from ground AO 1.5 m outside the wall, fades out by 10 m height, strength 0.6)",
+    "limits": "facade term is a derived approximation, not a per-facade bake; tower massing never enters the bake"
+  },
+  "night": {
+    "streetLamps": "5 original R3D.lamps positions as SpotLights (intensity 40 in scene units, 28 m, cone 65 deg); always present, intensity 0 by day (no recompile on time switch)",
+    "leaves": "4 leaf materials: daytime emissive translucency fill (0x6d682f, 0.12) set to 0 at night",
+    "haze": "aerial-perspective colour follows time: day 0xbdcbd5, night 0x1b2433 (was day colour at night -> white skyline)"
+  },
+  "rotation": {
+    "method": "TOWER360.spin(true) at the reference framing, 2 x 4.5 s windows, previewIntervalMs",
+    "autumnPm": [{"p50": 51.2, "p95": 54.9, "max": 60.2, "over100": 0}, {"p50": 50.9, "p95": 55.4, "max": 58.8, "over100": 0}],
+    "night": [{"p50": 51.4, "p95": 54.5, "max": 55.8, "over100": 0}, {"p50": 50.6, "p95": 54.3, "max": 55.5, "over100": 0}],
+    "bakeOffPm": [{"p50": 50.7, "p95": 54.6, "max": 57.3, "over100": 0}, {"p50": 52.6, "p95": 61.8, "max": 64.9, "over100": 0}],
+    "note": "local, same slow machine state as the cafe-final run; sky occlusion cost is within noise"
+  },
+  "files": ["day-before.jpg", "day-after.jpg", "night-before.jpg", "night-after.jpg", "entrance-after.jpg", "side-after.jpg"]
+}

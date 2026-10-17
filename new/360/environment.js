@@ -14,11 +14,14 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const loader=new T.TextureLoader(),pendingTextures=[];
   function texture(name,repeat,color){let done;pendingTextures.push(new Promise(resolve=>{done=resolve}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
   function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
-  surface(RMAT.road,'asphalt_02',.2);surface(RMAT.ground,'asphalt_02',.2);RMAT.ground.color.set('#b4b8bb').convertSRGBToLinear();surface(RMAT.walk,'pavement_04',1/3.1);surface(RMAT.site,'pavement_04',1/3.1);
+  surface(RMAT.road,'asphalt_02',.2);surface(RMAT.site,'pavement_04',1/3.1);
+  // 2026-10-18: AI 외관 시안의 밝은 회색 보도·콘크리트 공터에 맞춘다(CC0, 원본 지면 형상 유지).
+  // 원본의 무늬 없는 회녹색 지면(0x8f9488, 선형 약 0.27)과 같은 밝기대로 중성 보정한다.
+  surface(RMAT.walk,'sidewalk-pavers',1/1.8);surface(RMAT.ground,'ground-concrete',1/2.5);
   // A shared linear albedo correction also survives conversion to the path tracer.
   // The previous WebGL-only shader left the precision pavement brown and much darker.
-  [RMAT.walk,RMAT.site].forEach(m=>{m.color.setRGB(1.65,1.85,2.15)});
-  const stone=new T.MeshStandardMaterial({color:0x8e8c86,roughness:.86,map:RMAT.walk.map,normalMap:RMAT.walk.normalMap,normalScale:new T.Vector2(.15,.15)});
+  RMAT.site.color.setRGB(1.65,1.85,2.15);RMAT.walk.color.setRGB(1.2,1.42,1.72);RMAT.ground.color.setRGB(.8,1.05,1.43);
+  const stone=new T.MeshStandardMaterial({roughness:.86,map:RMAT.ground.map,normalMap:RMAT.ground.normalMap,normalScale:new T.Vector2(.15,.15)});stone.color.setRGB(.9,1.2,1.65);// 갈색 콘크리트 질감을 중성 회색 화강석 연석 톤(선형 약 0.25)으로
   const iron=new T.MeshStandardMaterial({color:0x303332,metalness:.75,roughness:.63});
   const soil=new T.MeshStandardMaterial({color:0x3b3020,roughness:1,map:RMAT.road.map,normalMap:RMAT.road.normalMap,normalScale:new T.Vector2(.6,.6)});
   const cube=new T.BoxGeometry(1,1,1);

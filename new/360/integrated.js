@@ -104,7 +104,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=room-bake-16';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=ext-5';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교

@@ -1,6 +1,7 @@
 import { copyMaterialTextures } from './material-textures.js';
 import { glazingSides } from './glazing-sides.js';
-import { applyBakedGround } from './baked-ground.js';
+import { applyBakedGround, exportGroundSource } from './baked-ground.js';
+import { createExteriorNight, DAY_HAZE } from './exterior-night.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -165,7 +166,9 @@ export async function start(C){
  // Depth-based aerial perspective, shared by moving and converged frames.
  // Protect the nearby architecture and leave the photographic sky untouched.
  const haze=previewPass.getViewZNode().negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3).mul(previewPass.getTextureNode('depth').lessThan(.999999));
- const hazeColor=new T.Color('#bdcbd5');
+ // 헤이즈 색은 시간대를 따른다(낮 색 고정이면 야간 원경 건물이 하얗게 뜬다).
+ const hazeColor=uniform(new T.Color(DAY_HAZE));
+ const exteriorNight=createExteriorNight(T,scene,C.R3D?.lamps||[]);exteriorNight.apply(C.reviewDaylight?.night,hazeColor);
  const whiteBalance=uniform(new T.Vector3(.97,1,1.025)),colorSaturation=uniform(1.03);
  // Final presentation is opaque: AO must never expose the legacy input canvas below.
  const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),colorSaturation),1);
@@ -228,18 +231,18 @@ export async function start(C){
   renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
  }
  renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
- window.TOWER_CINEMA={scene,camera,renderer,get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
+ window.TOWER_CINEMA={scene,camera,renderer,groundSource:()=>exportGroundSource(T,scene),get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
  limits:on=>{cancelPrecision();for(const line of limitLines)line.visible=!!on},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));scene.children.forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
  quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
- light:daylight=>{cancelPrecision();alignDaylight(daylight);ambientStudy.light(daylight);roomBake.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
+ light:daylight=>{cancelPrecision();alignDaylight(daylight);exteriorNight.apply(daylight?.night,hazeColor);ambientStudy.light(daylight);roomBake.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
  // Separately baked cafe ceiling lights (room bake lights channel); realtime lights are unaffected.
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
-  status:()=>({bake:groundBake?{receivers:groundBake.count,enabled:groundBake.enabled,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
+  status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}

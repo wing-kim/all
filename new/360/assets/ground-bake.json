@@ -1,14 +1,20 @@
 {
-  "sourceSha256": "fd659fbb59a890dada0ce1a8d7750a51b23db89b661bdea0c29726a603214f50",
-  "version": 1,
+  "signature": {
+    "hash": "3f490e5c",
+    "objects": 408,
+    "triangles": 321218
+  },
+  "sha256": "58007f246caf74342d83af150366457c408bf9d261076b22769ad312041425c1",
+  "sourceSha256": "3fddd629dae8adbb106f2f1d8eb800b513f466826e48f533c2e0b87342795eb3",
+  "version": 2,
   "extent": 112,
   "size": 512,
   "samples": 32,
   "rayDistance": 24,
   "receiverHeight": 0.38,
-  "triangles": 172566,
-  "bakeMs": 9306,
-  "minAO": 0.30289380348874007,
-  "meanAO": 0.9316858201173254,
-  "scope": "static low-complexity opaque neighbourhood; tower, alpha foliage and high-density meshes excluded; sky occlusion and weak one-bounce approximation, not full GI"
+  "triangles": 321218,
+  "bakeMs": 6259,
+  "minAO": 0.3022409878614306,
+  "meanAO": 0.8830834847901887,
+  "scope": "context (surrounding buildings) opaque meshes from the running scene; tower excluded; time-independent sky occlusion (bounce PNG kept for study, not loaded at runtime), not full GI"
 }

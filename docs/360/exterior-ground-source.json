@@ -1,0 +1,54 @@
+{
+  "downloaded": "2026-10-18",
+  "license": "CC0 (Poly Haven)",
+  "files": {
+    "sidewalk-pavers_color.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_diff_1k.jpg",
+      "sha256": "e129ee6b59b6ed7f65b4c4c5ba9eb583d13d040ec26bef5d5d4e0080fe342e7a"
+    },
+    "sidewalk-pavers_normal.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_nor_gl_1k.jpg",
+      "sha256": "26c09320b3373da7f55edb8165562f16d36c07161c9c715787a09daf5910450c"
+    },
+    "sidewalk-pavers_rough.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_rough_1k.jpg",
+      "sha256": "966ee3d1a6d343e5e72d5536fde7c04ecd32e6e95efc879a102effc527f5b679"
+    },
+    "ground-concrete_color.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_03/concrete_floor_03_diff_1k.jpg",
+      "sha256": "6403524d194100d80e3040435b953ddf44e90069bd404cfb116204dec3c35df7"
+    },
+    "ground-concrete_normal.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_03/concrete_floor_03_nor_gl_1k.jpg",
+      "sha256": "f9f18d02c1e4e655aa321ddeaf2c696a87a9c4782fea7119c65310c510367f5a"
+    },
+    "ground-concrete_rough.jpg": {
+      "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_floor_03/concrete_floor_03_rough_1k.jpg",
+      "sha256": "13bf9548e801ada85c2445782544ad6ffba17c9ec08e39aa35c6f6ad2bc83961"
+    }
+  },
+  "linearMeanAlbedo": {
+    "sidewalk-pavers_color.jpg": [
+      0.243,
+      0.202,
+      0.163
+    ],
+    "ground-concrete_color.jpg": [
+      0.275,
+      0.201,
+      0.146
+    ]
+  },
+  "runtimeTint": {
+    "walk": [
+      1.2,
+      1.42,
+      1.72
+    ],
+    "ground": [
+      0.8,
+      1.05,
+      1.43
+    ]
+  }
+}
