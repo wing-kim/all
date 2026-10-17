@@ -24,7 +24,7 @@ window.dressTowerCafe=async function(C,root,timber){
  }
  const inside=(x,z,margin=.8)=>[[-margin,-margin],[-margin,margin],[margin,-margin],[margin,margin]].every(([a,b])=>C.inPoly([(x+a)*41.6+914,(z+b)*41.6+770],L.poly));
  const blocked=(x,z,r=.7)=>(L.cols||[]).some(q=>{const p=C.P(q[0],q[1]);return Math.hypot(x-p[0],z-p[1])<r+.32})||(L.blocks||[]).some(b=>{const [x0,z0]=C.P(b.r[0],b.r[1]),[x1,z1]=C.P(b.r[2],b.r[3]);return x+r>x0&&x-r<x1&&z+r>z0&&z-r<z1});
- const keepouts=[];let tables=0;
+ const keepouts=[],pendants=[];let tables=0;
  function cup(x,y,z){cylinder(white,x,y+.045,z,.037,.07);cylinder(coffee,x,y+.081,z,.031,.001);mesh(new T.TorusGeometry(.025,.006,6,12),white,x+.042,y+.048,z).rotation.y=Math.PI/2;}
  function vase(x,y,z){mesh(new T.LatheGeometry([new T.Vector2(.055,0),new T.Vector2(.085,.06),new T.Vector2(.07,.14),new T.Vector2(.025,.20)],16),cream,x,y,z);for(let i=0;i<4;i++){rod(bronze,[x,y+.16,z],[x+(i-1.5)*.045,y+.38+i*.025,z+.02],.003);const leaf=mesh(new T.SphereGeometry(1,8,5),leafMaterial,x+(i-1.5)*.045,y+.34+i*.025,z+.02);leaf.scale.set(.045,.014,.065);leaf.rotation.z=i;}}
  for(const [x,z] of [[-10,-8],[-10,-4],[-10,0],[-10,4],[-6,-4],[-6,0],[-6,4],[-6,7]]){
@@ -50,14 +50,15 @@ window.dressTowerCafe=async function(C,root,timber){
   cylinder(dark,cx+.9,floor+1.28,cz,.13,.4);cylinder(bronze,cx+.9,floor+1.55,cz,.15,.19);
   for(let i=0;i<5;i++)cup(cx-.2+i*.14,floor+1.09,cz);
   keepouts.push({x:cx,z:cz,w:cw,d:cd});
-  for(const x of [cx-2.4,cx,cx+2.4]){rod(dark,[x,ceiling-.03,cz],[x,3.1,cz],.008);cylinder(bronze,x,2.86,cz,.042,.5);cylinder(glow,x,2.604,cz,.032,.012);}
+  for(const x of [cx-2.4,cx,cx+2.4]){rod(dark,[x,ceiling-.03,cz],[x,3.1,cz],.008);cylinder(bronze,x,2.86,cz,.042,.5);cylinder(glow,x,2.604,cz,.032,.012);pendants.push([x,2.56,cz]);}
  }
  // Recessed trim/diffuser geometry; lights are added by the modern renderer.
  const fixtures=[];
- for(const x of [-10,-6,-2])for(const z of [-10,-6,-2,2,6])if(inside(x,z,.35)&&!blocked(x,z,.25)){
+ // 2026-10-18: 카페 동쪽(x 0～8 m)까지 다운라이트를 고르게 배치. 위치는 베이크 조명과 같은 목록을 쓴다.
+ for(const x of [-10,-6,-2,2,6])for(const z of [-10,-6,-2,2,6,10])if(inside(x,z,.35)&&!blocked(x,z,.25)){
   cylinder(dark,x,ceiling-.016,z,.065,.025);cylinder(glow,x,ceiling-.031,z,.043,.007);fixtures.push([x,ceiling-.08,z]);
  }
- root.userData.cafe={floor,ceiling,tables,fixtures,keepouts,structuralSource:'original LEVELS; fit-out is illustrative'};
+ root.userData.cafe={floor,ceiling,tables,fixtures,pendants,keepouts,structuralSource:'original LEVELS; fit-out is illustrative'};
  // Reuse the licensed scanned indoor plants loaded by environment.js.
  // AI 실사 시안처럼 창가·기둥 주변에 화분을 더 둔다. 테이블·통로와 겹치는 후보는 건너뛴다.
  const nearKeepout=(x,z)=>keepouts.some(o=>o.r?Math.hypot(x-o.x,z-o.z)<o.r+.75:Math.abs(x-o.x)<o.w/2+.75&&Math.abs(z-o.z)<o.d/2+.75);

@@ -83,7 +83,7 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  let sets=[],bindings=[],active=null,loadMs=null,coverage=null,bindMs=null,refreshVersion=0,maxSliceMs=0;
  // Interior light scale is compiled into each baked material. A shared TSL uniform was observed to
  // keep its first uploaded value across these per-object materials, so changes swap materials instead.
- const started=performance.now(),bakedMaterials=new Map();let lightScale=1;
+ const started=performance.now(),bakedMaterials=new Map();let lightScale=1,defaultLightScale=1;
  const reflections=new URLSearchParams(location.search).get('roomReflect')!=='0',SpecularEnvironmentNode=specularEnvironment(T);
  const bakedFor=(binding,set)=>Array.isArray(binding.original)?binding.original.map(m=>bakedMaterial(m,set)):bakedMaterial(binding.original,set);
  const report=()=>({requested,valid,enabled,reason,loadMs,bindMs,maxSliceMs,coverage,receivers:bindings.length,slot:enabled&&active?active.key:null,slots:sets.map(set=>set.key)});
@@ -208,6 +208,8 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
   if(!sets.length)throw Error('no-room-sets');
   const odd=sets.find(set=>!sameRoomLayout(sets[0].manifest,set.manifest)||set.uvs!==sets[0].uvs);
   if(odd)throw Error('room-slot-layout-mismatch:'+odd.key);
+  // Interior lighting design level chosen after baking (lights channel is linear in light power).
+  defaultLightScale=lightScale=Math.max(0,sets[0].manifest.lightmaps.lights.defaultScale??1);
   assetsReady=true;reason='geometry-check';await refresh();
  }catch(error){
   disposeTextures();sets=[];
@@ -219,7 +221,7 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
   dispose(){clear();disposeTextures()},
   // true/false or a numeric scale of the separately baked cafe ceiling lights.
   interiorLights(value){
-   const next=typeof value==='number'?Math.max(0,value):value?1:0;
+   const next=typeof value==='number'?Math.max(0,value):value?defaultLightScale:0;
    if(next===lightScale)return;
    lightScale=next;
    setDaylight(C.reviewDaylight);

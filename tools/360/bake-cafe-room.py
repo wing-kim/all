@@ -43,6 +43,7 @@ def arguments():
     parser.add_argument('output', type=Path)
     parser.add_argument('--slots', type=Path, required=True, help='JSON list: key, season, time, sun, sunStrength, sunColor, sky, skyTint')
     parser.add_argument('--lights', type=Path, required=True)
+    parser.add_argument('--lights-scale', type=float, default=1, help='runtime default scale of the interior lights channel (lighting design level)')
     parser.add_argument('--size', type=int, default=2048)
     parser.add_argument('--samples', type=int, default=256)
     parser.add_argument('--device', choices=('CPU', 'GPU'), default='GPU')
@@ -308,18 +309,29 @@ def aim_sun(slot):
 light_specs = json.loads(args.lights.read_text())
 area_lights = []
 for index, spec in enumerate(light_specs):
-    data = bpy.data.lights.new(f'Cafe ceiling light {index}', 'AREA')
-    data.shape = 'RECTANGLE'
-    data.size, data.size_y = spec['width'], spec['height']
+    kind = spec.get('type', 'area')
+    data = bpy.data.lights.new(f'Cafe light {index} {kind}', {'area': 'AREA', 'spot': 'SPOT', 'point': 'POINT'}[kind])
     data.color = spec['color']
+    if kind == 'area':
+        data.shape = 'RECTANGLE'
+        data.size, data.size_y = spec['width'], spec['height']
+        # three RectAreaLight intensity is emitted radiance; Cycles area power is pi * radiance * area.
+        power = math.pi * spec['intensity'] * spec['width'] * spec['height']
+    else:
+        # 실내 조명 설계(다운라이트·펜던트): Cycles 와트 단위의 상대 세기. 최종 밝기는 런타임 defaultScale로 조정.
+        data.shadow_soft_size = spec.get('radius', .04)
+        if kind == 'spot':
+            data.spot_size = math.radians(spec.get('spotSize', 100))
+            data.spot_blend = spec.get('blend', .6)
+        power = spec['power']
     light = bpy.data.objects.new(data.name, data)
     px, py, pz = spec['pos']
-    dx, dy, dz = spec['dir']
     light.location = (px, -pz, py)
-    light.rotation_euler = Vector((dx, -dz, dy)).to_track_quat('-Z', 'Y').to_euler()
+    if 'dir' in spec:
+        dx, dy, dz = spec['dir']
+        light.rotation_euler = Vector((dx, -dz, dy)).to_track_quat('-Z', 'Y').to_euler()
     scene.collection.objects.link(light)
-    # three RectAreaLight intensity is emitted radiance; Cycles area power is pi * radiance * area.
-    area_lights.append((light, math.pi * spec['intensity'] * spec['width'] * spec['height']))
+    area_lights.append((light, power))
 
 
 def set_lights(sky, sun_energy, interior):
@@ -397,7 +409,7 @@ def encode(path, rgb):
             'coveredMean': float(covered.mean())}
 
 
-lights_encoding = {'file': '../lights-lightmap.png', **encode(args.output / 'lights-lightmap.png', passes['lights'])}
+lights_encoding = {'file': '../lights-lightmap.png', 'defaultScale': args.lights_scale, **encode(args.output / 'lights-lightmap.png', passes['lights'])}
 day_encodings = {}
 for slot in slots:
     (args.output / slot['key']).mkdir(exist_ok=True)

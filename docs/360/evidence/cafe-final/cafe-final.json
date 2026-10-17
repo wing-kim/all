@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-18",
+  "scope": "1F cafe finished product within the decided method",
+  "lighting": {"slots": "13 original season/time button pairs (4 seasons x am/pm/sunset + night for every season)",
+    "interior": "16 recessed downlights (spot, warm ~3000K) + 3 bar pendants (point) baked as a separate lights channel; runtime defaultScale 4 (lighting design level, not exposure)",
+    "exposure": "1.4 unchanged in every mode (comparison principle)", "environment": "specular-only on baked surfaces; diffuse from lightmaps"},
+  "fitOut": {"chairs": "Poly Haven Modern Arm Chair 01 (CC0), cushion #b07648", "downlights": "grid extended east (16 placed after column/wall checks)", "plants": 9},
+  "bake": {"receivers": {"triangles": 242270, "objects": 188}, "seconds": 186, "parity": "188/188 objects reproduced"},
+  "screens": {"meanBrightness": {"pm": 98.3, "night": 73.5}, "files": ["pm.jpg", "night.jpg"]},
+  "rotation": {"note": "machine slower during this session; compare relative", "baked": {"p95": [54.0, 66.9, 62.1, 66.7]}, "bakeOff": {"p95": [108.1, 78.0]}}
+}

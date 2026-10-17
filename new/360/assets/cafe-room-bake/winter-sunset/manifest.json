@@ -2,7 +2,7 @@
  "version": 2,
  "kind": "cafe-room",
  "source": "cafe-ambient-source.json.gz",
- "sourceSha256": "1113901e295a83013e37007b34d8a3291ab5591e2aca2438f091ca93da3f0cea",
+ "sourceSha256": "124f24436b28cd97c1e12a9e7303a4846466be369b6879447a0ec99a869e9956",
  "sourceState": {
   "era": "new",
   "scheme": "mech",
@@ -36,8 +36,8 @@
  "sourceCafeFloor": 0.07,
  "sourceCafeCeiling": 5.0200000000000005,
  "furnitureManifest": {
-  "360/cafe.js": "759fa15dd29d9e3422873c65dbeaa3481945daf0d21faa06fefc93ce7e6bf918",
-  "360/environment.js": "959a8728948d4b059a44fe81490b16c19dd2f542fc942cb9d77435d6b29e70a9",
+  "360/cafe.js": "4942326acc5cdb6b949427f9c337933e8ad6a37b3ec816e47200ee19c7b847b4",
+  "360/environment.js": "247993f2bc9bd51ad3e44f916ffef77573b8e22d814c90758726ae0469d9b32e",
   "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
   "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
   "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6"
@@ -66,8 +66,8 @@
    14.5
   ]
  },
- "triangles": 241758,
- "area": 3211.41,
+ "triangles": 242270,
+ "area": 3211.51,
  "objects": [
   {
    "hash": 3839434770,
@@ -1285,14 +1285,14 @@
    "triangles": 2,
    "offset": 4082,
    "area": 14.9423,
-   "name": "region-245"
+   "name": "region-243"
   },
   {
    "hash": 364744133,
    "triangles": 2,
    "offset": 4084,
    "area": 0.2025,
-   "name": "region-246"
+   "name": "region-244"
   },
   {
    "hash": 2290989045,
@@ -1344,44 +1344,44 @@
    "name": "Static material batch"
   },
   {
-   "hash": 3955701599,
-   "triangles": 3096,
+   "hash": 2635136215,
+   "triangles": 3352,
    "offset": 51090,
-   "area": 17.0012,
+   "area": 17.0743,
    "name": "Static material batch"
   },
   {
-   "hash": 1324020509,
-   "triangles": 2200,
-   "offset": 54186,
-   "area": 1.273,
+   "hash": 1997978069,
+   "triangles": 2456,
+   "offset": 54442,
+   "area": 1.2998,
    "name": "Static material batch"
   },
   {
    "hash": 4279339615,
    "triangles": 3500,
-   "offset": 56386,
+   "offset": 56898,
    "area": 5.4727,
    "name": "Static material batch"
   },
   {
    "hash": 1478034517,
    "triangles": 112160,
-   "offset": 59886,
+   "offset": 60398,
    "area": 39.7523,
    "name": "Static material batch"
   },
   {
    "hash": 2595947503,
    "triangles": 66160,
-   "offset": 172046,
+   "offset": 172558,
    "area": 30.309,
    "name": "Static material batch"
   },
   {
    "hash": 1672449771,
    "triangles": 3552,
-   "offset": 238206,
+   "offset": 238718,
    "area": 0.1302,
    "name": "Static material batch"
   }
@@ -1389,15 +1389,16 @@
  "uv": {
   "file": "../uv.bin",
   "format": "uint16 little-endian u,v per triangle corner, receiver order; value/65535; shared by every slot",
-  "sha256": "db669c2524293b583b642dcfd4063c1924d9b5e2a6fd74c281b36a845a074519"
+  "sha256": "52f55bdf848d3fb0cd4fd89d29b12ebff65765cd0e6eb09bcf1b1be092eedf58"
  },
  "atlasSize": 2048,
  "interiorLights": [
   {
+   "type": "spot",
    "pos": [
     -10,
-    4.9,
-    -7
+    4.94,
+    -10
    ],
    "dir": [
     0,
@@ -1405,19 +1406,22 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
   },
   {
+   "type": "spot",
    "pos": [
     -10,
-    4.9,
-    0
+    4.94,
+    -6
    ],
    "dir": [
     0,
@@ -1425,19 +1429,22 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
   },
   {
+   "type": "spot",
    "pos": [
     -10,
-    4.9,
-    5
+    4.94,
+    -2
    ],
    "dir": [
     0,
@@ -1445,19 +1452,22 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
   },
   {
+   "type": "spot",
    "pos": [
-    -5,
-    4.9,
-    -7
+    -10,
+    4.94,
+    2
    ],
    "dir": [
     0,
@@ -1465,19 +1475,22 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
   },
   {
+   "type": "spot",
    "pos": [
-    -5,
-    4.9,
-    0
+    -10,
+    4.94,
+    6
    ],
    "dir": [
     0,
@@ -1485,19 +1498,22 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
   },
   {
+   "type": "spot",
    "pos": [
-    -5,
-    4.9,
-    5
+    -6,
+    4.94,
+    -10
    ],
    "dir": [
     0,
@@ -1505,13 +1521,293 @@
     0
    ],
    "color": [
-    1,
-    0.84687,
-    0.7011
+    1.0,
+    0.72,
+    0.47
    ],
-   "intensity": 2.5,
-   "width": 3,
-   "height": 3
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -6,
+    4.94,
+    -6
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -6,
+    4.94,
+    -2
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -6,
+    4.94,
+    2
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -6,
+    4.94,
+    6
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -2,
+    4.94,
+    -10
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -2,
+    4.94,
+    -6
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -2,
+    4.94,
+    -2
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    -2,
+    4.94,
+    2
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    2,
+    4.94,
+    -6
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "spot",
+   "pos": [
+    2,
+    4.94,
+    -2
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1.0,
+    0.72,
+    0.47
+   ],
+   "power": 60,
+   "spotSize": 100,
+   "blend": 0.6,
+   "radius": 0.04,
+   "role": "recessed downlight"
+  },
+  {
+   "type": "point",
+   "pos": [
+    -6.800000000000001,
+    2.56,
+    -9.2
+   ],
+   "color": [
+    1.0,
+    0.66,
+    0.4
+   ],
+   "power": 18,
+   "radius": 0.03,
+   "role": "bar pendant"
+  },
+  {
+   "type": "point",
+   "pos": [
+    -4.4,
+    2.56,
+    -9.2
+   ],
+   "color": [
+    1.0,
+    0.66,
+    0.4
+   ],
+   "power": 18,
+   "radius": 0.03,
+   "role": "bar pendant"
+  },
+  {
+   "type": "point",
+   "pos": [
+    -2.0000000000000004,
+    2.56,
+    -9.2
+   ],
+   "color": [
+    1.0,
+    0.66,
+    0.4
+   ],
+   "power": 18,
+   "radius": 0.03,
+   "role": "bar pendant"
   }
  ],
  "filter": {
@@ -1535,7 +1831,7 @@
   "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
   "diffuseBounces": 3,
   "denoise": "mask-normalised Gaussian sigma 1.1 px",
-  "seconds": 153.6
+  "seconds": 185.7
  },
  "limitations": [
   "Diffuse lighting only; specular reflections remain realtime approximations.",
@@ -1570,17 +1866,18 @@
  "lightmaps": {
   "day": {
    "file": "day-lightmap.png",
-   "scale": 0.43923887610435486,
+   "scale": 0.43731337785720825,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.08028965443372726,
-   "sha256": "d88483cf2010ce478952d8d4b84e21dfd181046d53fb9a2c6fbe304a72386c11"
+   "coveredMean": 0.080722376704216,
+   "sha256": "bc18ea050d2b0dd88f3d72f96eb0ded5ab8a7afe66ea82317c4c2e7ae5159c8a"
   },
   "lights": {
    "file": "../lights-lightmap.png",
-   "scale": 0.6550084352493286,
+   "scale": 0.4755600094795227,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.06109151244163513,
-   "sha256": "883fb088aae87c06b4f95563723e0fc1be752d59c09d16b58317895aa1d0cb7f"
+   "coveredMean": 0.031452398747205734,
+   "sha256": "a56c8ec58a55e68c4dd86be4c0af3fbe0607ed7492ba4ac1dbbffdd522923a3d",
+   "defaultScale": 4
   }
  }
 }

@@ -432,7 +432,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     const asset=await cachedAsset('360/assets/modern-arm-chair/modern-arm-chair.gltf');
     const source=asset.scene.clone(true),cognac=new Map();
     source.traverse(o=>{if(!o.isMesh)return;o.castShadow=o.receiveShadow=true;
-      if(!cognac.has(o.material)){const m=o.material.clone();if(/pillow/.test(m.name)){m.map=null;m.color.set('#a3653c').convertSRGBToLinear();m.roughness=.62;m.name='Cafe cognac leather (illustrative)';}cognac.set(o.material,m)}
+      if(!cognac.has(o.material)){const m=o.material.clone();if(/pillow/.test(m.name)){m.map=null;m.color.set('#b07648').convertSRGBToLinear();m.roughness=.62;m.name='Cafe cognac leather (illustrative)';}cognac.set(o.material,m)}
       o.material=cognac.get(o.material)});
     const bounds=new T.Box3().setFromObject(source),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),scale=.68/size.x;
     const anchors=[];extra.traverse(o=>{if(o.userData.diningAnchor)anchors.push(o)});

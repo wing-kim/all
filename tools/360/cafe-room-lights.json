@@ -1,8 +1,418 @@
 [
- {"pos": [-10, 4.9, -7], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3},
- {"pos": [-10, 4.9, 0], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3},
- {"pos": [-10, 4.9, 5], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3},
- {"pos": [-5, 4.9, -7], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3},
- {"pos": [-5, 4.9, 0], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3},
- {"pos": [-5, 4.9, 5], "dir": [0, -1, 0], "color": [1, 0.84687, 0.7011], "intensity": 2.5, "width": 3, "height": 3}
+ {
+  "type": "spot",
+  "pos": [
+   -10,
+   4.94,
+   -10
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -10,
+   4.94,
+   -6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -10,
+   4.94,
+   -2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -10,
+   4.94,
+   2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -10,
+   4.94,
+   6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -6,
+   4.94,
+   -10
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -6,
+   4.94,
+   -6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -6,
+   4.94,
+   -2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -6,
+   4.94,
+   2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -6,
+   4.94,
+   6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -2,
+   4.94,
+   -10
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -2,
+   4.94,
+   -6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -2,
+   4.94,
+   -2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   -2,
+   4.94,
+   2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   2,
+   4.94,
+   -6
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "spot",
+  "pos": [
+   2,
+   4.94,
+   -2
+  ],
+  "dir": [
+   0,
+   -1,
+   0
+  ],
+  "color": [
+   1.0,
+   0.72,
+   0.47
+  ],
+  "power": 60,
+  "spotSize": 100,
+  "blend": 0.6,
+  "radius": 0.04,
+  "role": "recessed downlight"
+ },
+ {
+  "type": "point",
+  "pos": [
+   -6.800000000000001,
+   2.56,
+   -9.2
+  ],
+  "color": [
+   1.0,
+   0.66,
+   0.4
+  ],
+  "power": 18,
+  "radius": 0.03,
+  "role": "bar pendant"
+ },
+ {
+  "type": "point",
+  "pos": [
+   -4.4,
+   2.56,
+   -9.2
+  ],
+  "color": [
+   1.0,
+   0.66,
+   0.4
+  ],
+  "power": 18,
+  "radius": 0.03,
+  "role": "bar pendant"
+ },
+ {
+  "type": "point",
+  "pos": [
+   -2.0000000000000004,
+   2.56,
+   -9.2
+  ],
+  "color": [
+   1.0,
+   0.66,
+   0.4
+  ],
+  "power": 18,
+  "radius": 0.03,
+  "role": "bar pendant"
+ }
 ]
