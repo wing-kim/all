@@ -27,6 +27,8 @@
   // 실사 3D에서 넘어간 경우 신축으로 돌아오면 실사 3D를 복원한다.
   const eraNote=document.createElement('small');eraNote.id='precision-era-note';eraNote.textContent=' · 신축 전용(현황·비교는 원본 화면)';label.appendChild(eraNote);
   let eraReturn=false;
+  // 터치 기기에는 키보드·휠 대신 터치 조작을 안내한다.
+  const touchUI=!!window.matchMedia?.('(pointer: coarse)').matches;
   const syncEraNote=()=>{const isNew=(document.querySelector('input[name="era"]:checked')?.value||'new')==='new';eraNote.hidden=isNew;document.getElementById('vm-precision').disabled=!isNew;return isNew};syncEraNote();
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
   settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced" selected>균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>원본 층 선택과 층별 형상 표시를 사용합니다. 1F 카페에는 검토용 가구가 있고 다른 층은 원본 구조와 임시 가구가 표시됩니다. 실내 시안·정밀 단면 절단은 준비 중입니다.</div>';
@@ -111,7 +113,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=sec-6';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=sec-7';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -213,7 +215,7 @@
     if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||floor.doll||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState)+' · WASD 이동':' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기'));
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState)+(touchUI?' · 드래그 둘러보기 · 이동 패드':' · WASD 이동'):' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):(touchUI?' · 드래그 회전 · 두 손가락 확대':' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기')));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
     if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성'+((C.renderer?.clippingPlanes||[]).length?' · 원본 종단면 절단':'');
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;
