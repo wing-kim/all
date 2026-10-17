@@ -13,28 +13,45 @@ const triangles=o=>(o.geometry.index?o.geometry.index.count:o.geometry.attribute
 const opaque=m=>!!m&&!Array.isArray(m)&&!m.transparent&&!(m.transmission>0)&&!(m.alphaTest>0);
 function primary(o){for(let p=o;p;p=p.parent)if(p.userData?.primary)return true;return false}
 
-// 베이크 차폐체 = 주변 건물(context) 불투명 메시. 본 건물(primary)은 시안마다 형상이 바뀌므로 넣지 않는다.
-// 가시성은 보지 않는다(주변 건물 숨김은 setEnabled로 처리).
-export function contextOccluders(scene){const list=[];scene.traverse(o=>{if(o.isMesh&&o.userData.context&&!primary(o)&&opaque(o.material))list.push(o)});return list}
-
-// 베이크 원천과 실행 장면이 같은 주변 건물인지 확인하는 서명(월드 경계 cm 반올림 + 삼각형 수, 순서 무관).
-export function contextSignature(T,scene){
- scene.updateMatrixWorld(true);const box=new T.Box3(),rows=[];let tris=0;
- for(const o of contextOccluders(scene)){box.setFromObject(o);const n=triangles(o);tris+=n;rows.push([box.min.x,box.min.y,box.min.z,box.max.x,box.max.y,box.max.z].map(cm).join(',')+':'+n)}
- rows.sort();let hash=FNV_OFFSET;for(const row of rows)hash=fnv(hash,row+'|');
- return {hash:hash.toString(16).padStart(8,'0'),objects:rows.length,triangles:tris};
+// 베이크 차폐체 = 주변 건물(context) 메시의 불투명 삼각형. 본 건물(primary)은 시안마다 형상이 바뀌므로 넣지 않는다.
+// 가시성은 보지 않는다(주변 건물 숨김은 setEnabled로 처리). 시작 시점에 따라 배칭 묶음이 달라지므로
+// 객체가 아니라 삼각형 단위로 다루고, 다중 재질 배치는 재질 그룹별로 불투명 여부를 판단한다.
+export function contextOccluders(scene){const list=[];scene.traverse(o=>{if(o.isMesh&&o.userData.context&&!primary(o))list.push(o)});return list}
+export function forEachOccluderTriangle(T,scene,visit){
+ scene.updateMatrixWorld(true);const a=new T.Vector3(),b=new T.Vector3(),c=new T.Vector3(),m=new T.Matrix4(),instance=new T.Matrix4();
+ for(const o of contextOccluders(scene)){
+  const g=o.geometry,p=g.attributes.position,idx=g.index,count=idx?idx.count:p.count,materials=[].concat(o.material);
+  const groups=Array.isArray(o.material)&&g.groups.length?g.groups:[{start:0,count,materialIndex:0}];
+  for(let k=0;k<(o.isInstancedMesh?o.count:1);k++){
+   if(o.isInstancedMesh){o.getMatrixAt(k,instance);m.multiplyMatrices(o.matrixWorld,instance)}else m.copy(o.matrixWorld);
+   for(const group of groups){
+    const material=materials[group.materialIndex||0];if(!opaque(material))continue;
+    const end=Math.min(count,group.start+group.count);
+    for(let i=group.start;i+2<end;i+=3){
+     a.fromBufferAttribute(p,idx?idx.getX(i):i).applyMatrix4(m);b.fromBufferAttribute(p,idx?idx.getX(i+1):i+1).applyMatrix4(m);c.fromBufferAttribute(p,idx?idx.getX(i+2):i+2).applyMatrix4(m);
+     visit(a,b,c,material);
+    }
+   }
+  }
+ }
 }
 
-// 개발 환경에서 bake-ground.mjs 입력을 만든다(실행 장면 그대로, 서명 포함).
+// 베이크 원천과 실행 장면이 같은 주변 건물인지 확인하는 서명: 삼각형 수와 꼭짓점 월드 좌표(cm 정수) 합.
+// 순서·배칭 묶음과 무관하고, 건물 이동·추가·삭제에는 바뀐다.
+export function contextSignature(T,scene){
+ let tris=0,x=0,y=0,z=0,q=0;
+ forEachOccluderTriangle(T,scene,(a,b,c)=>{tris++;for(const v of [a,b,c]){const X=cm(v.x),Y=cm(v.y),Z=cm(v.z);x+=X;y+=Y;z+=Z;q+=(X*31+Y*17+Z*7)%1000003}});
+ const hash=fnv(FNV_OFFSET,[tris,x,y,z,q].join(':')).toString(16).padStart(8,'0');
+ return {hash,triangles:tris,sum:[x,y,z,q]};
+}
+
+// 개발 환경에서 bake-ground.mjs 입력을 만든다(실행 장면 그대로, 월드 좌표 삼각형, 서명 포함).
 export function exportGroundSource(T,scene){
- const geo=[],ids=new Map(),rows=[];
- for(const o of contextOccluders(scene)){
-  const g=o.geometry;if(!ids.has(g)){ids.set(g,geo.length);geo.push({position:Array.from(g.attributes.position.array,v=>Math.round(v*1e4)/1e4),index:g.index?Array.from(g.index.array):null})}
-  const c=o.material.color||new T.Color(1,1,1),row={geometry:ids.get(g),matrix:o.matrixWorld.toArray(),color:[c.r,c.g,c.b]};
-  if(o.isInstancedMesh)row.instances=Array.from(o.instanceMatrix.array.slice(0,o.count*16));
-  rows.push(row);
- }
- return {version:2,signature:contextSignature(T,scene),geo,rows};
+ const byColor=new Map();
+ forEachOccluderTriangle(T,scene,(a,b,c,material)=>{const color=material.color?material.color.toArray():[1,1,1],key=color.join(',');if(!byColor.has(key))byColor.set(key,{color,position:[]});byColor.get(key).position.push(...[a,b,c].flatMap(v=>[Math.round(v.x*1e4)/1e4,Math.round(v.y*1e4)/1e4,Math.round(v.z*1e4)/1e4]))});
+ const identity=new T.Matrix4().toArray(),geo=[],rows=[];
+ for(const {color,position} of byColor.values()){rows.push({geometry:geo.length,matrix:identity,color});geo.push({position,index:null})}
+ return {version:3,signature:contextSignature(T,scene),geo,rows};
 }
 
 // 외벽 하부 하늘 가림 노드: 지면 AO를 벽 바깥쪽에서 읽어 높이에 따라 약하게 적용한다(전체 외벽 베이크 아님).
@@ -59,7 +76,7 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
  const started=performance.now(),loader=new T.TextureLoader();
  // 베이크 메타(서명)와 현재 장면 서명이 다르면 베이크를 쓰지 않고 실시간 조명으로 둔다.
  const meta=await fetchImpl(root+'ground-bake.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('ground-bake.json '+r.status);return r.json()});
- const signature=contextSignature(T,scene),valid=!!meta.signature&&meta.signature.hash===signature.hash&&meta.signature.objects===signature.objects;
+ const signature=contextSignature(T,scene),valid=!!meta.signature&&meta.signature.hash===signature.hash&&meta.signature.triangles===signature.triangles;
  const extent=meta.extent||GROUND_EXTENT;
  const status={valid,reason:valid?'active':'context-mismatch',signature:signature.hash,bakedSignature:meta.signature?.hash||null};
  if(!valid){console.warn('Baked ground: context signature mismatch; retaining realtime lighting',status);
@@ -79,18 +96,17 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
   const baked=original.clone();baked.aoMap=ao;baked.aoMapIntensity=.85;
   bindings.push({object:o,original,baked});
  });
- // 주변 건물 외벽: 재질별로 한 번만 복제해 aoNode를 단다(배칭 메시가 재질을 공유).
- const facadeMaterials=new Map();let facades=0;
+ // 주변 건물 외벽: 재질별로 한 번만 복제해 aoNode를 단다(배칭 메시가 재질을 공유, 다중 재질은 그룹별).
+ const facadeMaterials=new Map(),bakedFor=original=>{if(!opaque(original))return original;if(!facadeMaterials.has(original))facadeMaterials.set(original,facadeMaterial(T,original,ao,extent)||original);return facadeMaterials.get(original)};let facades=0;
  for(const o of contextOccluders(scene)){
   if(bindings.some(b=>b.object===o))continue;box.setFromObject(o);
   if(box.max.y<=.7||box.min.y>FACADE_FADE_M||box.max.x<-extent||box.min.x>extent||box.max.z<-extent||box.min.z>extent)continue;
-  const original=o.material;
-  if(!facadeMaterials.has(original))facadeMaterials.set(original,facadeMaterial(T,original,ao,extent));
-  if(!facadeMaterials.get(original))continue;
-  bindings.push({object:o,original,baked:facadeMaterials.get(original)});facades++;
+  const original=o.material,baked=Array.isArray(original)?original.map(bakedFor):bakedFor(original);
+  if(Array.isArray(original)?baked.every((m,i)=>m===original[i]):baked===original)continue;
+  bindings.push({object:o,original,baked});facades++;
  }
  let enabled=false;
- const api={materials:[...new Set(bindings.flatMap(b=>[b.original,b.baked]))],count:bindings.length-facades,facades,loadMs:0,sunlightBakeValid:false,status,
+ const api={materials:[...new Set(bindings.flatMap(b=>[b.original,b.baked].flat()))],count:bindings.length-facades,facades,loadMs:0,sunlightBakeValid:false,status,
   setEnabled(value){enabled=!!value;for(const b of bindings){b.object.material=enabled?b.baked:b.original}},
   get enabled(){return enabled}};
  api.setEnabled(true);api.loadMs=performance.now()-started;return api;

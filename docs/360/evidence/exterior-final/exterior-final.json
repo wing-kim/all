@@ -9,10 +9,10 @@
     "road": "asphalt_02 unchanged; tower plaza pavement_04 unchanged"
   },
   "skyOcclusion": {
-    "source": "exportGroundSource() from the running scene: 408 context meshes, 321,218 triangles, tower excluded",
-    "signature": "3f490e5c (bbox cm + triangle count, order independent); mismatch keeps realtime lighting",
-    "bake": "512x512 over +-112 m, 32 rays, 24 m, 6.3 s; meanAO 0.883 (was 0.932 with the old 172k-triangle snapshot)",
-    "receivers": "36 ground surfaces (aoMap) + 335 context facade bindings (aoNode derived from ground AO 1.5 m outside the wall, fades out by 10 m height, strength 0.6)",
+    "source": "exportGroundSource() from the running scene: opaque triangles of context meshes (multi-material batches split per material group), 333,582 triangles, tower excluded",
+    "signature": "715cb916 = FNV of triangle count + summed world vertex coordinates (cm); independent of object order and of batching (identical when starting in the exterior or the cafe view); mismatch keeps realtime lighting; computed once at start (~0.16 s on this Mac)",
+    "bake": "512x512 over +-112 m, 32 rays, 24 m, 7.9 s; meanAO 0.834",
+    "receivers": "ground surfaces (aoMap) + context facade bindings (aoNode derived from ground AO 1.5 m outside the wall, fades out by 10 m height, strength 0.6); binding counts depend on the start view's batching (exterior start 380 facades, cafe start 375 facades / 49 ground)",
     "limits": "facade term is a derived approximation, not a per-facade bake; tower massing never enters the bake"
   },
   "night": {
@@ -22,10 +22,78 @@
   },
   "rotation": {
     "method": "TOWER360.spin(true) at the reference framing, 2 x 4.5 s windows, previewIntervalMs",
-    "autumnPm": [{"p50": 51.2, "p95": 54.9, "max": 60.2, "over100": 0}, {"p50": 50.9, "p95": 55.4, "max": 58.8, "over100": 0}],
-    "night": [{"p50": 51.4, "p95": 54.5, "max": 55.8, "over100": 0}, {"p50": 50.6, "p95": 54.3, "max": 55.5, "over100": 0}],
-    "bakeOffPm": [{"p50": 50.7, "p95": 54.6, "max": 57.3, "over100": 0}, {"p50": 52.6, "p95": 61.8, "max": 64.9, "over100": 0}],
-    "note": "local, same slow machine state as the cafe-final run; sky occlusion cost is within noise"
+    "autumnPm": [
+      {
+        "p50": 51.2,
+        "p95": 54.9,
+        "max": 60.2,
+        "over100": 0
+      },
+      {
+        "p50": 50.9,
+        "p95": 55.4,
+        "max": 58.8,
+        "over100": 0
+      }
+    ],
+    "night": [
+      {
+        "p50": 51.4,
+        "p95": 54.5,
+        "max": 55.8,
+        "over100": 0
+      },
+      {
+        "p50": 50.6,
+        "p95": 54.3,
+        "max": 55.5,
+        "over100": 0
+      }
+    ],
+    "bakeOffPm": [
+      {
+        "p50": 50.7,
+        "p95": 54.6,
+        "max": 57.3,
+        "over100": 0
+      },
+      {
+        "p50": 52.6,
+        "p95": 61.8,
+        "max": 64.9,
+        "over100": 0
+      }
+    ],
+    "note": "local, same slow machine state as the cafe-final run; sky occlusion cost is within noise",
+    "afterSignatureFix": {
+      "autumnPm": [
+        {
+          "p50": 35.1,
+          "p95": 45.2,
+          "max": 72.4,
+          "over100": 0
+        },
+        {
+          "p50": 35.2,
+          "p95": 48.8,
+          "max": 74.1,
+          "over100": 0
+        }
+      ],
+      "note": "same framing, machine less loaded than the first run"
+    }
   },
-  "files": ["day-before.jpg", "day-after.jpg", "night-before.jpg", "night-after.jpg", "entrance-after.jpg", "side-after.jpg"]
+  "files": [
+    "day-before.jpg",
+    "day-after.jpg",
+    "night-before.jpg",
+    "night-after.jpg",
+    "entrance-after.jpg",
+    "side-after.jpg"
+  ],
+  "incident": {
+    "deploy": "b11dcce (source 47b2280) disabled the cafe bake publicly: furniture-mismatch:360/environment.js, because the cafe bake hashes the whole environment.js and the exterior ground edit changed it",
+    "fix": "re-exported the cafe source from the current scene (receivers identical: 242,270 triangles / 188 objects; two tiny objects outside the east wall newly captured) and rebaked all 13 slots (149 s); day scale/mean equal to 4 decimals except autumn-pm mean +0.0001",
+    "guard": "tools/360/test-bake-freshness.mjs fails when a furniture file or lightmap hash no longer matches"
+  }
 }

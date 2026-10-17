@@ -20,14 +20,18 @@ const fetchMeta=meta=>async()=>({ok:true,json:async()=>meta});
 // 서명: 순서 무관, 형상 이동에는 바뀐다. 투명 주변 메시와 본 건물은 제외.
 {
  const a=build(),sig=contextSignature(T,a.scene);
- assert.equal(sig.objects,1);
+ assert.equal(sig.triangles,12,'only the opaque context box counts (glass context and tower excluded)');
+ // 배칭과 무관: 같은 월드 삼각형을 하나의 다중 재질 메시로 묶어도 서명이 같다.
+ const merged=a.wall.geometry.clone().applyMatrix4(a.wall.matrixWorld).toNonIndexed();merged.clearGroups();merged.addGroup(0,36,0);merged.addGroup(36,0,1);
+ const batch=new T.Scene(),mesh=new T.Mesh(merged,[a.wallMaterial,new T.MeshPhysicalMaterial({transmission:1})]);mesh.userData.context=true;batch.add(mesh);
+ assert.equal(contextSignature(T,batch).hash,sig.hash,'batched/multi-material grouping does not change the signature');
  a.scene.children.reverse();assert.equal(contextSignature(T,a.scene).hash,sig.hash,'signature is order independent');
  a.wall.position.x+=.5;a.scene.updateMatrixWorld(true);assert.notEqual(contextSignature(T,a.scene).hash,sig.hash,'moved context invalidates the bake');
- const src=exportGroundSource(T,build().scene);assert.equal(src.rows.length,1);assert.equal(src.signature.hash,sig.hash);assert.equal(src.rows[0].matrix.length,16);
+ const src=exportGroundSource(T,build().scene);assert.equal(src.rows.length,1);assert.equal(src.signature.hash,sig.hash);assert.equal(src.geo[0].position.length,12*9);
 }
 // 서명 불일치: 아무것도 바꾸지 않고 실시간 조명 유지.
 {
- const a=build(),api=await applyBakedGround({...T,...loader},a.scene,{fetchImpl:fetchMeta({signature:{hash:'00000000',objects:1},extent:GROUND_EXTENT})});
+ const a=build(),api=await applyBakedGround({...T,...loader},a.scene,{fetchImpl:fetchMeta({signature:{hash:'00000000',triangles:12},extent:GROUND_EXTENT})});
  assert.equal(api.status.reason,'context-mismatch');assert.equal(api.enabled,false);assert.equal(a.ground.material,a.material);assert.equal(a.wall.material,a.wallMaterial);assert.equal(a.ground.geometry,a.source);
 }
 // 서명 일치: 지면 UV1 + aoMap, 외벽 aoNode, 본 건물·지붕 불변, 끄면 원본 복원.

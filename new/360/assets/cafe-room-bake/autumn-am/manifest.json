@@ -2,7 +2,7 @@
  "version": 2,
  "kind": "cafe-room",
  "source": "cafe-ambient-source.json.gz",
- "sourceSha256": "124f24436b28cd97c1e12a9e7303a4846466be369b6879447a0ec99a869e9956",
+ "sourceSha256": "ff5501bc73928fb18dcd85eb561de2290fa16a65da2f24eed483846ba823d0d5",
  "sourceState": {
   "era": "new",
   "scheme": "mech",
@@ -37,7 +37,7 @@
  "sourceCafeCeiling": 5.0200000000000005,
  "furnitureManifest": {
   "360/cafe.js": "4942326acc5cdb6b949427f9c337933e8ad6a37b3ec816e47200ee19c7b847b4",
-  "360/environment.js": "247993f2bc9bd51ad3e44f916ffef77573b8e22d814c90758726ae0469d9b32e",
+  "360/environment.js": "249c63bffa2684acce3b38fbcd52de6b2c9399b7bd6fbdf9f0a1682bfb6150ca",
   "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
   "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
   "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6"
@@ -1285,14 +1285,14 @@
    "triangles": 2,
    "offset": 4082,
    "area": 14.9423,
-   "name": "region-243"
+   "name": "region-245"
   },
   {
    "hash": 364744133,
    "triangles": 2,
    "offset": 4084,
    "area": 0.2025,
-   "name": "region-244"
+   "name": "region-246"
   },
   {
    "hash": 2290989045,
@@ -1831,7 +1831,7 @@
   "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
   "diffuseBounces": 3,
   "denoise": "mask-normalised Gaussian sigma 1.1 px",
-  "seconds": 185.7
+  "seconds": 148.8
  },
  "limitations": [
   "Diffuse lighting only; specular reflections remain realtime approximations.",
@@ -1868,16 +1868,16 @@
    "file": "day-lightmap.png",
    "scale": 0.4626089930534363,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.08914370089769363,
-   "sha256": "d4a0d6aa21c9cf6ae49853af3d6428cb7b8c7c9ae9d1084589a94ce0d436bea8"
+   "coveredMean": 0.089128278195858,
+   "sha256": "b114b3dea5f7442e4b2a57970cb6d35ac374002e30eaae5e8cbede7db8b2e133"
   },
   "lights": {
    "file": "../lights-lightmap.png",
+   "defaultScale": 1,
    "scale": 0.4755600094795227,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.031452398747205734,
-   "sha256": "a56c8ec58a55e68c4dd86be4c0af3fbe0607ed7492ba4ac1dbbffdd522923a3d",
-   "defaultScale": 4
+   "coveredMean": 0.03145346790552139,
+   "sha256": "4218e239b98fae37458fbe7f7ce997894e855b82eedc3aa3a84d36846fe66877"
   }
  }
 }
