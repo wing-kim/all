@@ -4,6 +4,8 @@
   const C=window.TOWER_LAB_CONTEXT,host=document.getElementById('viewer');
   const style=document.createElement('style');style.textContent=`
     #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef}
+    /* 실사 3D 전용 시점 버튼은 실사 모드에서만 보인다(원본 화면의 버튼 줄은 그대로). */
+    #viewer:not(.precision-on) :is(#precision-home,#precision-reference,#precision-cafe,#precision-cafe-counter,#precision-original-interior){display:none}
     .precision-on .views,.precision-on .tools{z-index:8}
     .precision-on .intui,.precision-on .ihud{z-index:8}
     .precision-on > canvas:not(#mini){visibility:hidden}
@@ -22,7 +24,7 @@
     #precision-settings{padding:10px 0;font-size:12px} #precision-settings select{padding:5px;margin:4px}
   `;document.head.appendChild(style);
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
-  label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실시간 360°';group.appendChild(label);
+  label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실사 3D';group.appendChild(label);
   // 실사 3D는 신축 시안 전용이다. 현황·비교(기존 동광빌딩·현황 아파트·겹침 윤곽)는 원본 렌더로 보여 주고,
   // 실사 3D에서 넘어간 경우 신축으로 돌아오면 실사 3D를 복원한다.
   const eraNote=document.createElement('small');eraNote.id='precision-era-note';eraNote.textContent=' · 신축 전용(현황·비교는 원본 화면)';label.appendChild(eraNote);
@@ -113,7 +115,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=sec-7';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=emb-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -221,5 +223,6 @@
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;
   },200);
   window.TOWER_REVIEW={enable,disable,snapshot,timings,get frame(){return frame}};
-  enable();
+  // 검토용 ?lab=review만 바로 실사로 시작한다. 일반 주소는 원본 화면에서 시작하고 '실사 3D'를 고르면 장면을 불러온다.
+  if(new URLSearchParams(location.search).get('lab')==='review')enable();
 })();
