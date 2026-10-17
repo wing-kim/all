@@ -1,5 +1,13 @@
 # Claude Code 인계 준비
 
+## 현재 상태 — 2026-10-18 머지 직전 (Claude Code)
+- A(카페 완성품)·B(외부 완성품)·C(계약 잔여·회귀·정밀 이미지·전송량) 완료. 다음은 사용자 결정 대기: 원본 저장소 push, PR 갱신, 머지 범위·방식(`docs/360/PR_DESCRIPTION.md`의 결정 사항 4개).
+- 최신 소스 HEAD와 배포 SHA는 `docs/360/WORK_STATE.md` 맨 위 요약에 있다. 공개 검토 URL은 아래 격리 검토 주소.
+- 테스트 17종: `for t in tools/360/test-*.mjs; do node $t; done`. 배포 전 `node tools/360/test-bake-freshness.mjs` 필수.
+- 베이크 재생성: 카페는 `TOWER_REVIEW.frame` 안에서 `tools/360/export-cafe-bake.js` 실행 → `tools/360/cafe-ambient-source.json.gz` → `bake-cafe-room.py`(약 2.5분, 13개 시간대) → `new/360/assets/cafe-room-bake/`에 복사. 외부 하늘 가림은 `TOWER_CINEMA.groundSource()` → `tools/360/bake-static-source.json.gz` → `node bake-ground.mjs`(약 8초). 자세한 절차는 `docs/360/baked-environment.md`, WORK_STATE 체크포인트.
+- 캐시 토큰: `new/3d-model.html`의 integrated.js·scene.js 토큰, `new/360/scene.js`의 modern.js 토큰, `new/360/integrated.js`의 자식 revision을 함께 올린다.
+
+
 현재는 Codex 작업을 계속한다. 이 폴더는50% 한도 이전 전환이 필요할 때 사용하는 예비 진입점이며 완료 보고가 아니다.
 소스 복사본을 만들지 않는다. 같은 Git 저장소와 분리 브랜치를 이어받아 이중 수정/이력 누락을 막는다. 별도 작업폴더가 필요하면 clean commit을 기준으로 별도 worktree를 만들되 두 에이전트가 같은 파일을 동시에 수정하지 않는다.
 
@@ -19,9 +27,9 @@
 ## 실행/검증
 저장소 루트에서 `python3 -m http.server 8765 --bind 127.0.0.1`.
 http://127.0.0.1:8765/new/3d-model.html?lab=review
-카페는 같은 화면의1층 카페3D 버튼 또는 `?lab=review&view=cafe`. 베이크 시험은 `&ambientBake=study`를 추가한다(기본 꺼짐). 기존 모드는 query없는URL.
+카페는 같은 화면의1층 카페3D 버튼 또는 `?lab=review&view=cafe`. 카페 전체 베이크는 기본 켜짐(`&ambientBake=off`로 비교, `&ambientBake=study`는 예전 바닥·천장 연구 경로). 외부 하늘 가림은 `&bake=off`로 비교. 기존 모드는 query없는URL.
 렌더러 빌드: `npm --prefix tools/360 run build` (의존성이 없으면 해당 디렉터리에서 npm ci --ignore-scripts).
-테스트: `node tools/360/test-performance-stats.mjs`, `node tools/360/test-integrated-lifecycle.mjs`, 추가 단위별 테스트 및 git diff --check.
+테스트: `tools/360/test-*.mjs` 전체(17종)와 git diff --check.
 브라우저는 사용 가능한 실제 도구로 검증한다. Codex CUA 전용 코드가 Claude에서 실행된다고 가정하지 않는다. 기본 UI와 TOWER_REVIEW.frame.contentWindow.TOWER_CINEMA.status()/resetPerformance() 계측을 사용할 수 있다.
 
 ## 전환 판단

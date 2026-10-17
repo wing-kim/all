@@ -4,15 +4,15 @@
 
 갱신:2026-10-16. 최신 사용자 정정: 실사3D는 기존 앱의 표현 모드, 기능 연결은 전체 범위. 고품질 모델은 점진 제작 가능. PROJECT_BRIEF.md/VIEWER_CONTRACT.md가 과거 카페 중심 계획보다 우선한다.
 
-## 최신 재개 요약 — 2026-10-18, B(외부 완성품) 배포 완료 (Claude Code)
+## 최신 재개 요약 — 2026-10-18, A·B·C 완료, 머지 직전 결정 대기 (Claude Code)
 
 이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 이전 요약은 과거 기록이다.
 
-- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1 (6c774d1까지 push됨, 이후 로컬 커밋은 push 안 함), 병합 금지.
-- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 4598553(소스 6d97492). 공개 확인: 외부·카페 시작 모두 카페 베이크(autumn-pm)와 외부 하늘 가림 active, 야간 전환 시 any-night 슬롯과 가로등·헤이즈 보정 동작, 첫 화면 5.7초.
-- **진행 단계:** A(카페 완성품) 완료, B(외부 완성품) 완료. 다음 C: VIEWER_CONTRACT 잔여(종단면 2종·지하투시·윗층투시·램프·현황/비교), 회귀, PR·인계 문서, 머지 직전 정리.
-- **방법:** 카페 = 원본 13개 시간대별 Cycles 베이크(day+lights 라이트맵) + 실시간 반사. 외부 = 실시간 원본 태양·그림자 + 시간 무관 하늘 가림(주변 건물 서명 검증) + 야간 가로등.
-- **주의:** environment.js·cafe.js·가구 자산 수정 시 카페 원천 재추출과 전체 슬롯 재베이크 필요. 배포 전 `node tools/360/test-bake-freshness.mjs`.
+- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1 은 6c774d1까지만 push됨. 이후 로컬 커밋은 원본 저장소에 push하지 않았다(사용자 확인 필요). 병합 금지.
+- **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 72524ab(소스 934805c). 공개 확인: 첫 화면 약 3.9초, 첫 방문 약 48MB, 카페 베이크(autumn-pm)·외부 하늘 가림 active, 종단면 적용·해제, 정밀 이미지 32샘플 완료.
+- **완료:** A 카페 완성품, B 외부 완성품(지면 재질·서명 검증 하늘 가림·야간 가로등/헤이즈), C 종단면 2종·윗층 투시·지하층 투시 실사 연결, 현황·비교는 원본 화면(신축 전용 판단), 정밀 이미지 하늘 오류 수정, 가로수·차량 GLB 14.6MB 절감, 터치 안내, 일반 URL 19단계 비간섭.
+- **사용자 결정 대기:** `docs/360/PR_DESCRIPTION.md`의 4개(현황·비교 처리, 일반 URL 노출, 머지 범위 203MB 중 런타임만 권장, squash). 원본 저장소 push·PR 본문 갱신은 확인 후.
+- **주의:** environment.js·cafe.js·가구 자산 수정 시 카페 재베이크. 배포 전 `node tools/360/test-bake-freshness.mjs`.
 - **사용자 지시:** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단. main 병합·운영 배포·원본 저장소 push는 확인 후.
 
 ## 초기 감사 이력 — 현재 상태가 아님
@@ -271,3 +271,11 @@
 - 원인: 낮 하늘 배경이 원본 하늘 큐브 캡처(CubeRenderTarget 256)라 three-gpu-pathtracer가 WebGL 전용 CubeToEquirectGenerator(renderer.readRenderTargetPixels)를 호출해 WebGPU에서 실패. 야간은 등장방형 그라데이션이라 영향 없음.
 - 조치: `tools/360/cube-equirect.js`가 큐브를 WebGPU 셰이더로 1024×512 등장방형에 그리고 readRenderTargetPixelsAsync로 읽어 DataTexture로 넘김(하늘 캡처 횟수 키로 캐시, 종료 시 해제).
 - 확인: 실사 근사 구도 정밀 렌더 32샘플 완료, 오류 없음, 하늘 방향 정상. 증거 `docs/360/evidence/viewer-contract-c/precision-reference-32spp.jpg`. 경로 추적 결과는 커튼월이 어둡게 반사되고 실내가 따뜻하게 비쳐 AI 외관 사진에 더 가깝다(실시간 미리보기와의 차이는 남음).
+
+## C-3 전송량·모바일·머지 직전 정리 — 2026-10-18 (Claude Code)
+- 첫 방문 전송량(공개, encodedBodySize 합): 60.1MB → 48.1MB. tree-small-02.glb 10.9→6.1MB(WebP+Draco 재적용), concept-car.glb 11.5→1.9MB(WebP+Draco), glTF-Transform 4.1.1. 화면 차이 평균 0.76/255, 정밀 렌더 정상.
+- 남은 큰 항목: 1K JPG 텍스처 약 27MB(WebP 전환 시 environment.js 수정 → 카페 재베이크 필요), 2K HDR 3.5MB, 카페 라이트맵(현재 슬롯 3MB + 조명 2.3MB + UV 1MB). 후속 후보로 남김.
+- 모바일: 375×812 터치 흉내에서 첫 화면 4.3초, 두 베이크 active, 가로 스크롤 없음. 터치 기기 안내 문구 추가. 실제 휴대폰 GPU 성능은 미측정.
+- 공개 확인(72524ab): 종단면 적용·해제, 정밀 이미지 32샘플 완료.
+- 머지 범위 조사: main 대비 약 203MB 추가(new/360/assets 99MB, docs 82MB, tools 19MB). 운영 Pages 공개 게시 영향이 있어 런타임만 머지 권장. PR 본문 초안 `docs/360/PR_DESCRIPTION.md`.
+- 다음 첫 행동: 사용자 결정(4개)과 push 승인 받기 → 승인 시 브랜치 push, PR 본문 갱신. 머지는 하지 않는다.
