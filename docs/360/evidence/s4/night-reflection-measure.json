@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-18",
+  "slots": ["spring-pm", "any-night (original 야간 button, every season)"],
+  "bake": {"seconds": 50.5, "shared": ["uv.bin", "lights-lightmap.png"], "perSlot": "day-lightmap.png",
+    "sky": {"spring-pm": 0.6185, "any-night": 0.0483, "tint": [0.9431, 0.99, 1.0669], "calibration": "daylight-sky_2k.hdr upward irradiance-equivalent radiance 1.5463 x realtime environmentIntensity / bake world 0.8"}},
+  "reflection": {"finding": "three 0.186 node materials use scene.environmentIntensity unless the material has its own envMap; envMapIntensity=0 had no effect, so environment diffuse was added on top of the lightmap",
+    "fix": "SpecularEnvironmentNode keeps environment radiance (reflections) and drops iblIrradiance (diffuse)",
+    "effectBeforeCalibration": {"meanBrightness": [124.5, 101.2], "floor": [125.9, 92.2]}},
+  "screens": {"meanBrightness": {"pmOff": 148.9, "pmBaked": 94.4, "nightOff": 125.5, "nightBaked": 69.7},
+    "note": "same camera (cafe comparison view 1), exposure 1.4 in every mode; realtime interior is brighter because its environment lighting ignores wall/ceiling occlusion"},
+  "rotation4_5s": {"spring-pm": {"p50": 32.3, "p95": 43.1, "max": 54.6, "over100": 0}, "any-night": {"p50": 32.2, "p95": 43.5, "max": 51.5, "over100": 0}},
+  "load": {"firstFrameMs": 3110, "bindMs": 274, "maxSliceMs": 52}
+}
