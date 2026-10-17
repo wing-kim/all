@@ -3,6 +3,7 @@ import { glazingSides } from './glazing-sides.js';
 import { applyBakedGround, exportGroundSource } from './baked-ground.js';
 import { createExteriorNight, DAY_HAZE } from './exterior-night.js';
 import { createSectionClip } from './section-clip.js';
+import { cubeToEquirect } from './cube-equirect.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -138,6 +139,7 @@ export async function start(C){
   roomBake=bake;bake.precision(precisionRequested||precisionLoading);bake.light(C.reviewDaylight);roomChanged();
  }).catch(error=>console.warn('Cafe room bake unavailable; realtime lighting retained',error));
  syncSourceVisibility();
+ let skyEquirect=null;
  async function requestPrecision(){
   if(precisionLoading||precisionRequested||C.dollMode)return;
   ambientStudy.precision(true);roomBake.precision(true);
@@ -150,7 +152,9 @@ export async function start(C){
    if(version!==requestVersion||stopped)return;
    // Raster batching reduces draw calls; tracing needs the original shared geometries.
    const sceneAt=performance.now(),traceScene=createPrecisionScene(T,scene,batchSources);
-   precisionTiming.sceneMs=performance.now()-sceneAt;const tracerAt=performance.now();
+   precisionTiming.sceneMs=performance.now()-sceneAt;
+   // 낮 하늘(원본 하늘 큐브 캡처)은 경로 추적기가 WebGPU에서 변환하지 못하므로 등장방형으로 바꿔 넘긴다.
+   if(traceScene.background?.isCubeTexture){const key=sourceSky.status().captures;if(!skyEquirect||skyEquirect.key!==key){skyEquirect?.texture.dispose();skyEquirect={key,texture:await cubeToEquirect(T,renderer,traceScene.background)}}if(version!==requestVersion||stopped)return;traceScene.background=skyEquirect.texture}const tracerAt=performance.now();
    if(!tracer)tracer=createTracer(renderer,traceScene,camera,compactTouch);else tracer.setScene(traceScene,camera);
    precisionTiming.tracerMs=performance.now()-tracerAt;
    tracer.maxSamples=previewHigh?64:32;tracer.renderScale=previewHigh?1:.8;
@@ -259,7 +263,7 @@ export async function start(C){
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
   status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
- stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.

@@ -266,3 +266,8 @@
 - 비간섭: 일반 URL 19단계 main 대비 동일, 오류 0. 증거 `docs/360/evidence/viewer-contract-c/`.
 - 테스트: test-section-clip.mjs 추가, test-integrated-lifecycle.mjs 문구 갱신(단면 없으면 절단 주장 안 함, 원본 절단면 있으면 표시). 전체 통과.
 - 남은 C: 정밀 이미지 readRenderTargetPixels 오류 조사, 콜드 로딩·모바일 측정, 배포·공개 확인, PR 설명·인계 문서, 머지 직전 정리(원본 저장소 push는 확인 후).
+
+## C-2 정밀 이미지 오류 수정 — 2026-10-18 (Claude Code)
+- 원인: 낮 하늘 배경이 원본 하늘 큐브 캡처(CubeRenderTarget 256)라 three-gpu-pathtracer가 WebGL 전용 CubeToEquirectGenerator(renderer.readRenderTargetPixels)를 호출해 WebGPU에서 실패. 야간은 등장방형 그라데이션이라 영향 없음.
+- 조치: `tools/360/cube-equirect.js`가 큐브를 WebGPU 셰이더로 1024×512 등장방형에 그리고 readRenderTargetPixelsAsync로 읽어 DataTexture로 넘김(하늘 캡처 횟수 키로 캐시, 종료 시 해제).
+- 확인: 실사 근사 구도 정밀 렌더 32샘플 완료, 오류 없음, 하늘 방향 정상. 증거 `docs/360/evidence/viewer-contract-c/precision-reference-32spp.jpg`. 경로 추적 결과는 커튼월이 어둡게 반사되고 실내가 따뜻하게 비쳐 AI 외관 사진에 더 가깝다(실시간 미리보기와의 차이는 남음).
