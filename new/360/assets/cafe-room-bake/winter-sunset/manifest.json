@@ -1,0 +1,1586 @@
+{
+ "version": 2,
+ "kind": "cafe-room",
+ "source": "cafe-ambient-source.json.gz",
+ "sourceSha256": "1113901e295a83013e37007b34d8a3291ab5591e2aca2438f091ca93da3f0cea",
+ "sourceState": {
+  "era": "new",
+  "scheme": "mech",
+  "floors": 6,
+  "h1": 5.4,
+  "ht": 4.2,
+  "frame": true,
+  "g1": "skin",
+  "upSt": false,
+  "skin": false,
+  "use7": false,
+  "nost": false,
+  "style": "glass",
+  "form": "none",
+  "win": "base",
+  "design": "none",
+  "cgl": "none",
+  "finC": null,
+  "dsgC": null,
+  "formC": null,
+  "a4park": false,
+  "mode": "combo",
+  "cfin": "glass",
+  "cform": "none",
+  "pdesign": "stack",
+  "dl": [],
+  "skinD": null,
+  "formD": null,
+  "skinOn": false
+ },
+ "sourceCafeFloor": 0.07,
+ "sourceCafeCeiling": 5.0200000000000005,
+ "furnitureManifest": {
+  "360/cafe.js": "759fa15dd29d9e3422873c65dbeaa3481945daf0d21faa06fefc93ce7e6bf918",
+  "360/environment.js": "959a8728948d4b059a44fe81490b16c19dd2f542fc942cb9d77435d6b29e70a9",
+  "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
+  "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
+  "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6"
+ },
+ "box": {
+  "min": [
+   -13.697114944458008,
+   -0.07999999999999999,
+   -13.961538314819336
+  ],
+  "max": [
+   8.9375,
+   5.470000000000001,
+   11.197114944458008
+  ]
+ },
+ "snapshotRoomBox": {
+  "min": [
+   -15,
+   -0.2,
+   -15
+  ],
+  "max": [
+   10,
+   5.6,
+   14.5
+  ]
+ },
+ "triangles": 241758,
+ "area": 3211.41,
+ "objects": [
+  {
+   "hash": 3839434770,
+   "triangles": 10,
+   "offset": 0,
+   "area": 39.7392,
+   "name": "region-0"
+  },
+  {
+   "hash": 3315072474,
+   "triangles": 2,
+   "offset": 10,
+   "area": 0.3323,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 756294249,
+   "triangles": 60,
+   "offset": 12,
+   "area": 699.6229,
+   "name": "region-3"
+  },
+  {
+   "hash": 3197820271,
+   "triangles": 10,
+   "offset": 72,
+   "area": 2.1182,
+   "name": "region-5"
+  },
+  {
+   "hash": 976964703,
+   "triangles": 10,
+   "offset": 82,
+   "area": 2.1182,
+   "name": "region-6"
+  },
+  {
+   "hash": 112365561,
+   "triangles": 10,
+   "offset": 92,
+   "area": 2.1182,
+   "name": "region-7"
+  },
+  {
+   "hash": 791669385,
+   "triangles": 10,
+   "offset": 102,
+   "area": 2.1182,
+   "name": "region-8"
+  },
+  {
+   "hash": 1674383385,
+   "triangles": 10,
+   "offset": 112,
+   "area": 2.1182,
+   "name": "region-9"
+  },
+  {
+   "hash": 3995719049,
+   "triangles": 10,
+   "offset": 122,
+   "area": 2.1182,
+   "name": "region-10"
+  },
+  {
+   "hash": 1493040051,
+   "triangles": 10,
+   "offset": 132,
+   "area": 2.1182,
+   "name": "region-11"
+  },
+  {
+   "hash": 1414929667,
+   "triangles": 10,
+   "offset": 142,
+   "area": 2.1182,
+   "name": "region-12"
+  },
+  {
+   "hash": 25479241,
+   "triangles": 10,
+   "offset": 152,
+   "area": 2.1182,
+   "name": "region-13"
+  },
+  {
+   "hash": 3610904683,
+   "triangles": 10,
+   "offset": 162,
+   "area": 2.1182,
+   "name": "region-14"
+  },
+  {
+   "hash": 1497797371,
+   "triangles": 10,
+   "offset": 172,
+   "area": 2.1182,
+   "name": "region-15"
+  },
+  {
+   "hash": 963281975,
+   "triangles": 10,
+   "offset": 182,
+   "area": 2.1182,
+   "name": "region-16"
+  },
+  {
+   "hash": 496624869,
+   "triangles": 10,
+   "offset": 192,
+   "area": 2.1182,
+   "name": "region-17"
+  },
+  {
+   "hash": 1444147760,
+   "triangles": 10,
+   "offset": 202,
+   "area": 2.1182,
+   "name": "region-18"
+  },
+  {
+   "hash": 1872586038,
+   "triangles": 10,
+   "offset": 212,
+   "area": 2.1182,
+   "name": "region-19"
+  },
+  {
+   "hash": 3421443528,
+   "triangles": 10,
+   "offset": 222,
+   "area": 2.1182,
+   "name": "region-20"
+  },
+  {
+   "hash": 1323225717,
+   "triangles": 10,
+   "offset": 232,
+   "area": 2.1182,
+   "name": "region-21"
+  },
+  {
+   "hash": 1013396919,
+   "triangles": 10,
+   "offset": 242,
+   "area": 2.1182,
+   "name": "region-22"
+  },
+  {
+   "hash": 1627168077,
+   "triangles": 10,
+   "offset": 252,
+   "area": 2.1182,
+   "name": "region-23"
+  },
+  {
+   "hash": 892920071,
+   "triangles": 10,
+   "offset": 262,
+   "area": 2.1182,
+   "name": "region-24"
+  },
+  {
+   "hash": 3861590251,
+   "triangles": 10,
+   "offset": 272,
+   "area": 2.1182,
+   "name": "region-25"
+  },
+  {
+   "hash": 2432331469,
+   "triangles": 10,
+   "offset": 282,
+   "area": 2.1182,
+   "name": "region-26"
+  },
+  {
+   "hash": 70128139,
+   "triangles": 10,
+   "offset": 292,
+   "area": 2.1182,
+   "name": "region-27"
+  },
+  {
+   "hash": 1226989469,
+   "triangles": 10,
+   "offset": 302,
+   "area": 2.1182,
+   "name": "region-28"
+  },
+  {
+   "hash": 3173617805,
+   "triangles": 10,
+   "offset": 312,
+   "area": 2.1182,
+   "name": "region-29"
+  },
+  {
+   "hash": 261629095,
+   "triangles": 10,
+   "offset": 322,
+   "area": 2.1182,
+   "name": "region-30"
+  },
+  {
+   "hash": 2802588425,
+   "triangles": 10,
+   "offset": 332,
+   "area": 2.1182,
+   "name": "region-31"
+  },
+  {
+   "hash": 2843523711,
+   "triangles": 10,
+   "offset": 342,
+   "area": 2.1182,
+   "name": "region-32"
+  },
+  {
+   "hash": 1979613121,
+   "triangles": 10,
+   "offset": 352,
+   "area": 2.1182,
+   "name": "region-33"
+  },
+  {
+   "hash": 2644588855,
+   "triangles": 10,
+   "offset": 362,
+   "area": 2.1182,
+   "name": "region-34"
+  },
+  {
+   "hash": 3540274933,
+   "triangles": 10,
+   "offset": 372,
+   "area": 2.1182,
+   "name": "region-35"
+  },
+  {
+   "hash": 3980272639,
+   "triangles": 10,
+   "offset": 382,
+   "area": 2.1182,
+   "name": "region-36"
+  },
+  {
+   "hash": 933177399,
+   "triangles": 10,
+   "offset": 392,
+   "area": 2.1182,
+   "name": "region-37"
+  },
+  {
+   "hash": 71004757,
+   "triangles": 10,
+   "offset": 402,
+   "area": 2.1182,
+   "name": "region-38"
+  },
+  {
+   "hash": 1180919311,
+   "triangles": 10,
+   "offset": 412,
+   "area": 2.1182,
+   "name": "region-39"
+  },
+  {
+   "hash": 3050848073,
+   "triangles": 10,
+   "offset": 422,
+   "area": 2.1182,
+   "name": "region-40"
+  },
+  {
+   "hash": 2387289383,
+   "triangles": 10,
+   "offset": 432,
+   "area": 2.1182,
+   "name": "region-41"
+  },
+  {
+   "hash": 683527333,
+   "triangles": 10,
+   "offset": 442,
+   "area": 2.1182,
+   "name": "region-42"
+  },
+  {
+   "hash": 375048785,
+   "triangles": 12,
+   "offset": 452,
+   "area": 30.6805,
+   "name": "region-65"
+  },
+  {
+   "hash": 2342454317,
+   "triangles": 12,
+   "offset": 464,
+   "area": 23.5846,
+   "name": "region-66"
+  },
+  {
+   "hash": 719554865,
+   "triangles": 12,
+   "offset": 476,
+   "area": 34.5434,
+   "name": "region-67"
+  },
+  {
+   "hash": 751860541,
+   "triangles": 12,
+   "offset": 488,
+   "area": 3.9015,
+   "name": "region-68"
+  },
+  {
+   "hash": 1123094117,
+   "triangles": 12,
+   "offset": 500,
+   "area": 3.9015,
+   "name": "region-69"
+  },
+  {
+   "hash": 722587409,
+   "triangles": 12,
+   "offset": 512,
+   "area": 0.1136,
+   "name": "region-70"
+  },
+  {
+   "hash": 1462053377,
+   "triangles": 12,
+   "offset": 524,
+   "area": 0.1136,
+   "name": "region-71"
+  },
+  {
+   "hash": 837822493,
+   "triangles": 12,
+   "offset": 536,
+   "area": 4.1581,
+   "name": "region-72"
+  },
+  {
+   "hash": 3498814413,
+   "triangles": 12,
+   "offset": 548,
+   "area": 4.1581,
+   "name": "region-73"
+  },
+  {
+   "hash": 3826783294,
+   "triangles": 12,
+   "offset": 560,
+   "area": 4.314,
+   "name": "region-74"
+  },
+  {
+   "hash": 2882725335,
+   "triangles": 12,
+   "offset": 572,
+   "area": 16.5938,
+   "name": "region-75"
+  },
+  {
+   "hash": 2538511801,
+   "triangles": 12,
+   "offset": 584,
+   "area": 0.1284,
+   "name": "region-76"
+  },
+  {
+   "hash": 3337427751,
+   "triangles": 12,
+   "offset": 596,
+   "area": 18.975,
+   "name": "region-77"
+  },
+  {
+   "hash": 2757507829,
+   "triangles": 12,
+   "offset": 608,
+   "area": 0.268,
+   "name": "region-84"
+  },
+  {
+   "hash": 2308858712,
+   "triangles": 110,
+   "offset": 620,
+   "area": 43.4914,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 426557126,
+   "triangles": 98,
+   "offset": 730,
+   "area": 0.2695,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2857972285,
+   "triangles": 540,
+   "offset": 828,
+   "area": 133.2906,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3995769265,
+   "triangles": 48,
+   "offset": 1368,
+   "area": 25.6822,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1627980431,
+   "triangles": 408,
+   "offset": 1416,
+   "area": 692.6954,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 441724703,
+   "triangles": 120,
+   "offset": 1824,
+   "area": 2.98,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2386621797,
+   "triangles": 48,
+   "offset": 1944,
+   "area": 4.5774,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1200728005,
+   "triangles": 72,
+   "offset": 1992,
+   "area": 9.516,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 589191620,
+   "triangles": 400,
+   "offset": 2064,
+   "area": 47.7315,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1951462033,
+   "triangles": 180,
+   "offset": 2464,
+   "area": 22.6023,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1679882241,
+   "triangles": 48,
+   "offset": 2644,
+   "area": 0.4082,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 103023445,
+   "triangles": 48,
+   "offset": 2692,
+   "area": 9.2243,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3327501139,
+   "triangles": 50,
+   "offset": 2740,
+   "area": 407.3228,
+   "name": "region-97"
+  },
+  {
+   "hash": 367683615,
+   "triangles": 50,
+   "offset": 2790,
+   "area": 369.5285,
+   "name": "region-98"
+  },
+  {
+   "hash": 241107501,
+   "triangles": 2,
+   "offset": 2840,
+   "area": 0.0098,
+   "name": "region-100"
+  },
+  {
+   "hash": 320122677,
+   "triangles": 2,
+   "offset": 2842,
+   "area": 0.0098,
+   "name": "region-101"
+  },
+  {
+   "hash": 1250010399,
+   "triangles": 2,
+   "offset": 2844,
+   "area": 0.0098,
+   "name": "region-102"
+  },
+  {
+   "hash": 3531926333,
+   "triangles": 2,
+   "offset": 2846,
+   "area": 0.0098,
+   "name": "region-103"
+  },
+  {
+   "hash": 2991285445,
+   "triangles": 2,
+   "offset": 2848,
+   "area": 0.0098,
+   "name": "region-104"
+  },
+  {
+   "hash": 1558298895,
+   "triangles": 2,
+   "offset": 2850,
+   "area": 0.0098,
+   "name": "region-105"
+  },
+  {
+   "hash": 1276578035,
+   "triangles": 2,
+   "offset": 2852,
+   "area": 0.0098,
+   "name": "region-106"
+  },
+  {
+   "hash": 2816980597,
+   "triangles": 2,
+   "offset": 2854,
+   "area": 0.0098,
+   "name": "region-107"
+  },
+  {
+   "hash": 3010755055,
+   "triangles": 2,
+   "offset": 2856,
+   "area": 0.0098,
+   "name": "region-108"
+  },
+  {
+   "hash": 785258683,
+   "triangles": 2,
+   "offset": 2858,
+   "area": 0.0098,
+   "name": "region-109"
+  },
+  {
+   "hash": 2977713061,
+   "triangles": 2,
+   "offset": 2860,
+   "area": 0.0098,
+   "name": "region-110"
+  },
+  {
+   "hash": 454065149,
+   "triangles": 2,
+   "offset": 2862,
+   "area": 0.0098,
+   "name": "region-111"
+  },
+  {
+   "hash": 3740343609,
+   "triangles": 2,
+   "offset": 2864,
+   "area": 0.0098,
+   "name": "region-112"
+  },
+  {
+   "hash": 780470157,
+   "triangles": 2,
+   "offset": 2866,
+   "area": 0.0098,
+   "name": "region-113"
+  },
+  {
+   "hash": 2285146121,
+   "triangles": 2,
+   "offset": 2868,
+   "area": 0.0098,
+   "name": "region-114"
+  },
+  {
+   "hash": 3455103525,
+   "triangles": 2,
+   "offset": 2870,
+   "area": 0.0098,
+   "name": "region-115"
+  },
+  {
+   "hash": 569633985,
+   "triangles": 2,
+   "offset": 2872,
+   "area": 0.0098,
+   "name": "region-116"
+  },
+  {
+   "hash": 1326495521,
+   "triangles": 2,
+   "offset": 2874,
+   "area": 0.0098,
+   "name": "region-117"
+  },
+  {
+   "hash": 3294425561,
+   "triangles": 2,
+   "offset": 2876,
+   "area": 0.0098,
+   "name": "region-118"
+  },
+  {
+   "hash": 564134242,
+   "triangles": 2,
+   "offset": 2878,
+   "area": 0.0098,
+   "name": "region-119"
+  },
+  {
+   "hash": 3908281130,
+   "triangles": 2,
+   "offset": 2880,
+   "area": 0.0098,
+   "name": "region-120"
+  },
+  {
+   "hash": 3076080306,
+   "triangles": 2,
+   "offset": 2882,
+   "area": 0.0098,
+   "name": "region-121"
+  },
+  {
+   "hash": 3541940314,
+   "triangles": 2,
+   "offset": 2884,
+   "area": 0.0098,
+   "name": "region-122"
+  },
+  {
+   "hash": 404949170,
+   "triangles": 2,
+   "offset": 2886,
+   "area": 0.0098,
+   "name": "region-123"
+  },
+  {
+   "hash": 3892862519,
+   "triangles": 2,
+   "offset": 2888,
+   "area": 0.0098,
+   "name": "region-124"
+  },
+  {
+   "hash": 1860097347,
+   "triangles": 2,
+   "offset": 2890,
+   "area": 0.0098,
+   "name": "region-125"
+  },
+  {
+   "hash": 1587684343,
+   "triangles": 2,
+   "offset": 2892,
+   "area": 0.0098,
+   "name": "region-126"
+  },
+  {
+   "hash": 917753339,
+   "triangles": 2,
+   "offset": 2894,
+   "area": 0.0098,
+   "name": "region-127"
+  },
+  {
+   "hash": 3313066103,
+   "triangles": 2,
+   "offset": 2896,
+   "area": 0.0098,
+   "name": "region-128"
+  },
+  {
+   "hash": 3519549763,
+   "triangles": 2,
+   "offset": 2898,
+   "area": 0.0098,
+   "name": "region-129"
+  },
+  {
+   "hash": 3663557347,
+   "triangles": 2,
+   "offset": 2900,
+   "area": 0.0098,
+   "name": "region-130"
+  },
+  {
+   "hash": 804511331,
+   "triangles": 2,
+   "offset": 2902,
+   "area": 0.0098,
+   "name": "region-131"
+  },
+  {
+   "hash": 1201604057,
+   "triangles": 2,
+   "offset": 2904,
+   "area": 0.0098,
+   "name": "region-132"
+  },
+  {
+   "hash": 4047651837,
+   "triangles": 2,
+   "offset": 2906,
+   "area": 0.0098,
+   "name": "region-133"
+  },
+  {
+   "hash": 650290473,
+   "triangles": 2,
+   "offset": 2908,
+   "area": 0.0098,
+   "name": "region-134"
+  },
+  {
+   "hash": 1831508451,
+   "triangles": 2,
+   "offset": 2910,
+   "area": 0.0098,
+   "name": "region-135"
+  },
+  {
+   "hash": 4156941039,
+   "triangles": 2,
+   "offset": 2912,
+   "area": 0.0098,
+   "name": "region-136"
+  },
+  {
+   "hash": 3854194251,
+   "triangles": 2,
+   "offset": 2914,
+   "area": 0.0098,
+   "name": "region-137"
+  },
+  {
+   "hash": 280491775,
+   "triangles": 2,
+   "offset": 2916,
+   "area": 0.0098,
+   "name": "region-138"
+  },
+  {
+   "hash": 888032131,
+   "triangles": 2,
+   "offset": 2918,
+   "area": 0.0098,
+   "name": "region-139"
+  },
+  {
+   "hash": 1978060341,
+   "triangles": 2,
+   "offset": 2920,
+   "area": 0.0098,
+   "name": "region-140"
+  },
+  {
+   "hash": 3647307233,
+   "triangles": 2,
+   "offset": 2922,
+   "area": 0.0098,
+   "name": "region-141"
+  },
+  {
+   "hash": 719979021,
+   "triangles": 2,
+   "offset": 2924,
+   "area": 0.0098,
+   "name": "region-142"
+  },
+  {
+   "hash": 3978089135,
+   "triangles": 2,
+   "offset": 2926,
+   "area": 0.0098,
+   "name": "region-143"
+  },
+  {
+   "hash": 3572338783,
+   "triangles": 2,
+   "offset": 2928,
+   "area": 0.0098,
+   "name": "region-144"
+  },
+  {
+   "hash": 4044889421,
+   "triangles": 2,
+   "offset": 2930,
+   "area": 0.0098,
+   "name": "region-145"
+  },
+  {
+   "hash": 78547229,
+   "triangles": 2,
+   "offset": 2932,
+   "area": 0.0098,
+   "name": "region-146"
+  },
+  {
+   "hash": 70534951,
+   "triangles": 2,
+   "offset": 2934,
+   "area": 0.0098,
+   "name": "region-147"
+  },
+  {
+   "hash": 1288619431,
+   "triangles": 2,
+   "offset": 2936,
+   "area": 0.0098,
+   "name": "region-148"
+  },
+  {
+   "hash": 2415940713,
+   "triangles": 2,
+   "offset": 2938,
+   "area": 0.0098,
+   "name": "region-149"
+  },
+  {
+   "hash": 3296284025,
+   "triangles": 2,
+   "offset": 2940,
+   "area": 0.0098,
+   "name": "region-150"
+  },
+  {
+   "hash": 1451314255,
+   "triangles": 2,
+   "offset": 2942,
+   "area": 0.0098,
+   "name": "region-151"
+  },
+  {
+   "hash": 3865042079,
+   "triangles": 2,
+   "offset": 2944,
+   "area": 0.0098,
+   "name": "region-152"
+  },
+  {
+   "hash": 1803351373,
+   "triangles": 2,
+   "offset": 2946,
+   "area": 0.0098,
+   "name": "region-153"
+  },
+  {
+   "hash": 3462075517,
+   "triangles": 2,
+   "offset": 2948,
+   "area": 0.0098,
+   "name": "region-154"
+  },
+  {
+   "hash": 1755586391,
+   "triangles": 2,
+   "offset": 2950,
+   "area": 0.0098,
+   "name": "region-155"
+  },
+  {
+   "hash": 3729347191,
+   "triangles": 2,
+   "offset": 2952,
+   "area": 0.0098,
+   "name": "region-156"
+  },
+  {
+   "hash": 1407634551,
+   "triangles": 2,
+   "offset": 2954,
+   "area": 0.0098,
+   "name": "region-157"
+  },
+  {
+   "hash": 3350468161,
+   "triangles": 2,
+   "offset": 2956,
+   "area": 0.0098,
+   "name": "region-158"
+  },
+  {
+   "hash": 310779873,
+   "triangles": 2,
+   "offset": 2958,
+   "area": 0.0098,
+   "name": "region-159"
+  },
+  {
+   "hash": 2624432783,
+   "triangles": 2,
+   "offset": 2960,
+   "area": 0.0098,
+   "name": "region-160"
+  },
+  {
+   "hash": 1513770442,
+   "triangles": 10,
+   "offset": 2962,
+   "area": 15.4542,
+   "name": "region-169"
+  },
+  {
+   "hash": 3995558913,
+   "triangles": 10,
+   "offset": 2972,
+   "area": 11.8831,
+   "name": "region-170"
+  },
+  {
+   "hash": 2555691752,
+   "triangles": 10,
+   "offset": 2982,
+   "area": 17.3813,
+   "name": "region-171"
+  },
+  {
+   "hash": 2571823561,
+   "triangles": 2,
+   "offset": 2992,
+   "area": 0.0389,
+   "name": "region-172"
+  },
+  {
+   "hash": 3829776607,
+   "triangles": 2,
+   "offset": 2994,
+   "area": 0.0389,
+   "name": "region-173"
+  },
+  {
+   "hash": 1399077849,
+   "triangles": 2,
+   "offset": 2996,
+   "area": 0.0433,
+   "name": "region-174"
+  },
+  {
+   "hash": 3424595662,
+   "triangles": 10,
+   "offset": 2998,
+   "area": 9.6144,
+   "name": "region-175"
+  },
+  {
+   "hash": 764713327,
+   "triangles": 104,
+   "offset": 3008,
+   "area": 0.286,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 33135209,
+   "triangles": 130,
+   "offset": 3112,
+   "area": 4.1187,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1615817823,
+   "triangles": 40,
+   "offset": 3242,
+   "area": 13.0215,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3136316713,
+   "triangles": 54,
+   "offset": 3282,
+   "area": 10.4608,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3511229033,
+   "triangles": 30,
+   "offset": 3336,
+   "area": 0.9218,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3342274857,
+   "triangles": 4,
+   "offset": 3366,
+   "area": 0.4712,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3326074721,
+   "triangles": 12,
+   "offset": 3370,
+   "area": 2.779,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3211346575,
+   "triangles": 26,
+   "offset": 3382,
+   "area": 0.2008,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3477594094,
+   "triangles": 6,
+   "offset": 3408,
+   "area": 0.1064,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3543546721,
+   "triangles": 294,
+   "offset": 3414,
+   "area": 44.9549,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1297212361,
+   "triangles": 12,
+   "offset": 3708,
+   "area": 0.8953,
+   "name": "region-196"
+  },
+  {
+   "hash": 4006361005,
+   "triangles": 12,
+   "offset": 3720,
+   "area": 0.8953,
+   "name": "region-198"
+  },
+  {
+   "hash": 2184009810,
+   "triangles": 2,
+   "offset": 3732,
+   "area": 0.0025,
+   "name": "region-200"
+  },
+  {
+   "hash": 1912288418,
+   "triangles": 2,
+   "offset": 3734,
+   "area": 0.0025,
+   "name": "region-202"
+  },
+  {
+   "hash": 4221692729,
+   "triangles": 12,
+   "offset": 3736,
+   "area": 0.8257,
+   "name": "region-204"
+  },
+  {
+   "hash": 3463414247,
+   "triangles": 2,
+   "offset": 3748,
+   "area": 0.7452,
+   "name": "region-205"
+  },
+  {
+   "hash": 1994293719,
+   "triangles": 2,
+   "offset": 3750,
+   "area": 0.7452,
+   "name": "region-206"
+  },
+  {
+   "hash": 808788497,
+   "triangles": 2,
+   "offset": 3752,
+   "area": 0.5096,
+   "name": "region-207"
+  },
+  {
+   "hash": 1885010255,
+   "triangles": 2,
+   "offset": 3754,
+   "area": 0.2788,
+   "name": "region-208"
+  },
+  {
+   "hash": 1695678579,
+   "triangles": 2,
+   "offset": 3756,
+   "area": 0.2115,
+   "name": "region-209"
+  },
+  {
+   "hash": 2214520189,
+   "triangles": 2,
+   "offset": 3758,
+   "area": 0.0192,
+   "name": "region-210"
+  },
+  {
+   "hash": 84175953,
+   "triangles": 2,
+   "offset": 3760,
+   "area": 0.2827,
+   "name": "region-211"
+  },
+  {
+   "hash": 3749728985,
+   "triangles": 12,
+   "offset": 3762,
+   "area": 2.5293,
+   "name": "region-213"
+  },
+  {
+   "hash": 2979265963,
+   "triangles": 2,
+   "offset": 3774,
+   "area": 0.95,
+   "name": "region-214"
+  },
+  {
+   "hash": 1333642999,
+   "triangles": 10,
+   "offset": 3776,
+   "area": 0.8064,
+   "name": "region-215"
+  },
+  {
+   "hash": 3782030265,
+   "triangles": 28,
+   "offset": 3786,
+   "area": 0.2994,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 7031541,
+   "triangles": 12,
+   "offset": 3814,
+   "area": 0.268,
+   "name": "region-226"
+  },
+  {
+   "hash": 773496437,
+   "triangles": 12,
+   "offset": 3826,
+   "area": 0.268,
+   "name": "region-227"
+  },
+  {
+   "hash": 3534086575,
+   "triangles": 56,
+   "offset": 3838,
+   "area": 21.2644,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 4079908853,
+   "triangles": 12,
+   "offset": 3894,
+   "area": 0.268,
+   "name": "region-231"
+  },
+  {
+   "hash": 709663059,
+   "triangles": 12,
+   "offset": 3906,
+   "area": 0.268,
+   "name": "region-232"
+  },
+  {
+   "hash": 753878589,
+   "triangles": 66,
+   "offset": 3918,
+   "area": 34.1044,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1360979521,
+   "triangles": 8,
+   "offset": 3984,
+   "area": 13.166,
+   "name": "region-234"
+  },
+  {
+   "hash": 2583545145,
+   "triangles": 12,
+   "offset": 3992,
+   "area": 0.268,
+   "name": "region-237"
+  },
+  {
+   "hash": 2077673721,
+   "triangles": 12,
+   "offset": 4004,
+   "area": 0.268,
+   "name": "region-238"
+  },
+  {
+   "hash": 1366192687,
+   "triangles": 66,
+   "offset": 4016,
+   "area": 34.1044,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2447829168,
+   "triangles": 2,
+   "offset": 4082,
+   "area": 14.9423,
+   "name": "region-245"
+  },
+  {
+   "hash": 364744133,
+   "triangles": 2,
+   "offset": 4084,
+   "area": 0.2025,
+   "name": "region-246"
+  },
+  {
+   "hash": 2290989045,
+   "triangles": 84,
+   "offset": 4086,
+   "area": 0.1527,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2062389192,
+   "triangles": 2160,
+   "offset": 4170,
+   "area": 0.899,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 651538909,
+   "triangles": 30160,
+   "offset": 6330,
+   "area": 84.3658,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3735335005,
+   "triangles": 7308,
+   "offset": 36490,
+   "area": 8.7271,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3108915813,
+   "triangles": 1292,
+   "offset": 43798,
+   "area": 26.0758,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2023705381,
+   "triangles": 4080,
+   "offset": 45090,
+   "area": 0.4543,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2840068457,
+   "triangles": 1920,
+   "offset": 49170,
+   "area": 0.0929,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 3955701599,
+   "triangles": 3096,
+   "offset": 51090,
+   "area": 17.0012,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1324020509,
+   "triangles": 2200,
+   "offset": 54186,
+   "area": 1.273,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 4279339615,
+   "triangles": 3500,
+   "offset": 56386,
+   "area": 5.4727,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1478034517,
+   "triangles": 112160,
+   "offset": 59886,
+   "area": 39.7523,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 2595947503,
+   "triangles": 66160,
+   "offset": 172046,
+   "area": 30.309,
+   "name": "Static material batch"
+  },
+  {
+   "hash": 1672449771,
+   "triangles": 3552,
+   "offset": 238206,
+   "area": 0.1302,
+   "name": "Static material batch"
+  }
+ ],
+ "uv": {
+  "file": "../uv.bin",
+  "format": "uint16 little-endian u,v per triangle corner, receiver order; value/65535; shared by every slot",
+  "sha256": "db669c2524293b583b642dcfd4063c1924d9b5e2a6fd74c281b36a845a074519"
+ },
+ "atlasSize": 2048,
+ "interiorLights": [
+  {
+   "pos": [
+    -10,
+    4.9,
+    -7
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  },
+  {
+   "pos": [
+    -10,
+    4.9,
+    0
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  },
+  {
+   "pos": [
+    -10,
+    4.9,
+    5
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  },
+  {
+   "pos": [
+    -5,
+    4.9,
+    -7
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  },
+  {
+   "pos": [
+    -5,
+    4.9,
+    0
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  },
+  {
+   "pos": [
+    -5,
+    4.9,
+    5
+   ],
+   "dir": [
+    0,
+    -1,
+    0
+   ],
+   "color": [
+    1,
+    0.84687,
+    0.7011
+   ],
+   "intensity": 2.5,
+   "width": 3,
+   "height": 3
+  }
+ ],
+ "filter": {
+  "excludedMaterials": [
+   "Olive leaves",
+   "potted_plant_01_leaves",
+   "potted_plant_01_pot"
+  ],
+  "glazing": "glazing flag or transparent with opacity < 0.95",
+  "box": "all corners inside box",
+  "slabTop": "centroid y > ceiling + 0.05 and normal y > 0.5",
+  "slabBottom": "centroid y < floor - 0.05 and normal y < -0.5",
+  "hash": "FNV-1a 32 over floor(world*1000 + 0.5) of every kept corner, in source triangle order"
+ },
+ "settings": {
+  "engine": "Cycles GPU",
+  "samples": 256,
+  "bakeMargin": 4,
+  "world": "neutral RGB .8, strength 1, scaled and tinted per slot after baking (linear)",
+  "day": "sky direct+indirect x slot sky x slot tint + sun/moon indirect only",
+  "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
+  "diffuseBounces": 3,
+  "denoise": "mask-normalised Gaussian sigma 1.1 px",
+  "seconds": 153.6
+ },
+ "limitations": [
+  "Diffuse lighting only; specular reflections remain realtime approximations.",
+  "Potted plants and glazing are excluded and stay on the realtime path.",
+  "Emissive fixture diffusers are not light sources in the bake.",
+  "Sun indirect assumes the snapshot surroundings; farther context is not an occluder.",
+  "Valid only for this original app season/time button pair and the recorded structure/furniture state.",
+  "Appearance study, not a daylight or illuminance validation."
+ ],
+ "slot": {
+  "key": "winter-sunset",
+  "season": "winter",
+  "time": "sunset",
+  "sunDirection": [
+   -0.0121,
+   0.096,
+   0.9953
+  ],
+  "sunStrength": 2.2,
+  "sunColorLinear": [
+   1,
+   0.3516,
+   0.117
+  ],
+  "sky": 0.6185,
+  "skyTint": [
+   0.9431,
+   0.99,
+   1.0669
+  ]
+ },
+ "lightmaps": {
+  "day": {
+   "file": "day-lightmap.png",
+   "scale": 0.43923887610435486,
+   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
+   "coveredMean": 0.08028965443372726,
+   "sha256": "d88483cf2010ce478952d8d4b84e21dfd181046d53fb9a2c6fbe304a72386c11"
+  },
+  "lights": {
+   "file": "../lights-lightmap.png",
+   "scale": 0.6550084352493286,
+   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
+   "coveredMean": 0.06109151244163513,
+   "sha256": "883fb088aae87c06b4f95563723e0fc1be752d59c09d16b58317895aa1d0cb7f"
+  }
+ }
+}

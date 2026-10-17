@@ -109,7 +109,10 @@ try{
  const both=await createCafeRoomBake(fakeThree,two.scene,two.context);
  assert.deepEqual(both.status().slots,['spring-pm','any-night']);assert.equal(both.status().slot,'spring-pm');
  const receiver=two.scene.children.find(o=>o.userData.roomReceiver),dayMaterial=receiver.material;
- both.light({season:'winter',time:'night',night:true,custom:false,direction:[-.5121,.7682,.3841]});
+ two.context.reviewDaylight={season:'winter',time:'night',night:true,custom:false,direction:[-.5121,.7682,.3841]};
+ both.light(two.context.reviewDaylight);
+ assert.match(both.status().reason,/loading-slot:any-night/,'a slot downloads its day map on first use and stays realtime meanwhile');
+ await new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(both.status().slot,'any-night','the night button uses the night slot in any season');
  assert.notEqual(receiver.material,dayMaterial,'night uses its own lightmap material');
  assert.equal(two.ceilingLight.visible,false,'baked ceiling lights replace realtime lights at night too');

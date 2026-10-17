@@ -1535,7 +1535,7 @@
   "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
   "diffuseBounces": 3,
   "denoise": "mask-normalised Gaussian sigma 1.1 px",
-  "seconds": 50.4
+  "seconds": 153.6
  },
  "limitations": [
   "Diffuse lighting only; specular reflections remain realtime approximations.",
@@ -1570,17 +1570,17 @@
  "lightmaps": {
   "day": {
    "file": "day-lightmap.png",
-   "scale": 0.45274618268013,
+   "scale": 0.4527461528778076,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
    "coveredMean": 0.09233171492815018,
-   "sha256": "1ee8ad505db914592353ab6ba993e863f7d3ed5d69a7db268fc7c64497403f2a"
+   "sha256": "1a882fedfbc1d20d00fbd4477d7da54c871304ae1f86ea9bc555da667d68731b"
   },
   "lights": {
    "file": "../lights-lightmap.png",
-   "scale": 0.6550084948539734,
+   "scale": 0.6550084352493286,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.06109151616692543,
-   "sha256": "b6ffd1698f546f31e321fa1277dc4cac07134172b0d77a4993f331b91d700b73"
+   "coveredMean": 0.06109151244163513,
+   "sha256": "883fb088aae87c06b4f95563723e0fc1be752d59c09d16b58317895aa1d0cb7f"
   }
  }
 }

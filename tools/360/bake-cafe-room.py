@@ -290,6 +290,7 @@ print(f'UNWRAPPED in {time.time() - started:.1f}s', flush=True)
 
 # ---- 조명 --------------------------------------------------------------------------------
 slots = json.loads(args.slots.read_text())
+slots = slots['slots'] if isinstance(slots, dict) else slots
 for slot in slots:
     assert slot['key'] == slot['season'] + '-' + slot['time'], f"Slot key must be season-time: {slot['key']}"
 sun = bpy.data.objects.new('Slot sun', bpy.data.lights.new('Slot sun', 'SUN'))

@@ -1,7 +1,7 @@
 // Whole-cafe time-slot bake: structure and furniture lightmaps for one original season/time
 // button pair. Receivers are matched by the same triangle filter and hash as bake-cafe-room.py;
 // unmatched or invalid states keep the original realtime materials.
-import { matchSlot, validateAmbientSource, verifyFurnitureManifest } from './cafe-ambient.js';
+import { matchSlot, stableJSON, validateAmbientSource, verifyFurnitureManifest } from './cafe-ambient.js';
 import { bindSourceVisibility } from './source-visibility.js';
 import { texture as textureNode, uv as uvNode, vec3 } from 'three/tsl';
 
@@ -90,9 +90,14 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  function setLights(){scene.children.forEach(o=>{if(o.userData.cafeAmbientFallback||o.userData.cafeRoomBakedLight)o.visible=!enabled})}
  function setDaylight(daylight){
   active=valid?sets.find(set=>matchRoomSlot(set.manifest.slot,daylight))||null:null;
+  // Day lightmaps load on first use: keep the realtime path until the selected slot's map arrives.
+  if(active&&!active.day){
+   const waiting=active;ensureDay(waiting).then(()=>{if(valid&&matchRoomSlot(waiting.manifest.slot,C.reviewDaylight))setDaylight(C.reviewDaylight)}).catch(error=>{waiting.error=String(error.message||error);setDaylight(C.reviewDaylight)});
+   active=waiting.error?null:active;
+  }
   const common=C.dollMode?'dollhouse':!C.city?.visible||!C.ctx?.visible?'context-hidden':null;
   // Slot matching decides the time of day (including night); the source check covers structure and extent.
-  const invalid=!valid?reason:common||(active?validateAmbientSource(active.manifest,C.state,C.interiorDressing?.userData.cafe,null):(daylight?.night?'night':'unbaked-time'));
+  const invalid=!valid?reason:common||(active?(active.day?validateAmbientSource(active.manifest,C.state,C.interiorDressing?.userData.cafe,null):'loading-slot:'+active.key):(daylight?.night?'night':'unbaked-time'));
   enabled=valid&&!invalid&&!precisionActive;
   if(valid)reason=invalid||(precisionActive?'precision':'active');
   for(const binding of bindings)binding.receiver.material=enabled?bakedFor(binding,active):binding.original;
@@ -111,18 +116,21 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  const normalize=path=>path.split('/').reduce((parts,part)=>{if(part==='..')parts.pop();else if(part!=='.')parts.push(part);return parts},[]).join('/');
  // Content hashes from the manifest version every shared file, so a stale cached copy is never mixed in.
  const resolve=(folder,file,sha)=>{const query=sha?'?v='+sha.slice(0,12):'';try{return new URL(folder+file,location.href).href+query}catch{return normalize(folder+file)+query}};
+ const texture=url=>loader.loadAsync(url).then(map=>{map.colorSpace=T.NoColorSpace;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;return map});
+ const ensureDay=set=>once(set.dayUrl,texture).then(map=>{set.day=map;return map});
  async function loadSet(key){
   const folder=ROOM_BAKE_ROOT+key+'/',response=await fetch(folder+'manifest.json',{cache:'no-cache'});
   if(!response.ok)throw Error('room-manifest-unavailable:'+key);
   const manifest=await response.json();
   if(manifest.kind!=='cafe-room'||manifest.slot?.key!==key||key!==manifest.slot.season+'-'+manifest.slot.time)throw Error('room-slot-key-mismatch:'+key);
-  await verifyFurnitureManifest(manifest.furnitureManifest);
-  const texture=url=>loader.loadAsync(url).then(map=>{map.colorSpace=T.NoColorSpace;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;return map});
-  const [uvs,day,lights]=await Promise.all([
+  const furnitureKey=stableJSON(manifest.furnitureManifest);
+  await once('furniture:'+furnitureKey,()=>verifyFurnitureManifest(manifest.furnitureManifest));
+  const [uvs,lights]=await Promise.all([
    once(resolve(folder,manifest.uv.file,manifest.uv.sha256),url=>fetch(url).then(r=>{if(!r.ok)throw Error('room-uv-unavailable:'+key);return r.arrayBuffer()}).then(buffer=>new Uint16Array(buffer))),
-   once(resolve(folder,manifest.lightmaps.day.file,manifest.lightmaps.day.sha256),texture),once(resolve(folder,manifest.lightmaps.lights.file,manifest.lightmaps.lights.sha256),texture)]);
+   once(resolve(folder,manifest.lightmaps.lights.file,manifest.lightmaps.lights.sha256),texture)]);
+  const dayUrl=resolve(folder,manifest.lightmaps.day.file,manifest.lightmaps.day.sha256);
   if(uvs.length!==manifest.triangles*6)throw Error('room-uv-size-mismatch:'+key);
-  sets.push({key,manifest,uvs,day,lights});
+  sets.push({key,manifest,uvs,day:null,dayUrl,lights,error:null});
  }
  function bakedMaterial(original,set){
   const cacheKey=original.uuid+':'+set.key+':'+lightScale;
@@ -182,13 +190,17 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
    const prepared=[];
    for(const plan of plans){if(!await yieldSlice()){prepared.forEach(dispose);return}prepared.push(prepareReceiver(T,plan,set))}
    if(version!==refreshVersion){prepared.forEach(dispose);return}
+   // Fetch the currently selected slot's day map before the first bind so the bake appears in one step.
+   const current=sets.find(candidate=>matchRoomSlot(candidate.manifest.slot,C.reviewDaylight));
+   if(current&&!current.day)await ensureDay(current).catch(error=>{current.error=String(error.message||error)});
+   if(version!==refreshVersion){prepared.forEach(dispose);return}
    for(const item of prepared)bindings.push(attachReceiver(scene,item));
    valid=true;reason='ready';setDaylight(C.reviewDaylight);
   }catch(error){clear();reason='room-receiver-error:'+String(error.message||error);console.warn('Cafe room bake disabled',error)}
   finally{bindMs=performance.now()-began;maxSliceMs=Math.max(maxSliceMs,performance.now()-sliceAt)}
  }
  const dispose=item=>{item.remainder.dispose();item.receiver.geometry.dispose()};
- const disposeTextures=()=>new Set(sets.flatMap(set=>[set.day,set.lights])).forEach(map=>map.dispose());
+ const disposeTextures=()=>new Set(sets.flatMap(set=>[set.day,set.lights]).filter(Boolean)).forEach(map=>map.dispose());
  try{
   const index=await fetch(ROOM_BAKE_ROOT+'index.json',{cache:'no-cache'});
   if(!index.ok)throw Error('room-index-unavailable');

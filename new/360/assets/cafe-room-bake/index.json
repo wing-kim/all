@@ -1,4 +1,18 @@
 {
-  "slots": ["spring-pm", "any-night"],
-  "note": "Whole 1F cafe lightmaps per original app season/time button pair. uv.bin and lights-lightmap.png (cafe ceiling lights) are shared; each slot folder has its day lightmap (sky + sun/moon indirect). any-night matches the 야간 button in every season."
+ "slots": [
+  "spring-am",
+  "spring-pm",
+  "spring-sunset",
+  "summer-am",
+  "summer-pm",
+  "summer-sunset",
+  "autumn-am",
+  "autumn-pm",
+  "autumn-sunset",
+  "winter-am",
+  "winter-pm",
+  "winter-sunset",
+  "any-night"
+ ],
+ "note": "Whole 1F cafe lightmaps for every original app season/time button pair (4 seasons x 오전·오후·석양) plus 야간 for every season. uv.bin and lights-lightmap.png are shared; each slot folder holds its day lightmap, downloaded on first use."
 }
