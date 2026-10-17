@@ -71,3 +71,11 @@
 - 실시간 창가 밝은 띠의 정체: 카페 보조 조명 `windowFill` RectAreaLight(modern-entry.js addInteriorLighting, cafeAmbientFallback).
 - 첫 베이크 후보: 봄 + 오후(원본 버튼 조합). 굽는 대상은 하늘빛·태양 반사광·실내 조명 간접광, 직사광은 실시간 그림자. 스냅샷 범위를 넓혀 먼 주변 건물 포함 필요.
 - 증거: `evidence/s1/rt-spring-pm.jpg`, `evidence/s1/slot-spring-pm.jpg`.
+
+## 방법 확정과 무료 도구 사례 (2026-10-17)
+
+최종 목표의 방법: (1) 원본 계절·시간대 버튼 조합별로 장면 전체(바닥·천장·벽·기둥·가구)의 빛을 Blender Cycles로 굽기, (2) 실내 조명을 별도 채널로 굽고 조절, (3) 직사광은 원본 태양 실시간 그림자 유지, (4) AI 시안 분위기 기준 무료 CC0 가구·재질. 굽지 않은 조합·사용자 일시·시안은 실시간 경로.
+
+무료 도구 사례: My Room in 3D (Bruno Simon), https://my-room-in-3d.vercel.app/ , 소스 https://github.com/brunosimon/my-room-in-3d (라이선스 미명시, 방식만 참고). 셰이더 `src/Experience/shaders/baked/fragment.glsl`에서 bakedDay/Night/Neutral 텍스처(각 1.3～1.5MB)를 uNightMix·uNeutralMix로 섞고, lightMap.jpg의 RGB 채널로 TV·PC·책상 조명을 색·세기 조절. 앱 내장 브라우저 측정: 캔버스 3200×2000, p50 8.3ms, p95 9.3ms, 최대 9.4ms, 내려받기 11.4MB. 낮·밤·밤 조명 끔 캡처는 비공개 비교 페이지에만 둠(타사 자료).
+
+두 사례(My Room, Shapespark) 모두 시안 변경·임의 일시 기능은 없음. 우리 현재 구현은 바닥·천장 한 세트(봄·오후)뿐. 다음 실증: 카페 전체 수신면 + 실내 조명 베이크(봄·오후).
