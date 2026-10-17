@@ -8,10 +8,10 @@
 
 이 요약과 맨 아래 체크포인트가 현재 상태다. 아래 초기 감사 이력과 이전 요약은 과거 기록이다.
 
-- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1 은 6c774d1까지만 push됨. 이후 로컬 커밋은 원본 저장소에 push하지 않았다(사용자 확인 필요). 병합 금지.
+- **브랜치:** `codex/tower-360-validation`, main `25b111a` 보존. draft PR https://github.com/wing-kim/all/pull/1 에 2026-10-18 사용자 승인으로 42a7f86까지 push, PR 본문을 `docs/360/PR_DESCRIPTION.md` 내용으로 갱신(draft 유지). 병합 금지.
 - **배포:** https://evyfjae.github.io/kapehorn-3d-preview/ 배포 72524ab(소스 934805c). 공개 확인: 첫 화면 약 3.9초, 첫 방문 약 48MB, 카페 베이크(autumn-pm)·외부 하늘 가림 active, 종단면 적용·해제, 정밀 이미지 32샘플 완료.
 - **완료:** A 카페 완성품, B 외부 완성품(지면 재질·서명 검증 하늘 가림·야간 가로등/헤이즈), C 종단면 2종·윗층 투시·지하층 투시 실사 연결, 현황·비교는 원본 화면(신축 전용 판단), 정밀 이미지 하늘 오류 수정, 가로수·차량 GLB 14.6MB 절감, 터치 안내, 일반 URL 19단계 비간섭.
-- **사용자 결정 대기:** `docs/360/PR_DESCRIPTION.md`의 4개(현황·비교 처리, 일반 URL 노출, 머지 범위 203MB 중 런타임만 권장, squash). 원본 저장소 push·PR 본문 갱신은 확인 후.
+- **사용자 결정 대기:** `docs/360/PR_DESCRIPTION.md`의 4개(현황·비교 처리, 일반 URL 노출, 머지 범위 203MB 중 런타임만 권장, squash). 머지는 사용자 지시 전까지 하지 않는다.
 - **주의:** environment.js·cafe.js·가구 자산 수정 시 카페 재베이크. 배포 전 `node tools/360/test-bake-freshness.mjs`.
 - **사용자 지시:** 무료 구현만. 원본 main 설정 범위 안의 선택은 묻지 말고 판단. main 병합·운영 배포·원본 저장소 push는 확인 후.
 
