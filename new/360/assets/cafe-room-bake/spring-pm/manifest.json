@@ -1,22 +1,6 @@
 {
- "version": 1,
+ "version": 2,
  "kind": "cafe-room",
- "slot": {
-  "key": "spring-pm",
-  "season": "spring",
-  "time": "pm",
-  "sunDirection": [
-   0.0758,
-   0.6412,
-   0.7636
-  ],
-  "sunStrength": 2.6,
-  "sunColorLinear": [
-   1.0,
-   0.8714,
-   0.7379
-  ]
- },
  "source": "cafe-ambient-source.json.gz",
  "sourceSha256": "1113901e295a83013e37007b34d8a3291ab5591e2aca2438f091ca93da3f0cea",
  "sourceState": {
@@ -1403,24 +1387,9 @@
   }
  ],
  "uv": {
-  "file": "uv.bin",
-  "format": "uint16 little-endian u,v per triangle corner, receiver order; value/65535"
- },
- "lightmaps": {
-  "day": {
-   "file": "day-lightmap.png",
-   "scale": 0.6857404112815857,
-   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.14175613224506378,
-   "coveredP999": 0.6857404112815857
-  },
-  "lights": {
-   "file": "lights-lightmap.png",
-   "scale": 0.6550084352493286,
-   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.06109151989221573,
-   "coveredP999": 0.6550084352493286
-  }
+  "file": "../uv.bin",
+  "format": "uint16 little-endian u,v per triangle corner, receiver order; value/65535; shared by every slot",
+  "sha256": "db669c2524293b583b642dcfd4063c1924d9b5e2a6fd74c281b36a845a074519"
  },
  "atlasSize": 2048,
  "interiorLights": [
@@ -1561,19 +1530,57 @@
   "engine": "Cycles GPU",
   "samples": 256,
   "bakeMargin": 4,
-  "world": "neutral RGB .8, strength 1",
-  "day": "sky direct+indirect + sun indirect only",
-  "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect",
+  "world": "neutral RGB .8, strength 1, scaled and tinted per slot after baking (linear)",
+  "day": "sky direct+indirect x slot sky x slot tint + sun/moon indirect only",
+  "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
   "diffuseBounces": 3,
   "denoise": "mask-normalised Gaussian sigma 1.1 px",
-  "seconds": 35.7
+  "seconds": 50.4
  },
  "limitations": [
   "Diffuse lighting only; specular reflections remain realtime approximations.",
   "Potted plants and glazing are excluded and stay on the realtime path.",
   "Emissive fixture diffusers are not light sources in the bake.",
-  "Sun indirect assumes the snapshot surroundings (about 60 m); farther context is not an occluder.",
+  "Sun indirect assumes the snapshot surroundings; farther context is not an occluder.",
   "Valid only for this original app season/time button pair and the recorded structure/furniture state.",
   "Appearance study, not a daylight or illuminance validation."
- ]
+ ],
+ "slot": {
+  "key": "spring-pm",
+  "season": "spring",
+  "time": "pm",
+  "sunDirection": [
+   0.0758,
+   0.6412,
+   0.7636
+  ],
+  "sunStrength": 2.6,
+  "sunColorLinear": [
+   1,
+   0.8714,
+   0.7379
+  ],
+  "sky": 0.6185,
+  "skyTint": [
+   0.9431,
+   0.99,
+   1.0669
+  ]
+ },
+ "lightmaps": {
+  "day": {
+   "file": "day-lightmap.png",
+   "scale": 0.45274618268013,
+   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
+   "coveredMean": 0.09233171492815018,
+   "sha256": "1ee8ad505db914592353ab6ba993e863f7d3ed5d69a7db268fc7c64497403f2a"
+  },
+  "lights": {
+   "file": "../lights-lightmap.png",
+   "scale": 0.6550084948539734,
+   "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
+   "coveredMean": 0.06109151616692543,
+   "sha256": "b6ffd1698f546f31e321fa1277dc4cac07134172b0d77a4993f331b91d700b73"
+  }
+ }
 }

@@ -1,0 +1,8 @@
+[
+ {"key": "spring-pm", "season": "spring", "time": "pm", "sun": [0.0758, 0.6412, 0.7636], "sunStrength": 2.6, "sunColor": [1, 0.8714, 0.7379],
+  "sky": 0.6185, "skyTint": [0.9431, 0.99, 1.0669],
+  "note": "Sky calibrated to the realtime environment: daylight-sky_2k.hdr upward irradiance-equivalent radiance 1.5463 x environmentIntensity 0.32 / bake world 0.8, tinted by the HDR colour."},
+ {"key": "any-night", "season": "any", "time": "night", "sun": [-0.5121, 0.7682, 0.3841], "sunStrength": 0.15, "sunColor": [0.2542, 0.3516, 0.5775],
+  "sky": 0.0483, "skyTint": [0.9431, 0.99, 1.0669],
+  "note": "Original 야간 button is identical in every season (moon direction, intensity 0.15, colour 0x8AA0C8). Sky uses environmentIntensity 0.025 with the same HDR calibration."}
+]

@@ -207,3 +207,11 @@
 - 재현: (1) 리뷰 페이지에서 `tools/360/export-cafe-bake.js`를 실행해 스냅샷을 `tools/360/cafe-ambient-source.json.gz`로 저장(gitignore, 내보내기 상자 x -15～10, z -15～14.5) (2) `blender --background --factory-startup --python tools/360/bake-cafe-room.py -- tools/360/cafe-ambient-source.json.gz tools/360/room-bake/spring-pm --slot spring-pm --sun 0.0758,0.6412,0.7636 --sun-strength 2.6 --sun-color 1,0.8714,0.7379 --lights tools/360/cafe-room-lights.json --size 2048 --samples 256 --device GPU` (3) manifest.json·uv.bin·day/lights PNG를 `new/360/assets/cafe-room-bake/spring-pm/`로 복사 (4) `node tools/360/test-cafe-room-bake.mjs`로 188/188 객체 일치 확인.
 - 작업 중 잡은 문제: 스냅샷 상자가 카페 동쪽 5m를 잘라 천장 미일치 → 상자 확대·면적 기준 거부 규칙. 노드 재질 캐시 키가 같아 라이트맵 없는 원래 셰이더가 재사용됨 → customProgramCacheKey 지정. TSL uniform이 첫 값에 고정 → 조명 세기별 재질 교체.
 - **다음 첫 행동:** 원본 시간대 버튼 중 야간(봄·야간 또는 기본 계절 야간)을 같은 방식으로 추가해 실내 조명 채널의 가치를 확인하고, 반사(광택) 근사와 재질 텍스처 보강을 검토. 원본 설정 범위 안이면 묻지 않고 진행.
+
+## 야간 슬롯·반사 처리 체크포인트 — 2026-10-18 (Claude Code, 진행 중)
+- 베이크 스크립트를 다중 슬롯 구조로 변경: UV 한 번 펼침, `uv.bin`·`lights-lightmap.png` 공유, 슬롯별 `day-lightmap.png`. 입력 `tools/360/cafe-room-slots.json`(spring-pm, any-night). 원본 야간 버튼은 계절과 무관(달 방향·세기 0.15·0x8AA0C8)이라 `any-night` 하나로 모든 계절 야간에 적용.
+- 런타임: 다중 슬롯·같은 레이아웃 검증(room-slot-layout-mismatch), 야간 매칭(matchRoomSlot), 공유 파일 1회 로드, index/manifest no-cache와 파일 해시 `?v=`로 캐시 혼합 방지. 안내 "미리 계산한 빛(야간 · 카페 전체)".
+- 반사 검토 결과: three 0.186 노드 재질은 자체 envMap이 없으면 envMapIntensity 대신 scene.environmentIntensity를 써서, 기존 "envMapIntensity=0"은 무효였고 베이크 면에 환경광 확산이 라이트맵과 이중으로 더해지고 있었다(이전 바닥·천장 모듈도 동일). 환경광에서 반사(specular)만 남기는 노드로 교체: 확산은 라이트맵, 반사는 실시간과 동일. 이중 계산 제거로 봄·오후 화면 평균 124.5→101.2, 바닥 126→92.
+- 실시간 환경광은 벽·천장 가림을 무시해 실내가 과하게 밝았음. 베이크 하늘을 실시간 HDR 상향 조도에 맞춤(낮 0.6185, 밤 0.0483, HDR 색). 노출 1.4는 후보 비교 원칙상 유지.
+- 미확인: 보정 후 실제 화면 캡처·회전 측정(브라우저 패인이 숨겨져 rAF 정지), 격리 배포.
+- **다음 첫 행동:** 브라우저 패인을 띄운 상태에서 봄·오후/야간/베이크 끔 동일 구도 캡처와 회전 p95 측정 → 비교 페이지 갱신 → 격리 배포·공개 확인.

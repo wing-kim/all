@@ -1,15 +1,16 @@
-"""Bake the whole 1F cafe (structure + furniture) for one original season/time button pair.
+"""Bake the whole 1F cafe (structure + furniture) for original season/time button pairs.
 
 blender --background --factory-startup --python bake-cafe-room.py -- \
-  cafe-ambient-source.json.gz cafe-room-bake/spring-pm --slot spring-pm \
-  --sun 0.0758,0.6412,0.7636 --sun-strength 2.6 --sun-color 1,0.8714,0.7379 \
+  cafe-ambient-source.json.gz room-bake --slots cafe-room-slots.json \
   --lights cafe-room-lights.json --size 2048 --samples 256 --device GPU
 
-카페 안의 수신면(유리·화분 제외)을 객체별로 이어진 UV 아틀라스 하나로 펼치고 두 라이트맵을 굽는다.
-- day: 하늘빛(직접+간접) + 태양 반사광(간접만). 태양 직사광은 런타임 그림자 맵이 그린다.
-- lights: 카페 천장 면광원(직접+간접). 런타임의 같은 실시간 조명은 베이크 적용 중 끈다.
+카페 안의 수신면(유리·화분 제외)을 객체별로 이어진 UV 아틀라스 하나로 한 번만 펼치고, 모든 슬롯이 그 UV를 공유한다.
+- lights-lightmap.png (공유): 카페 천장 면광원(직접+간접). 런타임의 같은 실시간 조명은 베이크 적용 중 끈다.
+- <slot>/day-lightmap.png: 하늘빛(직접+간접) × 슬롯 하늘 세기·색 + 해/달 반사광(간접만).
+  해/달 직사광은 런타임 그림자 맵이 그린다. 하늘빛은 세기에 선형이라 한 번 구워 슬롯마다 배율만 곱한다.
+- uv.bin (공유), <slot>/manifest.json.
 런타임은 같은 필터로 삼각형을 다시 골라 객체 해시로 맞춘 뒤 uv.bin의 UV를 붙인다.
-필터 규칙을 바꾸면 tools/360/cafe-room-bake.js의 receiverFilter와 함께 바꿔야 한다.
+필터 규칙을 바꾸면 tools/360/cafe-room-bake.js의 receiverTriangle과 함께 바꿔야 한다.
 """
 import argparse
 import gzip
@@ -40,10 +41,7 @@ def arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('source', type=Path)
     parser.add_argument('output', type=Path)
-    parser.add_argument('--slot', required=True)
-    parser.add_argument('--sun', required=True)
-    parser.add_argument('--sun-strength', type=float, required=True)
-    parser.add_argument('--sun-color', default='1,1,1')
+    parser.add_argument('--slots', type=Path, required=True, help='JSON list: key, season, time, sun, sunStrength, sunColor, sky, skyTint')
     parser.add_argument('--lights', type=Path, required=True)
     parser.add_argument('--size', type=int, default=2048)
     parser.add_argument('--samples', type=int, default=256)
@@ -291,13 +289,21 @@ bpy.ops.object.mode_set(mode='OBJECT')
 print(f'UNWRAPPED in {time.time() - started:.1f}s', flush=True)
 
 # ---- 조명 --------------------------------------------------------------------------------
-x, y, z = (float(v) for v in args.sun.split(','))
-toward_sun = Vector((x, -z, y)).normalized()
+slots = json.loads(args.slots.read_text())
+for slot in slots:
+    assert slot['key'] == slot['season'] + '-' + slot['time'], f"Slot key must be season-time: {slot['key']}"
 sun = bpy.data.objects.new('Slot sun', bpy.data.lights.new('Slot sun', 'SUN'))
-sun.data.color = tuple(float(v) for v in args.sun_color.split(','))
 sun.data.angle = math.radians(.53)
-sun.rotation_euler = (-toward_sun).to_track_quat('-Z', 'Y').to_euler()
 scene.collection.objects.link(sun)
+
+
+def aim_sun(slot):
+    x, y, z = slot['sun']
+    toward = Vector((x, -z, y)).normalized()
+    sun.rotation_euler = (-toward).to_track_quat('-Z', 'Y').to_euler()
+    sun.data.color = slot['sunColor']
+
+
 light_specs = json.loads(args.lights.read_text())
 area_lights = []
 for index, spec in enumerate(light_specs):
@@ -344,12 +350,15 @@ def bake(direct, indirect):
 
 
 passes = {}
-for name, lights, direct, indirect in [('sky', (1, 0, False), True, True),
-                                       ('sun', (0, args.sun_strength, False), False, True),
-                                       ('lights', (0, 0, True), True, True)]:
+for name, lights, direct, indirect in [('sky', (1, 0, False), True, True), ('lights', (0, 0, True), True, True)]:
     set_lights(*lights)
     passes[name] = bake(direct, indirect)
     print(f'BAKED {name} in {time.time() - started:.1f}s, max {passes[name].max():.4f}', flush=True)
+for slot in slots:
+    aim_sun(slot)
+    set_lights(0, slot['sunStrength'], False)
+    passes['sun:' + slot['key']] = bake(False, True)
+    print(f"BAKED sun indirect {slot['key']} in {time.time() - started:.1f}s", flush=True)
 
 
 def denoise(rgb, coverage, sigma=1.1, radius=3):
@@ -374,16 +383,26 @@ def save_png(path, encoded):
 
 
 coverage = (passes['sky'].max(axis=2) + passes['lights'].max(axis=2)) > 1e-6
-encodings = {}
-for name, rgb in [('day', passes['sky'] + passes['sun']), ('lights', passes['lights'])]:
+
+
+def encode(path, rgb):
     clean = denoise(rgb, coverage)
     covered = clean[coverage]
     scale = float(max(np.percentile(covered.max(axis=1), 99.9), 1e-4))
     # sqrt 인코딩: 8비트에서 어두운 간접광의 계조를 지킨다. 런타임은 (x^2)*scale*pi로 복원.
-    save_png(args.output / f'{name}-lightmap.png', np.sqrt(np.clip(clean / scale, 0, 1)))
-    encodings[name] = {'file': f'{name}-lightmap.png', 'scale': scale, 'encoding': 'sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi',
-                       'coveredMean': float(covered.mean()), 'coveredP999': scale}
-    print(f'ENCODED {name}: scale {scale:.4f}, covered mean {covered.mean():.4f}', flush=True)
+    save_png(path, np.sqrt(np.clip(clean / scale, 0, 1)))
+    print(f'ENCODED {path.name}: scale {scale:.4f}, covered mean {covered.mean():.4f}', flush=True)
+    return {'scale': scale, 'encoding': 'sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi',
+            'coveredMean': float(covered.mean())}
+
+
+lights_encoding = {'file': '../lights-lightmap.png', **encode(args.output / 'lights-lightmap.png', passes['lights'])}
+day_encodings = {}
+for slot in slots:
+    (args.output / slot['key']).mkdir(exist_ok=True)
+    rgb = passes['sky'] * slot['sky'] * np.array(slot['skyTint'], dtype=np.float32) + passes['sun:' + slot['key']]
+    day_encodings[slot['key']] = {'file': 'day-lightmap.png', **encode(args.output / slot['key'] / 'day-lightmap.png', rgb)}
+
 
 # ---- 런타임용 UV와 매니페스트 --------------------------------------------------------------
 uv_layer = mesh.uv_layers['Room lightmap'].data
@@ -403,34 +422,44 @@ for polygon in mesh.polygons:
         values[cursor + 1] = round(min(1, max(0, v)) * 65535)
         cursor += 2
 (args.output / 'uv.bin').write_bytes(values.astype('<u2').tobytes())
-season, time_name = args.slot.split('-', 1)
-manifest = {
-    'version': 1, 'kind': 'cafe-room',
-    'slot': {'key': args.slot, 'season': season, 'time': time_name, 'sunDirection': [x, y, z],
-             'sunStrength': args.sun_strength, 'sunColorLinear': [float(v) for v in args.sun_color.split(',')]},
+common = {
+    'version': 2, 'kind': 'cafe-room',
     'source': args.source.name, 'sourceSha256': source_hash, 'sourceState': src['state'],
     'sourceCafeFloor': floor_y, 'sourceCafeCeiling': ceiling_y,
     'furnitureManifest': {name: hashlib.sha256((root / 'new' / name).read_bytes()).hexdigest() for name in FURNITURE_FILES},
-    'box': BOX, 'snapshotRoomBox': room_box, 'triangles': total, 'area': round(sum(o['area'] for o in manifest_objects), 3), 'objects': manifest_objects,
-    'uv': {'file': 'uv.bin', 'format': 'uint16 little-endian u,v per triangle corner, receiver order; value/65535'},
-    'lightmaps': encodings, 'atlasSize': size,
-    'interiorLights': light_specs,
+    'box': BOX, 'snapshotRoomBox': room_box, 'triangles': total, 'area': round(sum(o['area'] for o in manifest_objects), 3),
+    'objects': manifest_objects,
+    'uv': {'file': '../uv.bin', 'format': 'uint16 little-endian u,v per triangle corner, receiver order; value/65535; shared by every slot'},
+    'atlasSize': size, 'interiorLights': light_specs,
     'filter': {'excludedMaterials': sorted(PLANT_MATERIALS), 'glazing': 'glazing flag or transparent with opacity < 0.95',
                'box': 'all corners inside box', 'slabTop': 'centroid y > ceiling + 0.05 and normal y > 0.5',
                'slabBottom': 'centroid y < floor - 0.05 and normal y < -0.5',
                'hash': 'FNV-1a 32 over floor(world*1000 + 0.5) of every kept corner, in source triangle order'},
     'settings': {'engine': 'Cycles ' + args.device, 'samples': args.samples, 'bakeMargin': 4,
-                 'world': 'neutral RGB .8, strength 1', 'day': 'sky direct+indirect + sun indirect only',
-                 'lights': 'cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect',
-                 'diffuseBounces': 3, 'denoise': 'mask-normalised Gaussian sigma 1.1 px', 'seconds': None},
+                 'world': 'neutral RGB .8, strength 1, scaled and tinted per slot after baking (linear)',
+                 'day': 'sky direct+indirect x slot sky x slot tint + sun/moon indirect only',
+                 'lights': 'cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared',
+                 'diffuseBounces': 3, 'denoise': 'mask-normalised Gaussian sigma 1.1 px', 'seconds': round(time.time() - started, 1)},
     'limitations': [
         'Diffuse lighting only; specular reflections remain realtime approximations.',
         'Potted plants and glazing are excluded and stay on the realtime path.',
         'Emissive fixture diffusers are not light sources in the bake.',
-        'Sun indirect assumes the snapshot surroundings (about 60 m); farther context is not an occluder.',
+        'Sun indirect assumes the snapshot surroundings; farther context is not an occluder.',
         'Valid only for this original app season/time button pair and the recorded structure/furniture state.',
         'Appearance study, not a daylight or illuminance validation.']}
-manifest['settings']['seconds'] = round(time.time() - started, 1)
-(args.output / 'manifest.json').write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + '\n')
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+# 파일 내용 해시: 런타임은 ?v=해시로 받아 캐시된 옛 파일과 섞이지 않게 한다.
+common['uv']['sha256'] = digest(args.output / 'uv.bin')
+lights_encoding['sha256'] = digest(args.output / 'lights-lightmap.png')
+for key, encoding in day_encodings.items():
+    encoding['sha256'] = digest(args.output / key / 'day-lightmap.png')
+for slot in slots:
+    manifest = {**common, 'slot': {'key': slot['key'], 'season': slot['season'], 'time': slot['time'], 'sunDirection': slot['sun'],
+                                   'sunStrength': slot['sunStrength'], 'sunColorLinear': slot['sunColor'], 'sky': slot['sky'], 'skyTint': slot['skyTint']},
+                'lightmaps': {'day': day_encodings[slot['key']], 'lights': lights_encoding}}
+    (args.output / slot['key'] / 'manifest.json').write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + '\n')
 bpy.ops.wm.save_as_mainfile(filepath=str((args.output / 'room-bake.blend').resolve()))
 print(f'ROOM BAKE COMPLETE {args.output} in {time.time() - started:.1f}s', flush=True)

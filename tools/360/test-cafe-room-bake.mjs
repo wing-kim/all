@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {existsSync,readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import * as T from 'three';
-import {FNV_OFFSET,hashStep,isGlazing,receiverTriangle,receiverTriangles} from './cafe-room-bake.js';
+import {FNV_OFFSET,hashStep,isGlazing,matchRoomSlot,receiverTriangle,receiverTriangles,sameRoomLayout} from './cafe-room-bake.js';
 
 // Python parity of the 32-bit FNV step, including negative quantised coordinates.
 assert.equal(hashStep(FNV_OFFSET,0),Math.imul(FNV_OFFSET,16777619)>>>0);
@@ -16,10 +16,20 @@ assert.equal(receiverTriangle(box,.07,5.02,[0,5.4,0],[0,5.4,.5],[.5,5.4,0]),fals
 assert.equal(receiverTriangle(box,.07,5.02,[0,0,0],[0,0,0],[.5,0,0]),false,'degenerate triangle');
 assert.equal(isGlazing({transmission:1}),true);assert.equal(isGlazing({transparent:true,opacity:.5}),true);assert.equal(isGlazing({transparent:false,opacity:1}),false);
 
+// Night slot: the original 야간 button is identical in every season.
+const night={key:'any-night',season:'any',time:'night',sunDirection:[-.5121,.7682,.3841]};
+assert.equal(matchRoomSlot(night,{season:'winter',time:'night',night:true,custom:false,direction:[-.5121,.7682,.3841]}),true);
+assert.equal(matchRoomSlot(night,{season:'spring',time:'pm',night:false,custom:false,direction:[.0758,.6412,.7636]}),false);
+assert.equal(matchRoomSlot(night,{season:'spring',time:'night',night:true,custom:true}),false,'custom date/time never uses a baked slot');
+const springPm={key:'spring-pm',season:'spring',time:'pm',sunDirection:[.0758,.6412,.7636]};
+assert.equal(matchRoomSlot(springPm,{season:'spring',time:'pm',night:false,custom:false,direction:[.0758,.6412,.7636]}),true);
+assert.equal(matchRoomSlot(springPm,{season:'spring',time:'night',night:true,custom:false,direction:[-.5121,.7682,.3841]}),false);
+
 // Every baked object must be reproduced by the runtime filter from the same snapshot.
-const manifestPath=new URL('../../new/360/assets/cafe-room-bake/spring-pm/manifest.json',import.meta.url),sourcePath=new URL('./cafe-ambient-source.json.gz',import.meta.url);
+const manifestPath=new URL('../../new/360/assets/cafe-room-bake/spring-pm/manifest.json',import.meta.url),nightPath=new URL('../../new/360/assets/cafe-room-bake/any-night/manifest.json',import.meta.url),sourcePath=new URL('./cafe-ambient-source.json.gz',import.meta.url);
 if(existsSync(manifestPath)&&existsSync(sourcePath)){
  const manifest=JSON.parse(readFileSync(manifestPath,'utf8')),source=JSON.parse(gunzipSync(readFileSync(sourcePath)));
+ if(existsSync(nightPath))assert.equal(sameRoomLayout(manifest,JSON.parse(readFileSync(nightPath,'utf8'))),true,'all deployed slots share one receiver layout');
  const expected=new Map(manifest.objects.map(entry=>[entry.hash+':'+entry.triangles,entry]));
  const materials=Object.fromEntries(Object.entries(source.materials).map(([key,data])=>{
   const material=new T.MeshPhysicalMaterial({transparent:!!data.transparent,opacity:data.opacity??1});
@@ -44,7 +54,7 @@ console.log('cafe room bake: filter, hash and glazing rules passed');
 
 // Lifecycle with a one-triangle fixture: slot matching, light hand-off, fail-closed loads.
 const {createCafeRoomBake}=await import('./cafe-room-bake.js');
-const fakeThree={...T,MeshPhysicalNodeMaterial:class extends T.MeshPhysicalMaterial{},IrradianceNode:class{constructor(node){this.node=node;this.isLightingNode=true}},
+const fakeThree={...T,MeshPhysicalNodeMaterial:class extends T.MeshPhysicalMaterial{},IrradianceNode:class{constructor(node){this.node=node;this.isLightingNode=true}},EnvironmentNode:class{constructor(node){this.envNode=node}},
  TextureLoader:class{async loadAsync(){return new T.Texture()}}};
 function roomFixture(){
  const scene=new T.Scene(),state={floors:6};
@@ -52,7 +62,7 @@ function roomFixture(){
  const mesh=new T.Mesh(geometry,new T.MeshPhysicalMaterial());mesh.userData.primary=true;scene.add(mesh);
  const ceilingLight=new T.Object3D();ceilingLight.userData.cafeRoomBakedLight=true;scene.add(ceilingLight);
  const manifest={kind:'cafe-room',slot:{key:'spring-pm',season:'spring',time:'pm',sunDirection:[.0758,.6412,.7636]},sourceState:state,sourceCafeFloor:.07,sourceCafeCeiling:5.02,
-  furnitureManifest:{},box:{min:[-1,-.08,-1],max:[2,5.47,2]},uv:{file:'uv.bin'},lightmaps:{day:{file:'day.png',scale:.5},lights:{file:'lights.png',scale:.5}}};
+  furnitureManifest:{},box:{min:[-1,-.08,-1],max:[2,5.47,2]},uv:{file:'../uv.bin'},lightmaps:{day:{file:'day.png',scale:.5},lights:{file:'../lights.png',scale:.5}}};
  scene.updateMatrixWorld(true);
  const {offsets,hash}=receiverTriangles(T,mesh,manifest);
  Object.assign(manifest,{triangles:offsets.length,area:.5,objects:[{hash,triangles:offsets.length,offset:0,area:.5}]});
@@ -92,6 +102,23 @@ try{
  globalThis.fetch=async url=>url.endsWith('uv.bin')?{ok:true,arrayBuffer:async()=>new Uint16Array(12).buffer}:big.route(url);
  const bigRejected=await createCafeRoomBake(fakeThree,big.scene,big.context);
  assert.equal(bigRejected.status().reason,'room-large-surface-unmatched:ceiling');
+ // Two slots sharing one layout: the night button switches lightmaps without rebinding geometry.
+ const two=roomFixture(),nightManifest={...two.manifest,slot:{key:'any-night',season:'any',time:'night',sunDirection:[-.5121,.7682,.3841]}};
+ globalThis.fetch=async url=>url.endsWith('cafe-room-bake/index.json')?{ok:true,json:async()=>({slots:['spring-pm','any-night']})}
+  :url.includes('any-night/manifest.json')?{ok:true,json:async()=>nightManifest}:two.route(url);
+ const both=await createCafeRoomBake(fakeThree,two.scene,two.context);
+ assert.deepEqual(both.status().slots,['spring-pm','any-night']);assert.equal(both.status().slot,'spring-pm');
+ const receiver=two.scene.children.find(o=>o.userData.roomReceiver),dayMaterial=receiver.material;
+ both.light({season:'winter',time:'night',night:true,custom:false,direction:[-.5121,.7682,.3841]});
+ assert.equal(both.status().slot,'any-night','the night button uses the night slot in any season');
+ assert.notEqual(receiver.material,dayMaterial,'night uses its own lightmap material');
+ assert.equal(two.ceilingLight.visible,false,'baked ceiling lights replace realtime lights at night too');
+ both.dispose();
+ const skew=roomFixture(),skewNight={...skew.manifest,slot:{key:'any-night',season:'any',time:'night',sunDirection:[0,1,0]},objects:[{...skew.manifest.objects[0],hash:7}]};
+ globalThis.fetch=async url=>url.endsWith('cafe-room-bake/index.json')?{ok:true,json:async()=>({slots:['spring-pm','any-night']})}
+  :url.includes('any-night/manifest.json')?{ok:true,json:async()=>skewNight}:skew.route(url);
+ const skewed=await createCafeRoomBake(fakeThree,skew.scene,skew.context);
+ assert.equal(skewed.status().reason,'room-slot-layout-mismatch:any-night','slots with different receivers never share bindings');
  const low=roomFixture();low.manifest.triangles=50;low.manifest.area=40;globalThis.fetch=async url=>url.endsWith('uv.bin')?{ok:true,arrayBuffer:async()=>new Uint16Array(300).buffer}:low.route(url);
  const rejected=await createCafeRoomBake(fakeThree,low.scene,low.context);
  assert.match(rejected.status().reason,/room-coverage-low/);assert.equal(rejected.status().enabled,false);

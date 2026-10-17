@@ -3,10 +3,29 @@
 // unmatched or invalid states keep the original realtime materials.
 import { matchSlot, validateAmbientSource, verifyFurnitureManifest } from './cafe-ambient.js';
 import { bindSourceVisibility } from './source-visibility.js';
-import { texture as textureNode, uv as uvNode } from 'three/tsl';
+import { texture as textureNode, uv as uvNode, vec3 } from 'three/tsl';
 
 export const ROOM_BAKE_ROOT='360/assets/cafe-room-bake/';
 export const LARGE_SURFACE_M2=20;
+// In three 0.186 node materials, material.envMapIntensity only applies to a material's own envMap;
+// scene.environment uses scene.environmentIntensity. Baked surfaces therefore still received the full
+// environment: its diffuse part double-counted the lightmap. This node keeps only the specular
+// (reflection) part, so diffuse comes from the lightmap and reflections match the realtime path.
+export function specularEnvironment(T){
+ return class SpecularEnvironmentNode extends T.EnvironmentNode{
+  setup(builder){const kept=builder.context.iblIrradiance;builder.context.iblIrradiance=vec3(0).toVar();try{super.setup(builder)}finally{builder.context.iblIrradiance=kept}}
+ };
+}
+
+// Original 야간 button is identical in every season, so a night slot may use season "any".
+export function matchRoomSlot(slot,daylight){
+ if(!slot||!daylight||daylight.custom)return false;
+ if(slot.time==='night')return !!daylight.night&&daylight.time==='night'&&(slot.season==='any'||slot.season===daylight.season);
+ return matchSlot(slot,daylight);
+}
+// Every slot must describe the same receivers in the same order to share one set of bindings.
+export const sameRoomLayout=(a,b)=>a.sourceSha256===b.sourceSha256&&a.triangles===b.triangles&&a.objects.length===b.objects.length&&
+ a.objects.every((entry,index)=>entry.hash===b.objects[index].hash&&entry.triangles===b.objects[index].triangles&&entry.offset===b.objects[index].offset);
 // Glass and translucent materials stay realtime (same rule as glazing() in the bake script).
 export const isGlazing=material=>!!material&&(material.transmission>0||material.userData?.glazingRole!=null||(material.transparent&&material.opacity<.95));
 
@@ -65,15 +84,18 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  // Interior light scale is compiled into each baked material. A shared TSL uniform was observed to
  // keep its first uploaded value across these per-object materials, so changes swap materials instead.
  const started=performance.now(),bakedMaterials=new Map();let lightScale=1;
+ const reflections=new URLSearchParams(location.search).get('roomReflect')!=='0',SpecularEnvironmentNode=specularEnvironment(T);
+ const bakedFor=(binding,set)=>Array.isArray(binding.original)?binding.original.map(m=>bakedMaterial(m,set)):bakedMaterial(binding.original,set);
  const report=()=>({requested,valid,enabled,reason,loadMs,bindMs,maxSliceMs,coverage,receivers:bindings.length,slot:enabled&&active?active.key:null,slots:sets.map(set=>set.key)});
  function setLights(){scene.children.forEach(o=>{if(o.userData.cafeAmbientFallback||o.userData.cafeRoomBakedLight)o.visible=!enabled})}
  function setDaylight(daylight){
-  active=valid?sets.find(set=>matchSlot(set.manifest.slot,daylight))||null:null;
+  active=valid?sets.find(set=>matchRoomSlot(set.manifest.slot,daylight))||null:null;
   const common=C.dollMode?'dollhouse':!C.city?.visible||!C.ctx?.visible?'context-hidden':null;
-  const invalid=!valid?reason:common||(active?validateAmbientSource(active.manifest,C.state,C.interiorDressing?.userData.cafe,daylight):(daylight?.night?'night':'unbaked-time'));
+  // Slot matching decides the time of day (including night); the source check covers structure and extent.
+  const invalid=!valid?reason:common||(active?validateAmbientSource(active.manifest,C.state,C.interiorDressing?.userData.cafe,null):(daylight?.night?'night':'unbaked-time'));
   enabled=valid&&!invalid&&!precisionActive;
   if(valid)reason=invalid||(precisionActive?'precision':'active');
-  for(const binding of bindings)binding.receiver.material=enabled?binding.baked:binding.original;
+  for(const binding of bindings)binding.receiver.material=enabled?bakedFor(binding,active):binding.original;
   setLights();onChange();
  }
  function clear(){
@@ -83,17 +105,22 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  }
  const stub={status:report,clear,refresh(){},light(){},precision(){},dispose:clear};
  if(!requested)return stub;
- const loader=new T.TextureLoader();
+ const loader=new T.TextureLoader(),shared=new Map();
+ // uv.bin and the interior-lights lightmap are shared by every slot; fetch each URL once.
+ const once=(url,load)=>{if(!shared.has(url))shared.set(url,load(url));return shared.get(url)};
+ const normalize=path=>path.split('/').reduce((parts,part)=>{if(part==='..')parts.pop();else if(part!=='.')parts.push(part);return parts},[]).join('/');
+ // Content hashes from the manifest version every shared file, so a stale cached copy is never mixed in.
+ const resolve=(folder,file,sha)=>{const query=sha?'?v='+sha.slice(0,12):'';try{return new URL(folder+file,location.href).href+query}catch{return normalize(folder+file)+query}};
  async function loadSet(key){
-  const folder=ROOM_BAKE_ROOT+key+'/',response=await fetch(folder+'manifest.json');
+  const folder=ROOM_BAKE_ROOT+key+'/',response=await fetch(folder+'manifest.json',{cache:'no-cache'});
   if(!response.ok)throw Error('room-manifest-unavailable:'+key);
   const manifest=await response.json();
   if(manifest.kind!=='cafe-room'||manifest.slot?.key!==key||key!==manifest.slot.season+'-'+manifest.slot.time)throw Error('room-slot-key-mismatch:'+key);
   await verifyFurnitureManifest(manifest.furnitureManifest);
-  const [uv,day,lights]=await Promise.all([
-   fetch(folder+manifest.uv.file).then(r=>{if(!r.ok)throw Error('room-uv-unavailable:'+key);return r.arrayBuffer()}),
-   ...['day','lights'].map(async name=>{const map=await loader.loadAsync(folder+manifest.lightmaps[name].file);map.colorSpace=T.NoColorSpace;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;return map})]);
-  const uvs=new Uint16Array(uv);
+  const texture=url=>loader.loadAsync(url).then(map=>{map.colorSpace=T.NoColorSpace;map.flipY=true;map.anisotropy=4;map.needsUpdate=true;return map});
+  const [uvs,day,lights]=await Promise.all([
+   once(resolve(folder,manifest.uv.file,manifest.uv.sha256),url=>fetch(url).then(r=>{if(!r.ok)throw Error('room-uv-unavailable:'+key);return r.arrayBuffer()}).then(buffer=>new Uint16Array(buffer))),
+   once(resolve(folder,manifest.lightmaps.day.file,manifest.lightmaps.day.sha256),texture),once(resolve(folder,manifest.lightmaps.lights.file,manifest.lightmaps.lights.sha256),texture)]);
   if(uvs.length!==manifest.triangles*6)throw Error('room-uv-size-mismatch:'+key);
   sets.push({key,manifest,uvs,day,lights});
  }
@@ -103,7 +130,9 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
   const material=new T.MeshPhysicalNodeMaterial();
   for(const key in original)material[key]=original[key];// Same copy as three's NodeLibrary.fromMaterial.
   material.uuid=T.MathUtils.generateUUID();material.userData={...original.userData,cafeRoomBaked:set.key};
-  material.aoMap=null;material.envMapIntensity=0;
+  material.aoMap=null;
+  // Lightmap supplies diffuse; the scene environment supplies reflections only (roomReflect=0 removes them for comparison).
+  material.setupEnvironment=builder=>reflections&&builder.environmentNode?new SpecularEnvironmentNode(builder.environmentNode):null;
   const decode=(map,scale)=>{const value=textureNode(map,uvNode(1)).rgb;return value.mul(value).mul(scale*Math.PI)};
   const day=set.manifest.lightmaps.day.scale,lights=set.manifest.lightmaps.lights.scale;
   // Sky + sun-indirect lightmap plus the separately baked cafe ceiling lights.
@@ -114,7 +143,7 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
   // Without a distinct key the original material's shader (no lightmap) is silently reused.
   material.lightMap=set.day;
   const baseKey=material.customProgramCacheKey.bind(material);
-  material.customProgramCacheKey=()=>baseKey()+':cafe-room-bake:'+set.key+':'+(debug||'full')+':'+lightScale;
+  material.customProgramCacheKey=()=>baseKey()+':cafe-room-bake:'+set.key+':'+(debug||'full')+':'+lightScale+':'+(reflections?'specular-env':'no-env');
   material.needsUpdate=true;bakedMaterials.set(cacheKey,material);return material;
  }
  // Matching and splitting run in short slices so the first frames and camera motion stay responsive.
@@ -151,7 +180,7 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
    if(coverage.ratio<.95){reason='room-coverage-low:'+coverage.ratio.toFixed(3);return}
    // Prepare every split first; swap geometries only after all objects are ready (no half-baked frame).
    const prepared=[];
-   for(const plan of plans){if(!await yieldSlice()){prepared.forEach(dispose);return}prepared.push(prepareReceiver(T,plan,set,bakedMaterial))}
+   for(const plan of plans){if(!await yieldSlice()){prepared.forEach(dispose);return}prepared.push(prepareReceiver(T,plan,set))}
    if(version!==refreshVersion){prepared.forEach(dispose);return}
    for(const item of prepared)bindings.push(attachReceiver(scene,item));
    valid=true;reason='ready';setDaylight(C.reviewDaylight);
@@ -159,34 +188,34 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
   finally{bindMs=performance.now()-began;maxSliceMs=Math.max(maxSliceMs,performance.now()-sliceAt)}
  }
  const dispose=item=>{item.remainder.dispose();item.receiver.geometry.dispose()};
+ const disposeTextures=()=>new Set(sets.flatMap(set=>[set.day,set.lights])).forEach(map=>map.dispose());
  try{
-  const index=await fetch(ROOM_BAKE_ROOT+'index.json');
+  const index=await fetch(ROOM_BAKE_ROOT+'index.json',{cache:'no-cache'});
   if(!index.ok)throw Error('room-index-unavailable');
   for(const key of (await index.json()).slots)await loadSet(key);
   if(!sets.length)throw Error('no-room-sets');
-  // One set today; multiple slots must share the receiver layout before they can share bindings.
-  if(sets.length>1)throw Error('room-multi-slot-unsupported');
+  const odd=sets.find(set=>!sameRoomLayout(sets[0].manifest,set.manifest)||set.uvs!==sets[0].uvs);
+  if(odd)throw Error('room-slot-layout-mismatch:'+odd.key);
   assetsReady=true;reason='geometry-check';await refresh();
  }catch(error){
-  sets.forEach(set=>{set.day.dispose();set.lights.dispose()});sets=[];
+  disposeTextures();sets=[];
   reason=String(error.message||error);valid=false;enabled=false;setLights();
  }
  loadMs=performance.now()-started;
  return {status:report,clear,refresh,light:setDaylight,
   precision(value){if(precisionActive===!!value)return;precisionActive=!!value;setDaylight(C.reviewDaylight)},
-  dispose(){clear();sets.forEach(set=>{set.day.dispose();set.lights.dispose()})},
+  dispose(){clear();disposeTextures()},
   // true/false or a numeric scale of the separately baked cafe ceiling lights.
   interiorLights(value){
    const next=typeof value==='number'?Math.max(0,value):value?1:0;
    if(next===lightScale)return;
    lightScale=next;
-   for(const binding of bindings)binding.baked=Array.isArray(binding.original)?binding.original.map(m=>bakedMaterial(m,binding.set)):bakedMaterial(binding.original,binding.set);
    setDaylight(C.reviewDaylight);
   },
   lightScale:()=>lightScale};
 }
 
-function prepareReceiver(T,plan,set,bakedMaterial){
+function prepareReceiver(T,plan,set){
  const {object,offsets,entry}=plan,sourceGeometry=object.geometry,index=sourceGeometry.index,groups=sourceGeometry.groups;
  const total=(index?.count??sourceGeometry.attributes.position.count)/3,selected=new Set(offsets);
  const slot=groupCursor(groups);
@@ -199,10 +228,10 @@ function prepareReceiver(T,plan,set,bakedMaterial){
  const uv=new Float32Array(offsets.length*6),source=set.uvs,start=entry.offset*6;
  for(let i=0;i<uv.length;i++)uv[i]=source[start+i]/65535;
  receiverGeometry.setAttribute('uv1',new T.BufferAttribute(uv,2));
- const original=object.material,baked=Array.isArray(original)?original.map(m=>bakedMaterial(m,set)):bakedMaterial(original,set);
+ const original=object.material;
  const receiver=new T.Mesh(receiverGeometry,original);receiver.matrix.copy(object.matrix);receiver.matrixAutoUpdate=false;
  receiver.castShadow=object.castShadow;receiver.receiveShadow=object.receiveShadow;receiver.userData={...object.userData,roomReceiver:true};
- return {object,receiver,original,baked,sourceGeometry,remainder,set};
+ return {object,receiver,original,sourceGeometry,remainder,set};
 }
 function attachReceiver(scene,item){
  const {object,receiver,remainder}=item;
