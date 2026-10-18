@@ -5,8 +5,9 @@
 import { positionWorld, normalWorld, float, vec3, step, mix } from 'three/tsl';
 
 export const INTERIOR_AO=.22,BASEMENT_AO=.12;
-// 따뜻한 사무실 조명(약 3500K) 간접광. 장면 조명 단위(태양 2.6)에 맞춘 시각 보정값.
-export const INTERIOR_FILL=[.95,.78,.6],INTERIOR_FILL_SCALE=.55;
+// 낮 사무실의 창 주광 + 약 4000K 조명 간접광. 장면 조명 단위(태양 2.6)에 맞춘 시각 보정값.
+// 2026-10-18: 3500K(.95,.78,.6)·0.55는 2F 시안(밝은 오크 바닥·흰 가구)과 비교해 너무 주황·어두워 조정.
+export const INTERIOR_FILL=[.96,.87,.75],INTERIOR_FILL_SCALE=.8;
 // 천장(아래를 보는 면)은 밝은 바닥·창가에서 튀어 오른 빛을 더 받는다. 색은 중립(약 4000K)에 가깝게.
 export const CEILING_FILL=[.95,.9,.82],CEILING_BOOST=2.2;
 // 지하 주차장: 중립 백색 LED 선형 조명 수준(실내 시안 사진 기준).

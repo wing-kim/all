@@ -56,3 +56,4 @@
 - `concept-car.glb`: glTF-Transform `simplify`(ratio 0.05, error 0.02) 후 Draco. 대당 213,347 → 27,921 삼각형. 거리 시점용 예시 차량.
 - 텍스처 38장(`*_color/_normal/_rough/_metal`)을 JPG에서 WebP로 변환(Pillow, 노멀 90·그 외 82 품질). 24.9MB → 6.2MB. 원본 JPG는 저장소 밖 휴지통 폴더로 옮김(git 이력에는 남음). 출처·라이선스는 위 각 항목과 같다.
 - `daylight-sky_1k.hdr`: 같은 Poly Haven Kloofendal 48d Partly Cloudy (Pure Sky) 1K(CC0). 기존 2K(5.3MB)를 대체(1.4MB). 환경 반사·간접광 용도.
+- `office-floor_*.webp` (2F 사무실 시안 바닥, 2026-10-18): Poly Haven [Laminate Floor 02](https://polyhaven.com/a/laminate_floor_02), Dario Barresi·Charlotte Baglioni, CC0. 1K 원본 diffuse/OpenGL normal/roughness. diffuse는 카탈로그 f2 사진의 밝은 꿀색 오크에 맞춰 선형 공간에서 평균 알베도 sRGB(205,178,148), 결 대비 70%로 재보정. 1.6 m 반복. 실제 마감 사양이 아닌 검토용 표현.

@@ -96,6 +96,7 @@
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
   await load('360/cafe.js?v=cafe-5');
+  await load('360/office.js?v=office-6');
   async function dressBuilding(){
   const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
@@ -138,7 +139,7 @@
       for(const side of [-1,1]){const wheel=part(wheelGeometry,casterMat,dx+Math.cos(a)*side*.022,.046,dz-Math.sin(a)*side*.022);wheel.rotation.set(0,a,Math.PI/2);}}
   }
   // Interior furnishings are illustrative. Architecture and opening locations remain from the model.
-  C.levels().filter(l=>l.kind==='upper').forEach((l,li)=>{
+  C.levels().filter(l=>l.kind==='upper'&&!(window.OFFICE_FLOORS||[]).includes(l.key)).forEach((l,li)=>{
     // Match the original finished floor: ground +70 mm, upper floors +15 mm.
     const y=l.y+(l.kind==='ground'?.07:.015)+.003;
     for(let x=450;x<900;x+=145)for(let z=360;z<1100;z+=170){
@@ -176,7 +177,7 @@
   const bayStep=({base:1.25,big:3,front:2.5,mega:6})[state.win],shadeColumns=[];
   bld.updateWorldMatrix(true,true);bld.traverse(o=>{if(o.isMesh&&o.material===M.col)shadeColumns.push(new T.Box3().setFromObject(o))});
   extra.userData.shadePlacement={candidates:0,skippedColumns:0,accepted:0};
-  C.levels().filter(l=>l.kind==='upper').forEach((l,li)=>{
+  C.levels().filter(l=>l.kind==='upper'&&!(window.OFFICE_FLOORS||[]).includes(l.key)).forEach((l,li)=>{
     for(const e of l.env||[{poly:l.poly,y0:l.y,y1:l.y+l.h-.38}])for(let edge=0;edge<e.poly.length;edge++){
       const a=P(...e.poly[edge]),b=P(...e.poly[(edge+1)%e.poly.length]),dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
       if(!bayStep||length<2)continue;
@@ -217,9 +218,11 @@
   }
   [[120,240],[120,610],[120,1020],[520,1310],[1550,910]].forEach(q=>{const [x,z]=P(...q);/* Replaced below by scanned tree assets. */});
   extra.userData.interiorPlantAnchors=[];
-  C.levels().filter(l=>l.kind==='upper').forEach(l=>{if(!Array.from({length:8},(_,i)=>[445+Math.cos(i*Math.PI/4)*27,480+Math.sin(i*Math.PI/4)*27]).every(q=>inPoly(q,l.poly)))return;const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1);extra.userData.interiorPlantAnchors.push({x,y:l.y+.495,z,height:1.35,floor:l.key,poly:l.poly})});
+  C.levels().filter(l=>l.kind==='upper'&&!(window.OFFICE_FLOORS||[]).includes(l.key)).forEach(l=>{if(!Array.from({length:8},(_,i)=>[445+Math.cos(i*Math.PI/4)*27,480+Math.sin(i*Math.PI/4)*27]).every(q=>inPoly(q,l.poly)))return;const [x,z]=P(445,480);box(extra,x,l.y+.265,z,.45,.5,.45,pot);plant(x,l.y+.495,z,1.1);extra.userData.interiorPlantAnchors.push({x,y:l.y+.495,z,height:1.35,floor:l.key,poly:l.poly})});
   leaves.count=n;leaves.instanceMatrix.needsUpdate=true;leaves.userData.legacyInteriorFoliage=true;extra.add(leaves);
   await window.dressTowerCafe(C,extra,timber);
+  // 2F 사무실 시안(카탈로그 f2): 원본 구조 위 가구·마감만.
+  for(const key of window.OFFICE_FLOORS||[])await window.dressTowerOffice?.(C,extra,key);
   return extra;
   }
   let interiors=await dressBuilding();
@@ -378,13 +381,13 @@
     }
   };
   window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'environment'});
-  await load('360/environment.js?v=int-1');
+  await load('360/environment.js?v=office-6');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){document.getElementById('t-city').checked=initial.display.city!==false;document.getElementById('t-ctx').checked=initial.display.ctx!==false;C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'renderer'});
-    try{const modern=await import('./modern.js?v=int-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=office-6');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
