@@ -6,16 +6,9 @@ Run from any directory with Python 3 (no third-party dependencies):
 python3 tools/360/package-preview.py --out /tmp/capehorn-review-unique
 ```
 
-Since 2026-10-18 the review deployment mirrors production first:
-
-```sh
-python3 tools/360/package-preview.py --mirror-base origin/main --out /tmp/capehorn-review-unique
-```
-
-`--mirror-base` extracts the whole published site at that ref (`main:/`: `new/`, `newbuild/`,
-`bluepica/`, `test/`) and then overlays only the photoreal runtime, so the preview equals the
-production pages plus this feature at the same paths (`/new/`, `/new/3d-model.html`). The audit
-records `mirror_base` and which mirrored files were overlaid (expected: `new/3d-model.html`).
+2026-10-18 user decision: publish only the 3D model page and its runtime. Do not publish the
+construction dashboard (`new/index.html`) or other production pages (`newbuild/`, `bluepica/`, `test/`),
+and do not mirror the production site.
 
 The output must be a new directory outside this checkout. Existing directories,
 repository directories and repository ancestors are refused. The source HTML

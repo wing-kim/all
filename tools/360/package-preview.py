@@ -81,9 +81,6 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', required=True, type=Path,
                         help='New, non-existent output directory outside the source repository')
-    parser.add_argument('--mirror-base', metavar='GIT_REF',
-                        help='Copy the whole published site at this ref (e.g. origin/main) first, '
-                             'then overlay only the photoreal runtime, so the preview equals production plus this feature')
     args = parser.parse_args()
     out = args.out.expanduser().resolve()
     if out == ROOT or ROOT in out.parents or out in ROOT.parents:
@@ -96,8 +93,6 @@ def main():
     paths = [Path('new/3d-model.html')]
     # Only this visual review page and its three images are public; other project
     # documents and offline bake sources remain outside the deployment artifact.
-    paths += [Path('docs/360') / name for name in (
-        'cafe-review.html', 'cafe-ambient-before.jpg', 'cafe-ambient-denoised.jpg')]
     paths += [Path('new/360') / name for name in sorted(RUNTIME_FILES)]
     for directory in ('assets', 'renderer-chunks'):
         paths += sorted(p.relative_to(ROOT) for p in (ROOT / 'new/360' / directory).rglob('*')
@@ -111,37 +106,20 @@ def main():
         if any(token in source.name.lower() for token in ('.env', 'credential', 'secret', 'token')):
             parser.error(f'sensitive-looking filename: {rel}')
     out.mkdir(parents=True)
-    mirrored = []
-    base_commit = None
-    if args.mirror_base:
-        # 운영 사이트(main:/) 전체를 먼저 그대로 풀고, 아래에서 이번 기능의 런타임 파일만 덮어쓴다.
-        base_commit = git('rev-parse', args.mirror_base)
-        archive = subprocess.check_output(['git', '-C', str(ROOT), 'archive', '--format=tar', base_commit])
-        subprocess.run(['tar', '-x', '-C', str(out)], input=archive, check=True)
-        mirrored = sorted(p.relative_to(out) for p in out.rglob('*') if p.is_file())
     for rel in paths:
         (out / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / rel, out / rel)
-    mirror_links = [('운영과 같은 첫 화면 · 신축 진행 대시보드 (new/)', 'new/'),
-                    ('3D 모델 · 운영과 같은 화면에 보기 방식 \u2018실사 3D\u2019 추가', 'new/3d-model.html'),
-                    ('원본 그대로(추가 기능 끔) · 비교용', 'new/3d-model.html?lab=off')] if args.mirror_base else []
-    links = mirror_links + [('통합 실사 3D 검토 · 바로 실사로 시작', 'new/3d-model.html?lab=review'),
-             ('카페 · 원본 UI와 연결된 3D', 'new/3d-model.html?lab=review&view=cafe'),
-             ('카페 · 원본 실사와 나란히 비교', 'new/3d-model.html?lab=review&view=cafe&compare=1'),
-             ('간접광 베이크 시험 · 호환 구조에서만 적용', 'new/3d-model.html?lab=review&view=cafe&ambientBake=study'),
-             ('화면·성능 비교 기록', 'docs/360/cafe-review.html'),
-             ('기존 모드 검토', 'new/3d-model.html')]
-    intro = (f'운영 사이트(wing-kim.github.io/all, main {base_commit[:7]}) 전체를 그대로 옮기고 실사 3D 표현 모드만 더한 검토본입니다. '
-             '경로도 운영과 같습니다(/new/, /new/3d-model.html). 운영 사이트는 변경하지 않습니다.') if base_commit else \
-            '기존 앱에 추가하는 실사 3D 모드의 격리된 검토본입니다. 기능 연결 및 시각 품질은 검증 중이며 기존 운영 사이트는 변경하지 않습니다.'
+    # 실사 3D 페이지만 공개한다. 대시보드 등 다른 운영 페이지와 업무 문서는 넣지 않는다.
+    links = [('3D 모델 · 보기 방식에서 \u2018실사 3D\u2019 선택', 'new/3d-model.html'),
+             ('바로 실사 3D로 시작', 'new/3d-model.html?lab=review'),
+             ('실사 3D · 1층 카페로 시작', 'new/3d-model.html?lab=review&view=cafe'),
+             ('비교용 · 추가 기능 없는 원본 3D', 'new/3d-model.html?lab=off')]
+    intro = '케이프혼타워 3D 모델에 실사 3D 표현 모드를 더한 검토본입니다. 3D 모델 페이지만 공개합니다.'
     buttons = ''.join(f'<a href="{html.escape(url, quote=True)}">{label}</a>' for label, url in links)
-    (out / 'index.html').write_text(f'''<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cape Horn · 실험 검토</title><style>body{{font:18px system-ui;background:#111b23;color:#ecf1f5;max-width:780px;margin:10vh auto;padding:24px}}a{{display:block;background:#d9ecda;color:#13241b;padding:20px;margin:14px 0;border-radius:8px;text-decoration:none}}small{{overflow-wrap:anywhere}}</style><main><h1>Cape Horn · 실험 검토</h1><p>{intro}</p>{buttons}<small>Source commit: {commit}<br>Build UTC: {timestamp}<br>Working tree changes: {str(dirty).lower()}</small></main></html>''')
+    (out / 'index.html').write_text(f'''<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cape Horn · 실사 3D 검토</title><style>body{{font:18px system-ui;background:#111b23;color:#ecf1f5;max-width:780px;margin:10vh auto;padding:24px}}a{{display:block;background:#d9ecda;color:#13241b;padding:20px;margin:14px 0;border-radius:8px;text-decoration:none}}small{{overflow-wrap:anywhere}}</style><main><h1>Cape Horn · 실사 3D 검토</h1><p>{intro}</p>{buttons}<small>Source commit: {commit}<br>Build UTC: {timestamp}<br>Working tree changes: {str(dirty).lower()}</small></main></html>''')
     report = audit(out, paths)
     report.update({'commit': commit, 'build_utc': timestamp, 'working_tree_dirty': dirty,
                    'test_links': [url for _, url in links],
-                   'mirror_base': base_commit,
-                   'mirrored_file_count': len(mirrored),
-                   'overlaid_from_mirror': sorted(str(p) for p in set(mirrored) & set(paths)),
                    'copied_file_count': len(paths),
                    'copied_bytes': sum((out / p).stat().st_size for p in paths),
                    'files': [str(p) for p in paths]})
