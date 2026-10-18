@@ -124,7 +124,8 @@ window.dressTowerOffice=async function(C,root,key='2F'){
   if(S.lounge.kind==='curve'){
    // 3F: 황마 러그 위 곡선 크림 소파와 마주 보는 라운지 체어 둘, 원형 원목 테이블, 테라코타 스툴.
    box(jute,x,floor+.006,z,3.9,.012,3.0).castShadow=false;
-   sofa(x,z+.95,Math.PI,2.7,'curvesofa',0);// 이 모델은 정면이 -Z라 yaw 0lounge(x-.75,z-1.0,0,'lounge3',.78);lounge(x+.75,z-1.0,0,'lounge3',.78);
+   // 곡선 소파 모델은 정면이 -Z라 yaw 0.
+   sofa(x,z+.95,Math.PI,2.7,'curvesofa',0);lounge(x-.75,z-1.0,0,'lounge3',.78);lounge(x+.75,z-1.0,0,'lounge3',.78);
    cylinder(oak,x,floor+.2,z+.05,.55,.4);cylinder(terracotta,x+1.55,floor+.23,z+.55,.2,.46);cylinder(terracotta,x-1.6,floor+.23,z+.6,.2,.46);
   }else{
    box(rug,x,floor+.006,z,3.6,.012,2.8).castShadow=false;
