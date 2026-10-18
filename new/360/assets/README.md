@@ -57,3 +57,15 @@
 - 텍스처 38장(`*_color/_normal/_rough/_metal`)을 JPG에서 WebP로 변환(Pillow, 노멀 90·그 외 82 품질). 24.9MB → 6.2MB. 원본 JPG는 저장소 밖 휴지통 폴더로 옮김(git 이력에는 남음). 출처·라이선스는 위 각 항목과 같다.
 - `daylight-sky_1k.hdr`: 같은 Poly Haven Kloofendal 48d Partly Cloudy (Pure Sky) 1K(CC0). 기존 2K(5.3MB)를 대체(1.4MB). 환경 반사·간접광 용도.
 - `office-floor_*.webp` (2F 사무실 시안 바닥, 2026-10-18): Poly Haven [Laminate Floor 02](https://polyhaven.com/a/laminate_floor_02), Dario Barresi·Charlotte Baglioni, CC0. 1K 원본 diffuse/OpenGL normal/roughness. diffuse는 카탈로그 f2 사진의 밝은 꿀색 오크에 맞춰 선형 공간에서 평균 알베도 sRGB(205,178,148), 결 대비 70%로 재보정. 1.6 m 반복. 실제 마감 사양이 아닌 검토용 표현.
+
+## 2F 사무실 가구 모델 (2026-10-18, CC BY 4.0 — 출처 표기 의무)
+
+Sketchfab 공개 모델(다운로드 허용, CC BY 4.0)을 Objaverse 공개 데이터셋(allenai/objaverse, Hugging Face)의 같은 uid 파일로 받았다. 모두 [glTF-Transform](https://gltf-transform.dev/) CLI 4.1.1로 텍스처 512px WebP·Draco 압축(소파·라운지 체어·스툴은 면 수 35%로 단순화). 형상 변경 없이 축척·방향만 배치 시 맞춘다(실제 제품 사양 아님, 검토용 표현). 라이선스: https://creativecommons.org/licenses/by/4.0/
+
+- `office/office-chair.glb`: "Office Chair" by Red Fox / nokillnando (https://sketchfab.com/3d-models/none-b228a29fa84544c2be501c295653ffe7), CC Attribution.
+- `office/office-monitor.glb`: "Computer Monitor 16:9 (Low Poly, Game Ready)" by LiveToWin34 (https://sketchfab.com/3d-models/none-336de680dd9a4d84943d05d9c7dde1b0), CC Attribution.
+- `office/office-sofa.glb`: "Modern  Sofa" by 3dimentionalben (https://sketchfab.com/3d-models/none-ac92f6e97eaa43c4ad6cb8f7c65ac43f), CC Attribution.
+- `office/office-lounge.glb`: "366 Armchair" by hectopod (https://sketchfab.com/3d-models/none-97e53f749df14e8c9de7a22bf99be753), CC Attribution.
+- `office/office-stool.glb`: "Dima upholstered barstool" by Andriano Milanovic (https://sketchfab.com/3d-models/none-2be0e4efd95d4b9b9740eeeaae318af6), CC Attribution.
+- `office/office-plantA.glb`: "Monstera Deliciosa Potted Mid-Century plant" by Giora (https://sketchfab.com/3d-models/none-1ab9bf841df04c07b1819be596327629), CC Attribution.
+- `office/office-plantB.glb`: "Potted Plant, Mediterranean med leaf, low poly" by dudecon (https://sketchfab.com/3d-models/none-bc7f26baef2a45d18dbd9a5d6d2ec565), CC Attribution.

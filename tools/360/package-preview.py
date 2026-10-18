@@ -11,7 +11,7 @@ import subprocess
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME_FILES = {'cafe.js', 'office.js', 'integrated.js', 'environment.js', 'viewer.js',
+RUNTIME_FILES = {'cafe.js', 'office.js', 'interior-models.js', 'integrated.js', 'environment.js', 'viewer.js',
                  'scene.js', 'modern.js', 'viewer.css'}
 ASSET_SUFFIXES = {'.js', '.jpg', '.jpeg', '.png', '.webp', '.hdr', '.glb',
                   '.gltf', '.bin', '.wasm', '.tza', '.json', '.txt'}

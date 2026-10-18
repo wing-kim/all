@@ -9,6 +9,11 @@ window.dressTowerOffice=async function(C,root,key='2F'){
   mesh=mat('Task chair mesh','#a3a7aa',.85),chairBase=mat('Task chair base','#5d6063',.45,.3),screen=mat('Office monitor','#15191c',.25,.2),felt=mat('Dusty blue felt screen','#b4cad8',.96),
   boucle=mat('Light grey boucle','#cbc9c3',.96),blue=mat('Dusty blue upholstery','#8fa8bb',.92),oak=mat('Light oak','#d5b48b',.5),rug=mat('Grey wool rug','#b8b5ad',1),
   pot=mat('White ceramic planter','#eeece6',.5),housing=mat('Linear LED housing','#ecebe7',.35,.25),grille=mat('Cassette grille','#cfd0cd',.7),duct=mat('White painted duct','#eeeeea',.55,.1);
+ // 가구 모델(CC-BY, Sketchfab 공개 모델을 Objaverse에서 받음, 출처는 assets/README): environment.js가 userData.modelSwap 자리를
+ // 같은 위치·방향·크기의 모델로 바꾼다. 받지 못하면 아래 절차적 가구가 그대로 남는다. yaw는 모델 정면(+Z)을 절차적 가구 정면(-Z)에 맞춘다.
+ const MODEL='360/assets/office/office-',swap=(g,name,fit)=>{g.userData.modelSwap={url:MODEL+name+'.glb',yaw:Math.PI,...fit};return g};
+ // 절차적 대체물은 숨겨 둔다(숨긴 물체는 environment.js 재질 묶음에 들어가지 않는다). 모델을 못 받으면 interior-models.js가 다시 보인다.
+ const stash=g=>{const fallback=new T.Group();fallback.name='Procedural fallback';fallback.visible=false;fallback.userData.modelFallback=true;while(g.children.length)fallback.add(g.children[0]);g.add(fallback);return g};
  const glow=mat('Linear LED diffuser','#ffffff',.4);glow.emissive.set('#fff3e2');glow.emissiveIntensity=2.4;
  const unit=new T.BoxGeometry(1,1,1),rodGeo=new T.CylinderGeometry(1,1,1,20);
  function add(g,m,x,y,z,parent=group){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);return o}
@@ -26,7 +31,7 @@ window.dressTowerOffice=async function(C,root,key='2F'){
   if(cols.some(([x,z])=>x>x0-margin-.35&&x<x1+margin+.35&&z>z0-margin-.35&&z<z1+margin+.35))return false;
   return !rects.some(([a,b,c,d])=>x1+margin>a&&x0-margin<c&&z1+margin>b&&z0-margin<d);
  }
- const keepouts=[],anchors=root.userData.interiorPlantAnchors||(root.userData.interiorPlantAnchors=[]);
+ const keepouts=[];
  const loader=new T.TextureLoader();
  // 바닥: 밝은 오크 마루(CC0 Poly Haven laminate_floor_02를 밝은 꿀색 알베도로 재보정, 1.6 m 반복). 코어·개구부는 비운다.
  try{
@@ -57,11 +62,12 @@ window.dressTowerOffice=async function(C,root,key='2F'){
  }
  // 업무 공간: 흰 벤치 책상(마주 보는 두 줄), 서랍장, 모니터, 하늘색 칸막이, 메시 의자.
  function taskChair(x,z,angle){
-  const g=new T.Group();g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
+  const g=swap(new T.Group(),'chair',{height:1.02});g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
   for(let i=0;i<5;i++){const a=i*Math.PI*2/5;rod(chairBase,[0,.06,0],[Math.cos(a)*.3,.05,Math.sin(a)*.3],.016,g);cylinder(chairBase,Math.cos(a)*.3,.03,Math.sin(a)*.3,.025,.05,g)}
   cylinder(chairBase,0,.25,0,.025,.38,g);box(mesh,0,.47,0,.48,.07,.46,g);
   const back=box(mesh,0,.82,.22,.46,.58,.04,g);back.rotation.x=-.12;
   for(const s of [-1,1]){rod(chairBase,[s*.24,.5,.1],[s*.24,.66,.1],.012,g);box(chairBase,s*.24,.67,0,.05,.025,.26,g)}
+  stash(g);
  }
  function benchCluster(cx,cz,n){
   const len=n*1.4;if(!free(cx-1.55,cz-len/2-.3,cx+1.55,cz+len/2+.3))return false;
@@ -72,7 +78,7 @@ window.dressTowerOffice=async function(C,root,key='2F'){
    for(let i=0;i<n;i++){
     const z=cz-len/2+.7+i*1.4;box(white,x+side*.12,floor+.33,z+.42,.4,.6,.42);
     // 모니터는 한 대(시안처럼 칸막이 위로 살짝 보이는 정도).
-    box(screen,x-side*.2,floor+1.06,z,.022,.3,.52);box(chairBase,x-side*.22,floor+.88,z,.03,.24,.03);
+    {const m=swap(new T.Group(),'monitor',{width:.56,yaw:0});m.position.set(x-side*.2,floor+.75,z);m.rotation.y=side*Math.PI/2;group.add(m);box(screen,0,.31,0,.52,.3,.022,m);box(chairBase,0,.13,-.02,.03,.24,.03,m);stash(m);}
     box(chairBase,x-side*.1,floor+.756,z,.14,.012,.42);
     taskChair(x+side*.95,z,side>0?Math.PI/2:-Math.PI/2);
    }
@@ -84,15 +90,15 @@ window.dressTowerOffice=async function(C,root,key='2F'){
  for(const [x,z] of [[-10.2,-10.9],[-6.2,-10.9],[-10.2,-5.9],[-6.2,-5.9],[-10.2,-.6],[-6.2,-.6]])if(benchCluster(x,z,3))clusters++;
  // 창가 바 카운터와 스툴(시안 1·5번 사진 왼쪽).
  {const x=-12.45,z0=3.25,z1=6.45;if(free(x-.3,z0,x+.9,z1,.05)){box(oak,x,floor+1.04,(z0+z1)/2,.42,.04,z1-z0);for(const z of [z0+.2,z1-.2])box(frame,x,floor+.52,z,.05,1.02,.36);
-   for(let z=z0+.5;z<z1-.2;z+=.75){cylinder(oak,x+.55,floor+.76,z,.18,.04);for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;rod(frame,[x+.55+Math.cos(a)*.12,floor+.74,z+Math.sin(a)*.12],[x+.55+Math.cos(a)*.18,floor,z+Math.sin(a)*.18],.012)}}
+   for(let z=z0+.5;z<z1-.2;z+=.75){const st=swap(new T.Group(),'stool',{height:1.0});st.position.set(x+.55,floor,z);st.rotation.y=Math.PI/2;group.add(st);cylinder(oak,0,.76,0,.18,.04,st);for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;rod(frame,[Math.cos(a)*.12,.74,Math.sin(a)*.12],[Math.cos(a)*.18,0,Math.sin(a)*.18],.012,st)}stash(st)}
    keepouts.push({x:x+.3,z:(z0+z1)/2,w:1.3,d:z1-z0});}}
  // 라운지: 회색 러그 위 소파 두 개, 하늘색 라운지 체어, 원목 커피 테이블(시안 3·6번 사진).
- function sofa(x,z,angle,w=2.2){const g=new T.Group();g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
+ function sofa(x,z,angle,w=2.2){const g=swap(new T.Group(),'sofa',{width:w});g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
   box(boucle,0,.22,0,w,.3,.9,g);box(boucle,0,.43,.06,w-.3,.14,.76,g);box(boucle,0,.62,.37,w,.5,.2,g);for(const s of [-1,1])box(boucle,s*(w/2-.1),.47,0,.2,.34,.9,g);
-  for(let i=0;i<2;i++){const c=box(blue,(i-.5)*w*.45,.62,.22,.42,.36,.1,g);c.rotation.x=-.2}}
- function lounge(x,z,angle){const g=new T.Group();g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
+  for(let i=0;i<2;i++){const c=box(blue,(i-.5)*w*.45,.62,.22,.42,.36,.1,g);c.rotation.x=-.2}stash(g)}
+ function lounge(x,z,angle){const g=swap(new T.Group(),'lounge',{height:.8});g.position.set(x,floor,z);g.rotation.y=angle;group.add(g);
   for(const [dx,dz] of [[-.26,-.24],[.26,-.24],[-.26,.24],[.26,.24]])rod(oak,[dx,0,dz],[dx*.85,.36,dz*.85],.018,g);
-  box(blue,0,.42,0,.66,.12,.62,g);const b=box(blue,0,.72,.27,.68,.5,.1,g);b.rotation.x=-.18;for(const s of [-1,1])box(blue,s*.33,.56,.02,.08,.22,.55,g)}
+  box(blue,0,.42,0,.66,.12,.62,g);const b=box(blue,0,.72,.27,.68,.5,.1,g);b.rotation.x=-.18;for(const s of [-1,1])box(blue,s*.33,.56,.02,.08,.22,.55,g);stash(g)}
  function loungeGroup(x,z){
   if(!free(x-2.1,z-1.7,x+2.1,z+1.7,.1))return false;
   box(rug,x,floor+.006,z,3.6,.012,2.8).castShadow=false;
@@ -104,10 +110,11 @@ window.dressTowerOffice=async function(C,root,key='2F'){
  // 회의 테이블(동쪽 베이, 코어 앞).
  {const x=-1.3,z=-10.3;if(free(x-1.2,z-1.6,x+1.2,z+1.6,.05)){box(oak,x,floor+.74,z,1.1,.05,2.6);for(const dz of [-.95,.95])box(frame,x,floor+.36,z+dz,.7,.72,.05);
    for(const dz of [-.8,0,.8])for(const s of [-1,1])taskChair(x+s*.85,z+dz,s>0?Math.PI/2:-Math.PI/2);keepouts.push({x,z,w:2.6,d:3.2});}}
- // 식재: 창가·기둥 옆 흰 화분(스캔 식물은 environment.js가 앵커 위치에 놓는다).
+ // 식재: 창가·기둥 옆 흰 화분 식물(모델 교체 대상, 몬스테라·지중해 화분을 번갈아).
+let plants=0;
  const near=(x,z)=>keepouts.some(o=>Math.abs(x-o.x)<o.w/2+.45&&Math.abs(z-o.z)<o.d/2+.45);
  for(const [x,z,h] of [[-12.5,-12.8,1.5],[-12.4,-8.1,1.3],[-12.4,-3.9,1.3],[-4.25,-12.8,1.4],[-4.3,2.0,1.6],[-12.3,6.2,1.6],[-6.2,8.6,1.4],[-0.3,1.6,1.5],[-2.6,-6.6,1.3],[-12.4,.45,1.2]])
-  if(free(x-.3,z-.3,x+.3,z+.3,.02)&&!near(x,z)){cylinder(pot,x,floor+.26,z,.27,.52);anchors.push({x,y:floor+.46,z,height:h,floor:L.key,poly:L.poly})}
+  if(free(x-.3,z-.3,x+.3,z+.3,.02)&&!near(x,z)){const g=swap(new T.Group(),plants++%2?'plantB':'plantA',{height:h,yaw:plants*2.4});g.position.set(x,floor,z);group.add(g);cylinder(pot,0,.26,0,.27,.52,g);stash(g)}
  root.userData.office={floor:L.key,clusters,lounges,keepouts,structuralSource:'original LEVELS; fit-out is illustrative (catalog f2)'};
  return group;
 };
