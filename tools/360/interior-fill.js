@@ -2,11 +2,15 @@
 // 밝고 푸르게 보이고, 밖에서 보면 유리가 밝은 하늘색으로 뜬다. 픽셀 단위로 "타워 외곽 안쪽 + 층 높이 범위"만
 // 골라 환경광을 줄이고(가림 근사) 따뜻한 실내 조명 수준의 간접광을 더한다. 태양 직사광·그림자는 실시간 그대로.
 // 미리 구운 카페(1F)는 제외한다. 실내 시안별 베이크가 생기면 그 층은 베이크가 대신한다.
-import { positionWorld, normalWorld, float, vec3, step } from 'three/tsl';
+import { positionWorld, normalWorld, float, vec3, step, mix } from 'three/tsl';
 
-export const INTERIOR_AO=.22,BASEMENT_AO=.05;
+export const INTERIOR_AO=.22,BASEMENT_AO=.12;
 // 따뜻한 사무실 조명(약 3500K) 간접광. 장면 조명 단위(태양 2.6)에 맞춘 시각 보정값.
-export const INTERIOR_FILL=[.95,.78,.6],INTERIOR_FILL_SCALE=.55,BASEMENT_FILL_SCALE=.42;
+export const INTERIOR_FILL=[.95,.78,.6],INTERIOR_FILL_SCALE=.55;
+// 천장(아래를 보는 면)은 밝은 바닥·창가에서 튀어 오른 빛을 더 받는다. 색은 중립(약 4000K)에 가깝게.
+export const CEILING_FILL=[.95,.9,.82],CEILING_BOOST=2.2;
+// 지하 주차장: 중립 백색 LED 선형 조명 수준(실내 시안 사진 기준).
+export const BASEMENT_FILL=[.92,.93,.95],BASEMENT_FILL_SCALE=1.1;
 
 // 층별 실내 범위: 원본 층 평면(level.poly)의 월드 다각형 × 바닥판 위~위층 바닥판 아랫면.
 // 평면이 같은 층(2F~6F 등)은 묶고, 판정점은 면 바깥 방향으로 25cm 옮겨 벽 바깥면은 제외·안쪽면은 포함한다.
@@ -51,7 +55,9 @@ export function createInteriorFill(T){
   n.uuid=T.MathUtils.generateUUID();n.userData={...original.userData,interiorFill:true};
   const occlusion=float(1).sub(masks.upper.mul(1-INTERIOR_AO)).sub(masks.base.mul(1-BASEMENT_AO));
   n.aoNode=original.aoNode?original.aoNode.mul(occlusion):occlusion;
-  const fill=vec3(...INTERIOR_FILL).mul(masks.upper.mul(INTERIOR_FILL_SCALE*Math.PI).add(masks.base.mul(BASEMENT_FILL_SCALE*Math.PI)));
+  const down=normalWorld.y.negate().max(0),warm=vec3(...INTERIOR_FILL),ceiling=vec3(...CEILING_FILL);
+  const upperFill=mix(warm,ceiling.mul(CEILING_BOOST),down).mul(INTERIOR_FILL_SCALE*Math.PI);
+  const fill=upperFill.mul(masks.upper).add(vec3(...BASEMENT_FILL).mul(BASEMENT_FILL_SCALE*Math.PI).mul(masks.base));
   const base=original.setupLightMap?.bind(original);
   n.setupLightMap=builder=>{const own=original.lightMap&&base?base(builder):null;return own||new T.IrradianceNode(fill)};
   const parent=original.customProgramCacheKey.bind(original);n.customProgramCacheKey=()=>parent()+':interior-fill:'+signature;
