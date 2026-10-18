@@ -69,3 +69,10 @@ Sketchfab 공개 모델(다운로드 허용, CC BY 4.0)을 Objaverse 공개 데�
 - `office/office-stool.glb`: "Dima upholstered barstool" by Andriano Milanovic (https://sketchfab.com/3d-models/none-2be0e4efd95d4b9b9740eeeaae318af6), CC Attribution.
 - `office/office-plantA.glb`: "Monstera Deliciosa Potted Mid-Century plant" by Giora (https://sketchfab.com/3d-models/none-1ab9bf841df04c07b1819be596327629), CC Attribution.
 - `office/office-plantB.glb`: "Potted Plant, Mediterranean med leaf, low poly" by dudecon (https://sketchfab.com/3d-models/none-bc7f26baef2a45d18dbd9a5d6d2ec565), CC Attribution.
+
+## 3F 사무실 추가 모델·텍스처 (2026-10-18)
+
+- `office/office-curvesofa.glb`: "Sofa from MRS Collection by Roman Plyus" by sdsketch (https://sketchfab.com/3d-models/none-5c123f31ae894d5db5b82a546998b92a), CC Attribution(CC BY 4.0). Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco·면 수 40% 단순화.
+- `office/office-lounge3.glb`: "Midcentury Harvey Probber Armchair" by eireni (https://sketchfab.com/3d-models/none-e54f711755a54b119b364fe6fcbfd821), CC Attribution(CC BY 4.0). Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco·면 수 40% 단순화.
+- `office/office-palm.glb`: "Palm Plant" by SomeKevin (https://sketchfab.com/3d-models/none-fc5680053bb54ff6bacae64be12200ad), CC Attribution(CC BY 4.0). Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco·면 수 40% 단순화.
+- `office-concrete_*.webp` (3F 바닥): Poly Haven [Concrete Floor 02](https://polyhaven.com/a/concrete_floor_02), CC0. 1K diffuse를 카탈로그 f3 사진의 밝은 베이지 광택 콘크리트에 맞춰 선형 공간 평균 알베도 sRGB(214,206,194), 얼룩 대비 20%로 재보정. normal은 원본. 3 m 반복.

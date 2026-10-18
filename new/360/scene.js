@@ -96,8 +96,8 @@
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
   await load('360/cafe.js?v=cafe-5');
-  await load('360/office.js?v=office-8');
-  await load('360/interior-models.js?v=office-8');
+  await load('360/office.js?v=office-10');
+  await load('360/interior-models.js?v=office-10');
   async function dressBuilding(){
   const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
@@ -383,7 +383,7 @@
     }
   };
   window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'environment'});
-  await load('360/environment.js?v=office-8');
+  await load('360/environment.js?v=office-10');
   await window.enhanceTowerEnvironment(C,extra,load);
   // 실내 시안 가구 모델(2F 사무실): 재질 묶음 뒤에 끼운다(절차적 대체물은 숨겨져 묶이지 않음).
   await window.swapInteriorModels?.(C,C.interiorDressing);
@@ -391,7 +391,7 @@
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'renderer'});
-    try{const modern=await import('./modern.js?v=office-8');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=office-10');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));
