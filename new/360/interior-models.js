@@ -27,6 +27,16 @@ window.swapInteriorModels=async function(C,root,{floor=null}={}){
  return {audit,holders};
 };
 
+// 건물 재생성(시안·주차 방식 전환) 때: 이미 받은 층의 모델은 새 실내 꾸밈에 바로 다시 끼운다(받아 둔 파일 재사용).
+// 그러면 실사 쪽 재복사·셰이더 준비가 로딩 카드 아래에서 한 번에 끝나고, 카드가 닫힌 뒤 층별 추가 작업이 남지 않는다.
+window.restoreInteriorModels=async function(C,root){
+ const done=window.__interiorFloorsLoaded;if(!root||!done?.size)return [];
+ const loaded=root.userData.modelFloorsLoaded||(root.userData.modelFloorsLoaded=new Set()),floors=[];
+ root.traverse(o=>{const key=o.userData.fitoutFloor;if(key&&done.has(key)&&!loaded.has(key)&&!floors.includes(key))floors.push(key)});
+ for(const key of floors){loaded.add(key);await window.swapInteriorModels(C,root,{floor:key})}
+ return floors;
+};
+
 // 지연 로더: 실사 렌더러의 첫 화면 뒤에 시작한다. 건물을 다시 만들면(시안 전환) 새 실내 꾸밈에 대해 다시 진행한다.
 window.startInteriorModelLoader=function(C){
  if(window.__interiorModelTimer)return;
@@ -45,6 +55,7 @@ window.startInteriorModelLoader=function(C){
   try{
    const {holders}=await window.swapInteriorModels(C,root,{floor:key});
    if(holders.length&&root===C.interiorDressing&&window.TOWER_CINEMA===cinema)await cinema.addInteriorObjects(holders);
+   (window.__interiorFloorsLoaded||(window.__interiorFloorsLoaded=new Set())).add(key);
   }catch(error){console.warn('Interior model loading failed',key,error)}
   finally{busy=false}
  },400);

@@ -276,26 +276,30 @@ export async function start(C){
  }
  // 첫 화면용(정지 패스+그림자) 준비: 보이는 물체를 조금씩만 켜고 실제 경로로 그려 셰이더·노드를 만든다.
  // compileAsync는 물체마다 GPU 컴파일을 하나씩 기다려 느리고 그림자 경로는 준비하지 못한다.
- async function warmStillInChunks(onProgress){
-  const drawables=[];scene.traverseVisible(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)drawables.push(o)});
+ // only: 준비할 물체 조건(재생성 때는 새 건물·실내 복사본만), chunk: 프레임당 묶음 크기, lowRes: 준비 중 저해상도로 그려 채우기 비용을 줄인다.
+ async function warmStillInChunks(onProgress,{only=null,chunk=WARM_CHUNK,lowRes=false}={}){
+  const visible=[];scene.traverseVisible(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)visible.push(o)});
+  // 대상이 아닌 물체는 숨기지 않는다(숨겼다 다시 보이면 렌더 객체가 새로 만들어져 카드가 닫힌 뒤 1.5초 멈췄다).
+  const drawables=only?visible.filter(only):visible;
+  if(lowRes)stillPass.setResolutionScale(.25);
   const culled=drawables.filter(o=>o.frustumCulled);
   const hidden=new Set(drawables);for(const o of drawables){o.visible=false;o.frustumCulled=false}
   try{
    // 후처리 패스는 프레임마다 한 번만 장면을 그리므로 한 프레임에 한 묶음씩 처리한다.
    for(let i=0;i<drawables.length;){
     // 부모도 그릴 물체(예: 주변 건물 본체 아래 창·난간)면 부모까지 켜야 자식이 그려진다.
-    const end=Math.min(drawables.length,i+WARM_CHUNK),on=new Set();
+    const end=Math.min(drawables.length,i+chunk),on=new Set();
     for(let k=i;k<end;k++)for(let o=drawables[k];o&&o!==scene;o=o.parent)if(hidden.has(o))on.add(o);
     for(const o of on)o.visible=true;renderer.shadowMap.needsUpdate=true;renderPreview(false);for(const o of on)o.visible=false;i=end;
     onProgress({loaded:i,total:drawables.length});await nextFrame();if(stopped)break;
    }
-  }finally{for(const o of drawables)o.visible=true;for(const o of culled)o.frustumCulled=true;renderer.shadowMap.needsUpdate=true}
+  }finally{for(const o of drawables)o.visible=true;for(const o of culled)o.frustumCulled=true;if(lowRes)stillPass.setResolutionScale(1);renderer.shadowMap.needsUpdate=true}
  }
  // 건물 재생성(시안·주차 방식 전환) 뒤: 부팅과 같은 방식으로 정지 패스·그림자 셰이더를 묶음 단위로 준비하고(로딩 카드가 덮는다)
  // 움직임 패스는 백그라운드로 준비한다. 첫 렌더에서 수천 개를 한꺼번에 동기 준비하면 화면이 수 초 멈췄다.
  async function rewarm(onProgress){
   if(stopped)return;const gen=++movingGen;rewarming=true;movingReady=false;
-  try{await warmStillInChunks(onProgress||(()=>{}))}catch(error){console.warn('Shader warm-up failed',error)}
+  try{await warmStillInChunks(onProgress||(()=>{}),{only:o=>o.userData.primary,chunk:80,lowRes:true})}catch(error){console.warn('Shader warm-up failed',error)}
   finally{rewarming=false;invalidatePresentation()}
   warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{if(gen===movingGen)movingReady=true});
  }
@@ -388,18 +392,29 @@ export async function start(C){
   }
   return relinked;
  }
+ // 새 건물의 실내 조명을 임시로 만든 뒤, 종류·개수가 같으면 기존 조명 객체에 위치·세기·크기만 옮긴다(조명 구성 유지).
+ // 다르면(층 수 변화 등) 교체한다. 카페 베이크가 쓰는 기준 세기(baseIntensity)는 새 값으로 다시 잡히게 비운다.
+ function reconcileInteriorLights(){
+  const fresh=new T.Group();addInteriorLighting({scene:fresh},C);
+  const next=fresh.children.slice(),current=scene.children.filter(o=>o.userData.interiorLight);
+  const same=next.length===current.length&&next.every((l,i)=>l.type===current[i].type);
+  if(!same){for(const o of current)scene.remove(o);for(const l of next)scene.add(l);return}
+  next.forEach((l,i)=>{const o=current[i];o.position.copy(l.position);o.quaternion.copy(l.quaternion);o.color.copy(l.color);o.intensity=l.intensity;
+   if(l.isRectAreaLight){o.width=l.width;o.height=l.height}o.userData={...l.userData};o.updateMatrixWorld(true)});
+ }
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
   // 종단면 중이면 감싸기를 잠시 풀어 기존 복사본 제거·새 복사본 추가가 장면 직계에서 일어나게 한다.
   sectionClip.suspend();
   ambientStudy.clear();roomBake.clear();
-  scene.children.filter(o=>o.userData.primary||o.userData.interiorLight).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
+  // 실내 조명은 지우지 않고 아래에서 맞춰 쓴다(조명 객체가 바뀌면 장면의 모든 재질이 조명 노드를 다시 만든다).
+  scene.children.filter(o=>o.userData.primary).forEach(o=>{scene.remove(o);if(o.userData.renderGlazing)o.geometry.dispose();});
   // Keep neighbourhood buffers/textures, release only resources no longer referenced.
   const usedG=new Set(),usedM=new Set(groundBake?.materials||[]);for(const originals of batchSources.values())for(const o of originals){usedG.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])usedM.add(m)}scene.traverse(o=>{if(o.geometry)usedG.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])usedM.add(m)});
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
-  copyRoot(C.bld);copyRoot(C.interiorDressing);counts.relinkedSources=(counts.relinkedSources||0)+relinkReplacedSources();bindMetalReflections();addInteriorLighting({scene},C);applyInteriorFill();ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
+  copyRoot(C.bld);copyRoot(C.interiorDressing);counts.relinkedSources=(counts.relinkedSources||0)+relinkReplacedSources();bindMetalReflections();reconcileInteriorLights();applyInteriorFill();ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
   // 장면에 남은 모든 재질(배칭된 주변·지면 베이크·꾸밈 재질 포함)이 쓰는 텍스처는 지우지 않는다.
   const usedTextures=new Set(),liveMaterials=new Set([...materials.values(),...(groundBake?.materials||[])]);
   scene.traverse(o=>{for(const m of o.material?[].concat(o.material):[])liveMaterials.add(m)});

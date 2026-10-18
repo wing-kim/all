@@ -7654,8 +7654,8 @@ if(['360','verify','review','embedded'].includes(TOWER_LAB)) {
     hideGuides:()=>{limits.visible=false;setLabels(false)},
     transition:(p,t)=>{anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,s:performance.now()}},
     cancel:()=>{anim=null}};
-  if(TOWER_LAB==='review'||TOWER_LAB==='embedded'){const script=document.createElement('script');script.src='360/integrated.js?v=upd-1';document.head.appendChild(script);}
-  if(TOWER_LAB==='360'){const script=document.createElement('script');script.src='360/scene.js?v=upd-1';document.head.appendChild(script);}
+  if(TOWER_LAB==='review'||TOWER_LAB==='embedded'){const script=document.createElement('script');script.src='360/integrated.js?v=upd-6';document.head.appendChild(script);}
+  if(TOWER_LAB==='360'){const script=document.createElement('script');script.src='360/scene.js?v=upd-6';document.head.appendChild(script);}
 }
 let last=performance.now();
 (function loop(now){
