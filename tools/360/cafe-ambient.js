@@ -49,7 +49,8 @@ export async function createCafeAmbientStudy(T,scene,C){
  const base=()=>sets[0]?.manifest||null;
  const report=()=>({requested,study:studyRequested,valid,enabled,reason,receivers:bindings.length,loadMs,sourceKey:base()?.sourceSha256||null,
   slot:enabled&&active?.slot?active.key:null,slots:sets.filter(set=>set.slot).map(set=>set.key)});
- function setLights(){scene.children.filter(o=>o.userData.cafeAmbientFallback).forEach(o=>o.visible=!enabled)}
+ // 조명 구성을 바꾸지 않도록 세기만 조절한다(cafe-room-bake.js와 같은 이유).
+ function setLights(){scene.children.filter(o=>o.userData.cafeAmbientFallback&&o.isLight).forEach(o=>{if(o.userData.baseIntensity==null)o.userData.baseIntensity=o.intensity;o.visible=true;o.intensity=enabled?0:o.userData.baseIntensity})}
  function chooseSet(daylight){return sets.find(set=>set.slot&&matchSlot(set.slot,daylight))||sets.find(set=>!set.slot)||null}
  function setDaylight(daylight){
   active=valid?chooseSet(daylight):null;

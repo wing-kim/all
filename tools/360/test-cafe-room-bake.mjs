@@ -60,7 +60,7 @@ function roomFixture(){
  const scene=new T.Scene(),state={floors:6};
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([0,.07,0,0,.07,1,1,.07,0, 40,.07,0,40,.07,1,41,.07,0],3));
  const mesh=new T.Mesh(geometry,new T.MeshPhysicalMaterial());mesh.userData.primary=true;scene.add(mesh);
- const ceilingLight=new T.Object3D();ceilingLight.userData.cafeRoomBakedLight=true;scene.add(ceilingLight);
+ const ceilingLight=new T.PointLight(0xffffff,2.5);ceilingLight.userData.cafeRoomBakedLight=true;scene.add(ceilingLight);
  const manifest={kind:'cafe-room',slot:{key:'spring-pm',season:'spring',time:'pm',sunDirection:[.0758,.6412,.7636]},sourceState:state,sourceCafeFloor:.07,sourceCafeCeiling:5.02,
   furnitureManifest:{},box:{min:[-1,-.08,-1],max:[2,5.47,2]},uv:{file:'../uv.bin'},lightmaps:{day:{file:'day.png',scale:.5},lights:{file:'../lights.png',scale:.5}}};
  scene.updateMatrixWorld(true);
@@ -83,7 +83,8 @@ try{
  const bake=await createCafeRoomBake(fakeThree,f.scene,f.context);
  assert.equal(f.manifest.triangles,1,'only the in-room triangle is a receiver');
  assert.equal(bake.status().reason,'active');assert.equal(bake.status().slot,'spring-pm');assert.equal(bake.status().coverage.ratio,1);
- assert.equal(f.ceilingLight.visible,false,'realtime ceiling lights are replaced by the baked lights channel');
+ // 조명 구성은 유지(visible)하고 세기만 0: 구성이 바뀌면 모든 재질이 다시 컴파일된다.
+assert.equal(f.ceilingLight.intensity,0,'realtime ceiling lights are replaced by the baked lights channel');assert.equal(f.ceilingLight.visible,true,'light set stays stable');
  assert.equal(f.mesh.geometry.index.count,3,'the out-of-room triangle stays on the original mesh');
  const lit=[].concat(f.scene.children.find(o=>o.userData.roomReceiver).material)[0];
  bake.interiorLights(false);
@@ -91,7 +92,7 @@ try{
  assert.notEqual(lit,unlit,'turning baked interior lights off swaps to a distinct compiled material');
  bake.interiorLights(true);assert.equal([].concat(f.scene.children.find(o=>o.userData.roomReceiver).material)[0],lit,'materials are cached per light scale');
  bake.light({...f.context.reviewDaylight,time:'am'});
- assert.equal(bake.status().reason,'unbaked-time');assert.equal(f.ceilingLight.visible,true,'unbaked times restore realtime lights');
+ assert.equal(bake.status().reason,'unbaked-time');assert.equal(f.ceilingLight.intensity,2.5,'unbaked times restore realtime lights');
  bake.light(f.context.reviewDaylight);bake.precision(true);
  assert.equal(bake.status().enabled,false,'precision rendering uses original materials');bake.precision(false);
  f.context.state={floors:7};bake.light(f.context.reviewDaylight);
@@ -115,7 +116,7 @@ try{
  await new Promise(resolve=>setTimeout(resolve,0));
  assert.equal(both.status().slot,'any-night','the night button uses the night slot in any season');
  assert.notEqual(receiver.material,dayMaterial,'night uses its own lightmap material');
- assert.equal(two.ceilingLight.visible,false,'baked ceiling lights replace realtime lights at night too');
+ assert.equal(two.ceilingLight.intensity,0,'baked ceiling lights replace realtime lights at night too');
  both.dispose();
  const skew=roomFixture(),skewNight={...skew.manifest,slot:{key:'any-night',season:'any',time:'night',sunDirection:[0,1,0]},objects:[{...skew.manifest.objects[0],hash:7}]};
  globalThis.fetch=async url=>url.endsWith('cafe-room-bake/index.json')?{ok:true,json:async()=>({slots:['spring-pm','any-night']})}

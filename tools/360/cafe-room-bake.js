@@ -87,7 +87,8 @@ export async function createCafeRoomBake(T,scene,C,{onChange=()=>{}}={}){
  const reflections=new URLSearchParams(location.search).get('roomReflect')!=='0',SpecularEnvironmentNode=specularEnvironment(T);
  const bakedFor=(binding,set)=>Array.isArray(binding.original)?binding.original.map(m=>bakedMaterial(m,set)):bakedMaterial(binding.original,set);
  const report=()=>({requested,valid,enabled,reason,loadMs,bindMs,maxSliceMs,coverage,receivers:bindings.length,slot:enabled&&active?active.key:null,slots:sets.map(set=>set.key)});
- function setLights(){scene.children.forEach(o=>{if(o.userData.cafeAmbientFallback||o.userData.cafeRoomBakedLight)o.visible=!enabled})}
+ // 숨기지 않고 세기만 0으로: 보이는 조명 구성이 바뀌면 장면의 모든 재질이 조명 노드를 다시 만든다(첫 화면 뒤 베이크 도착 시 수 초 정지).
+ function setLights(){scene.children.forEach(o=>{if(!(o.userData.cafeAmbientFallback||o.userData.cafeRoomBakedLight)||!o.isLight)return;if(o.userData.baseIntensity==null)o.userData.baseIntensity=o.intensity;o.visible=true;o.intensity=enabled?0:o.userData.baseIntensity})}
  function setDaylight(daylight){
   active=valid?sets.find(set=>matchRoomSlot(set.manifest.slot,daylight))||null:null;
   // Day lightmaps load on first use: keep the realtime path until the selected slot's map arrives.

@@ -48,7 +48,7 @@ const OFFICE_STYLES={
 };
 window.dressTowerOffice=async function(C,root,key='2F'){
  const T=C.THREE,L=C.levels().find(l=>l.key===key),S=OFFICE_STYLES[key];if(!L||!S)return null;
- const floor=C.floorTop(L),group=new T.Group();
+ const floor=C.floorTop(L),group=new T.Group();group.userData.fitoutFloor=key;
  // 복층(6F)은 바로 위 층(PH1) 천장까지 트여 있으므로 그 높이를 천장으로 쓴다.
  const ceiling=S.dup?Math.max(C.ceilOf(L),...C.levels().filter(l=>l.y>L.y&&l.y<L.y+L.h*1.6).map(l=>C.ceilOf(l))):C.ceilOf(L);group.name=key+' office illustrative fit-out';root.add(group);
  const mat=(name,color,roughness=.6,metalness=0)=>{const m=new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness,metalness});m.name=name;return m};

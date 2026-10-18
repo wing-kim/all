@@ -44,7 +44,7 @@ export async function start(C){
  // 멈춘 화면은 기기 해상도(원본 스케치업과 같은 배율, 최대 2)로, 움직이는 동안은 배율 1 상당으로 그린다.
  const renderParams=new URLSearchParams(location.search),compactScreen=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  const balancedRatio=renderParams.has('pr')?Math.min(2,Math.max(.5,+renderParams.get('pr')||1)):Math.min(devicePixelRatio||1,compactScreen?1.5:2);
- const STILL_DELAY_MS=150,BAKE_WAIT_MS=4000,WARM_CHUNK=60,METAL_REFLECT_MIN=.3,METAL_ENV_SCALE=3;
+ const STILL_DELAY_MS=150,WARM_CHUNK=60,METAL_REFLECT_MIN=.3,METAL_ENV_SCALE=3;
  // 최종 출력은 후처리 파이프라인이 그리므로 캔버스 자체 MSAA는 쓰지 않는다(장면 패스에서 MSAA).
  const renderer=new T.WebGPURenderer({alpha:false,antialias:false,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(balancedRatio);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
@@ -55,9 +55,9 @@ export async function start(C){
  // 검게 보인다. 같은 하늘 HDR을 재질 envMap으로 직접 반사하되 세기는 장면 환경광에 비례(밤에는 함께 어두워짐).
  // 실내 간접광 복제 재질도 envMap을 물려받으므로 집합 대신 장면의 타워 재질을 직접 훑는다.
  function syncMetalReflections(){if(!scene.environment)return;scene.traverse(o=>{if(!o.isMesh||!o.userData.primary)return;for(const m of [].concat(o.material))if(m.envMap===scene.environment){m.envMapIntensity=scene.environmentIntensity*METAL_ENV_SCALE;m.envMapRotation.copy(scene.environmentRotation)}})}
- function bindMetalReflections(){
+ function bindMetalReflections(root=scene){
   if(!scene.environment)return;
-  scene.traverse(o=>{if(!o.isMesh||!o.userData.primary)return;for(const m of [].concat(o.material)){if(m.metalness<METAL_REFLECT_MIN||m.transmission>0||m.userData?.glazingRole!=null||m.userData?.interiorFill||m.envMap)continue;m.envMap=scene.environment;m.needsUpdate=true}});
+  root.traverse(o=>{if(!o.isMesh||!o.userData.primary)return;for(const m of [].concat(o.material)){if(m.metalness<METAL_REFLECT_MIN||m.transmission>0||m.userData?.glazingRole!=null||m.userData?.interiorFill||m.envMap)continue;m.envMap=scene.environment;m.needsUpdate=true}});
   syncMetalReflections();
  }
  function texture(t){if(!t)return null;if(textures.has(t))return textures.get(t);const n=new T.Texture(t.image);n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.repeat.copy(t.repeat);n.offset.copy(t.offset);n.rotation=t.rotation;n.flipY=t.flipY;n.colorSpace=t.encoding===3001?T.SRGBColorSpace:T.NoColorSpace;n.anisotropy=4;n.needsUpdate=true;textures.set(t,n);return n}
@@ -82,10 +82,11 @@ export async function start(C){
  function geometry(g){if(geometries.has(g))return geometries.get(g);const n=copyGeometry(T,g);geometries.set(g,n);return n}
  C.scene.updateMatrixWorld(true);
  const roundedProfiles=new Map();
- function copyRoot(root){const glazingEdges=root===C.ovl?new Map():collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]);root.updateWorldMatrix(true,true);
+ // all: 원본 조상 가시성과 무관하게 복사(지연 추가하는 실내 모델), edges: 미리 계산한 유리 모서리(없으면 계산).
+ function copyRoot(root,all=false,edges=null){const glazingEdges=edges||(root===C.ovl?new Map():collectGlazingEdges(T,C.bld,[C.M.glass,C.M.glass1]));root.updateWorldMatrix(true,true);
  root.traverse(o=>{
   let building=false;for(let p=o;p;p=p.parent)if(p===C.bld)building=true;
-  if(!building)for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
+  if(!building&&!all)for(let p=o;p;p=p.parent)if(!p.visible&&!p.userData.box&&p!==C.city&&p!==C.ctx)return;
   if(!o.isMesh||o.userData.batched||o===C.R3D.sky||o.material?.isShaderMaterial)return;
   const m=Array.isArray(o.material)?o.material.map(material):material(o.material);
   let copies=o.isInstancedMesh&&o.userData.roundedCurtainWall?copyRoundedMullions(T,RoundedBoxGeometry,o,m,roundedProfiles,glazingEdges):null;
@@ -170,17 +171,20 @@ export async function start(C){
  // Bake validation downloads and hashes furniture files. Never hold the first frame for it:
  // the realtime path renders immediately and the bake binds once every check has passed.
  let ambientStudy={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){},materials:()=>[]};
- const studyReady=createCafeAmbientStudy(T,scene,C).then(study=>{
-  if(stopped){study.dispose();return}
-  ambientStudy=study;study.precision(precisionRequested||precisionLoading);study.light(C.reviewDaylight);materialsChanged();
- }).catch(error=>console.warn('Cafe bake unavailable; realtime lighting retained',error));
  // Whole-cafe slot bake (structure + furniture + separately baked ceiling lights), also non-blocking.
  let roomBake={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){}};
  const roomChanged=()=>{renderer.shadowMap.needsUpdate=true;invalidatePresentation()};
- const roomReady=createCafeRoomBake(T,scene,C,{onChange:()=>roomChanged()}).then(bake=>{
+ // 첫 방문 로딩: 카페 베이크(라이트맵·UV 약 8 MB)는 첫 화면 뒤에 받기 시작해 필수 자산과 대역폭을 나누지 않는다.
+ function startCafeBakes(){
+ createCafeAmbientStudy(T,scene,C).then(study=>{
+  if(stopped){study.dispose();return}
+  ambientStudy=study;study.precision(precisionRequested||precisionLoading);study.light(C.reviewDaylight);materialsChanged();
+ }).catch(error=>console.warn('Cafe bake unavailable; realtime lighting retained',error));
+ createCafeRoomBake(T,scene,C,{onChange:()=>roomChanged()}).then(bake=>{
   if(stopped){bake.dispose();return}
   roomBake=bake;bake.precision(precisionRequested||precisionLoading);bake.light(C.reviewDaylight);renderer.shadowMap.needsUpdate=true;materialsChanged();
  }).catch(error=>console.warn('Cafe room bake unavailable; realtime lighting retained',error));
+ }
  syncSourceVisibility();
  let skyEquirect=null;
  async function requestPrecision(){
@@ -255,17 +259,19 @@ export async function start(C){
  // 셰이더(렌더 파이프라인)는 compileAsync로 미리 준비한다. 처음 그릴 때의 동기 컴파일은 같은 스레드를 쓰는
  // 원본 화면 조작까지 수 초 멈춘다. 정지·움직임 패스는 MSAA 표본 수가 달라 파이프라인을 따로 준비한다.
  let bootWarm=false,movingReady=false,warmPending=0,warmChain=Promise.resolve();
- function warmPass(target,onProgress=null){
+ // root를 주면 장면 밖 임시 묶음의 물체만 실제 장면(조명·안개·환경광) 기준으로 준비한다(지연 추가용).
+ function warmPass(target,onProgress=null,root=scene){
   // compileAsync는 그릴 대상(재질 포함)을 동기적으로 모은 뒤 비동기로 컴파일하므로 바로 원래대로 돌린다.
   // 시야 밖 물체도 곧 보이게 되므로 시야 절두체 제외를 잠시 끄고 장면 전체를 준비한다.
   const previous=renderer.getRenderTarget(),culled=[];let job;
-  scene.traverse(o=>{if(o.frustumCulled){o.frustumCulled=false;culled.push(o)}});
-  for(const b of previewBindings)b.object.material=b.replacement;
+  root.traverse(o=>{if(o.frustumCulled){o.frustumCulled=false;culled.push(o)}});
+  const bindings=root===scene?previewBindings:[];
+  for(const b of bindings)b.object.material=b.replacement;
   // 장면은 후처리(RenderPipeline) 안에서 한 단계 중첩(호출 깊이 1)으로 그려지고, 렌더 객체·노드 캐시는 그 깊이의
   // 렌더 컨텍스트별로 따로 잡힌다. compileAsync는 항상 깊이 0으로 준비하므로 이때만 깊이 1 컨텍스트를 쓰게 한다(three 0.186).
   const contexts=renderer._renderContexts,contextAt=contexts.get;contexts.get=(renderTarget,mrt)=>contextAt.call(contexts,renderTarget,mrt,1);
-  try{renderer.setRenderTarget(target);job=renderer.compileAsync(scene,camera,null,onProgress)}
-  finally{contexts.get=contextAt;renderer.setRenderTarget(previous);for(const b of previewBindings)b.object.material=b.original;for(const o of culled)o.frustumCulled=true}
+  try{renderer.setRenderTarget(target);job=renderer.compileAsync(root,camera,root===scene?null:scene,onProgress)}
+  finally{contexts.get=contextAt;renderer.setRenderTarget(previous);for(const b of bindings)b.object.material=b.original;for(const o of culled)o.frustumCulled=true}
   return job;
  }
  // 첫 화면용(정지 패스+그림자) 준비: 보이는 물체를 조금씩만 켜고 실제 경로로 그려 셰이더·노드를 만든다.
@@ -285,11 +291,44 @@ export async function start(C){
    }
   }finally{for(const o of drawables)o.visible=true;for(const o of culled)o.frustumCulled=true;renderer.shadowMap.needsUpdate=true}
  }
+ // 실내 가구 모델 지연 추가(첫 화면 뒤 층별로): 원본 쪽에 새로 붙은 모델(holders)을 복사해 장면 밖 임시 묶음에서
+ // 실내 간접광·금속 반사를 적용하고 셰이더를 비동기로 준비한 뒤 장면에 넣는다. 그동안 기존 화면은 계속 그린다.
+ let lazyChain=Promise.resolve();
+ function addInteriorObjects(holders){
+  const job=lazyChain.then(async()=>{
+   if(stopped||!holders?.length)return 0;
+   const version=counts.buildingUpdates,before=new Set(scene.children),edges=new Map();
+   for(const holder of holders){holder.updateWorldMatrix(true,true);copyRoot(holder,true,edges)}
+   // 그림자 패스 셰이더는 미리 준비할 수 없어 첫 사용 때 동기 컴파일(첫 방문 GPU 캐시가 비면 수 초)되므로 지연 추가 가구는 그림자를 드리우지 않는다.
+   const added=scene.children.filter(o=>!before.has(o)),temp=new T.Group();for(const o of added){o.castShadow=false;temp.add(o)}
+   bindMetalReflections(temp);interiorFill.apply(temp,C,{exclude:groundOnly});
+   try{await warmPass(stillPass.renderTarget,null,temp);await warmPass(movingPass.renderTarget,null,temp)}catch(error){console.warn('Interior model warm-up failed',error)}
+   // 준비하는 동안 건물이 다시 만들어졌으면(시안 전환) updateBuilding이 이미 새 실내를 복사했으므로 버린다.
+   if(stopped||version!==counts.buildingUpdates)return 0;
+   sectionClip.suspend();for(const o of [...temp.children])scene.add(o);sectionClip.resume();
+   syncMetalReflections();syncSourceVisibility();renderer.shadowMap.needsUpdate=true;invalidatePresentation();
+   counts.lazyInteriorObjects=(counts.lazyInteriorObjects||0)+added.length;return added.length;
+  });
+  lazyChain=job.catch(()=>0);return job;
+ }
  // 재질이 바뀌면(카페 베이크 도착 등) 새 셰이더를 준비하는 동안 이전 화면을 유지한다.
+ // 첫 화면 뒤 도착한 카페 베이크는 새 수신면(roomReceiver)만 장면 밖 임시 묶음에서 준비한 뒤 다시 넣는다.
+ // 준비하는 동안 카페 일부 면만 잠시 빠지고 나머지 화면은 계속 그린다(전체 재준비로 화면이 멈추지 않게).
  function materialsChanged(){
   if(!bootWarm){invalidatePresentation();return}
-  warmPending++;
-  warmChain=warmChain.then(()=>warmPass(stillPass.renderTarget)).then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).finally(()=>{warmPending--;invalidatePresentation()});
+  warmChain=warmChain.then(async()=>{
+   const fresh=scene.children.filter(o=>o.userData.roomReceiver&&!o.userData.receiverWarmed);
+   if(!fresh.length){invalidatePresentation();return}
+   const receivers=roomBake.status().receivers,version=counts.buildingUpdates,temp=new T.Group();
+   // 카페 수신면의 그림자는 베이크에 이미 들어 있으므로 실시간 그림자 패스에서 뺀다(새 그림자 셰이더 동기 컴파일 방지).
+   for(const o of fresh)o.castShadow=false;
+   sectionClip.suspend();for(const o of fresh)temp.add(o);sectionClip.resume();
+   try{await warmPass(stillPass.renderTarget,null,temp);await warmPass(movingPass.renderTarget,null,temp)}catch(error){console.warn('Shader warm-up failed',error)}
+   // 준비 중 베이크가 해제·재결합됐거나 건물이 바뀌었으면 옛 수신면은 버린다.
+   if(stopped||version!==counts.buildingUpdates||roomBake.status().receivers!==receivers)return;
+   sectionClip.suspend();for(const o of fresh){o.userData.receiverWarmed=true;scene.add(o)}sectionClip.resume();
+   renderer.shadowMap.needsUpdate=true;invalidatePresentation();
+  }).catch(error=>console.warn('Shader warm-up failed',error));
  }
  function renderPreview(moving=false){
   // Alpha glazing needs no transmission framebuffer allocation.
@@ -364,6 +403,7 @@ export async function start(C){
  window.TOWER_CINEMA={scene,camera,renderer,groundSource:()=>exportGroundSource(T,scene),get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
  limits:on=>{cancelPrecision();for(const line of limitLines)line.visible=!!on},
  section:planes=>{if(sectionClip.set(planes)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
+ addInteriorObjects,lastMotionAt:()=>lastMotion,
  undergroundSee:on=>{if(applyUndergroundSee(on)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));sectionClip.objects().forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
@@ -399,13 +439,12 @@ export async function start(C){
  // 첫 화면 전에 정지 화면용 셰이더를 준비하고(진행률 표시), 움직임용은 첫 화면 뒤 백그라운드로 준비한다.
  // 카페 베이크는 대개 이 사이에 도착하므로 잠시 기다려 같은 준비에 포함한다(늦으면 도착 후 다시 준비).
  loadProgress.stage='shaders';
- await Promise.race([Promise.allSettled([studyReady,roomReady]),new Promise(resolve=>setTimeout(resolve,BAKE_WAIT_MS))]);
  if(stopped)return window.TOWER_CINEMA;
  const shaderProgress=event=>{loadProgress.shadersDone=event.loaded;loadProgress.shadersTotal=event.total};
  bootWarm=true;
  try{await warmStillInChunks(shaderProgress)}catch(error){console.warn('Shader warm-up failed',error)}
  timings.shadersMs=performance.now()-bootAt;
- frame();
+ frame();setTimeout(startCafeBakes,0);
  warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{movingReady=true;timings.movingShadersMs=performance.now()-bootAt});
  const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}if(precisionRequested)tracer?.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;
 }
