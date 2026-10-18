@@ -76,6 +76,12 @@ export function facadeMaterial(T,original,ao,extent=GROUND_EXTENT){
  return material;
 }
 
+// 지면 베이크 좌표: 월드 xz를 베이크 범위(±extent)에 맞춘 UV1. 기하는 복제해 원본을 건드리지 않는다.
+export function withGroundUV1(T,geometry,matrixWorld,extent=GROUND_EXTENT){
+ const g=geometry.clone(),p=g.attributes.position,uv=new Float32Array(p.count*2),point=new T.Vector3();
+ for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(matrixWorld);uv[i*2]=(point.x+extent)/(extent*2);uv[i*2+1]=(point.z+extent)/(extent*2)}
+ g.setAttribute('uv1',new T.BufferAttribute(uv,2));return g;
+}
 export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=globalThis.fetch?.bind(globalThis)}={}){
  const started=performance.now(),loader=new T.TextureLoader();
  // 베이크 메타(서명)와 현재 장면 서명이 다르면 베이크를 쓰지 않고 실시간 조명으로 둔다.
@@ -87,16 +93,14 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
   return {materials:[],count:0,facades:0,loadMs:performance.now()-started,setEnabled(){},get enabled(){return false},sunlightBakeValid:false,status};}
  const ao=await loader.loadAsync(root+'ground-sky-ao.png'+(meta.sha256?'?v='+meta.sha256.slice(0,12):''));
  ao.colorSpace=T.NoColorSpace;ao.channel=1;ao.flipY=false;ao.anisotropy=4;
- const bindings=[],point=new T.Vector3(),box=new T.Box3();
+ const bindings=[],box=new T.Box3();
  scene.updateMatrixWorld(true);
  // 지면 수신면: 높이 -0.6~0.7m의 불투명 지면에 월드 좌표 UV1을 만들어 aoMap으로 연결한다.
  scene.traverse(o=>{
   if(!o.isMesh||o.isInstancedMesh||primary(o)||!opaque(o.material))return;
   box.setFromObject(o);if(box.max.y>.7||box.min.y<-.6||box.max.x<-extent||box.min.x>extent||box.max.z<-extent||box.min.z>extent)return;
-  const original=o.material,g=o.geometry.clone(),p=g.attributes.position,uv=new Float32Array(p.count*2);
-  for(let i=0;i<p.count;i++){point.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);uv[i*2]=(point.x+extent)/(extent*2);uv[i*2+1]=(point.z+extent)/(extent*2)}
   // 원본 기하는 건드리지 않고 복제본에 UV1만 더해 교체한다(위치 동일, 정밀 렌더도 같은 기하 사용).
-  g.setAttribute('uv1',new T.BufferAttribute(uv,2));o.geometry=g;
+  const original=o.material;o.geometry=withGroundUV1(T,o.geometry,o.matrixWorld,extent);
   const baked=original.clone();baked.aoMap=ao;baked.aoMapIntensity=.85;baked.userData.groundBakeSource=original.uuid;
   bindings.push({object:o,original,baked});
  });
@@ -110,7 +114,7 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
   bindings.push({object:o,original,baked});facades++;
  }
  let enabled=false;
- const api={materials:[...new Set(bindings.flatMap(b=>[b.original,b.baked].flat()))],count:bindings.length-facades,facades,loadMs:0,sunlightBakeValid:false,status,
+ const api={extent,materials:[...new Set(bindings.flatMap(b=>[b.original,b.baked].flat()))],count:bindings.length-facades,facades,loadMs:0,sunlightBakeValid:false,status,
   setEnabled(value){enabled=!!value;for(const b of bindings){b.object.material=enabled?b.baked:b.original}},
   get enabled(){return enabled}};
  api.setEnabled(true);api.loadMs=performance.now()-started;return api;

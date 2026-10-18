@@ -378,13 +378,13 @@
     }
   };
   window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'environment'});
-  await load('360/environment.js?v=warm-6');
+  await load('360/environment.js?v=metal-2');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){document.getElementById('t-city').checked=initial.display.city!==false;document.getElementById('t-ctx').checked=initial.display.ctx!==false;C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'renderer'});
-    try{const modern=await import('./modern.js?v=warm-6');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=metal-2');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

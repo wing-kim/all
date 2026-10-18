@@ -1,6 +1,6 @@
 import { copyMaterialTextures } from './material-textures.js';
 import { glazingSides } from './glazing-sides.js';
-import { applyBakedGround, exportGroundSource } from './baked-ground.js';
+import { applyBakedGround, exportGroundSource, withGroundUV1 } from './baked-ground.js';
 import { createExteriorNight, DAY_HAZE } from './exterior-night.js';
 import { createSectionClip } from './section-clip.js';
 import { cubeToEquirect } from './cube-equirect.js';
@@ -44,13 +44,22 @@ export async function start(C){
  // 멈춘 화면은 기기 해상도(원본 스케치업과 같은 배율, 최대 2)로, 움직이는 동안은 배율 1 상당으로 그린다.
  const renderParams=new URLSearchParams(location.search),compactScreen=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  const balancedRatio=renderParams.has('pr')?Math.min(2,Math.max(.5,+renderParams.get('pr')||1)):Math.min(devicePixelRatio||1,compactScreen?1.5:2);
- const STILL_DELAY_MS=150,BAKE_WAIT_MS=4000,WARM_CHUNK=60;
+ const STILL_DELAY_MS=150,BAKE_WAIT_MS=4000,WARM_CHUNK=60,METAL_REFLECT_MIN=.3,METAL_ENV_SCALE=3;
  // 최종 출력은 후처리 파이프라인이 그리므로 캔버스 자체 MSAA는 쓰지 않는다(장면 패스에서 MSAA).
  const renderer=new T.WebGPURenderer({alpha:false,antialias:false,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(balancedRatio);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
  renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
  const materials=new Map(),geometries=new Map(),textures=new Map();
+ // 타워 금속(원본 금속성 0.3 이상: 메탈 밴드·메시 베일·돌출 박스 창 테두리 등)은 반사가 거의 전부라 약한 장면 환경광(낮 0.32)만으로는
+ // 검게 보인다. 같은 하늘 HDR을 재질 envMap으로 직접 반사하되 세기는 장면 환경광에 비례(밤에는 함께 어두워짐).
+ // 실내 간접광 복제 재질도 envMap을 물려받으므로 집합 대신 장면의 타워 재질을 직접 훑는다.
+ function syncMetalReflections(){if(!scene.environment)return;scene.traverse(o=>{if(!o.isMesh||!o.userData.primary)return;for(const m of [].concat(o.material))if(m.envMap===scene.environment){m.envMapIntensity=scene.environmentIntensity*METAL_ENV_SCALE;m.envMapRotation.copy(scene.environmentRotation)}})}
+ function bindMetalReflections(){
+  if(!scene.environment)return;
+  scene.traverse(o=>{if(!o.isMesh||!o.userData.primary)return;for(const m of [].concat(o.material)){if(m.metalness<METAL_REFLECT_MIN||m.transmission>0||m.userData?.glazingRole!=null||m.userData?.interiorFill||m.envMap)continue;m.envMap=scene.environment;m.needsUpdate=true}});
+  syncMetalReflections();
+ }
  function texture(t){if(!t)return null;if(textures.has(t))return textures.get(t);const n=new T.Texture(t.image);n.wrapS=t.wrapS;n.wrapT=t.wrapT;n.repeat.copy(t.repeat);n.offset.copy(t.offset);n.rotation=t.rotation;n.flipY=t.flipY;n.colorSpace=t.encoding===3001?T.SRGBColorSpace:T.NoColorSpace;n.anisotropy=4;n.needsUpdate=true;textures.set(t,n);return n}
  function material(m){if(materials.has(m))return materials.get(m);
   const glass=m===C.M.glass||m===C.M.glass1||m===C.M.door||m===C.M.guard||m===C.M.rail;
@@ -139,7 +148,7 @@ export async function start(C){
   sun.color.setHex(daylight.color);sun.intensity=daylight.intensity;
   const azimuth=Math.atan2(daylight.direction[2],daylight.direction[0]);
   scene.environmentRotation.y=.5967185264875144-azimuth;
-  scene.environmentIntensity=daylight.night ? .025 : .32;
+  scene.environmentIntensity=daylight.night ? .025 : .32;syncMetalReflections();
   scene.background=daylight.night?nightSky:sourceSky.update(daylight);
  }
  alignDaylight();
@@ -152,7 +161,7 @@ export async function start(C){
  finally {primary.forEach((o,i)=>o.visible=primaryVisibility[i]);}
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false,lightProbeTimer=null;
- addInteriorLighting({scene},C);
+ bindMetalReflections();addInteriorLighting({scene},C);
  // 미리 구운 빛이 없는 실내(2F~PH1·지하)의 환경광 가림 근사와 따뜻한 실내 조명 간접광. 1층(카페 베이크)은 제외.
  const interiorFill=createInteriorFill(T),firstUpper=()=>Math.min(...C.levels().filter(l=>l.kind==='upper').map(l=>C.floorTop(l)));
  const fillBox=new T.Box3(),groundOnly=o=>{fillBox.setFromObject(o);return fillBox.min.y>-.2&&fillBox.max.y<firstUpper()-.1};
@@ -315,6 +324,23 @@ export async function start(C){
   scene.traverse(o=>{if(!o.isMesh)return;for(const m of [].concat(o.material)){if(!m||seen.has(m))continue;seen.add(m);if(ids.has(m.uuid)||ids.has(m.userData?.groundBakeSource)){m.transparent=on;m.opacity=on?.3:1;m.depthWrite=!on;m.needsUpdate=true}}});
   return true;
  }
+ // 원본은 건물을 다시 만들 때 건물 밖 메시 일부도 새로 만든다(예: 램프·선큰 구멍을 뚫은 3km 지면).
+ // 옛 원본이 장면에서 빠진 복사본은 같은 재질·크기의 새 원본에 다시 연결하고 기하를 바꾼다(재질·베이크는 유지).
+ function relinkReplacedSources(){
+  const attached=o=>{for(;o;o=o.parent)if(o.isScene)return true;return false},size=new T.Vector3(),other=new T.Vector3();
+  const bound=new Set(scene.children.map(c=>c.sourceVisibilityObject).filter(Boolean));let relinked=0;
+  for(const copy of scene.children){
+   const source=copy.sourceVisibilityObject;if(!source||copy.userData.primary||copy.userData.sourceOverlay||attached(source))continue;
+   source.geometry.computeBoundingBox();source.geometry.boundingBox.getSize(size);let next=null;
+   C.scene.traverse(o=>{if(next||!o.isMesh||o.material!==source.material||bound.has(o)||o.geometry.type!==source.geometry.type||!attached(o))return;o.geometry.computeBoundingBox();if(o.geometry.boundingBox.getSize(other).distanceTo(size)<.01*Math.max(1,size.length()))next=o});
+   if(!next)continue;
+   next.updateWorldMatrix(true,false);let g=geometry(next.geometry);
+   if(copy.geometry.attributes.uv1&&groundBake?.extent)g=withGroundUV1(T,g,next.matrixWorld,groundBake.extent);
+   if(!scene.children.some(o=>o!==copy&&o.geometry===copy.geometry)&&![...geometries.values()].includes(copy.geometry))copy.geometry.dispose();
+   copy.geometry=g;copy.matrix.copy(next.matrixWorld);copy.matrixWorldNeedsUpdate=true;bindSourceVisibility(copy,next);bound.add(next);relinked++;
+  }
+  return relinked;
+ }
  function updateBuilding(){
   const began=performance.now();counts.buildingUpdates++;cancelPrecision();
   // 종단면 중이면 감싸기를 잠시 풀어 기존 복사본 제거·새 복사본 추가가 장면 직계에서 일어나게 한다.
@@ -326,8 +352,11 @@ export async function start(C){
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
-  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);applyInteriorFill();ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
-  const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
+  copyRoot(C.bld);copyRoot(C.interiorDressing);counts.relinkedSources=(counts.relinkedSources||0)+relinkReplacedSources();bindMetalReflections();addInteriorLighting({scene},C);applyInteriorFill();ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
+  // 장면에 남은 모든 재질(배칭된 주변·지면 베이크·꾸밈 재질 포함)이 쓰는 텍스처는 지우지 않는다.
+  const usedTextures=new Set(),liveMaterials=new Set([...materials.values(),...(groundBake?.materials||[])]);
+  scene.traverse(o=>{for(const m of o.material?[].concat(o.material):[])liveMaterials.add(m)});
+  for(const m of liveMaterials)for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
   sectionClip.resume();renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
  }
