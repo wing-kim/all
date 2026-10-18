@@ -44,7 +44,7 @@ export async function start(C){
  // 멈춘 화면은 기기 해상도(원본 스케치업과 같은 배율, 최대 2)로, 움직이는 동안은 배율 1 상당으로 그린다.
  const renderParams=new URLSearchParams(location.search),compactScreen=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
  const balancedRatio=renderParams.has('pr')?Math.min(2,Math.max(.5,+renderParams.get('pr')||1)):Math.min(devicePixelRatio||1,compactScreen?1.5:2);
- const STILL_DELAY_MS=150;
+ const STILL_DELAY_MS=150,BAKE_WAIT_MS=4000,WARM_CHUNK=60;
  // 최종 출력은 후처리 파이프라인이 그리므로 캔버스 자체 MSAA는 쓰지 않는다(장면 패스에서 MSAA).
  const renderer=new T.WebGPURenderer({alpha:false,antialias:false,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(balancedRatio);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
@@ -161,16 +161,16 @@ export async function start(C){
  // Bake validation downloads and hashes furniture files. Never hold the first frame for it:
  // the realtime path renders immediately and the bake binds once every check has passed.
  let ambientStudy={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){},materials:()=>[]};
- createCafeAmbientStudy(T,scene,C).then(study=>{
+ const studyReady=createCafeAmbientStudy(T,scene,C).then(study=>{
   if(stopped){study.dispose();return}
-  ambientStudy=study;study.precision(precisionRequested||precisionLoading);study.light(C.reviewDaylight);invalidatePresentation();
+  ambientStudy=study;study.precision(precisionRequested||precisionLoading);study.light(C.reviewDaylight);materialsChanged();
  }).catch(error=>console.warn('Cafe bake unavailable; realtime lighting retained',error));
  // Whole-cafe slot bake (structure + furniture + separately baked ceiling lights), also non-blocking.
  let roomBake={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){}};
  const roomChanged=()=>{renderer.shadowMap.needsUpdate=true;invalidatePresentation()};
- createCafeRoomBake(T,scene,C,{onChange:()=>roomChanged()}).then(bake=>{
+ const roomReady=createCafeRoomBake(T,scene,C,{onChange:()=>roomChanged()}).then(bake=>{
   if(stopped){bake.dispose();return}
-  roomBake=bake;bake.precision(precisionRequested||precisionLoading);bake.light(C.reviewDaylight);roomChanged();
+  roomBake=bake;bake.precision(precisionRequested||precisionLoading);bake.light(C.reviewDaylight);renderer.shadowMap.needsUpdate=true;materialsChanged();
  }).catch(error=>console.warn('Cafe room bake unavailable; realtime lighting retained',error));
  syncSourceVisibility();
  let skyEquirect=null;
@@ -243,6 +243,45 @@ export async function start(C){
   scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
  }
  refreshGlazing();
+ // 셰이더(렌더 파이프라인)는 compileAsync로 미리 준비한다. 처음 그릴 때의 동기 컴파일은 같은 스레드를 쓰는
+ // 원본 화면 조작까지 수 초 멈춘다. 정지·움직임 패스는 MSAA 표본 수가 달라 파이프라인을 따로 준비한다.
+ let bootWarm=false,movingReady=false,warmPending=0,warmChain=Promise.resolve();
+ function warmPass(target,onProgress=null){
+  // compileAsync는 그릴 대상(재질 포함)을 동기적으로 모은 뒤 비동기로 컴파일하므로 바로 원래대로 돌린다.
+  // 시야 밖 물체도 곧 보이게 되므로 시야 절두체 제외를 잠시 끄고 장면 전체를 준비한다.
+  const previous=renderer.getRenderTarget(),culled=[];let job;
+  scene.traverse(o=>{if(o.frustumCulled){o.frustumCulled=false;culled.push(o)}});
+  for(const b of previewBindings)b.object.material=b.replacement;
+  // 장면은 후처리(RenderPipeline) 안에서 한 단계 중첩(호출 깊이 1)으로 그려지고, 렌더 객체·노드 캐시는 그 깊이의
+  // 렌더 컨텍스트별로 따로 잡힌다. compileAsync는 항상 깊이 0으로 준비하므로 이때만 깊이 1 컨텍스트를 쓰게 한다(three 0.186).
+  const contexts=renderer._renderContexts,contextAt=contexts.get;contexts.get=(renderTarget,mrt)=>contextAt.call(contexts,renderTarget,mrt,1);
+  try{renderer.setRenderTarget(target);job=renderer.compileAsync(scene,camera,null,onProgress)}
+  finally{contexts.get=contextAt;renderer.setRenderTarget(previous);for(const b of previewBindings)b.object.material=b.original;for(const o of culled)o.frustumCulled=true}
+  return job;
+ }
+ // 첫 화면용(정지 패스+그림자) 준비: 보이는 물체를 조금씩만 켜고 실제 경로로 그려 셰이더·노드를 만든다.
+ // compileAsync는 물체마다 GPU 컴파일을 하나씩 기다려 느리고 그림자 경로는 준비하지 못한다.
+ async function warmStillInChunks(onProgress){
+  const drawables=[];scene.traverseVisible(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)drawables.push(o)});
+  const culled=drawables.filter(o=>o.frustumCulled);
+  const hidden=new Set(drawables);for(const o of drawables){o.visible=false;o.frustumCulled=false}
+  try{
+   // 후처리 패스는 프레임마다 한 번만 장면을 그리므로 한 프레임에 한 묶음씩 처리한다.
+   for(let i=0;i<drawables.length;){
+    // 부모도 그릴 물체(예: 주변 건물 본체 아래 창·난간)면 부모까지 켜야 자식이 그려진다.
+    const end=Math.min(drawables.length,i+WARM_CHUNK),on=new Set();
+    for(let k=i;k<end;k++)for(let o=drawables[k];o&&o!==scene;o=o.parent)if(hidden.has(o))on.add(o);
+    for(const o of on)o.visible=true;renderer.shadowMap.needsUpdate=true;renderPreview(false);for(const o of on)o.visible=false;i=end;
+    onProgress({loaded:i,total:drawables.length});await nextFrame();if(stopped)break;
+   }
+  }finally{for(const o of drawables)o.visible=true;for(const o of culled)o.frustumCulled=true;renderer.shadowMap.needsUpdate=true}
+ }
+ // 재질이 바뀌면(카페 베이크 도착 등) 새 셰이더를 준비하는 동안 이전 화면을 유지한다.
+ function materialsChanged(){
+  if(!bootWarm){invalidatePresentation();return}
+  warmPending++;
+  warmChain=warmChain.then(()=>warmPass(stillPass.renderTarget)).then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).finally(()=>{warmPending--;invalidatePresentation()});
+ }
  function renderPreview(moving=false){
   // Alpha glazing needs no transmission framebuffer allocation.
 
@@ -250,7 +289,7 @@ export async function start(C){
   // refraction through overlapping facade faces otherwise obscures the interiors.
   // Restore every original material before the path tracer or guide pass runs.
   for(const b of previewBindings)b.object.material=b.replacement;
-  try{if(previewHigh)previewPipeline.render();else if(moving)balancedPipeline.render();else stillPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
+  try{if(previewHigh)previewPipeline.render();else if(moving&&movingReady)balancedPipeline.render();else stillPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
  }
  let presented=false,previewCached=false,stillDrawn=false;
  // While the camera is still, keep a single exact preview frame above the tracer.
@@ -306,7 +345,7 @@ export async function start(C){
  // Separately baked cafe ceiling lights (room bake lights channel); realtime lights are unaffected.
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
-  status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
+  status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,shaders:{stillMs:timings.shadersMs??null,movingMs:timings.movingShadersMs??null,movingReady,pending:warmPending},frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();interiorFill.dispose();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();stillPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();stillDrawn=false;syncOcclusion();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
@@ -314,7 +353,7 @@ export async function start(C){
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
     if(gpuError)throw gpuError;
-    if(!precisionRequested){const moving=performance.now()-lastMotion<STILL_DELAY_MS;if(!previewCached||(!moving&&!stillDrawn)){const began=performance.now();renderPreview(moving);counts.previewFrames++;if(moving){if(lastDrawAt)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began)}else{counts.stillFrames=(counts.stillFrames||0)+1;lastDrawAt=0}if(firstFrameMs===null){firstFrameMs=performance.now()-bootAt;loadProgress.stage='ready'}previewCached=true;stillDrawn=!moving;}else lastDrawAt=0;return;}
+    if(!precisionRequested){if(warmPending>0){lastDrawAt=0;return}const moving=performance.now()-lastMotion<STILL_DELAY_MS;if(!previewCached||(!moving&&!stillDrawn)){const began=performance.now();renderPreview(moving);counts.previewFrames++;if(moving){if(lastDrawAt)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began)}else{counts.stillFrames=(counts.stillFrames||0)+1;lastDrawAt=0}if(firstFrameMs===null){firstFrameMs=performance.now()-bootAt;loadProgress.stage='ready'}previewCached=true;stillDrawn=!moving;}else lastDrawAt=0;return;}
     lastDrawAt=0;
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200){tracer.renderSample();counts.precisionSamples++;}
@@ -327,7 +366,18 @@ export async function start(C){
       presented=true;}
   }catch(error){if(!deviceLost&&(tracer||precisionRequested||precisionLoading)){precisionError=String(error?.message||error);tracer?.dispose();tracer=null;gpuError=null;cancelPrecision();console.warn('Precision stopped; interactive renderer retained',precisionError);return;}console.warn('Precision renderer stopped; restoring realtime view',error);window.TOWER_CINEMA_FAILURE=true;window.TOWER_CINEMA_FAILURE_REASON=String(error?.message||error);window.TOWER_CINEMA.stop();window.TOWER_CINEMA=null;}
 
- }frame();
+ }
+ // 첫 화면 전에 정지 화면용 셰이더를 준비하고(진행률 표시), 움직임용은 첫 화면 뒤 백그라운드로 준비한다.
+ // 카페 베이크는 대개 이 사이에 도착하므로 잠시 기다려 같은 준비에 포함한다(늦으면 도착 후 다시 준비).
+ loadProgress.stage='shaders';
+ await Promise.race([Promise.allSettled([studyReady,roomReady]),new Promise(resolve=>setTimeout(resolve,BAKE_WAIT_MS))]);
+ if(stopped)return window.TOWER_CINEMA;
+ const shaderProgress=event=>{loadProgress.shadersDone=event.loaded;loadProgress.shadersTotal=event.total};
+ bootWarm=true;
+ try{await warmStillInChunks(shaderProgress)}catch(error){console.warn('Shader warm-up failed',error)}
+ timings.shadersMs=performance.now()-bootAt;
+ frame();
+ warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{movingReady=true;timings.movingShadersMs=performance.now()-bootAt});
  const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}if(precisionRequested)tracer?.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;
 }
 export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer?.updateEnvironment();}

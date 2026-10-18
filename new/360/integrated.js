@@ -78,6 +78,7 @@
   function loadingState(w){
     const p=w?.TOWER_LOAD_PROGRESS;if(!p)return w?.TOWER_LAB_CONTEXT?[8,'원본 건물·주변 모델 구성 중']:[3,'실사 3D 화면 여는 중'];
     if(p.stage==='environment'){const done=p.assetsDone||0,total=Math.max(1,p.assetsTotal||0);return [10+Math.round(60*Math.min(1,done/total)),'재질·나무·차량 내려받는 중 ('+done+'/'+(p.assetsTotal||0)+')'];}
+    if(p.stage==='shaders'&&p.shadersTotal){const done=p.shadersDone||0;return [86+Math.round(13*Math.min(1,done/p.shadersTotal)),'화면 준비 중 ('+done+'/'+p.shadersTotal+') · 처음 한 번만 시간이 걸립니다'];}
     return ({renderer:[72,'실사 렌더러 시작 중'],scene:[78,'장면 변환 중'],sky:[84,'하늘·조명 준비 중'],shaders:[90,'화면 준비 중 · 처음 한 번만 시간이 걸립니다'],ready:[100,'완료']})[p.stage]||[8,'원본 건물·주변 모델 구성 중'];
   }
   function showLoading(){
@@ -131,7 +132,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=fill-5';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=warm-6';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug','msaa','pr'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
