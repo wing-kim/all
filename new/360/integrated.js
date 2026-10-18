@@ -3,12 +3,13 @@
   'use strict';
   const C=window.TOWER_LAB_CONTEXT,host=document.getElementById('viewer');
   const style=document.createElement('style');style.textContent=`
-    #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef}
+    #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef;pointer-events:none}
     /* 실사 3D 전용 시점 버튼은 실사 모드에서만 보인다(원본 화면의 버튼 줄은 그대로). */
     #viewer:not(.precision-on) :is(#precision-home,#precision-reference,#precision-cafe,#precision-cafe-counter,#precision-original-interior){display:none}
     .precision-on .views,.precision-on .tools{z-index:8}
     .precision-on .intui,.precision-on .ihud{z-index:8}
-    .precision-on > canvas:not(#mini){visibility:hidden}
+    /* 원본 캔버스는 보이지 않게만 두고 마우스·터치 입력은 그대로 받는다(조작 방식이 원본과 같도록). */
+    .precision-on > canvas:not(#mini){opacity:0}
     .precision-on .compass,.precision-on .hint{visibility:hidden}
     .precision-on #mini,.precision-on .pad{z-index:8}
     .precision-on .compass{visibility:visible;z-index:4}
@@ -47,10 +48,10 @@
   compareBox.onchange=e=>{host.classList.toggle('cafe-compare',e.target.checked);if(e.target.checked){cafePhoto();document.getElementById('precision-cafe').click();requestAnimationFrame(layoutReference)}};
   const views=document.querySelector('.views');
   const reference=document.createElement('button');reference.textContent='실사 근사 구도';reference.id='precision-reference';views.appendChild(reference);
-  reference.onclick=()=>{clearComparison();C.cancel();if(C.interior())document.getElementById('v-corner').click();poseUntil=0;if(!active)enable();api()?.view('reference');currentFloorKey=null;currentDoll=false;};
+  reference.onclick=()=>{clearComparison();C.cancel();if(C.interior())document.getElementById('v-corner').click();poseUntil=0;if(!active)enable();if(!goView('reference'))pendingView='reference';currentFloorKey=null;currentDoll=false;};
   const home=document.createElement('button');home.id='precision-home';home.textContent='건물 전체 보기 ↗';home.title='건물 중심 공중 시점으로 복귀 (Home)';views.prepend(home);
-  home.onclick=()=>{clearComparison();C.cancel();if(C.interior())document.getElementById('v-corner').click();poseUntil=0;if(!active)enable();api()?.view('aerial');currentFloorKey=null;currentDoll=false;};
-  for(const [id,title,view] of [['precision-cafe','1층 카페 3D','cafe'],['precision-cafe-counter','카페 카운터','cafe-counter']]){const button=document.createElement('button');button.id=id;button.textContent=title;views.appendChild(button);button.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();C.selectInteriorFloor('1F');syncInterior(true);if(view==='cafe-counter')api()?.view(view);else if(!ready)pendingView='cafe';};}
+  home.onclick=()=>{clearComparison();C.cancel();if(C.interior())document.getElementById('v-corner').click();poseUntil=0;if(!active)enable();if(!goView('aerial'))pendingView='aerial';currentFloorKey=null;currentDoll=false;};
+  for(const [id,title,view] of [['precision-cafe','1층 카페 3D','cafe'],['precision-cafe-counter','카페 카운터','cafe-counter']]){const button=document.createElement('button');button.id=id;button.textContent=title;views.appendChild(button);button.onclick=()=>{poseUntil=0;C.cancel();if(!active)enable();C.selectInteriorFloor('1F');syncInterior(true);if(!ready||!goView(view))pendingView=view;};}
   // The original floor chips and authored floor poses stay authoritative.
   const originalInterior=document.createElement('button');originalInterior.id='precision-original-interior';originalInterior.textContent='다른 층 · 기존 내부 보기';originalInterior.title='기존 층 선택·단면·실내 실사 보기';views.appendChild(originalInterior);
   originalInterior.textContent='층 선택';originalInterior.title='원본 층 선택을 실시간 3D에서 사용';
@@ -60,7 +61,7 @@
   let pendingView=reviewParams.get('view')==='cafe'?'cafe':null;
   if(reviewParams.get('compare')==='1'){compareBox.checked=true;host.classList.add('cafe-compare');cafePhoto();pendingView='cafe';requestAnimationFrame(layoutReference);}
   if(pendingView==='cafe')C.selectInteriorFloor('1F');
-  addEventListener('keydown',event=>{if(!active)return;api()?.navigateKey(event);if(['Home','Enter','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.code)&&!event.target?.closest?.('input,textarea,select,[contenteditable=true]'))event.stopImmediatePropagation()},true);
+  // 키 입력은 원본 화면이 그대로 처리한다(실사 쪽 WASD 이동 없음).
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
   let frame=null,active=false,key='',daylightKey='',currentFloorKey=null,currentDoll=false,currentVisibilityKey='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false,notice='',noticeUntil=0;
@@ -72,33 +73,26 @@
   function copyPose(){const floor=C.interiorState();if(floor.on)api()?.interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,C.interiorVisibility?.()||{});else api()?.pose(C.camera.position.toArray(),C.controls.target.toArray())}
   // 원본 종단면은 부모 렌더러 전역 절단면으로 표현된다. 같은 평면을 실사 장면에 넘긴다(같은 값이면 자식이 무시).
   const sectionPlanes=()=>(C.renderer?.clippingPlanes||[]).map(p=>[p.normal.x,p.normal.y,p.normal.z,p.constant]);
-  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;api().section?.(sectionPlanes());api().undergroundSee?.(document.getElementById('t-b1')?.checked&&!floor.on);const visibility=C.interiorVisibility?.()||{},visibilityKey=JSON.stringify(visibility);if(floor.on){if(force||currentFloorKey!==floor.key||currentDoll!==floor.doll||currentVisibilityKey!==visibilityKey){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,visibility);currentFloorKey=floor.key;currentDoll=!!floor.doll;currentVisibilityKey=visibilityKey;}}else if(currentFloorKey){api().view('corner');currentFloorKey=null;currentDoll=false;currentVisibilityKey='';}}
-  function followPose(){
-    if(!active||(performance.now()>=poseUntil&&!C.interiorState().spin)){following=false;return;}
-    copyPose();requestAnimationFrame(followPose);
-  }
+  function syncInterior(force=false){const floor=C.interiorState();if(!ready||!api())return;api().section?.(sectionPlanes());api().undergroundSee?.(document.getElementById('t-b1')?.checked&&!floor.on);const visibility=C.interiorVisibility?.()||{},visibilityKey=JSON.stringify(visibility);if(floor.on){if(force||currentFloorKey!==floor.key||currentDoll!==floor.doll||currentVisibilityKey!==visibilityKey){api().interiorPose(floor.key,floor.camera,floor.target,floor.fov,floor.doll,visibility);currentFloorKey=floor.key;currentDoll=!!floor.doll;currentVisibilityKey=visibilityKey;}}else if(currentFloorKey){api().pose(C.camera.position.toArray(),C.controls.target.toArray());currentFloorKey=null;currentDoll=false;currentVisibilityKey='';}}
+  // 카메라는 drivePose가 항상 원본 → 실사로 넘기므로 따로 따라갈 필요가 없다(기존 호출 지점 호환용).
+  function followPose(){following=false}
   function showNotice(message){notice=message;noticeUntil=performance.now()+6000;status.textContent=message;}
-  // Keep source labels/minimap/compass on the visible camera. While an original UI
-  // navigation command owns the camera, followPose runs the opposite direction.
-  function mirrorVisiblePose(){
-    requestAnimationFrame(mirrorVisiblePose);
-    if(!active||!ready||updating||following)return;
-    const floor=C.interiorState(),pose=api()?.telemetry();if(!pose)return;
-    if(floor.on){if(currentFloorKey!==floor.key||pose.floor!==floor.key)return;C.restoreInteriorPose(pose.camera,pose.target,pose.fov,pose.floor);return;}
-    if(currentFloorKey||pose.floor)return;
-    C.camera.position.fromArray(pose.camera);C.controls.target.fromArray(pose.target);
-    if(Number.isFinite(pose.fov)&&C.camera.fov!==pose.fov){C.camera.fov=pose.fov;C.camera.updateProjectionMatrix()}
-    C.controls.update();
+  // 원본 화면이 입력과 카메라를 소유한다. 바뀐 경우에만 같은 카메라를 실사 화면에 넘긴다.
+  // 실내·층·단면 표시 변경은 syncInterior가 맡고, 여기서는 위치·시선·화각만 보낸다.
+  function drivePose(){
+    requestAnimationFrame(drivePose);
+    if(!active||!ready||updating||!api()?.drive)return;
+    api().drive(C.camera.position.toArray(),C.controls.target.toArray(),C.camera.fov);
   }
-  requestAnimationFrame(mirrorVisiblePose);
+  requestAnimationFrame(drivePose);
+  // 실사 전용 시점(실사 근사 구도·건물 전체·카페)은 목표만 실사 쪽에서 계산하고 원본 카메라로 이동한다.
+  function goView(name){
+    const v=api()?.viewPose?.(name);if(!v)return false;
+    if(v.floor){if(!C.interior()||C.interiorState().key!==v.floor)C.selectInteriorFloor(v.floor);requestAnimationFrame(()=>{C.restoreInteriorPose(v.position,v.target,v.fov,v.floor);syncInterior(true)});}
+    else{if(C.interior())C.exitInterior();C.cancel();api().pose(C.camera.position.toArray(),C.controls.target.toArray());currentFloorKey=null;currentDoll=false;currentVisibilityKey='';C.transition(new C.THREE.Vector3(...v.position),new C.THREE.Vector3(...v.target));if(Number.isFinite(v.fov)&&C.camera.fov!==v.fov){C.camera.fov=v.fov;C.camera.updateProjectionMatrix()}}
+    return true;
+  }
   let padHeld=false;
-  document.addEventListener('pointerdown',event=>{
-    if(!active)return;
-    const padButton=event.target.closest('#pad button');if(!padButton)return;
-    if(padButton.dataset.k==='in'){event.preventDefault();event.stopImmediatePropagation();showNotice('층 단면 연결은 준비 중입니다. 현재 실내 탐색은 유지합니다.');return;}
-    padHeld=true;poseUntil=Infinity;if(!following){following=true;requestAnimationFrame(followPose);}
-  },true);
-  for(const type of ['pointerup','pointercancel','blur'])addEventListener(type,()=>{if(padHeld){padHeld=false;poseUntil=performance.now()+100;}},true);
 
   async function rebuild(){
     if(!active)return;
@@ -115,7 +109,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=emb-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=ctl-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -148,7 +142,7 @@
     hostControlsEnabled=C.controls.enabled;hostModernActive=!!window.TOWER_MODERN_ACTIVE;
     lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
     if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
-    active=true;C.controls.enabled=false;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;document.getElementById('sec-time').hidden=false;
+    active=true;window.TOWER_MODERN_ACTIVE=true;host.classList.add('precision-on');settings.hidden=status.hidden=false;document.getElementById('sec-time').hidden=false;
     if(frame&&ready){frame.style.display='block';frame.contentWindow.TOWER_CINEMA?.pause(false);const config=snapshot();api()?.limits(config.limits);api()?.section?.(sectionPlanes());api()?.undergroundSee?.(document.getElementById('t-b1')?.checked&&!C.interior());if(modelKey(config)!==key)rebuild();else if(JSON.stringify(config.daylight)!==daylightKey){api()?.light(config.daylight);daylightKey=JSON.stringify(config.daylight);}}
     else rebuild();
   }
@@ -177,7 +171,6 @@
     }else {
       clearComparison();
       lastExteriorView=button;
-      const previous=api()?.telemetry();if(previous){C.camera.position.fromArray(previous.camera);C.controls.target.fromArray(previous.target);C.controls.update();}
       poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}
     }}
     if(event.target.closest('#mini')){poseUntil=performance.now()+1400;if(!following){following=true;requestAnimationFrame(followPose);}}
@@ -214,10 +207,10 @@
     document.getElementById('v-int').setAttribute('aria-pressed',String(floor.on));
     if(floor.on)document.querySelectorAll('[data-v]:not([data-v="int"])').forEach(button=>button.setAttribute('aria-pressed','false'));
     else if(!pendingView)clearComparison();
-    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){api().view(pendingView);pendingView=null;}}
+    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){goView(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||floor.doll||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState)+(touchUI?' · 드래그 둘러보기 · 이동 패드':' · WASD 이동'):' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):(touchUI?' · 드래그 회전 · 두 손가락 확대':' · 휠 확대 · WASD 이동 · Q/E 높이 · Home 전체 보기')));
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState):' · '+floor.key+' 원본 구조 · 임시 가구 · 실내 시안 미연결'):''));
     if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
     if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성'+((C.renderer?.clippingPlanes||[]).length?' · 원본 종단면 절단':'');
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;

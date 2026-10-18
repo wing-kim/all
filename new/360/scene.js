@@ -268,6 +268,27 @@
     camera.near=doll ? .2 : .08;camera.fov=T.MathUtils.clamp(fov,35,100);camera.updateProjectionMatrix();controls.minDistance=doll ? 3 : .15;controls.maxDistance=doll ? 300 : .8;controls.enableZoom=!!doll;controls.minPolarAngle=.1;controls.maxPolarAngle=doll ? Math.PI*.49 : Math.PI-.1;controls.autoRotate=false;
     camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
   }
+  // 실사 전용 시점의 목표 위치만 계산한다. 실제 이동은 원본 화면의 카메라 애니메이션이 맡는다.
+  function viewPose(name){
+    if(name==='cafe'||name==='cafe-counter'){const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6,position=name==='cafe'?[-4.6,y,5.5]:[-10,y,-1],lookAt=name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2],target=new T.Vector3(...lookAt).sub(new T.Vector3(...position)).normalize().multiplyScalar(.35).add(new T.Vector3(...position)).toArray();return {floor:'1F',position,target,fov:72};}
+    const directions={reference:[-1,.18,.95],corner:[-1,.12,1.08],street:[-1,-.24,1.08],front:[-1,.16,0],back:[1,.16,0],left:[0,.9,-1],right:[0,.9,1],aerial:[-1,.7,1.1]};
+    const a=directions[name];if(!a)return null;
+    const distance=(name==='reference'?66:62)*Math.max(1,Math.pow(1/Math.max(camera.aspect,.3),.65));
+    const viewCenter=center.clone();if(name==='reference')viewCenter.y=15;
+    return {position:viewCenter.clone().add(new T.Vector3(...a).normalize().multiplyScalar(distance)).toArray(),target:viewCenter.toArray(),fov:45};
+  }
+  // 원본(부모) 화면이 입력과 카메라를 소유한다. 실사 화면은 같은 카메라를 그대로 그린다.
+  // 실사 쪽 컨트롤 제약(거리·각도·감쇠)은 풀어 원본 위치를 바꾸지 않게 한다.
+  let drivenKey='';
+  function drive(position,target,fov){
+    const key=[...position,...target,fov].map(v=>(+v).toFixed(4)).join(',');if(key===drivenKey)return false;drivenKey=key;
+    flight=null;cancel();window.TOWER_CINEMA?.cancelPrecision();
+    controls.enabled=false;controls.autoRotate=false;controls.enableDamping=false;controls.minDistance=0;controls.maxDistance=Infinity;controls.minPolarAngle=0;controls.maxPolarAngle=Math.PI;
+    const distance=Math.hypot(position[0]-target[0],position[1]-target[1],position[2]-target[2]);
+    const near=C.cafeMode?(C.dollMode?.2:.08):T.MathUtils.clamp(distance*.05,.1,2);
+    if(Number.isFinite(fov)&&fov>0)camera.fov=fov;camera.near=near;camera.updateProjectionMatrix();
+    camera.position.fromArray(position);controls.target.fromArray(target);controls.update();return true;
+  }
   function view(name){
     if(name==='cafe'||name==='cafe-counter'){const y=C.floorTop(C.levels().find(l=>l.kind==='ground'))+1.6,position=name==='cafe'?[-4.6,y,5.5]:[-10,y,-1],lookAt=name==='cafe'?[-9,y,-2]:[-4.4,y,-9.2],target=new T.Vector3(...lookAt).sub(new T.Vector3(...position)).normalize().multiplyScalar(.35).add(new T.Vector3(...position)).toArray();interiorPose('1F',position,target);return;}
     C.cafeMode=false;C.dollMode=false;C.syncInteriorDisplay?.(null,false);window.TOWER_CINEMA?.syncSourceVisibility();
@@ -298,7 +319,7 @@
     }
     frames++;if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now}requestAnimationFrame(stats)}requestAnimationFrame(stats);
   window.TOWER360={
-    view,interiorPose,navigateKey,quality:setQuality,appearance:value=>window.TOWER_CINEMA?.appearance(value),
+    view,viewPose,drive,interiorPose,navigateKey,quality:setQuality,appearance:value=>window.TOWER_CINEMA?.appearance(value),
     requestPrecision:()=>window.TOWER_CINEMA?.requestPrecision(),
     cancelPrecision:()=>window.TOWER_CINEMA?.cancelPrecision(),
     section:planes=>window.TOWER_CINEMA?.section?.(planes),
@@ -356,13 +377,13 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=emb-1');
+  await load('360/environment.js?v=ctl-2');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){document.getElementById('t-city').checked=initial.display.city!==false;document.getElementById('t-ctx').checked=initial.display.ctx!==false;C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=emb-1');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=ctl-2');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

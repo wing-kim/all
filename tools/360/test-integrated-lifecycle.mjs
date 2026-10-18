@@ -35,7 +35,7 @@ const C={state:{scheme:'A'},R3D:{on:false,season:'spring'},sourceDaylight:()=>({
 let interval,now=100;const context={window:{TOWER_LAB_CONTEXT:C,TOWER_MODERN_ACTIVE:false},document,URL,URLSearchParams,Option:class{},ResizeObserver:class{constructor(callback){resizeObserved=callback}observe(){}},location:{href:'https://example.test/3d-model.html?lab=review',search:'?lab=review'},performance:{now:()=>now},setTimeout:()=>1,clearTimeout(){},setInterval(fn){interval=fn},requestAnimationFrame(fn){frames.push(fn)},addEventListener(){},console};
 vm.runInNewContext(readFileSync(new URL('../../new/360/integrated.js',import.meta.url),'utf8'),context);
 const review=context.window.TOWER_REVIEW;
-assert.equal(C.controls.enabled,false,'precision owns host controls while active');
+assert.equal(C.controls.enabled,true,'original controls keep mouse/touch/key input while the photoreal view is active');
 assert.equal(ids.get('sec-time').hidden,false,'the original time controls remain visible in precision mode');
 const comparison=ids.get('precision-cafe-compare'),referencePanel=ids.get('viewer').children.find(child=>child.id==='cafe-reference');
 comparison.checked=true;comparison.onchange({target:comparison});frames.splice(0).forEach(fn=>fn());
@@ -76,31 +76,31 @@ assert.deepEqual(limitCalls,[true],'initial authored limit-line state reaches th
 assert.equal(review.frame,daylightFrame,'daylight-only change keeps the building frame');
 assert.equal(lightCalls.length,1,'daylight-only change updates light once');
 assert.equal(lightCalls[0].intensity,1.7);
-let visiblePose={camera:[17,21,32],target:[3,4,5],fov:58,floor:null};
-daylightFrame.contentWindow.TOWER360.telemetry=()=>({...visiblePose,environment:'ready'});
+// 원본 카메라가 기준: 원본 컨트롤이 움직인 카메라를 실사 화면에 그대로 넘긴다(역방향 복사 없음).
+const driveCalls=[];daylightFrame.contentWindow.TOWER360.drive=(...args)=>driveCalls.push(args);
+C.camera.position.fromArray([17,21,32]);C.controls.target.fromArray([3,4,5]);C.camera.fov=58;
 frames.splice(0).forEach(fn=>fn());
-assert.deepEqual(C.camera.position.toArray(),visiblePose.camera,'exterior labels use the child camera position');
-assert.deepEqual(C.controls.target.toArray(),visiblePose.target,'exterior labels use the child camera target');
-assert.equal(C.camera.fov,58,'exterior label projection uses child field of view');
-assert.equal(C.camera.projectionUpdates,1);
+assert.deepEqual(driveCalls.at(-1),[[17,21,32],[3,4,5],58],'the original camera drives the photoreal view');
+assert.deepEqual(C.camera.position.toArray(),[17,21,32],'the photoreal view never overwrites the original camera');
 for(const id of ['t-labels','t-cxlab']){
   listeners.get('change')({target:ids.get(id),stopImmediatePropagation(){}});
-  assert.equal(C.controls.enabled,false,`${id} remains in the continuous viewer`);
+  assert.equal(C.controls.enabled,true,`${id} keeps original input`);
   assert.equal(review.frame,daylightFrame,`${id} preserves the renderer frame`);
 }
 ids.get('t-limits').checked=false;
 listeners.get('change')({target:ids.get('t-limits'),stopImmediatePropagation(){}});
 assert.equal(limitCalls.at(-1),false,'limit-line toggle reaches the child without a model rebuild');
 assert.equal(review.frame,daylightFrame);
-assert.equal(C.controls.enabled,false,'limit-line toggle keeps the continuous viewer active');
+assert.equal(C.controls.enabled,true,'limit-line toggle keeps original input');
 let selectedFloor='1F',sourcePose={camera:[0,1.6,2],target:[0,1.6,1.7],fov:72,spin:false,doll:false};C.interiorState=()=>({on:true,key:selectedFloor,...sourcePose});
 interval();assert.equal(floorCalls.length,1);assert.equal(floorCalls[0][0],'1F');
 selectedFloor='2F';interval();assert.equal(floorCalls.length,2);assert.equal(floorCalls[1][0],'2F');
 assert.equal(review.frame,daylightFrame,'floor selection uses the existing renderer frame');
 const click=selector=>listeners.get('click')({target:{closest:query=>query.includes(selector)?{}:null},preventDefault(){},stopImmediatePropagation(){}});
 sourcePose={camera:[8,11,13],target:[8,11,12],fov:45,spin:false,doll:false};
-click('[data-c]');frames.splice(0).forEach(fn=>fn());
-assert.deepEqual(floorCalls.at(-1).slice(0,4),['2F',sourcePose.camera,sourcePose.target,45],'authored interior corner pose and field of view reach the child');
+// 원본 모서리 버튼이 원본 카메라를 옮기면(실제 앱에서는 interiorState().camera가 그 카메라) 같은 값이 실사로 간다.
+click('[data-c]');C.camera.position.fromArray(sourcePose.camera);C.controls.target.fromArray(sourcePose.target);C.camera.fov=45;frames.splice(0).forEach(fn=>fn());
+assert.deepEqual(driveCalls.at(-1),[sourcePose.camera,sourcePose.target,45],'authored interior corner pose and field of view reach the child');
 sourcePose={...sourcePose,doll:true};click('#coreTop');interval();
 const status=ids.get('viewer').children.find(child=>child.id==='precision-status');
 assert.equal(floorCalls.at(-1)[4],true,'core top enters the original dollhouse visibility mode');
