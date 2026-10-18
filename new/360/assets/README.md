@@ -76,3 +76,15 @@ Sketchfab 공개 모델(다운로드 허용, CC BY 4.0)을 Objaverse 공개 데�
 - `office/office-lounge3.glb`: "Midcentury Harvey Probber Armchair" by eireni (https://sketchfab.com/3d-models/none-e54f711755a54b119b364fe6fcbfd821), CC Attribution(CC BY 4.0). Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco·면 수 40% 단순화.
 - `office/office-palm.glb`: "Palm Plant" by SomeKevin (https://sketchfab.com/3d-models/none-fc5680053bb54ff6bacae64be12200ad), CC Attribution(CC BY 4.0). Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco·면 수 40% 단순화.
 - `office-concrete_*.webp` (3F 바닥): Poly Haven [Concrete Floor 02](https://polyhaven.com/a/concrete_floor_02), CC0. 1K diffuse를 카탈로그 f3 사진의 밝은 베이지 광택 콘크리트에 맞춰 선형 공간 평균 알베도 sRGB(214,206,194), 얼룩 대비 20%로 재보정. normal은 원본. 3 m 반복.
+
+## 4F·5F·6F(복층)·지하 실내 시안 모델·텍스처 (2026-10-18)
+
+- `office/office-leathersofa.glb`: "Leather couch" by bretzel44 (https://sketchfab.com/3d-models/none-7778ddf3af584561800f2e26b1595eba), CC BY 4.0. Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco(일부 면 수 단순화).
+- `office/office-pottedtree.glb`: "Potted Tree" by dylanheyes (https://sketchfab.com/3d-models/none-dd6c9d90421b4a99acdfebbddd4ccf75), CC BY 4.0. Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco(일부 면 수 단순화).
+- `office/office-diningchair.glb`: "Dining_chair_241120" by 3D Error 404 (https://sketchfab.com/3d-models/none-a5aa4613bc5b46baba4d9254d6c9c038), CC BY 4.0. Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco(일부 면 수 단순화).
+- `office/office-barstool.glb`: "Bar Stool" by raeganmaddox (https://sketchfab.com/3d-models/none-382d65cea3e84bb68b81fd318b10d12c), CC BY 4.0. Objaverse에서 받아 glTF-Transform 4.1.1로 512px WebP·Draco(일부 면 수 단순화).
+- `office/office-leatherlounge.glb`: Poly Haven [Mid Century Lounge Chair](https://polyhaven.com/a/mid_century_lounge_chair), CC0. 1K glTF를 glTF-Transform으로 512px WebP·Draco.
+- `office-carpet_*.webp` (4F): Poly Haven [Dirty Carpet](https://polyhaven.com/a/dirty_carpet), Rohit Seervi, CC0. diffuse를 카탈로그 f4의 회색 트위드 톤(평균 sRGB 112,112,114)으로 재보정, 1.2 m 반복.
+- `office-parquet_*.webp` (5F): Poly Haven [Herringbone Parquet](https://polyhaven.com/a/herringbone_parquet), CC0. diffuse를 f5의 월넛 톤(평균 sRGB 150,92,58)으로 재보정, 3.4 m 반복.
+- `office-marble_*.webp` (6F 복층): Poly Haven [Marble 01](https://polyhaven.com/a/marble_01), Rob Tuytel, CC0. diffuse를 f6dup의 따뜻한 회갈색 대리석(평균 sRGB 168,152,134)으로 재보정, 3 m 반복.
+- 지하 주차장 바닥은 `office-concrete_*`를 회색 에폭시 톤(색 곱 .55,.57,.6, 거칠기 .16)으로 재사용.
