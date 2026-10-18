@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import * as T from 'three/webgpu';
-import {applyBakedGround,contextSignature,exportGroundSource,facadeMaterial,GROUND_EXTENT} from './baked-ground.js';
+import {applyBakedGround,contextSignature,exportGroundSource,facadeMaterial,GROUND_EXTENT,sameContext} from './baked-ground.js';
 import {createExteriorNight,DAY_HAZE,NIGHT_HAZE,LEAF_GLOW,LAMP_INTENSITY} from './exterior-night.js';
 
 function build(){
@@ -29,9 +29,12 @@ const fetchMeta=meta=>async()=>({ok:true,json:async()=>meta});
  a.wall.position.x+=.5;a.scene.updateMatrixWorld(true);assert.notEqual(contextSignature(T,a.scene).hash,sig.hash,'moved context invalidates the bake');
  const src=exportGroundSource(T,build().scene);assert.equal(src.rows.length,1);assert.equal(src.signature.hash,sig.hash);assert.equal(src.geo[0].position.length,12*9);
 }
+// 허용 오차: 반올림 차이(수 cm)는 같은 형상, 건물 이동(수천 cm 이상)은 다른 형상.
+{const a=contextSignature(T,build().scene);assert.ok(sameContext(a,{...a,sum:[a.sum[0]+3,a.sum[1]-400,a.sum[2]+18,0]}),'float rounding noise is tolerated');
+ const moved=build();moved.wall.position.x+=30;moved.scene.updateMatrixWorld(true);assert.ok(!sameContext(a,contextSignature(T,moved.scene)),'a 30 m move is a different context');}
 // 서명 불일치: 아무것도 바꾸지 않고 실시간 조명 유지.
 {
- const a=build(),api=await applyBakedGround({...T,...loader},a.scene,{fetchImpl:fetchMeta({signature:{hash:'00000000',triangles:12},extent:GROUND_EXTENT})});
+ const a=build(),api=await applyBakedGround({...T,...loader},a.scene,{fetchImpl:fetchMeta({signature:{hash:'00000000',triangles:12,sum:[0,0,0,0]},extent:GROUND_EXTENT})});
  assert.equal(api.status.reason,'context-mismatch');assert.equal(api.enabled,false);assert.equal(a.ground.material,a.material);assert.equal(a.wall.material,a.wallMaterial);assert.equal(a.ground.geometry,a.source);
 }
 // 서명 일치: 지면 UV1 + aoMap, 외벽 aoNode, 본 건물·지붕 불변, 끄면 원본 복원.

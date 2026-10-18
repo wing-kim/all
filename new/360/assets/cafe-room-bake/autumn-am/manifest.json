@@ -2,7 +2,7 @@
  "version": 2,
  "kind": "cafe-room",
  "source": "cafe-ambient-source.json.gz",
- "sourceSha256": "ff5501bc73928fb18dcd85eb561de2290fa16a65da2f24eed483846ba823d0d5",
+ "sourceSha256": "0c923f467449a15ec5117d58fea2ac5712332a6170012bf8f23224bba91fabfd",
  "sourceState": {
   "era": "new",
   "scheme": "mech",
@@ -37,8 +37,8 @@
  "sourceCafeCeiling": 5.0200000000000005,
  "furnitureManifest": {
   "360/cafe.js": "4942326acc5cdb6b949427f9c337933e8ad6a37b3ec816e47200ee19c7b847b4",
-  "360/environment.js": "249c63bffa2684acce3b38fbcd52de6b2c9399b7bd6fbdf9f0a1682bfb6150ca",
-  "360/assets/interior-foliage.glb": "58b527b467c2b83ff0bd009febf440342edfc0f5e7dd0e64542869030b55010b",
+  "360/environment.js": "fe6c16acf6ffc93944ccb935b38bc460b1262770aad59fba5564b63809afa72f",
+  "360/assets/interior-foliage.glb": "d9ab78165aa26abaf28e89990219e6fe731c85feb796eb97fe9380ff97d334c2",
   "360/assets/modern-arm-chair/modern-arm-chair.gltf": "d31be520add2603447b43acedbdacf9516866f7c89e9ea9230c9edbac9cc6e6a",
   "360/assets/modern-arm-chair/modern_arm_chair_01.bin": "8755f2f498c0bb165660379d1b045465751c16bbeaf553c8dd76bb14c16d1ff6"
  },
@@ -1285,14 +1285,14 @@
    "triangles": 2,
    "offset": 4082,
    "area": 14.9423,
-   "name": "region-245"
+   "name": "region-243"
   },
   {
    "hash": 364744133,
    "triangles": 2,
    "offset": 4084,
    "area": 0.2025,
-   "name": "region-246"
+   "name": "region-244"
   },
   {
    "hash": 2290989045,
@@ -1831,7 +1831,7 @@
   "lights": "cafe ceiling RectAreaLights as Cycles area lights, power = pi * intensity * area, direct+indirect, shared",
   "diffuseBounces": 3,
   "denoise": "mask-normalised Gaussian sigma 1.1 px",
-  "seconds": 148.8
+  "seconds": 169.5
  },
  "limitations": [
   "Diffuse lighting only; specular reflections remain realtime approximations.",
@@ -1866,18 +1866,18 @@
  "lightmaps": {
   "day": {
    "file": "day-lightmap.png",
-   "scale": 0.4626089930534363,
+   "scale": 0.4626145362854004,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.089128278195858,
-   "sha256": "b114b3dea5f7442e4b2a57970cb6d35ac374002e30eaae5e8cbede7db8b2e133"
+   "coveredMean": 0.08914942294359207,
+   "sha256": "34210a8c60f502c3967497c5ab31df88506e70167e725307c88b0e57d132e496"
   },
   "lights": {
    "file": "../lights-lightmap.png",
    "defaultScale": 1,
-   "scale": 0.4755600094795227,
+   "scale": 0.4753871262073517,
    "encoding": "sqrt(linear/scale) RGB8, top row first; runtime flipY, decode x*x*scale, lightMap intensity pi",
-   "coveredMean": 0.03145346790552139,
-   "sha256": "4218e239b98fae37458fbe7f7ce997894e855b82eedc3aa3a84d36846fe66877"
+   "coveredMean": 0.03144354745745659,
+   "sha256": "2f93ad86737e61531bdbd235d3ef166e3598d82cb3e8385888f893f139aae9c0"
   }
  }
 }

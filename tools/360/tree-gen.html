@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<title>가로수 GLB 생성기 (개발 도구)</title>
+<!-- 개발 도구: ez-tree(MIT)로 가지 구조를 만들고 CC0 잎·껍질 텍스처를 입혀 GLB로 내보낸다.
+     로컬 서버(저장소 루트)에서 http://127.0.0.1:8765/tools/360/tree-gen.html 로 연다. 배포하지 않는다. -->
+<style>body{margin:0;background:#9fb4c8}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { Tree } from './node_modules/@dgreenheck/ez-tree/build/ez-tree.es.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+const loader = new THREE.TextureLoader();
+const load = (url, srgb) => loader.loadAsync(url).then(t => { t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; });
+const [barkColor, barkNormal, barkRough, twigColor, twigNormal] = await Promise.all([
+  load('tree-src/bark_color.jpg', true), load('tree-src/bark_normal.jpg'), load('tree-src/bark_rough.jpg'),
+  load('tree-src/street-tree-twig_color.png', true), load('tree-src/street-tree-twig_normal.png')]);
+twigColor.wrapS = twigColor.wrapT = twigNormal.wrapS = twigNormal.wrapT = THREE.ClampToEdgeWrapping;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(900, 900); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x9fb4c8);
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x6b6050, 1.2));
+const sun = new THREE.DirectionalLight(0xfff1df, 2.4); sun.position.set(30, 50, 20); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(35, 1, .1, 500);
+
+// 가로수(느티나무 느낌의 꽃병형): 곧은 줄기 위로 비스듬히 퍼지는 가지, 잔가지 카드 잎.
+export function makeTree(overrides = {}) {
+  const tree = new Tree();
+  tree.loadPreset('Ash Medium');
+  const o = tree.options;
+  o.seed = overrides.seed ?? 4127;
+  // 2026-10-18 채택값(street-tree.glb): 곧은 밑동 위 둥근 수관, 폭/높이 약 0.8, 그루당 약 2만 4천 삼각형.
+  Object.assign(o.leaves, { billboard: 'double', count: 16, size: 4.4, sizeVariance: .35, angle: 50, start: 0, alphaTest: .5 }, overrides.leaves || {});
+  const branch = { children: { 2: 4 }, start: { 1: .4 }, length: { 1: 18, 2: 7.5 }, ...(overrides.branch || {}) };
+  for (const [k, v] of Object.entries(branch)) Object.assign(o.branch[k], v);
+  tree.generate();
+  tree.branchesMesh.material = new THREE.MeshStandardMaterial({ name: 'street_tree_trunk', map: barkColor, normalMap: barkNormal, roughnessMap: barkRough, roughness: 1 });
+  tree.leavesMesh.material = new THREE.MeshStandardMaterial({ name: 'street_tree_leaves', map: twigColor, normalMap: twigNormal, roughness: .75, alphaTest: .5, side: THREE.DoubleSide });
+  tree.branchesMesh.name = 'street_tree_trunk'; tree.leavesMesh.name = 'street_tree_leaves';
+  return tree;
+}
+
+const triangles = mesh => (mesh.geometry.index ? mesh.geometry.index.count : mesh.geometry.attributes.position.count) / 3;
+window.preview = (overrides = {}, view = [1, .35, 1]) => {
+  scene.children.filter(o => o.isGroup).forEach(o => scene.remove(o));
+  const tree = makeTree(overrides); scene.add(tree);
+  const box = new THREE.Box3().setFromObject(tree), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  camera.position.copy(center).add(new THREE.Vector3(...view).normalize().multiplyScalar(size.y * 1.9)); camera.lookAt(center);
+  renderer.render(scene, camera);
+  window.currentTree = tree;
+  return { trunk: triangles(tree.branchesMesh), leaves: triangles(tree.leavesMesh), size: size.toArray().map(v => +v.toFixed(2)) };
+};
+window.snapshot = () => renderer.domElement.toDataURL('image/jpeg', .9);
+window.exportGLB = () => new Promise((resolve, reject) => new GLTFExporter().parse(window.currentTree, resolve, reject, { binary: true }));
+// GLB 비교용: 여러 파일을 나란히 놓고 같은 조명으로 렌더한다.
+const gltf = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('./node_modules/three/examples/jsm/libs/draco/gltf/'));
+window.compareGLB = async (urls, view = [1, .5, 1]) => {
+  scene.children.filter(o => o.isGroup || o.userData.compare).forEach(o => scene.remove(o));
+  const group = new THREE.Group(); group.userData.compare = true; scene.add(group);
+  const models = await Promise.all(urls.map(u => gltf.loadAsync(u)));
+  models.forEach((m, i) => { const b = new THREE.Box3().setFromObject(m.scene), w = b.getSize(new THREE.Vector3()).x * 1.25; m.scene.position.x = (i - (urls.length - 1) / 2) * w; group.add(m.scene); });
+  const box = new THREE.Box3().setFromObject(group), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  camera.position.copy(center).add(new THREE.Vector3(...view).normalize().multiplyScalar(Math.max(size.x, size.y) * 1.6)); camera.lookAt(center);
+  renderer.render(scene, camera); return size.toArray();
+};
+window.ready = true;
+</script>
+</html>

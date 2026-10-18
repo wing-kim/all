@@ -105,13 +105,13 @@
   const screen=new T.MeshStandardMaterial({color:0x151c20,roughness:.24,metalness:.25});
   const textureLoader=new T.TextureLoader();
   try{
-    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/furniture-veneer_'+name+'.jpg')));
+    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/furniture-veneer_'+name+'.webp')));
     color.encoding=T.sRGBEncoding;
     for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
     timber.map=color;timber.normalMap=normal;timber.normalScale.set(.06,.06);timber.roughnessMap=rough;timber.color.setRGB(1,1,1);timber.roughness=.55;timber.userData.illustrativeTimber=true;
   }catch(error){console.warn('Interior wood texture unavailable',error)}
   try{
-    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/interior-stone_'+name+'.jpg')));
+    const [color,normal,rough]=await Promise.all(['color','normal','rough'].map(name=>textureLoader.loadAsync('360/assets/interior-stone_'+name+'.webp')));
     color.encoding=T.sRGBEncoding;
     for(const map of [color,normal,rough]){map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.setScalar(1/1.5);map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}
     for(const m of [M.floorUp,M.stone]){m.map=color;m.normalMap=normal;m.normalScale.set(.065,.065);m.roughnessMap=rough;m.roughness=.55;m.color.setRGB(1,1.05,1.15);m.needsUpdate=true;}
@@ -377,13 +377,14 @@
       finally{materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose())}
     }
   };
-  await load('360/environment.js?v=ctl-2');
+  window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'environment'});
+  await load('360/environment.js?v=q-2');
   await window.enhanceTowerEnvironment(C,extra,load);
   if(initial.display){document.getElementById('t-city').checked=initial.display.city!==false;document.getElementById('t-ctx').checked=initial.display.ctx!==false;C.city.visible=initial.display.city!==false;C.ctx.visible=initial.display.ctx!==false;}
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
-    environmentStatus='실시간 재질 준비 중';
-    try{const modern=await import('./modern.js?v=ctl-2');await modern.start(C);return;}
+    environmentStatus='실시간 재질 준비 중';window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'renderer'});
+    try{const modern=await import('./modern.js?v=q-2');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

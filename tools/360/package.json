@@ -12,5 +12,8 @@
     "build": "node build.mjs"
   },
   "name": "cape-horn-renderer",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "devDependencies": {
+    "@dgreenheck/ez-tree": "1.1.0"
+  }
 }

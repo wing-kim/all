@@ -4,6 +4,13 @@
   const C=window.TOWER_LAB_CONTEXT,host=document.getElementById('viewer');
   const style=document.createElement('style');style.textContent=`
     #precision-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2;background:#dce6ef;pointer-events:none}
+    #precision-loading{position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;pointer-events:none;background:#dce6efcc}
+    #precision-loading[hidden]{display:none}
+    #precision-loading .card{min-width:min(320px,80%);background:#172126f0;color:#fff;border-radius:10px;padding:16px 18px;font-size:13px;box-shadow:0 6px 24px #0003}
+    #precision-loading .head{display:flex;justify-content:space-between;gap:12px;font-weight:600;font-size:14px}
+    #precision-loading .bar{height:6px;border-radius:3px;background:#ffffff2e;margin:10px 0 8px;overflow:hidden}
+    #precision-loading .bar i{display:block;height:100%;width:0;background:#7cc4a4;transition:width .25s}
+    #precision-loading .stage{opacity:.8;font-size:12px}
     /* 실사 3D 전용 시점 버튼은 실사 모드에서만 보인다(원본 화면의 버튼 줄은 그대로). */
     #viewer:not(.precision-on) :is(#precision-home,#precision-reference,#precision-cafe,#precision-cafe-counter,#precision-original-interior){display:none}
     .precision-on .views,.precision-on .tools{z-index:8}
@@ -64,6 +71,21 @@
   // 키 입력은 원본 화면이 그대로 처리한다(실사 쪽 WASD 이동 없음).
 
   const status=document.createElement('div');status.id='precision-status';status.hidden=true;host.appendChild(status);
+  // 실사 3D 로딩 진행률: 실사 쪽 TOWER_LOAD_PROGRESS(단계·받은 자산 수)를 퍼센트와 단계 설명으로 보여 준다.
+  const loading=document.createElement('div');loading.id='precision-loading';loading.hidden=true;
+  loading.innerHTML='<div class="card" role="status" aria-live="polite"><div class="head"><span>실사 3D 불러오는 중</span><span class="pct">0%</span></div><div class="bar"><i></i></div><div class="stage">실사 3D 화면 여는 중</div></div>';host.appendChild(loading);
+  let loadingShown=0;
+  function loadingState(w){
+    const p=w?.TOWER_LOAD_PROGRESS;if(!p)return w?.TOWER_LAB_CONTEXT?[8,'원본 건물·주변 모델 구성 중']:[3,'실사 3D 화면 여는 중'];
+    if(p.stage==='environment'){const done=p.assetsDone||0,total=Math.max(1,p.assetsTotal||0);return [10+Math.round(60*Math.min(1,done/total)),'재질·나무·차량 내려받는 중 ('+done+'/'+(p.assetsTotal||0)+')'];}
+    return ({renderer:[72,'실사 렌더러 시작 중'],scene:[78,'장면 변환 중'],sky:[84,'하늘·조명 준비 중'],shaders:[90,'화면 준비 중 · 처음 한 번만 시간이 걸립니다'],ready:[100,'완료']})[p.stage]||[8,'원본 건물·주변 모델 구성 중'];
+  }
+  function showLoading(){
+    const w=frame?.contentWindow,doneLoading=!frame||w?.TOWER_CINEMA_FAILURE||w?.TOWER_CINEMA?.status?.().firstFrameMs!=null;
+    if(!active||doneLoading){loading.hidden=true;loadingShown=0;return}
+    const [pct,label]=loadingState(w);loadingShown=Math.max(loadingShown,pct);
+    loading.hidden=false;loading.querySelector('.pct').textContent=loadingShown+'%';loading.querySelector('.bar i').style.width=loadingShown+'%';loading.querySelector('.stage').textContent=label;
+  }
   let frame=null,active=false,key='',daylightKey='',currentFloorKey=null,currentDoll=false,currentVisibilityKey='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false,notice='',noticeUntil=0;
   let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
   const timings=[];
@@ -109,10 +131,10 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=ctl-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=q-2';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
-    for(const name of ['roomReflect','roomDebug'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
+    for(const name of ['roomReflect','roomDebug','msaa','pr'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
     frame.style.visibility='hidden';frame.src=url.href;host.appendChild(frame);status.textContent='선택한 시안의 재질·조명 준비 중…';
   }
   const SEASON_NAMES={spring:'봄',summer:'여름',autumn:'가을',winter:'겨울'},TIME_NAMES={am:'오전',pm:'오후',sunset:'석양',night:'야간'};
@@ -192,6 +214,7 @@
   document.getElementById('precision-cancel').onclick=()=>api()?.cancelPrecision();
   document.getElementById('precision-quality').onchange=e=>api()?.quality(e.target.value);
   setInterval(()=>{
+    showLoading();
     if(!active){frame?.contentWindow?.TOWER_CINEMA?.pause(true);return;}
     const config=snapshot(),next=modelKey(config);
     if(next!==key){key=next;clearTimeout(timer);timer=setTimeout(rebuild,120);status.textContent='변경한 시안 적용 중…';return;}

@@ -6,3 +6,4 @@
 __pycache__/
 # Room bake working output (Blender scene + copies of the deployed lightmaps); reproducible from the snapshot.
 /tools/360/room-bake*/
+/tools/360/tree-src/

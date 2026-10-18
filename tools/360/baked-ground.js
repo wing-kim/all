@@ -3,6 +3,10 @@
 import { texture as textureNode, positionWorld, normalWorld, vec2, float, mix, smoothstep } from 'three/tsl';
 
 export const GROUND_EXTENT=112;
+// 서명 비교 허용 오차: 배칭 여부에 따라 float32/float64 경로가 달라 cm 반올림이 몇 개 꼭짓점에서 1cm씩 바뀐다.
+// 축별 합 차이 2,000cm 이내는 같은 형상으로 본다(작은 건물 1m 이동만으로도 약 1만cm 차이).
+export const SIGNATURE_TOLERANCE_CM=2000;
+export const sameContext=(a,b)=>!!a&&!!b&&a.triangles===b.triangles&&Array.isArray(a.sum)&&Array.isArray(b.sum)&&[0,1,2].every(i=>Math.abs(a.sum[i]-b.sum[i])<=SIGNATURE_TOLERANCE_CM);
 // 외벽 하부 근사: 벽에서 바깥으로 이만큼 떨어진 지면의 하늘 가림을 읽고, 높이에 따라 1로 풀어 준다.
 export const FACADE_PROBE_M=1.5,FACADE_FADE_M=10,FACADE_STRENGTH=.6;
 
@@ -76,7 +80,7 @@ export async function applyBakedGround(T,scene,{root='360/assets/',fetchImpl=glo
  const started=performance.now(),loader=new T.TextureLoader();
  // 베이크 메타(서명)와 현재 장면 서명이 다르면 베이크를 쓰지 않고 실시간 조명으로 둔다.
  const meta=await fetchImpl(root+'ground-bake.json',{cache:'no-cache'}).then(r=>{if(!r.ok)throw new Error('ground-bake.json '+r.status);return r.json()});
- const signature=contextSignature(T,scene),valid=!!meta.signature&&meta.signature.hash===signature.hash&&meta.signature.triangles===signature.triangles;
+ const signature=contextSignature(T,scene),valid=sameContext(meta.signature,signature);
  const extent=meta.extent||GROUND_EXTENT;
  const status={valid,reason:valid?'active':'context-mismatch',signature:signature.hash,bakedSignature:meta.signature?.hash||null};
  if(!valid){console.warn('Baked ground: context signature mismatch; retaining realtime lighting',status);

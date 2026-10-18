@@ -8,7 +8,7 @@
 
 - `daylight-sky_2k.hdr`: Poly Haven, Kloofendal 48d Partly Cloudy (Pure Sky), CC0, https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky . Generic sky, not site photography.
 - `asphalt_02_*.jpg`, `pavement_04_*.jpg`: Poly Haven CC0 PBR texture sets, https://polyhaven.com/a/asphalt_02 and https://polyhaven.com/a/pavement_04 . 1K color/normal/roughness; downloaded from dl.polyhaven.org.
-- `tree-small-02.glb`: adapted from Poly Haven Tree Small 02, CC0, https://polyhaven.com/a/tree_small_02 . Reduced bark meshes and planar leaf simplification for browser display; all source leaf components are retained at their original scale. Trunk-foot anchoring aligns street trees with their planting pits. Illustrative landscaping.
+- (2026-10-18부터 사용 안 함, `street-tree.glb`로 대체) `tree-small-02.glb`: adapted from Poly Haven Tree Small 02, CC0, https://polyhaven.com/a/tree_small_02 . Reduced bark meshes and planar leaf simplification for browser display; all source leaf components are retained at their original scale. Trunk-foot anchoring aligns street trees with their planting pits. Illustrative landscaping.
 - `concept-car.glb`: Car Concept, Eric Chadwick / Darmstadt Graphics Group GmbH, 2024, CC BY 4.0. https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept . Runtime paint and glass adapted for this viewer. Khronos/3D Commerce marks belong to Khronos. No endorsement implied.
 - `GLTFLoader.js`: Three.js r128, MIT, same license file as the other Three.js extensions.
 - Urban background blocks and added facade relief are illustrative, not new measured architectural evidence. The primary tower source geometry is unchanged; rendering copies of narrow metal members receive the documented 2.5 mm edge finish within their original bounds.
@@ -48,3 +48,11 @@
 - `ground-concrete_*.jpg`: Poly Haven [Concrete Floor 03](https://polyhaven.com/a/concrete_floor_03), Rob Tuytel / Matterfield, CC0. Original 1K diffuse/OpenGL normal/roughness, source width 2.5 m; neutral-tinted generic open-ground and curb finish (the original page used a plain 0x8f9488 ground). Not a site material survey. SHA256 recorded in `docs/360/exterior-ground-source.json`.
 
 - 2026-10-18 전송량 최적화: `tree-small-02.glb`, `concept-car.glb`를 [glTF-Transform](https://gltf-transform.dev/) CLI 4.1.1(MIT)로 다시 저장했다. 가로수는 텍스처 9장을 WebP(품질 85)로 바꾸고 Draco를 다시 적용(10.9MB → 6.1MB), 차량은 WebP(품질 85) + Draco(11.5MB → 1.9MB). 형상·재질 구성은 같고 화면 평균 차이 0.76/255. 이전 SHA256: tree `0ab40468f8183b1e874238be690f424851195b486103e0ddd7cb62d859a9d90b`, car `c272098089d78c5cd9fd9f24ff50ee8acf8d932c55f2d55fc10adb6c8998966b`; 현재: tree `39e26bf7d40b80f87d585cfcc460e7b40a5e90e13aa82760292aab93e66b241e`, car `fe3260e691f6b62bdd1476da11f86581c0af69f2c116b91dc201b1e9a0a7a5ab`. 두 파일은 카페 베이크 가구 검증·주변 건물 서명 대상이 아니다.
+
+## 2026-10-18 화질·로딩 개선에 따른 자산 변경
+
+- `street-tree.glb` (새 가로수, 기존 `tree-small-02.glb` 대체): 가지 구조는 [ez-tree](https://github.com/dgreenheck/ez-tree) 1.1.0(MIT, Daniel Greenheck)으로 생성. 잎 카드 텍스처는 ambientCG [LeafSet024](https://ambientcg.com/view?id=LeafSet024)(CC0) 낱장 잎 9장을 `tools/360/make-twig-texture.py`로 잔가지 형태로 배열해 만든 것, 나무껍질은 Poly Haven [Tree Small 02](https://polyhaven.com/a/tree_small_02)(CC0) 줄기 텍스처. ez-tree에 포함된 텍스처는 출처 표기가 없어 쓰지 않았다. 생성 도구 `tools/360/tree-gen.html`(옵션은 파일 안 기본값), glTF-Transform 4.1.1로 WebP(85)+Draco. 그루당 23,680 삼각형(기존 약 42만), 843KB. 예시용 조경이며 수종 확정이 아니다.
+- `interior-foliage.glb`: 같은 Poly Haven Potted Plant 01 형상을 glTF-Transform `simplify`(ratio 0.15, error 0.004)로 잎 106,900 → 16,035 삼각형으로 줄이고 Draco 재적용. 화면 비교로 외형 유지 확인.
+- `concept-car.glb`: glTF-Transform `simplify`(ratio 0.05, error 0.02) 후 Draco. 대당 213,347 → 27,921 삼각형. 거리 시점용 예시 차량.
+- 텍스처 38장(`*_color/_normal/_rough/_metal`)을 JPG에서 WebP로 변환(Pillow, 노멀 90·그 외 82 품질). 24.9MB → 6.2MB. 원본 JPG는 저장소 밖 휴지통 폴더로 옮김(git 이력에는 남음). 출처·라이선스는 위 각 항목과 같다.
+- `daylight-sky_1k.hdr`: 같은 Poly Haven Kloofendal 48d Partly Cloudy (Pure Sky) 1K(CC0). 기존 2K(5.3MB)를 대체(1.4MB). 환경 반사·간접광 용도.

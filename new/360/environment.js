@@ -7,13 +7,15 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const draco=new T.DRACOLoader().setDecoderPath('360/assets/draco/');
   const gltfLoader=new T.GLTFLoader().setDRACOLoader(draco);
     const assetCache=new Map();
-    const cachedAsset=url=>{if(!assetCache.has(url))assetCache.set(url,new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject)));return assetCache.get(url)};
-    for(const url of ['tree-small-02.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
+    const cachedAsset=url=>{if(!assetCache.has(url)){const progress=window.TOWER_LOAD_PROGRESS;if(progress)progress.assetsTotal++;const loading=new Promise((resolve,reject)=>gltfLoader.load(url,resolve,undefined,reject));loading.finally(()=>{if(progress)progress.assetsDone++}).catch(()=>{});assetCache.set(url,loading)}return assetCache.get(url)};
+    for(const url of ['street-tree.glb','concept-car.glb','interior-foliage.glb','modern-arm-chair/modern-arm-chair.gltf'])cachedAsset('360/assets/'+url).catch(()=>{});
     return {cachedAsset};
   })();
   const loader=new T.TextureLoader(),pendingTextures=[];
-  function texture(name,repeat,color){let done;pendingTextures.push(new Promise(resolve=>{done=resolve}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
-  function surface(m,asset,repeat){m.map=texture(asset+'_color.jpg',repeat,true);m.normalMap=texture(asset+'_normal.jpg',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.jpg',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
+  // 실사 3D 로딩 진행률(부모 화면 표시용): 받은 자산 수 / 요청한 자산 수.
+  const loadProgress=window.TOWER_LOAD_PROGRESS=window.TOWER_LOAD_PROGRESS||{};Object.assign(loadProgress,{stage:'environment',assetsDone:loadProgress.assetsDone||0,assetsTotal:loadProgress.assetsTotal||0});
+  function texture(name,repeat,color){let done;loadProgress.assetsTotal++;pendingTextures.push(new Promise(resolve=>{done=value=>{loadProgress.assetsDone++;resolve(value)}}));const t=loader.load('360/assets/'+name,()=>done(true),undefined,error=>{console.warn('Environment texture unavailable',name,error);done(false)});t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.setScalar(repeat);t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(color)t.encoding=T.sRGBEncoding;return t}
+  function surface(m,asset,repeat){m.map=texture(asset+'_color.webp',repeat,true);m.normalMap=texture(asset+'_normal.webp',repeat);m.normalScale.set(.3,.3);m.roughnessMap=texture(asset+'_rough.webp',repeat);m.bumpMap=null;m.color.set(0xffffff);m.roughness=.95;m.needsUpdate=true}
   surface(RMAT.road,'asphalt_02',.2);surface(RMAT.site,'pavement_04',1/3.1);
   // 2026-10-18: AI 외관 시안의 밝은 회색 보도·콘크리트 공터에 맞춘다(CC0, 원본 지면 형상 유지).
   // 원본의 무늬 없는 회녹색 지면(0x8f9488, 선형 약 0.27)과 같은 밝기대로 중성 보정한다.
@@ -78,9 +80,9 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const contextGlasses=['#24343c','#485862','#809099','#4d5b63','#303c45','#77838a','#b0aaa0','#364f5b'].map((col,i)=>new T.MeshStandardMaterial({color:new T.Color(col).convertSRGBToLinear(),metalness:i===6?.05:.42,roughness:i===6?.65:.12+i*.025}));
   const contextBlindMats=['#bcc1bc','#c9c5b9'].map(color=>new T.MeshStandardMaterial({color:new T.Color(color).convertSRGBToLinear(),roughness:.78}));
   const unitMat=new T.MeshStandardMaterial({color:0xb5b6b0,metalness:.28,roughness:.58}),grilleMat=new T.MeshStandardMaterial({color:0x242a2b,roughness:.8});
-  const plasterColor=texture('plaster_color.jpg',.25,true),plasterNormal=texture('plaster_normal.jpg',.25),plasterRough=texture('plaster_rough.jpg',.25);
+  const plasterColor=texture('plaster_color.webp',.25,true),plasterNormal=texture('plaster_normal.webp',.25),plasterRough=texture('plaster_rough.webp',.25);
   // Photographic 1.8 m granite sheet; preserve the context mass and window layout.
-  const graniteColor=texture('facade-granite_color.jpg',1/1.8,true),graniteNormal=texture('facade-granite_normal.jpg',1/1.8),graniteRough=texture('facade-granite_rough.jpg',1/1.8);
+  const graniteColor=texture('facade-granite_color.webp',1/1.8,true),graniteNormal=texture('facade-granite_normal.webp',1/1.8),graniteRough=texture('facade-granite_rough.webp',1/1.8);
   // The original context describes a small white tiled facade. Rebuild a restrained
   // ceramic finish at an illustrative 200 mm pitch, without adding mesh displacement.
   function mosaicTextures(){
@@ -119,7 +121,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     for(let y=0;y<128;y++){const i=(y*128+x)*4,value=Math.min(255,line+Math.sin(y*.31+x)*5);grainPixels.data[i]=grainPixels.data[i+1]=grainPixels.data[i+2]=value;grainPixels.data[i+3]=255;}}
   grainContext.putImageData(grainPixels,0,0);const grain=new T.CanvasTexture(grainCanvas);grain.wrapS=grain.wrapT=T.RepeatWrapping;grain.repeat.set(2,8);grain.anisotropy=4;
   // Weathered roof finish is illustrative; preserve every existing roof surface.
-  const roofColor=texture('roof-concrete_color.jpg',.5,true),roofNormal=texture('roof-concrete_normal.jpg',.5),roofRough=texture('roof-concrete_rough.jpg',.5);
+  const roofColor=texture('roof-concrete_color.webp',.5,true),roofNormal=texture('roof-concrete_normal.webp',.5),roofRough=texture('roof-concrete_rough.webp',.5);
   const roofTints=[[.925,1.11,1.6],[.785,1,1.415],[.685,1.035,1.15],[1.06,1.225,1.715]];
   const frameMat=new T.MeshStandardMaterial({color:0x464d50,metalness:.55,roughness:.4});
   const copingMat=new T.MeshStandardMaterial({color:0x999b96,metalness:.2,roughness:.7});
@@ -228,7 +230,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const roofMat=new T.MeshStandardMaterial({color:0x8e9590,roughness:.93});const roofUnits=new T.InstancedMesh(cube,roofMat,6000);let roofCount=0;C.city.add(roofUnits);
   // Use storey-count variants, so height variation does not stretch the same windows.
   const storeys=[[2,3,4,5],[4,5,7,9],[6,8,10,12],[2,3,4,5],[14,18,22]];
-  const cityLayers=types.map((base,index)=>storeys[index].map((floors,variant)=>{const t={...base,rows:floors,h:floors*3.2,columns:base.columns+(variant%2)};const asset=t.office?'facade-office':'facade-brick',pbr=t.brick||(t.office&&variant===3);const map=pbr?texture(asset+'_color.jpg',1,true):urbanFacade(t.columns,t.rows,t.tone,index*7+variant);if(pbr)map.repeat.set(t.columns/6,t.rows/6);const mat=new T.MeshStandardMaterial({map,roughness:.8,color:0xffffff});if(pbr){mat.normalMap=texture(asset+'_normal.jpg',1);mat.roughnessMap=texture(asset+'_rough.jpg',1);mat.metalnessMap=texture(asset+'_metal.jpg',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0,type:t}}));
+  const cityLayers=types.map((base,index)=>storeys[index].map((floors,variant)=>{const t={...base,rows:floors,h:floors*3.2,columns:base.columns+(variant%2)};const asset=t.office?'facade-office':'facade-brick',pbr=t.brick||(t.office&&variant===3);const map=pbr?texture(asset+'_color.webp',1,true):urbanFacade(t.columns,t.rows,t.tone,index*7+variant);if(pbr)map.repeat.set(t.columns/6,t.rows/6);const mat=new T.MeshStandardMaterial({map,roughness:.8,color:0xffffff});if(pbr){mat.normalMap=texture(asset+'_normal.webp',1);mat.roughnessMap=texture(asset+'_rough.webp',1);mat.metalnessMap=texture(asset+'_metal.webp',1);mat.metalness=.85;mat.normalScale.set(.45,.45);for(const tex of [mat.normalMap,mat.roughnessMap,mat.metalnessMap])tex.repeat.copy(map.repeat)}const mesh=new T.InstancedMesh(cube,[mat,mat,roofMat,roofMat,mat,mat],3000);mesh.name='Illustrative distant urban fabric';mesh.receiveShadow=true;C.city.add(mesh);return {mesh,count:0,type:t}}));
   const dummy=new T.Object3D();let seed=17;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
   const occupied=masses.filter(m=>{for(let p=m;p;p=p.parent)if(p===C.contextBuildings?.future)return false;return true}).map(m=>m.userData.box);
   for(let x=-600;x<=600;x+=22)for(let z=-600;z<=600;z+=22){
@@ -251,7 +253,7 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
   const {cachedAsset}=await assetsReady;
 
   try{
-    const asset=await cachedAsset('360/assets/tree-small-02.glb');
+    const asset=await cachedAsset('360/assets/street-tree.glb');
     const bounds=new T.Box3().setFromObject(asset.scene),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
     // Anchor the trunk foot, not the asymmetric canopy bounding-box centre.
     asset.scene.updateMatrixWorld(true);const trunkPoints=[];
@@ -260,12 +262,13 @@ window.enhanceTowerEnvironment=async function(C,extra,load){
     for(const p of trunkPoints)if(p.y<=trunkMin+.015)footBox.expandByPoint(p);
     const foot=footBox.isEmpty()?center.clone():footBox.getCenter(new T.Vector3());foot.y=trunkMin;
 
-    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.32;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
+    asset.scene.traverse(o=>{if(o.isMesh){o.castShadow=o.receiveShadow=true;const m=o.material;if(m){if(/leaves/.test(m.name)){m.emissive.set('#53612f').convertSRGBToLinear();m.emissiveIntensity=.06;}m.side=T.DoubleSide;m.alphaTest=.45;m.transparent=false;m.needsUpdate=true}}});
     // Illustrative early-autumn variation; share a small material palette, never duplicate foliage geometry.
-    const leafTints=C.R3D.season==='autumn'?[[1.1,1,.88],[1.5,1.08,.7],[1.85,1.05,.6],[1.28,1.02,.78]]:[[1,1,1]],leafMaterials=new Map();
+    // 2026-10-18 새 가로수 잎 텍스처는 밝아서 가을 보정과 반투과 발광을 낮춘다(과한 노란색 방지).
+    const leafTints=C.R3D.season==='autumn'?[[.96,.98,.92],[1.1,1.02,.82],[1.22,1.02,.74],[1.02,1,.86]]:[[.94,.97,.94]],leafMaterials=new Map();
     function dressLeaves(tree,index){
       tree.traverse(o=>{if(!o.isMesh||!/leaves/.test(o.material?.name))return;const source=o.material,tint=index%leafTints.length;let variants=leafMaterials.get(source);if(!variants){variants=[];leafMaterials.set(source,variants)}
-        if(!variants[tint]){const m=source.clone();m.color.setRGB(...leafTints[tint]);m.emissive.set('#6d682f').convertSRGBToLinear();m.emissiveIntensity=.12;m.userData.leafTint=tint;variants[tint]=m;}o.material=variants[tint];
+        if(!variants[tint]){const m=source.clone();m.color.setRGB(...leafTints[tint]);m.emissive.set('#6d682f').convertSRGBToLinear();m.emissiveIntensity=.05;m.userData.leafTint=tint;variants[tint]=m;}o.material=variants[tint];
       });
     }
     // Keep root pits on the actual sidewalk; the old corner coordinates fell in the road.

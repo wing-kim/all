@@ -15,7 +15,7 @@ import { createCafeAmbientStudy } from './cafe-ambient.js';
 import { createCafeRoomBake } from './cafe-room-bake.js';
 import { bindSourceVisibility, sourceVisible, syncCopiedVisibility } from './source-visibility.js';
 import * as T from 'three/webgpu';
-import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, cameraPosition } from 'three/tsl';
+import { pass, texture as textureNode, vec4, mix, saturation, uniform, normalWorld, positionWorld, positionView, cameraPosition, fog } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { fxaa } from 'three/addons/tsl/display/FXAANode.js';
@@ -39,7 +39,13 @@ export async function start(C){
  if(!adapter)throw new Error('WebGPU adapter unavailable');
  timings.adapterMs=performance.now()-bootAt;
  const limit=512*1024*1024;
- const renderer=new T.WebGPURenderer({alpha:false,antialias:true,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(1);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
+ // 화면 품질 진단용(?msaa=0|4, ?pr=배율). 기본값은 아래에서 정한다.
+ // 멈춘 화면은 기기 해상도(원본 스케치업과 같은 배율, 최대 2)로, 움직이는 동안은 배율 1 상당으로 그린다.
+ const renderParams=new URLSearchParams(location.search),compactScreen=parent.innerWidth<=850&&matchMedia('(pointer: coarse)').matches;
+ const balancedRatio=renderParams.has('pr')?Math.min(2,Math.max(.5,+renderParams.get('pr')||1)):Math.min(devicePixelRatio||1,compactScreen?1.5:2);
+ const STILL_DELAY_MS=150;
+ // 최종 출력은 후처리 파이프라인이 그리므로 캔버스 자체 MSAA는 쓰지 않는다(장면 패스에서 MSAA).
+ const renderer=new T.WebGPURenderer({alpha:false,antialias:false,powerPreference:'high-performance',requiredLimits:{maxStorageBufferBindingSize:Math.min(limit,adapter.limits.maxStorageBufferBindingSize),maxBufferSize:Math.min(limit,adapter.limits.maxBufferSize)}});renderer.setPixelRatio(balancedRatio);renderer.toneMapping=T.NeutralToneMapping;renderer.toneMappingExposure=1.4;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFShadowMap;await renderer.init();timings.rendererInitMs=performance.now()-bootAt;
  let gpuError=null,deviceLost=false;renderer.backend.device?.addEventListener('uncapturederror',event=>{event.preventDefault();if(!gpuError){gpuError=event.error;console.warn('Precision GPU validation failure',gpuError.message)}});
  renderer.backend.device?.lost.then(info=>{if(info.reason!=='destroyed'){deviceLost=true;gpuError=new Error(info.message||'GPU device lost')}});
  const host=C.renderer.domElement.parentElement;renderer.setSize(host.clientWidth,host.clientHeight);Object.assign(renderer.domElement.style,{position:'absolute',inset:'0',pointerEvents:'none',zIndex:'2'});
@@ -50,6 +56,8 @@ export async function start(C){
   const n=new T.MeshPhysicalMaterial({color:m.color?.clone()||new T.Color(.5,.5,.5),roughness:m.roughness??.7,metalness:m.metalness??0,side:m.side,opacity:m.opacity,transparent:m.transparent,alphaTest:m.alphaTest||0});
   copyMaterialTextures(m,n,texture);if(m.normalScale)n.normalScale.copy(m.normalScale);n.bumpScale=m.bumpScale||.01;if(m.emissive)n.emissive.copy(m.emissive);n.emissiveIntensity=m.emissiveIntensity||0;
   n.clearcoat=m.clearcoat||0;n.clearcoatRoughness=m.clearcoatRoughness||0;
+  // 알파 테스트 잎(가로수·화분)은 MSAA 커버리지로 가장자리를 부드럽게 한다(정렬 문제 없는 불투명 경로 유지).
+  if(n.alphaTest>0&&!n.transparent)n.alphaToCoverage=true;
   n.polygonOffset=!!m.polygonOffset;n.polygonOffsetFactor=m.polygonOffsetFactor||0;n.polygonOffsetUnits=m.polygonOffsetUnits||0;
   if(m.userData?.satinMetal){n.anisotropy=.32;n.clearcoat=.12;n.clearcoatRoughness=.28;}
   if(glass){n.color.set('#f3f9fc');n.transmission=1;n.opacity=1;n.transparent=false;n.metalness=0;n.roughness=.045;n.ior=1.52;n.thickness=0;n.side=T.DoubleSide;}
@@ -77,7 +85,7 @@ export async function start(C){
    else n=new T.Mesh(g,m);
    n.matrix.copy(o.matrixWorld);n.matrixAutoUpdate=false;n.castShadow=o.castShadow;n.receiveShadow=true;copies=[n];
   }
-  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.ovl)n.userData.sourceOverlay=true;if(p===C.persistentNeighborhood||p===C.R3D.street||p===C.R3D.props)n.userData.outdoorEnhancement=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
+  for(const n of copies){if(o.material===C.M.glass||o.material===C.M.glass1)n.userData.renderGlazing=true;bindSourceVisibility(n,o);for(let p=o;p;p=p.parent)if(p.userData.box){n.userData.occlusionLinked=true;break}for(let p=o;p;p=p.parent){if(p===C.city||p===C.ctx)n.userData.context=true;if(p===C.bld||p===C.interiorDressing)n.userData.primary=true;if(p===C.interiorDressing)n.userData.interiorDressing=true;if(p===C.ovl)n.userData.sourceOverlay=true;if(p===C.persistentNeighborhood||p===C.R3D.street||p===C.R3D.props)n.userData.outdoorEnhancement=true;if(p===C.city)n.userData.contextKind='city';if(p===C.ctx)n.userData.contextKind='ctx';}n.visible=sourceVisible(o);scene.add(n)}
  });}
  copyRoot(C.scene);
  function currentOverlaySources(){const sources=new Set();C.ovl?.traverse(o=>{if(o.isMesh&&!o.userData.batched&&!o.material?.isShaderMaterial)sources.add(o)});return sources}
@@ -89,17 +97,37 @@ export async function start(C){
   for(const copy of stale){scene.remove(copy);const source=copy.sourceVisibilityObject;if(source&&geometries.get(source.geometry)===copy.geometry&&!scene.children.some(other=>other.geometry===copy.geometry)){geometries.delete(source.geometry);copy.geometry.dispose()}}
   overlaySources=next;copyRoot(C.ovl);return stale.length+next.size;
  }
- function syncSourceVisibility(){const overlaysChanged=refreshOverlayCopies();if(overlaysChanged)cancelPrecision();const changed=syncCopiedVisibility(T,scene,C,renderer);ambientStudy?.light(C.reviewDaylight);roomBake?.light(C.reviewDaylight);return changed+overlaysChanged}
+ function syncSourceVisibility(){const overlaysChanged=refreshOverlayCopies();if(overlaysChanged)cancelPrecision();const changed=syncCopiedVisibility(T,scene,C,renderer)+(typeof syncOcclusion==='function'?syncOcclusion():0);ambientStudy?.light(C.reviewDaylight);roomBake?.light(C.reviewDaylight);return changed+overlaysChanged}
  const limitLines=[];
  C.limits.updateWorldMatrix(true,true);
  C.limits.traverse(source=>{if(!source.isLine)return;const copy=copySourceLine(T,source);copy.visible=C.limits.visible;copy.userData.reviewLimit=true;scene.add(copy);limitLines.push(copy)});
  const {batchedObjects,batchBoundsDelta,sources:batchSources}=batchStaticSurroundings(T,mergeGeometries,scene);
  timings.sceneCopyMs=performance.now()-bootAt;
+ const loadProgress=window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'scene'});
+ // 단계 사이에 한 프레임 양보해 부모 화면의 진행률이 실제로 그려지게 한다.
+ const nextFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));await nextFrame();
+ // 원본 occl(): 카메라와 시점 중심 사이를 가리는 주변 건물을 숨긴다. 실사에서는 꾸밈 부속까지 건물 단위로
+ // 같은 규칙을 카메라가 바뀔 때마다 직접 계산한다(원본 루프와의 실행 순서 차이로 생기는 지연·잔상 방지).
+ const occlusionHosts=new Map();
+ for(const copy of scene.children){const source=copy.sourceVisibilityObject;if(!source||!copy.userData.occlusionLinked)continue;for(let p=source;p;p=p.parent)if(p.userData?.box){if(!occlusionHosts.has(p))occlusionHosts.set(p,[]);occlusionHosts.get(p).push(copy);break}}
+ const occlusionRay=new T.Ray(),occlusionHit=new T.Vector3(),occlusionCenter=new T.Vector3();
+ const visibleExcept=(node,skip)=>{for(;node;node=node.parent){if(node!==skip&&!node.visible)return false;if(node.isScene)return true}return false};
+ function syncOcclusion(){
+  if(!occlusionHosts.size)return 0;
+  const from=C.camera.position,to=C.controls.target,distance=from.distanceTo(to);occlusionRay.origin.copy(from);occlusionRay.direction.copy(to).sub(from).normalize();let changed=0;
+  for(const [host,copies] of occlusionHosts){
+   const box=host.userData.box,hit=occlusionRay.intersectBox(box,occlusionHit),blocked=!!hit&&from.distanceTo(occlusionHit)<distance-1,along=box.getCenter(occlusionCenter).sub(from).dot(occlusionRay.direction);
+   const open=host.userData.rayOnly?!(blocked||box.distanceToPoint(from)<30):!(blocked||(along>0&&along<distance*.85));
+   for(const copy of copies){const visible=open&&visibleExcept(copy.sourceVisibilityObject,host);if(copy.visible!==visible){copy.visible=visible;changed++}}
+  }
+  if(changed)renderer.shadowMap.needsUpdate=true;return changed;
+ }
  let improved=new URLSearchParams(location.search).get('bake')!=='off';
  let groundBake=null;try{groundBake=await applyBakedGround(T,scene);groundBake.setEnabled(improved&&C.city.visible&&C.ctx.visible)}catch(error){console.warn('Baked ground unavailable; retaining realtime lighting',error)}
  timings.bakeMs=performance.now()-bootAt;
- const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_2k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;
- timings.hdrMs=performance.now()-bootAt;
+ loadProgress.stage='sky';await nextFrame();
+ const hdr=await new HDRLoader().loadAsync('360/assets/daylight-sky_1k.hdr');hdr.mapping=T.EquirectangularReflectionMapping;scene.environment=hdr;
+ timings.hdrMs=performance.now()-bootAt;loadProgress.stage='shaders';await nextFrame();
  function skyGradient(top,horizon,bottom){const canvas=document.createElement('canvas');canvas.width=4;canvas.height=256;const ctx=canvas.getContext('2d'),gradient=ctx.createLinearGradient(0,0,0,256);gradient.addColorStop(0,top);gradient.addColorStop(.48,horizon);gradient.addColorStop(1,bottom);ctx.fillStyle=gradient;ctx.fillRect(0,0,4,256);const map=new T.CanvasTexture(canvas);map.mapping=T.EquirectangularReflectionMapping;map.colorSpace=T.SRGBColorSpace;return map}
  const nightSky=skyGradient('#080e1a','#233047','#202938'),sourceSky=createSourceSky(T,renderer);
  const sun=new T.DirectionalLight(C.sun.color.getHex(),C.sun.intensity);sun.position.copy(C.sun.position);sun.target.position.copy(C.sun.target.position);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-65,right:65,top:65,bottom:-65,near:1,far:300});sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;scene.add(sun,sun.target);
@@ -178,8 +206,17 @@ export async function start(C){
  const whiteBalance=uniform(new T.Vector3(.97,1,1.025)),colorSaturation=uniform(1.03);
  // Final presentation is opaque: AO must never expose the legacy input canvas below.
  const atmospheric=node=>vec4(saturation(mix(node.rgb,hazeColor,haze).mul(whiteBalance),colorSaturation),1);
- const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(atmospheric(vec4(previewPass.rgb.mul(filteredAO.r.mul(.65).add(.35)),1)));
- const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=fxaa(atmospheric(previewPass));
+ // 실시간 화면의 원경 헤이즈는 재질 안개로 계산한다(MSAA 깊이는 후처리에서 읽을 수 없다). 같은 식·같은 색.
+ scene.fogNode=fog(hazeColor,positionView.z.negate().sub(100).max(0).mul(-.0006).exp().oneMinus().min(.3));
+ const graded=node=>vec4(saturation(node.rgb.mul(whiteBalance),colorSaturation),1);
+ // 기본 화면: MSAA 4배로 가는 멀리언·잎 가장자리의 계단과 이동 중 반짝임을 줄인다.
+ const msaaSamples=renderParams.has('msaa')?Math.max(0,+renderParams.get('msaa')||0):4;
+ // 움직이는 동안: 배율 1 상당 + MSAA 4배(계단·반짝임 감소). 멈춘 뒤: 전체 해상도 + FXAA(고해상도 MSAA는 메모리가 과도).
+ const movingPass=pass(scene,camera,{samples:msaaSamples});movingPass.renderTarget.texture.name='tower-moving-color';movingPass.setResolutionScale(Math.min(1,1/balancedRatio));
+ const stillPass=pass(scene,camera,{samples:0});stillPass.renderTarget.texture.name='tower-still-color';
+ const previewPipeline=new T.RenderPipeline(renderer);previewPipeline.outputNode=fxaa(graded(vec4(previewPass.rgb.mul(filteredAO.r.mul(.65).add(.35)),1)));
+ const balancedPipeline=new T.RenderPipeline(renderer);balancedPipeline.outputNode=graded(movingPass);
+ const stillPipeline=new T.RenderPipeline(renderer);stillPipeline.outputNode=fxaa(graded(stillPass));
  const precisionTexture=textureNode(new T.Texture());
  const precisionPipeline=new T.RenderPipeline(renderer);precisionPipeline.outputNode=atmospheric(precisionTexture);
  let previewHigh=false;
@@ -206,14 +243,14 @@ export async function start(C){
   // refraction through overlapping facade faces otherwise obscures the interiors.
   // Restore every original material before the path tracer or guide pass runs.
   for(const b of previewBindings)b.object.material=b.replacement;
-  try{if(previewHigh)previewPipeline.render();else balancedPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
+  try{if(previewHigh)previewPipeline.render();else if(moving)balancedPipeline.render();else stillPipeline.render()}finally{for(const b of previewBindings)b.object.material=b.original}
  }
- let presented=false,previewCached=false;
+ let presented=false,previewCached=false,stillDrawn=false;
  // While the camera is still, keep a single exact preview frame above the tracer.
  // Repainting thousands of scene objects during every tracing pass wastes GPU time.
  const cachedPreview=document.createElement('canvas'),cachedContext=cachedPreview.getContext('2d',{alpha:false});
  Object.assign(cachedPreview.style,{position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none',zIndex:'3',display:'none'});
- function invalidatePresentation(){presented=false;previewCached=false;cachedPreview.style.display='none'}
+ function invalidatePresentation(){presented=false;previewCached=false;stillDrawn=false;cachedPreview.style.display='none'}
  function cachePreview(){
   renderPreview();
   if(!cachedContext)return;
@@ -255,7 +292,7 @@ export async function start(C){
  undergroundSee:on=>{if(applyUndergroundSee(on)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));sectionClip.objects().forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
- quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):1);renderer.setSize(host.clientWidth,host.clientHeight)},
+ quality:value=>{cancelPrecision();previewHigh=value==='high';renderer.setPixelRatio(previewHigh?(compactTouch?1:1.25):balancedRatio);renderer.setSize(host.clientWidth,host.clientHeight)},
  light:daylight=>{cancelPrecision();alignDaylight(daylight);exteriorNight.apply(daylight?.night,hazeColor);ambientStudy.light(daylight);roomBake.light(daylight);renderer.shadowMap.needsUpdate=true;clearTimeout(lightProbeTimer);lightProbeTimer=setTimeout(()=>{if(!stopped&&!paused)refreshProbe()},900)},
  background:async url=>{const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;scene.background=map;cancelPrecision()},
  whiteBalance:(r,g,b)=>{whiteBalance.value.set(r,g,b);cancelPrecision()},
@@ -263,14 +300,14 @@ export async function start(C){
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
   status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
- stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();stillPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
-  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
+  const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();stillDrawn=false;syncOcclusion();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
   try{
     if(gpuError)throw gpuError;
-    if(!precisionRequested){if(!previewCached){const began=performance.now();renderPreview();counts.previewFrames++;if(lastDrawAt)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began);if(firstFrameMs===null)firstFrameMs=performance.now()-bootAt;previewCached=true;}else lastDrawAt=0;return;}
+    if(!precisionRequested){const moving=performance.now()-lastMotion<STILL_DELAY_MS;if(!previewCached||(!moving&&!stillDrawn)){const began=performance.now();renderPreview(moving);counts.previewFrames++;if(moving){if(lastDrawAt)measure(frameIntervals,began-lastDrawAt);lastDrawAt=began;measure(frameSubmitMs,performance.now()-began)}else{counts.stillFrames=(counts.stillFrames||0)+1;lastDrawAt=0}if(firstFrameMs===null){firstFrameMs=performance.now()-bootAt;loadProgress.stage='ready'}previewCached=true;stillDrawn=!moving;}else lastDrawAt=0;return;}
     lastDrawAt=0;
     if(presented&&tracer._denoiser?.complete)return;
     if(performance.now()-lastMotion>200){tracer.renderSample();counts.precisionSamples++;}
