@@ -96,8 +96,8 @@
   R3D.hq=false;HQ.on=false;
   T.Cache.enabled=true;
   await load('360/cafe.js?v=cafe-5');
-  await load('360/office.js?v=lazy-5');
-  await load('360/interior-models.js?v=lazy-5');
+  await load('360/office.js?v=upd-1');
+  await load('360/interior-models.js?v=upd-1');
   async function dressBuilding(){
   const extra=new T.Group();extra.name='illustrative-interiors-and-landscape';scene.add(extra);C.interiorDressing=extra;
   let seed=941;const random=()=>{seed=(1664525*seed+1013904223)>>>0;return seed/4294967296};
@@ -331,7 +331,7 @@
     undergroundSee:on=>window.TOWER_CINEMA?.undergroundSee?.(on),
     applyConfig:async config=>{
       if(!window.TOWER_CINEMA)return false;
-      const before=performance.now();window.TOWER_CINEMA.cancelPrecision();
+      const before=performance.now();window.TOWER_CINEMA.cancelPrecision();window.TOWER_UPDATE_PROGRESS={stage:'build'};
       for(const key of Object.keys(state))if(Object.prototype.hasOwnProperty.call(config.state,key))state[key]=config.state[key];
       // Preserve the neighbourhood and GPU renderer. Only rebuild the authored building.
       if(config.daylight)applySourceLight(config.daylight);
@@ -344,6 +344,10 @@
       window.TOWER_CINEMA.updateBuilding();
       if(config.floor?.on)interiorPose(config.floor.key,config.floor.camera,config.floor.target,config.floor.fov,config.floor.doll,config.visibility);
       if(config.display&&JSON.stringify(config.display)!==JSON.stringify(initial.display)){C.city.visible=config.display.city!==false;C.ctx.visible=config.display.ctx!==false;window.TOWER_CINEMA.context(config.display);initial.display={...config.display};}
+      // 새 건물의 셰이더를 로딩 카드 아래에서 나눠 준비한다(첫 렌더 동기 준비로 화면이 수 초 멈추지 않게). 진행률은 부모 카드가 읽는다.
+      window.TOWER_UPDATE_PROGRESS={stage:'shaders',done:0,total:0};
+      await window.TOWER_CINEMA.rewarm?.(e=>{window.TOWER_UPDATE_PROGRESS={stage:'shaders',done:e.loaded,total:e.total}});
+      window.TOWER_UPDATE_PROGRESS={stage:'done'};
       const geometries=new Set(),materials=new Set();old.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.add(m)});
       // Imported templates share resources with the new dressing; never dispose those.
       interiors.traverse(o=>{geometries.delete(o.geometry);for(const m of o.material?(Array.isArray(o.material)?o.material:[o.material]):[])materials.delete(m)});
@@ -383,7 +387,7 @@
     }
   };
   window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'environment'});
-  await load('360/environment.js?v=lazy-5');
+  await load('360/environment.js?v=upd-1');
   await window.enhanceTowerEnvironment(C,extra,load);
   // 실내 시안 가구 모델은 첫 화면 뒤 층별로 지연 로드한다(들어간 층 우선, 나머지는 카메라가 멈춰 있을 때 한 층씩).
   window.startInteriorModelLoader?.(C);
@@ -391,7 +395,7 @@
   renderer.domElement.addEventListener('webglcontextlost',()=>{environmentStatus='그래픽 컨텍스트 중단 · 새로고침 필요'});
   if(new URLSearchParams(location.search).get('engine')==='cinema'){
     environmentStatus='실시간 재질 준비 중';window.TOWER_LOAD_PROGRESS=Object.assign(window.TOWER_LOAD_PROGRESS||{},{stage:'renderer'});
-    try{const modern=await import('./modern.js?v=lazy-5');await modern.start(C);return;}
+    try{const modern=await import('./modern.js?v=upd-1');await modern.start(C);return;}
     catch(error){window.TOWER_CINEMA_FAILURE=true;console.warn('Modern viewer unavailable; WebGL fallback',error)}
   }
   try{await load('360/assets/RGBELoader.js');const hdr=await new Promise((resolve,reject)=>new T.RGBELoader().setDataType(T.UnsignedByteType).load('360/assets/urban_courtyard_1k.hdr',resolve,undefined,reject));

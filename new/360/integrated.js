@@ -81,11 +81,24 @@
     if(p.stage==='shaders'&&p.shadersTotal){const done=p.shadersDone||0;return [86+Math.round(13*Math.min(1,done/p.shadersTotal)),'화면 준비 중 ('+done+'/'+p.shadersTotal+') · 처음 한 번만 시간이 걸립니다'];}
     return ({renderer:[72,'실사 렌더러 시작 중'],scene:[78,'장면 변환 중'],sky:[84,'하늘·조명 준비 중'],shaders:[90,'화면 준비 중 · 처음 한 번만 시간이 걸립니다'],ready:[100,'완료']})[p.stage]||[8,'원본 건물·주변 모델 구성 중'];
   }
+  function paintLoading(title,pct,label){
+    loading.hidden=false;loading.querySelector('.head span').textContent=title;loading.querySelector('.pct').textContent=pct+'%';loading.querySelector('.bar i').style.width=pct+'%';loading.querySelector('.stage').textContent=label;
+  }
+  // 시안·주차 방식 등 건물을 다시 만드는 동안(수 초)도 같은 카드로 진행 상황을 보여 준다(화면이 멈춘 것처럼 보이지 않게).
+  let updateShown=0,changePending=false;
+  function updateState(w){
+    const p=w?.TOWER_UPDATE_PROGRESS;
+    if(!updating||!p||p.stage==='build')return [5,'원본 건물·실내 다시 만드는 중'];
+    if(p.stage==='shaders')return [p.total?12+Math.round(86*p.done/p.total):12,'화면 준비 중'+(p.total?' ('+p.done+'/'+p.total+')':'')];
+    return [100,'완료'];
+  }
   function showLoading(){
     const w=frame?.contentWindow,doneLoading=!frame||w?.TOWER_CINEMA_FAILURE||w?.TOWER_CINEMA?.status?.().firstFrameMs!=null;
+    if(active&&doneLoading&&(updating||changePending)&&!w?.TOWER_CINEMA_FAILURE){const [pct,label]=updateState(w);updateShown=Math.max(updateShown,pct);paintLoading('선택한 건물 적용 중',updateShown,label);return}
+    updateShown=0;
     if(!active||doneLoading){loading.hidden=true;loadingShown=0;return}
     const [pct,label]=loadingState(w);loadingShown=Math.max(loadingShown,pct);
-    loading.hidden=false;loading.querySelector('.pct').textContent=loadingShown+'%';loading.querySelector('.bar i').style.width=loadingShown+'%';loading.querySelector('.stage').textContent=label;
+    paintLoading('실사 3D 불러오는 중',loadingShown,label);
   }
   let frame=null,active=false,key='',daylightKey='',currentFloorKey=null,currentDoll=false,currentVisibilityKey='',ready=false,timer=null,poseUntil=0,started=0,following=false,updating=false,queued=false,notice='',noticeUntil=0;
   let hostControlsEnabled=true,hostModernActive=false,lastExteriorView=null;
@@ -122,17 +135,19 @@
     if(updating){queued=true;return;}
     const config=snapshot(),previous=api()?.telemetry();
     if(ready&&api()?.applyConfig&&frame.contentWindow.TOWER_CINEMA){
-      updating=true;const current=frame,begin=performance.now();key=modelKey(config);daylightKey=JSON.stringify(config.daylight);
+      updating=true;changePending=false;const current=frame,begin=performance.now();key=modelKey(config);daylightKey=JSON.stringify(config.daylight);
+      // 카드를 먼저 그린 뒤(두 프레임 양보) 무거운 재생성을 시작한다.
+      frame.contentWindow.TOWER_UPDATE_PROGRESS={stage:'build'};showLoading();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
       try{await api().applyConfig(config);timings.push({kind:'switch',ms:performance.now()-begin,state:{...config.state}})}
       catch(error){console.warn('Model update failed',error);status.textContent='시안 적용 실패 · 다시 선택해 주세요';}
-      finally{updating=false;if(queued&&active&&frame===current){queued=false;rebuild();}}
+      finally{updating=false;showLoading();if(queued&&active&&frame===current){queued=false;rebuild();}}
       return;
     }
     config.camera=previous?.camera||C.camera.position.toArray();config.target=previous?.target||C.controls.target.toArray();
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=lazy-5';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=upd-1';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug','msaa','pr'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -218,7 +233,7 @@
     showLoading();
     if(!active){frame?.contentWindow?.TOWER_CINEMA?.pause(true);return;}
     const config=snapshot(),next=modelKey(config);
-    if(next!==key){key=next;clearTimeout(timer);timer=setTimeout(rebuild,120);status.textContent='변경한 시안 적용 중…';return;}
+    if(next!==key){key=next;clearTimeout(timer);timer=setTimeout(rebuild,120);status.textContent='변경한 시안 적용 중…';changePending=ready;showLoading();return;}
     const nextDaylight=JSON.stringify(config.daylight);
     if(ready&&nextDaylight!==daylightKey){api()?.light(config.daylight);daylightKey=nextDaylight;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}

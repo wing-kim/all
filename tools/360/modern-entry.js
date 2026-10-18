@@ -258,7 +258,7 @@ export async function start(C){
  refreshGlazing();
  // 셰이더(렌더 파이프라인)는 compileAsync로 미리 준비한다. 처음 그릴 때의 동기 컴파일은 같은 스레드를 쓰는
  // 원본 화면 조작까지 수 초 멈춘다. 정지·움직임 패스는 MSAA 표본 수가 달라 파이프라인을 따로 준비한다.
- let bootWarm=false,movingReady=false,warmPending=0,warmChain=Promise.resolve();
+ let bootWarm=false,movingReady=false,warmPending=0,warmChain=Promise.resolve(),movingGen=0,rewarming=false;
  // root를 주면 장면 밖 임시 묶음의 물체만 실제 장면(조명·안개·환경광) 기준으로 준비한다(지연 추가용).
  function warmPass(target,onProgress=null,root=scene){
   // compileAsync는 그릴 대상(재질 포함)을 동기적으로 모은 뒤 비동기로 컴파일하므로 바로 원래대로 돌린다.
@@ -290,6 +290,14 @@ export async function start(C){
     onProgress({loaded:i,total:drawables.length});await nextFrame();if(stopped)break;
    }
   }finally{for(const o of drawables)o.visible=true;for(const o of culled)o.frustumCulled=true;renderer.shadowMap.needsUpdate=true}
+ }
+ // 건물 재생성(시안·주차 방식 전환) 뒤: 부팅과 같은 방식으로 정지 패스·그림자 셰이더를 묶음 단위로 준비하고(로딩 카드가 덮는다)
+ // 움직임 패스는 백그라운드로 준비한다. 첫 렌더에서 수천 개를 한꺼번에 동기 준비하면 화면이 수 초 멈췄다.
+ async function rewarm(onProgress){
+  if(stopped)return;const gen=++movingGen;rewarming=true;movingReady=false;
+  try{await warmStillInChunks(onProgress||(()=>{}))}catch(error){console.warn('Shader warm-up failed',error)}
+  finally{rewarming=false;invalidatePresentation()}
+  warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{if(gen===movingGen)movingReady=true});
  }
  // 실내 가구 모델 지연 추가(첫 화면 뒤 층별로): 원본 쪽에 새로 붙은 모델(holders)을 복사해 장면 밖 임시 묶음에서
  // 실내 간접광·금속 반사를 적용하고 셰이더를 비동기로 준비한 뒤 장면에 넣는다. 그동안 기존 화면은 계속 그린다.
@@ -403,7 +411,7 @@ export async function start(C){
  window.TOWER_CINEMA={scene,camera,renderer,groundSource:()=>exportGroundSource(T,scene),get captureCanvas(){return cachedPreview.style.display==='block'?cachedPreview:renderer.domElement},get tracer(){return tracer},requestPrecision,cancelPrecision,updateBuilding,pause:value=>{if(paused===value)return;paused=value;cancelPrecision()},
  limits:on=>{cancelPrecision();for(const line of limitLines)line.visible=!!on},
  section:planes=>{if(sectionClip.set(planes)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
- addInteriorObjects,lastMotionAt:()=>lastMotion,
+ addInteriorObjects,rewarm,lastMotionAt:()=>lastMotion,
  undergroundSee:on=>{if(applyUndergroundSee(on)){cancelPrecision();renderer.shadowMap.needsUpdate=true}},
  appearance:value=>{cancelPrecision();improved=value;groundBake?.setEnabled(value&&C.city.visible&&C.ctx.visible);refreshGlazing();refreshProbe()},
  context:display=>{cancelPrecision();groundBake?.setEnabled(improved&&(typeof display==='boolean'?display:display.city!==false&&display.ctx!==false));sectionClip.objects().forEach(o=>{if(o.userData.context)o.visible=typeof display==='boolean'?display:display[o.userData.contextKind]!==false});syncSourceVisibility();refreshProbe();renderer.shadowMap.needsUpdate=true},
@@ -416,7 +424,7 @@ export async function start(C){
   resetPerformance,syncSourceVisibility,
   status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,shaders:{stillMs:timings.shadersMs??null,movingMs:timings.movingShadersMs??null,movingReady,pending:warmPending},frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
  stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();interiorFill.dispose();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();stillPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
- function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
+ function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused||rewarming){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();stillDrawn=false;syncOcclusion();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
   // Both views share geometry, camera and environment; moving glass is an alpha approximation.
@@ -445,7 +453,7 @@ export async function start(C){
  try{await warmStillInChunks(shaderProgress)}catch(error){console.warn('Shader warm-up failed',error)}
  timings.shadersMs=performance.now()-bootAt;
  frame();setTimeout(startCafeBakes,0);
- warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{movingReady=true;timings.movingShadersMs=performance.now()-bootAt});
+ {const gen=movingGen;warmChain=warmChain.then(()=>warmPass(movingPass.renderTarget)).catch(error=>console.warn('Shader warm-up failed',error)).then(()=>{if(gen===movingGen)movingReady=true;timings.movingShadersMs=performance.now()-bootAt});}
  const countTimer=setInterval(()=>{if(!window.TOWER_MODERN_ACTIVE){clearInterval(countTimer);return}if(precisionRequested)tracer?.getSampleCountsAsync().catch(()=>{})},1500);return window.TOWER_CINEMA;
 }
 export async function changeBackdrop(state,url){const map=await new HDRLoader().loadAsync(url);map.mapping=T.EquirectangularReflectionMapping;state.scene.background=map;state.tracer?.updateEnvironment();}
