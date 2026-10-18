@@ -4,6 +4,7 @@ import { applyBakedGround, exportGroundSource } from './baked-ground.js';
 import { createExteriorNight, DAY_HAZE } from './exterior-night.js';
 import { createSectionClip } from './section-clip.js';
 import { cubeToEquirect } from './cube-equirect.js';
+import { createInteriorFill } from './interior-fill.js';
 import { batchStaticSurroundings, createPrecisionScene } from './static-batching.js';
 import { copyRoundedMullions, collectGlazingEdges } from './curtain-wall.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -152,6 +153,11 @@ export async function start(C){
  counts.probeRefreshes++;timings.probeMs=performance.now()-bootAt;
  let tracer=null,precisionRequested=false,precisionLoading=false,requestVersion=0,precisionError=null,stopped=false,paused=false,lightProbeTimer=null;
  addInteriorLighting({scene},C);
+ // 미리 구운 빛이 없는 실내(2F~PH1·지하)의 환경광 가림 근사와 따뜻한 실내 조명 간접광. 1층(카페 베이크)은 제외.
+ const interiorFill=createInteriorFill(T),firstUpper=()=>Math.min(...C.levels().filter(l=>l.kind==='upper').map(l=>C.floorTop(l)));
+ const fillBox=new T.Box3(),groundOnly=o=>{fillBox.setFromObject(o);return fillBox.min.y>-.2&&fillBox.max.y<firstUpper()-.1};
+ const applyInteriorFill=()=>{try{timings.interiorFill=interiorFill.apply(scene,C,{exclude:groundOnly}).count}catch(error){console.warn('Interior fill skipped',error)}};
+ applyInteriorFill();
  // Bake validation downloads and hashes furniture files. Never hold the first frame for it:
  // the realtime path renders immediately and the bake binds once every check has passed.
  let ambientStudy={status:()=>({requested:true,valid:false,enabled:false,reason:'loading',receivers:0,slot:null,slots:[]}),clear(){},refresh(){},light(){},precision(){},dispose(){},materials:()=>[]};
@@ -228,9 +234,10 @@ export async function start(C){
   for(const m of previewGlass){const p=m.clone();p.transmission=0;p.transparent=true;p.opacity=m.userData.glazingRole==='facade'?.64:.22;p.color.set(m.userData.glazingRole==='facade'?'#8cabb9':'#dce7e9');p.metalness=m.userData.glazingRole==='facade'?.32:.05;p.roughness=.065;p.side=T.DoubleSide;p.depthWrite=false;p.envMap=probeTarget.texture;p.envMapIntensity=1.15;
    if(improved){const facade=m.userData.glazingRole==='facade';// Alpha preview is not transmission: a pale diffuse layer reads as frosted paint.
     // Keep its absorption tint restrained and let the scene probe supply highlights.
-    p.color.set(facade?'#49636b':'#779094');p.metalness=0;p.ior=1.52;p.roughness=.09;p.clearcoat=.12;p.clearcoatRoughness=.08;p.envMapIntensity=1.0;
+    p.color.set(facade?'#33474e':'#779094');p.metalness=0;p.ior=1.52;p.roughness=.09;p.clearcoat=.12;p.clearcoatRoughness=.08;p.envMapIntensity=facade?1.5:1.0;
     const grazing=normalWorld.dot(cameraPosition.sub(positionWorld).normalize()).abs().oneMinus().pow(5);
-    p.opacityNode=grazing.mul(facade?.55:.52).add(facade?.18:.1);
+    // 올 글라스 시안 사진 기준: 정면에서도 하늘·주변 반사가 읽히는 은은한 반사 유리(정면 약 34%).
+    p.opacityNode=grazing.mul(facade?.5:.52).add(facade?.34:.1);
    }
    previewGlazing.set(m,p);}
   scene.traverse(o=>{if(!o.material)return;const original=o.material,replacement=Array.isArray(original)?(original.some(m=>previewGlazing.has(m))?original.map(m=>previewGlazing.get(m)||m):null):previewGlazing.get(original);if(replacement)previewBindings.push({object:o,original,replacement})});
@@ -280,7 +287,7 @@ export async function start(C){
   for(const [key,value] of geometries)if(!usedG.has(value)){value.dispose();geometries.delete(key)}
   for(const [key,value] of materials)if(!usedM.has(value)){value.dispose();materials.delete(key)}
   roundedProfiles.forEach(g=>g.dispose?.());roundedProfiles.clear();
-  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
+  copyRoot(C.bld);copyRoot(C.interiorDressing);addInteriorLighting({scene},C);applyInteriorFill();ambientStudy.refresh();roomBake.refresh();syncSourceVisibility();refreshGlazing();
   const usedTextures=new Set();for(const m of [...materials.values(),...(groundBake?.materials||[])])for(const value of Object.values(m))if(value?.isTexture)usedTextures.add(value);
   for(const [source,target] of textures)if(!usedTextures.has(target)){target.dispose();textures.delete(source)}
   sectionClip.resume();renderer.shadowMap.needsUpdate=true;lastUpdateMs=performance.now()-began;
@@ -300,7 +307,7 @@ export async function start(C){
  cafeInteriorLights:value=>{roomBake.interiorLights?.(value)},
   resetPerformance,syncSourceVisibility,
   status:()=>({bake:groundBake?{receivers:groundBake.count,facades:groundBake.facades,enabled:groundBake.enabled,valid:groundBake.status.valid,reason:groundBake.status.reason,signature:groundBake.status.signature,sunlightBakeValid:groundBake.sunlightBakeValid,loadMs:groundBake.loadMs}:null,ambientStudy:ambientStudy.status(),roomBake:roomBake.status(),exteriorNight:{night:exteriorNight.night,lamps:exteriorNight.lamps.length,leaves:exteriorNight.leaves},section:sectionClip.planes,undergroundSee,daylight:{...C.reviewDaylight,renderedSunDirection:sun.position.clone().sub(sun.target.position).normalize().toArray(),renderedSunIntensity:sun.intensity},sky:sourceSky.status(),improved,mode:precisionLoading?'preparing':precisionRequested?(tracer?._denoiser?.complete?'complete':'rendering'):'interactive',error:precisionError,samples:tracer?._lastSampleCounts,objects:scene.children.length,batchedObjects,batchBoundsDelta,materials:materials.size,firstFrameMs,lastUpdateMs,frameIntervalMs:frameIntervals.length?frameIntervals.reduce((a,b)=>a+b,0)/frameIntervals.length:null,frameMs:frameSubmitMs.length?frameSubmitMs.reduce((a,b)=>a+b,0)/frameSubmitMs.length:null,performance:performanceStatus()}),
- stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();stillPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
+ stop:()=>{stopped=true;clearTimeout(lightProbeTimer);cancelPrecision();interiorFill.dispose();ambientStudy.dispose();roomBake.dispose();window.TOWER_MODERN_ACTIVE=false;renderer.domElement.remove();cachedPreview.remove();previewGlazing.forEach(m=>m.dispose());tracer?.dispose();probeTarget.dispose();sourceSky.dispose();skyEquirect?.texture.dispose();nightSky.dispose();previewPipeline.dispose();balancedPipeline.dispose();stillPipeline.dispose();precisionPipeline.dispose();previewAO.dispose();previewPass.dispose();renderer.dispose()}};
  function frame(){if(!window.TOWER_MODERN_ACTIVE)return;requestAnimationFrame(frame);if(paused){lastDrawAt=0;return}const w=host.clientWidth,h=host.clientHeight;if(lastW!==w||lastH!==h){invalidatePresentation();lastW=w;lastH=h;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();if(precisionRequested)tracer?.updateCamera()}
   const next=C.camera.position.toArray().concat(C.camera.quaternion.toArray(),[C.camera.fov,C.camera.near]).map(v=>v.toFixed(5)).join(',');if(next!==signature){counts.cameraMoves++;cancelPrecision();stillDrawn=false;syncOcclusion();lastMotion=performance.now();signature=next;whiteBalance.value.set(...(C.cafeMode?[1.045,1,.955]:[.97,1,1.025]));camera.position.copy(C.camera.position);camera.quaternion.copy(C.camera.quaternion);camera.fov=C.camera.fov;camera.near=C.camera.near;camera.updateProjectionMatrix();camera.updateMatrixWorld()}
   // Keep stochastic grain off screen during movement and convergence.
