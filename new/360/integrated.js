@@ -30,6 +30,13 @@
     .precision-on.cafe-compare #cafe-reference{display:flex}
     .precision-on.cafe-compare #precision-frame{left:50%;width:50%}
     #precision-settings{padding:10px 0;font-size:12px} #precision-settings select{padding:5px;margin:4px}
+    #precision-gpu-note{color:#8a5a12}
+    #precision-gpu-help{margin:6px 0 0;font-size:12px;color:#8a5a12;line-height:1.6}
+    #precision-gpu-help[hidden]{display:none}
+    #precision-gpu-alert{position:absolute;left:50%;top:70px;transform:translateX(-50%);z-index:10;max-width:min(520px,calc(100% - 32px));background:#172126f2;color:#fff;border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6;box-shadow:0 6px 24px #0003}
+    #precision-gpu-alert[hidden]{display:none}
+    #precision-gpu-alert p{margin:0 0 10px}
+    #precision-gpu-alert button{font:inherit;background:#ffffff1f;color:#fff;border:1px solid #ffffff4d;border-radius:6px;padding:4px 12px;cursor:pointer}
   `;document.head.appendChild(style);
   const group=document.querySelector('[aria-label="보기 방식"]'),label=document.createElement('label');
   label.innerHTML='<input type="radio" name="vmode" value="precision" id="vm-precision"> 실사 3D';group.appendChild(label);
@@ -37,9 +44,20 @@
   // 실사 3D에서 넘어간 경우 신축으로 돌아오면 실사 3D를 복원한다.
   const eraNote=document.createElement('small');eraNote.id='precision-era-note';eraNote.textContent=' · 신축 전용(현황·비교는 원본 화면)';label.appendChild(eraNote);
   let eraReturn=false;
+  // 실사 3D는 WebGPU로만 그린다. 쓸 수 없는 브라우저에서는 선택지를 막고 이유와 해결법을 알린다(멈춘 화면을 남기지 않는다).
+  const GPU_HELP='이 브라우저에서는 실사 3D를 쓸 수 없습니다. 크롬이나 엣지 최신 버전으로 열어 주세요. 사파리는 macOS 26 이상이 필요하고, 브라우저 설정의 그래픽 가속이 꺼져 있어도 같은 증상이 납니다.';
+  const gpuNote=document.createElement('small');gpuNote.id='precision-gpu-note';gpuNote.hidden=true;gpuNote.textContent=' · 이 브라우저에서는 사용 불가';label.appendChild(gpuNote);
+  const gpuHelp=document.createElement('p');gpuHelp.id='precision-gpu-help';gpuHelp.hidden=true;gpuHelp.textContent=GPU_HELP;group.after(gpuHelp);
+  const gpuAlert=document.createElement('div');gpuAlert.id='precision-gpu-alert';gpuAlert.hidden=true;
+  const gpuAlertText=document.createElement('p'),gpuAlertClose=document.createElement('button');
+  gpuAlertClose.type='button';gpuAlertClose.textContent='닫기';gpuAlertClose.onclick=()=>{gpuAlert.hidden=true};
+  gpuAlert.appendChild(gpuAlertText);gpuAlert.appendChild(gpuAlertClose);host.appendChild(gpuAlert);
+  let gpuSupported=!!globalThis.navigator?.gpu;
   // 터치 기기에는 키보드·휠 대신 터치 조작을 안내한다.
   const touchUI=!!window.matchMedia?.('(pointer: coarse)').matches;
-  const syncEraNote=()=>{const isNew=(document.querySelector('input[name="era"]:checked')?.value||'new')==='new';eraNote.hidden=isNew;document.getElementById('vm-precision').disabled=!isNew;return isNew};syncEraNote();
+  const syncEraNote=()=>{const isNew=(document.querySelector('input[name="era"]:checked')?.value||'new')==='new';eraNote.hidden=isNew||!gpuSupported;gpuNote.hidden=gpuHelp.hidden=gpuSupported;document.getElementById('vm-precision').disabled=!isNew||!gpuSupported;return isNew};syncEraNote();
+  // 어댑터를 실제로 얻지 못하는 기기(그래픽 가속 꺼짐·드라이버 차단)도 같은 안내로 막는다.
+  if(gpuSupported)Promise.resolve().then(()=>navigator.gpu.requestAdapter({powerPreference:'high-performance'})).then(adapter=>{if(!adapter)markUnsupported()},()=>markUnsupported());
   const settings=document.createElement('div');settings.id='precision-settings';settings.hidden=true;
   settings.innerHTML='<label>조명: 원본 날짜·시간·계절 설정 사용</label><label>품질 <select id="precision-quality"><option value="high">고품질</option><option value="balanced" selected>균형</option></select></label><div><label><input type="checkbox" id="precision-bake" checked> 환경 베이킹·유리 개선</label></div><div style="margin:8px 0"><button id="precision-render" type="button">정밀 이미지 만들기</button> <button id="precision-cancel" type="button" hidden>탐색으로 돌아가기</button></div><div>원본 층 선택과 층별 형상 표시를 사용합니다. 1F 카페에는 검토용 가구가 있고 다른 층은 원본 구조와 임시 가구가 표시됩니다. 실내 시안·정밀 단면 절단은 준비 중입니다.</div>';
   group.after(settings);document.getElementById('precision-bake').checked=new URLSearchParams(location.search).get('bake')!=='off';
@@ -93,8 +111,8 @@
     return [100,'완료'];
   }
   function showLoading(){
-    const w=frame?.contentWindow,doneLoading=!frame||w?.TOWER_CINEMA_FAILURE||w?.TOWER_CINEMA?.status?.().firstFrameMs!=null;
-    if(active&&doneLoading&&(updating||changePending)&&!w?.TOWER_CINEMA_FAILURE){const [pct,label]=updateState(w);updateShown=Math.max(updateShown,pct);paintLoading('선택한 건물 적용 중',updateShown,label);return}
+    const w=frame?.contentWindow,doneLoading=!frame||w?.TOWER_CINEMA?.status?.().firstFrameMs!=null;
+    if(active&&doneLoading&&(updating||changePending)){const [pct,label]=updateState(w);updateShown=Math.max(updateShown,pct);paintLoading('선택한 건물 적용 중',updateShown,label);return}
     updateShown=0;
     if(!active||doneLoading){loading.hidden=true;loadingShown=0;return}
     const [pct,label]=loadingState(w);loadingShown=Math.max(loadingShown,pct);
@@ -147,7 +165,7 @@
     key=modelKey(config);daylightKey=JSON.stringify(config.daylight);ready=false;started=performance.now();
     // Unload the old document so GPU resources can be released before the next scene.
     frame?.contentWindow?.TOWER_CINEMA?.stop();frame?.remove();frame=document.createElement('iframe');frame.id='precision-frame';frame.title='선택한 시안의 실시간 360도 화면';
-    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=upd-6';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
+    const url=new URL(location.href);url.search='?lab=360&engine=cinema&model=cafe-2&revision=upd-7';url.hash=new URLSearchParams({config:JSON.stringify(config)}).toString();
     if(!document.getElementById('precision-bake').checked)url.searchParams.set('bake','off');
     if(['study','off'].includes(reviewParams.get('ambientBake')))url.searchParams.set('ambientBake',reviewParams.get('ambientBake'));
     for(const name of ['roomReflect','roomDebug','msaa','pr'])if(reviewParams.has(name))url.searchParams.set(name,reviewParams.get(name));// 진단용 베이크 비교
@@ -175,8 +193,19 @@
     C.controls.enabled=C.interior()?!C.interiorState().look:hostControlsEnabled;window.TOWER_MODERN_ACTIVE=hostModernActive;host.classList.remove('precision-on');settings.hidden=status.hidden=true;document.getElementById('sec-time').hidden=!C.R3D.on;
     if(document.activeElement===frame)document.getElementById('vm-sketch').focus({preventScroll:true});
   }
+  // WebGPU를 쓸 수 없다고 판명되면 실사 화면을 버리고 원본 보기로 되돌린다(멈춘 화면을 남기지 않는다).
+  function markUnsupported(){
+    const wasActive=active;
+    gpuSupported=false;
+    if(active)disable();
+    frame?.contentWindow?.TOWER_CINEMA?.stop?.();frame?.remove();frame=null;ready=false;
+    document.getElementById('vm-precision').checked=false;document.getElementById('vm-sketch').checked=true;
+    syncEraNote();
+    if(wasActive){gpuAlertText.textContent=GPU_HELP+' 원본 화면으로 돌아왔습니다.';gpuAlert.hidden=false;}
+  }
   function enable(){
-    if(active)return;if(window.PH?.on)window.PH.set(false);
+    if(active)return;
+    if(!gpuSupported){document.getElementById('vm-precision').checked=false;document.getElementById('vm-sketch').checked=true;return;}if(window.PH?.on)window.PH.set(false);
     hostControlsEnabled=C.controls.enabled;hostModernActive=!!window.TOWER_MODERN_ACTIVE;
     lastExteriorView=document.querySelector('.views [data-v][aria-pressed="true"]')||lastExteriorView||document.getElementById('v-corner');
     if(C.R3D.on)C.setRender(false);document.getElementById('vm-precision').checked=true;
@@ -192,7 +221,7 @@
     if(el.name==='era'){
       const isNew=syncEraNote();
       if(active&&!isNew){eraReturn=true;disable();document.getElementById('vm-sketch').checked=true;}
-      else if(isNew&&eraReturn&&!active){eraReturn=false;document.getElementById('vm-precision').checked=true;enable();}
+      else if(isNew&&eraReturn&&!active&&gpuSupported){eraReturn=false;document.getElementById('vm-precision').checked=true;enable();}
     }
     if(el.name==='vmode'){
       eraReturn=false;// 사용자가 보기 방식을 직접 고르면 자동 복원하지 않는다
@@ -238,6 +267,7 @@
     if(ready&&nextDaylight!==daylightKey){api()?.light(config.daylight);daylightKey=nextDaylight;}
     if(!api()){if(performance.now()-started>60000)status.textContent='장면 준비 지연 · 다른 보기로 전환 후 다시 시도해 주세요';return;}
     const w=frame.contentWindow;
+    if(w.TOWER_CINEMA_FAILURE){markUnsupported();return;}
     if(!ready&&w.TOWER_CINEMA){ready=true;w.addEventListener('tower-navigation-start',()=>{poseUntil=0;C.cancel()});w.addEventListener('tower-navigation-home',()=>{document.getElementById('v-corner').click();poseUntil=0;currentFloorKey=null;currentDoll=false;});w.addEventListener('tower-navigation-walk',()=>{C.walkFromDoll?.();requestAnimationFrame(()=>syncInterior(true))});timings.push({kind:'initial',ms:performance.now()-started});api().quality(document.getElementById('precision-quality').value);api().limits(document.getElementById('t-limits').checked);syncInterior(true);}
     else syncInterior();
     const renderState=w.TOWER_CINEMA?.status();
@@ -246,11 +276,10 @@
     document.getElementById('v-int').setAttribute('aria-pressed',String(floor.on));
     if(floor.on)document.querySelectorAll('[data-v]:not([data-v="int"])').forEach(button=>button.setAttribute('aria-pressed','false'));
     else if(!pendingView)clearComparison();
-    if(renderState?.firstFrameMs!=null||w.TOWER_CINEMA_FAILURE){frame.style.visibility='visible';if(pendingView){goView(pendingView);pendingView=null;}}
+    if(renderState?.firstFrameMs!=null){frame.style.visibility='visible';if(pendingView){goView(pendingView);pendingView=null;}}
     document.getElementById('precision-cancel').hidden=!renderState||renderState.mode==='interactive';
     document.getElementById('precision-render').disabled=!ready||updating||floor.doll||renderState?.mode==='preparing'||renderState?.mode==='rendering'||renderState?.mode==='complete';
-    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null&&!w.TOWER_CINEMA_FAILURE?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState):' · '+floor.key+(w.OFFICE_CATALOG?.[floor.key]?' 원본 구조 · 검토용 실내(시안 '+w.OFFICE_CATALOG[floor.key]+')':' 원본 구조 · 임시 가구 · 실내 시안 미연결')):''));
-    if(w.TOWER_CINEMA_FAILURE)status.textContent='정밀 렌더 미지원 · 실시간 화면 표시';
+    status.textContent=updating?'선택한 건물 적용 중…':renderState?.error?'정밀 계산 실패 · 실시간 탐색 가능':(renderState?.firstFrameMs==null?'재질·조명 준비 중…':api().telemetry().environment+(floor.on?(inCafe?' · 1F 카페 검토용 가구 · '+bakeLabel(renderState):' · '+floor.key+(w.OFFICE_CATALOG?.[floor.key]?' 원본 구조 · 검토용 실내(시안 '+w.OFFICE_CATALOG[floor.key]+')':' 원본 구조 · 임시 가구 · 실내 시안 미연결')):''));
     if(floor.on&&floor.doll)status.textContent+=' · 원본 층별 가시성'+((C.renderer?.clippingPlanes||[]).length?' · 원본 종단면 절단':'');
     if(notice&&performance.now()<noticeUntil)status.textContent+=' · '+notice;
   },200);
