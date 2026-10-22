@@ -368,3 +368,9 @@
 - 테스트: `tools/360/test-webgpu-gate.mjs` 추가(미지원·지원·실행 중 실패 3경우), `test-integrated-lifecycle.mjs` 컨텍스트에 navigator.gpu 스텁 추가. 전체 20종 통과, 카페 베이크 freshness 통과.
 - 브라우저 확인(로컬): navigator.gpu를 가린 주소에서 라디오 비활성·안내 표시·실사 iframe 미생성, `?lab=review`로도 원본 화면 유지·회전 정상. modern.js 404 주소에서 3.3초 만에 자동 복귀·알림 표시·원본 회전 정상, 닫기 동작. 정상 환경에서는 실사 화면 로딩(ready)·회전 정상, 되돌림 없음.
 - 남은 일: 공개 미리보기 배포는 사용자 확인 후. 윈도우·모바일 실제 기기 확인 미완. Wing 인계 문서·아티팩트의 '그래픽 가속이 꺼진 환경에서는 원본 화면으로 자동 대체됩니다' 문구는 이번 동작에 맞게 고칠 것.
+
+### D-11 배포와 공개 확인 — 2026-10-22
+- 패키지: `python3 tools/360/package-preview.py` (소스 f640fa6, 깨끗한 트리) → 156개 파일 82.2MB, 누락 로컬 참조 0.
+- 배포: evyfjae/kapehorn-3d-preview `69dbad8`(소스 f640fa6). 바뀐 파일은 integrated.js·scene.js·3d-model.html·index.html·preview-audit.json뿐. Pages build 69dbad8 built, error null.
+- 공개 확인(https://evyfjae.github.io/kapehorn-3d-preview/new/3d-model.html): ① 일반 주소는 스케치업으로 시작, '실사 3D' 선택 가능, 안내 숨김 ② `?lab=review`는 실사 화면 ready·회전 정상(카메라 -70.6,24,41.5) ③ 자식 창에 `TOWER_CINEMA_FAILURE`를 세워 실패를 흉내 내니 0.38초 만에 실사 화면 제거·원본 복귀·라디오 비활성·안내와 알림 표시, 복귀 후 원본 회전 정상.
+- 미지원 브라우저 실제 기기(사파리·윈도우·모바일) 확인은 사용자 쪽에서 필요. Wing 인계 문서·아티팩트의 '자동 대체' 문구는 아직 갱신하지 않았다.
