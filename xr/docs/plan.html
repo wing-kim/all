@@ -476,7 +476,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 </ul>
 <p class="small">완료 조건: 체험판의 모든 조작이 같은 주소에서 동작, 우리 버전의 프레임이 체험판보다 안정(수치 기록), 화면 모드 PC와 모바일 변화 없음. 사람 확인: Jack 착용으로 끊김 비교.</p></div>
 
-<div class="phase" id="p2"><h3>P2. 성능 <span class="pill todo">대기</span></h3>
+<div class="phase" id="p2"><h3>P2. 성능 <span class="pill ok">완료</span></h3>
 <p class="goal">퀘스트 3에서 모든 모드가 72fps를 유지합니다.</p>
 <ul class="chk">
 <li>비슷한 재질(같은 종류, 색, 맵, 투명도) 묶기로 그리기 호출 200회 미만 목표(상한 400회)</li>
@@ -486,7 +486,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li>10분 연속 사용 메모리 측정, 장면 재생성 반복 시 누수 없음</li>
 </ul></div>
 
-<div class="phase" id="p3"><h3>P3. 메뉴와 핸드 UI, 웹 전환 <span class="pill todo">대기</span></h3>
+<div class="phase" id="p3"><h3>P3. 메뉴와 핸드 UI, 웹 전환 <span class="pill acc">진행 중</span></h3>
 <p class="goal">7-1장 명세대로 VR 안에서 설정을 바꿔 가며 보고, 웹 화면과 자유롭게 오갑니다.</p>
 <ul class="chk">
 <li>XR 메뉴: 상단 모드 스위치(몰입, 피규어, 웹 화면으로), 탭 6개와 "기타", 사용자 앞 고정, 위치 옮기기</li>
@@ -730,6 +730,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>문서</td><td>v1.1: Wing 파일 수정 허용(Jack)에 따라 연결 통로 방식으로 구조 변경, Wing VR 체험판 분석과 흡수 계획, 성능 단계 앞당김, 병합 절차, 착수 전 검토. 브랜치를 최신 main(<code>ab4d257</code>) 위로 갱신</td><td><code>7d5d6a2</code></td></tr>
 <tr><td>2026-10-30</td><td>문서, 환경</td><td>v1.2: 조작과 메뉴 명세(7-1, Jack 착용 평가와 Meta 손 조작 지침 반영), 실행 방식(8-1), 미리보기 저장소 <code>evyfjae/kapehorn-preview</code> 구축과 첫 배포(12-1)</td><td>(이 커밋)</td></tr>
 <tr><td>2026-10-30</td><td>P1</td><td>연결 코드 [XR] 4곳(렌더러 alpha 포함), 연결 통로 기반 XR 계층, 체험판 조작 이식, 메뉴와 빠른 막대, 웹 이어받기. 미리보기 배포. 실기기 측정은 대기열</td><td><code>78f3375</code></td></tr>
+<tr><td>2026-10-30</td><td>P2</td><td>그리기 호출 외부 196, 내부 140, 피규어 162, 렌더 146(양안, 에뮬레이터). 꼭짓점 색 굽기 병합, 선분과 다중 재질 병합, 그림자 얼룩 해결. 스모크 테스트 17/17</td><td><code>1e9324c</code></td></tr>
 </tbody></table></div>
 </section>
 </main>
