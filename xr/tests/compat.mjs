@@ -54,6 +54,20 @@ try {
     ok('Q14 XR 줄이 모두 없어도 원본 정상', !r.layer && r.canvas && !r.btn && p.errs.length === 0, Object.assign(r, { errs: p.errs.slice(0, 3) }));
     await p.close();
   }
+  // P8: 패스스루가 없는 세션(비전 프로 WebXR 과 같은 조건) — 몰입과 가상 방 피규어
+  {
+    const p = await open(BASE + '/new/3d-model.html?xremu=1&xrsession=vr');
+    await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support, { timeout: 30000 });
+    const r = await p.evaluate(async () => {
+      const f = async n => { const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < n; i++) await new Promise(q => s.requestAnimationFrame(() => q())); };
+      await KHXRLayer.enter('vr'); await f(10); const vr = { sm: KHXRLayer.state.sessionMode, mode: KHXRLayer.state.mode };
+      KHXRLayer.setMode('fig'); await new Promise(r => setTimeout(r, 2200)); await f(5);
+      const fig = { mode: KHXRLayer.state.mode, room: !!(KHXRLayer.room.g && KHXRLayer.room.g.visible), placed: KHXRLayer.fig.placed, calls: KHXR.renderer.info.render.calls };
+      await KHXRLayer.exit(); return { vr, fig };
+    });
+    ok('P8 패스스루 없는 세션: 몰입과 가상 방 피규어', r.vr.sm === 'immersive-vr' && r.vr.mode === 'vr' && r.fig.mode === 'fig' && r.fig.room && r.fig.placed && p.errs.length === 0, Object.assign(r, { errs: p.errs.slice(0, 3) }));
+    await p.close();
+  }
   // Q13: 진입·종료 10회 메모리
   {
     const p = await open(BASE + '/new/3d-model.html?xremu=1');

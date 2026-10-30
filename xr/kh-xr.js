@@ -279,7 +279,8 @@
   // 몰입/피규어에 따른 배경 처리
   let bgSaved = null;
   function setVisualsFor(m) {
-    if (m === 'fig' && S.ar) {
+    Room.show(m === 'fig' && !S.ar);
+    if (m === 'fig') {
       if (!bgSaved) bgSaved = { bg: scene.background, fog: scene.fog };
       if (!hiddenBg.length) hideBig();
     } else if (bgSaved) {
@@ -287,6 +288,35 @@
       scene.background = bgSaved.bg; scene.fog = bgSaved.fog; bgSaved = null;
     }
   }
+  // 패스스루가 없을 때(비전 프로 WebXR, 퀘스트 xrsession=vr) 모형을 올려 둘 가상 방. rig 의 자식이라 실제 방 크기로 보인다
+  const Room = X.room = {
+    g: null, scene: null, root: null,
+    build() {
+      // 모형 자르기(clippingPlanes)에 잘리지 않게 별도 장면에 두고 먼저 그린다. root 는 매 프레임 rig 변환을 따른다
+      this.scene = new T.Scene(); this.root = new T.Group(); this.root.matrixAutoUpdate = false; this.scene.add(this.root);
+      const g = this.g = new T.Group(); g.userData.khxr = true; g.name = 'khxr-room';
+      const cv = document.createElement('canvas'); cv.width = 2; cv.height = 256; const c = cv.getContext('2d');
+      const gr = c.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#dfe5e8'); gr.addColorStop(0.55, '#c7ced2'); gr.addColorStop(1, '#8d969b'); c.fillStyle = gr; c.fillRect(0, 0, 2, 256);
+      const sky = new T.Mesh(new T.SphereGeometry(30, 32, 16), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), side: T.BackSide, depthWrite: false }));
+      sky.renderOrder = -10;
+      const floor = new T.Mesh(new T.CircleGeometry(6, 48).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x9aa3a8 }));
+      const grid = new T.GridHelper(12, 24, 0x7f888d, 0x8a9398); grid.position.y = 0.002;
+      const top = new T.Mesh(new T.BoxGeometry(1.2, 0.04, 0.8), new T.MeshBasicMaterial({ color: 0x6b5a48 }));
+      const leg = new T.Mesh(new T.BoxGeometry(1.1, 1, 0.7), new T.MeshBasicMaterial({ color: 0x4a3f35 }));
+      g.add(sky, floor, grid, top, leg); this.top = top; this.leg = leg;
+    },
+    show(on) {
+      if (on && !this.g) this.build();
+      if (!this.g) return;
+      if (this.g.parent !== this.root) this.root.add(this.g);
+      this.g.visible = on;
+    },
+    update() {   // 탁자는 모형 아래에
+      if (!this.g || !this.g.visible || !S.fig.pos) return;
+      this.root.matrix.copy(rig.matrixWorld); this.root.matrixWorldNeedsUpdate = true;
+      const p = S.fig.pos; this.top.position.set(p.x, p.y - 0.035, p.z); this.leg.scale.y = Math.max(0.05, p.y - 0.06); this.leg.position.set(p.x, (p.y - 0.06) / 2, p.z);
+    }
+  };
   function hideBig() {
     const box = new T.Box3(), sz = new T.Vector3();
     scene.traverse(o => {
@@ -322,7 +352,7 @@
       const line = new T.Line(new T.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 0, -1)]), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.75 }));
       line.scale.z = 3; line.visible = false; c.add(line);
       c.userData = { i, line, hand: i ? 'right' : 'left', src: null, aim: false, sq: false, hit: null, uiHit: null, isHand: false };
-      c.addEventListener('connected', e => { c.userData.src = e.data; c.userData.hand = e.data.handedness; c.userData.isHand = !!e.data.hand; line.visible = true; UI.detectInput(); });
+      c.addEventListener('connected', e => { c.userData.src = e.data; c.userData.hand = e.data.handedness; c.userData.isHand = !!e.data.hand; line.visible = e.data.targetRayMode !== 'transient-pointer'; UI.detectInput(); });
       c.addEventListener('disconnected', () => { line.visible = false; c.userData.src = null; });
       c.addEventListener('selectstart', () => onSelectStart(c));
       c.addEventListener('selectend', () => onSelectEnd(c));
@@ -342,14 +372,19 @@
     X.ray.ray.direction.set(0, 0, -1).applyMatrix4(m).normalize();
     return X.ray;
   }
-  function onSelectStart(c) {
-    const u = c.userData;
+  function onSelectStart(c) { c.userData.pending = true; }
+  function startSelect(c) {   // 포즈가 갱신된 프레임에서 실제 판정
+    const u = c.userData; u.pending = false;
+    if (!u.uiHit) { aim(c); const h = UI.raycast(X.ray); if (h) u.uiHit = h; }
     if (u.uiHit) { u.pressUI = u.uiHit; return; }
-    if (S.mode === 'vr') u.aim = true;
-    else if (S.mode === 'fig') { if (u.isHand) { u.pinchHold = true; Grab.update(); } else Fig.selectStart(c); }
+    if (S.mode === 'vr') { if (u.src && u.src.targetRayMode === 'transient-pointer') return; u.aim = true; }
+    else if (S.mode === 'fig') { if (u.isHand || (u.src && u.src.targetRayMode === 'transient-pointer')) { u.pinchHold = true; Grab.update(); } else Fig.selectStart(c); }
   }
   function onSelectEnd(c) {
     const u = c.userData;
+    if (u.pending) {   // 한 프레임 안에 누르고 뗀 짧은 탭: 지금 판정해서 메뉴만 누른다
+      u.pending = false; aim(c); const h = UI.raycast(X.ray); if (h) UI.activate(h); return;
+    }
     if (u.pressUI) { const h = u.pressUI; u.pressUI = null; if (u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
     if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
     if (S.mode === 'fig' && !u.isHand) { Fig.selectEnd(c); return; }
@@ -388,6 +423,7 @@
       aim(c);
       let len = 3;
       const uh = UI.raycast(X.ray); if (uh) { u.uiHit = uh; len = uh.distance; }
+      if (u.pending) startSelect(c);
       if (!uh && u.aim && S.mode === 'vr') {
         const r = arc(X.ray.ray.origin, X.ray.ray.direction);
         u.hit = r.ok ? r.point : null; u.arcPts = r.pts; len = 0.3;
@@ -458,11 +494,15 @@
     if (S.opt) Opt.check(time);
     // 피규어: 배경 비우고 대지 주변만
     let cp0 = null;
-    if (S.mode === 'fig' && S.ar) { scene.background = null; scene.fog = null; R.setClearAlpha(0); cp0 = R.clippingPlanes; R.clippingPlanes = cropPlanes(); }
+    if (S.mode === 'fig') { scene.background = null; scene.fog = null; R.setClearAlpha(S.ar ? 0 : 1); cp0 = R.clippingPlanes; R.clippingPlanes = cropPlanes(); }
     else if (S.ar) R.setClearAlpha(1);
     xrCam.near = S.mode === 'fig' ? 0.02 : 0.08; xrCam.far = S.mode === 'fig' ? 60 : 5000;
     rig.updateMatrixWorld(true);
-    R.render(scene, xrCam);
+    if (Room.g && Room.g.visible) {
+      Room.update(); const cpR = R.clippingPlanes; R.clippingPlanes = [];
+      R.render(Room.scene, xrCam);
+      R.clippingPlanes = cpR; const ac = R.autoClear; R.autoClear = false; R.render(scene, xrCam); R.autoClear = ac;
+    } else R.render(scene, xrCam);
     if (cp0) R.clippingPlanes = cp0;
   }
 
@@ -1034,7 +1074,7 @@
     let quickToast = '', quickToastT = 0;
     function detectInput() {
       if (!S.session) return;
-      const hands = [...S.session.inputSources].some(s => s.hand);
+      const hands = [...S.session.inputSources].some(s => s.hand || s.targetRayMode === 'transient-pointer');
       const was = S.input; S.input = hands ? 'hand' : 'controller';
       if (was !== S.input) { log('입력', S.input); if (open) openMenu(); }
     }
