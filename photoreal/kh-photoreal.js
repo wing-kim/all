@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1030.d';
+  const VER = '1030.e';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -39,7 +39,7 @@
   /* ================= 1. 자산 ================= */
   function prefetch() {
     const c = navigator.connection; if (c && (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || ''))) { log('미리받기 생략(절약 모드)'); return; }
-    const q0 = f => BASE + f + (/^(bake|codex)\//.test(f) ? '?v=' + VER : '');
+    const q0 = f => BASE + f + (/^(bake|codex|context)\//.test(f) ? '?v=' + VER : '');
     fetch(BASE + 'prefetch.json?v=' + VER).then(r => r.ok ? r.json() : null).then(async j => {
       if (!j) return; const q = j.files.slice(), t0 = now(); PR.pre = { n: q.length, done: 0, bytes: j.bytes };
       const worker = async () => { while (q.length) { const f = q.shift(); try { const r = await fetch(q0(f), { priority: 'low' }); await r.arrayBuffer(); } catch (e) {} PR.pre.done++; } };
@@ -396,10 +396,10 @@
   }
   // 주변 건물: Wing의 창 패턴 캔버스(거리뷰 기준)를 4배 해상도로 다시 그리고 벽 질감·창 반사(금속성·거칠기 맵)를 더한다
   const FAC = new Map();
-  function facadeMat(orig) {
+  function facadeMat(orig, winK = 0.62) {
     const src = orig.map, img = src.image;
     if (img === K.TEX.brick.image) { const m = texMat('brick', 1.0, { ns: 1.1, env: 0.4 }); return m; }
-    let f = FAC.get(img);
+    const fs = FAC.get(img) || {}; FAC.set(img, fs); let f = fs[winK];   // 같은 캔버스라도 창 밝기(winK)별로 따로
     if (!f) {
       const w = img.width, h = img.height, S = Math.max(1, Math.round(256 / Math.max(w, h)));
       const sd = img.getContext('2d').getImageData(0, 0, w, h).data, W = w * S, H = h * S;
@@ -410,7 +410,7 @@
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const i = ((y / S | 0) * w + (x / S | 0)) * 4, r = sd[i], g = sd[i + 1], b = sd[i + 2], lum = 0.3 * r + 0.59 * g + 0.11 * b, win = b > r + 6 && lum < 190;
         const o = (y * W + x) * 4; const n = (rnd() - 0.5) * (win ? 6 : 16), st = win ? 0 : Math.sin(x * 0.7 + rnd()) * 2;
-        const k = win ? 0.62 : 1;   // 창은 어둡게(실제 유리는 안이 어둡다), 반사는 환경맵이 맡는다
+        const k = win ? winK : 1;   // 창은 어둡게(실제 유리는 안이 어둡다), 반사는 환경맵이 맡는다
         co.data[o] = Math.max(0, Math.min(255, r * k + n + st)); co.data[o + 1] = Math.max(0, Math.min(255, g * k + n + st)); co.data[o + 2] = Math.max(0, Math.min(255, b * k + n + st)); co.data[o + 3] = 255;
         // 거칠기(G)·금속성(B): 창 0.06/0.6, 벽 0.85/0
         ro.data[o] = 0; ro.data[o + 1] = win ? 16 : 215 + rnd() * 30; ro.data[o + 2] = win ? 150 : 0; ro.data[o + 3] = 255;
@@ -425,7 +425,7 @@
         no.data[o] = (nx / l * 0.5 + 0.5) * 255; no.data[o + 1] = (ny / l * 0.5 + 0.5) * 255; no.data[o + 2] = (1 / l * 0.5 + 0.5) * 255; no.data[o + 3] = 255;
       }
       ng.putImageData(no, 0, 0);
-      f = { c: cc, r: rc, n: nc }; FAC.set(img, f);
+      f = fs[winK] = { c: cc, r: rc, n: nc };
     }
     const mk = (c, srgb) => { const t = new T.CanvasTexture(c); t.wrapS = src.wrapS; t.wrapT = src.wrapT; t.repeat.copy(src.repeat); t.offset.copy(src.offset); t.anisotropy = isMobile ? 4 : 8; if (srgb) t.encoding = T.sRGBEncoding; return t; };
     const m = std({ map: mk(f.c, true), roughnessMap: mk(f.r), metalnessMap: mk(f.r), normalMap: mk(f.n), roughness: 1, metalness: 1, color: orig.color.clone() });
@@ -544,6 +544,7 @@
     if (R3D.sky) R3D.sky.visible = !useSky;
     if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
     if (DIST) DIST.visible = !K.I.on || !inBase;
+    if (CTX.now && CTX.detached.length) { const nw = K.state.era === 'new'; CTX.now.visible = !nw; CTX.next.visible = nw; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
     // 층 묶음은 원본이 재건할 때마다 새로 생기므로 층 이름으로 매번 찾는다
@@ -687,7 +688,8 @@
     tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; if (K.R3D.season === 'autumn') m.color.setRGB(1.08, 1.0, 0.82); } m.userData.lin = true; m.needsUpdate = true; } });
     const walk = px => 1365 - 0.3604 * (px - 230) + 305;
     // 예전 위치에서 압구정로 쪽 우리 건물 앞(x=120, y 0～1365) 네 그루는 뺐다
-    [[1550, walk(1550)], [120, -690], [120, -1000], [120, -1500], [-1240, 200], [-1240, 650], [-1240, 1050], [-1240, -690], [1850, walk(1850)], [2200, walk(2200)], [2550, walk(2550)], [-1240, 1550], [-1240, -1000]].forEach((q, i) => {
+    // 압구정로 건너편 보도(x=-1240)도 우리 건물 정면(y -200～1400)을 가리는 세 그루는 뺐다
+    [[1550, walk(1550)], [120, -690], [120, -1000], [120, -1500], [-1240, -690], [1850, walk(1850)], [2200, walk(2200)], [2550, walk(2550)], [-1240, 1550], [-1240, -1000]].forEach((q, i) => {
       const t = tree.clone(true), s = (9.2 + (i % 3) * 0.8) / h; t.scale.setScalar(s);
       const [x, z] = K.P(q[0], q[1]); t.position.set(x, 0.18, z); t.rotation.y = i * 2.399; g.add(t);
     });
@@ -729,6 +731,42 @@
     im.receiveShadow = false; im.castShadow = false; im.userData.prSkip = true; im.frustumCulled = false;
     DIST = im; DIST.name = 'pr-distant'; scene.add(DIST);
   }
+  /* ================= 6-3. 주변 건물(실측) =================
+     photoreal/context/(주변 건물 세션 산출물): 브이월드 건물정보·OSM 외곽선·카카오 로드뷰로 정한 3,888동(근경 258, 원경 3,630).
+     Wing 의 근사 주변 건물 덩어리는 실사 3D 동안 장면에서 떼어 두고(끄면 되돌림), 신축 모드에서는 Wing 이 가정한
+     미성아파트 재건축 고층 동(100m 이상)을 살리고 실측 자료의 현재 미성 단지는 뺀다. */
+  const CTX = { p: null, now: null, next: null, detached: [] };
+  function inPolyW(p, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, zi] = poly[i], [xj, zj] = poly[j]; if ((zi > p[1]) !== (zj > p[1]) && p[0] < (xj - xi) * (p[1] - zi) / (zj - zi) + xi) c = !c; } return c; }
+  function ctxLoad() {
+    return CTX.p || (CTX.p = loadScript(BASE + 'context/kh-context.js?v=' + VER).then(async () => {
+      const url = BASE + 'context/buildings.json?v=' + VER;
+      const area = [[[-9400, -480], [-1430, -480], [-1430, 10400], [-9400, 10400]], [[-10700, -5100], [-5600, -5100], [-5600, -480], [-10700, -480]]].map(q => q.map(p => K.P(p[0], p[1])));
+      const redev = b => { const o = b.outline, c = [o.reduce((s, q) => s + q[0], 0) / o.length, o.reduce((s, q) => s + q[1], 0) / o.length]; return area.some(a => inPolyW(c, a)) && b.cls === 'apt'; };
+      CTX.now = await window.KHContext.load(url, { near: true, far: true });
+      CTX.next = await window.KHContext.load(url, { near: true, far: true, filter: b => !redev(b) });
+      // 창 패턴 캔버스 재질에 실사 보강(창 반사·벽 질감·창 깊이). 건물 색은 꼭짓점 색
+      const up = new Map();
+      [CTX.now, CTX.next].forEach(g => { g.name = 'pr-context'; g.traverse(o => {
+        if (!o.isMesh) return; o.castShadow = o.receiveShadow = true; const m0 = o.material;
+        if (m0 && m0.map && m0.map.image && m0.map.image.getContext) { let m = up.get(m0); if (!m) { m = facadeMat(m0, 1.25); m.vertexColors = true; m.color.set(0xffffff); m.userData.lin = true; keepEnv(m); up.set(m0, m); } o.material = m; }
+      }); });
+      PR.stat.context = CTX.now.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', CTX.now.userData.stats.buildings + '동');
+      if (PR.on) ctxOn();
+    }).catch(e => log('주변 건물 실패', e && e.message)));
+  }
+  function ctxOn() {
+    if (!CTX.now || CTX.detached.length) return;
+    [K.city, K.ctx].forEach(root => {
+      const list = []; root.traverse(o => { if (o.isMesh && Array.isArray(o.material)) list.push(o); });
+      list.forEach(o => { const b = new T.Box3().setFromObject(o); if (b.max.y - b.min.y > 100) return; const p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
+    });
+    scene.add(CTX.now); scene.add(CTX.next);
+    if (DIST) DIST.parent && DIST.parent.remove(DIST);
+  }
+  function ctxOff() {
+    CTX.detached.forEach(([p, o]) => p.add(o)); CTX.detached = [];
+    if (CTX.now) scene.remove(CTX.now); if (CTX.next) scene.remove(CTX.next);
+  }
   /* ================= 7. 켜기·끄기 ================= */
   async function enable(on) {
     if (on === PR.on) return;
@@ -746,13 +784,13 @@
       PR.t.firstApply = Math.round(now() - PR.t.enable0);
       requestAnimationFrame(() => requestAnimationFrame(() => { PR.t.firstFrame = Math.round(now() - PR.t.enable0); statLine(); }));
       panel(true);
-      distantCity();
-      loadEnv(); envAssets(); loadBake();
+      if (!CTX.now) distantCity();
+      loadEnv(); envAssets(); loadBake(); ctxLoad().then(() => PR.on && ctxOn());
     } else {
       PR.on = false;
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
-      envOff();
+      envOff(); ctxOff();
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
@@ -809,7 +847,7 @@
       PNL.innerHTML = `<b>실사 3D · 우선 조합</b> <span style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
-<small id="pr-stat">준비 중</small>`;
+<small id="pr-stat">준비 중</small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
       document.getElementById('viewer').appendChild(PNL);
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
