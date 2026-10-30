@@ -60,7 +60,27 @@ node xr.mjs                # IWER 퀘스트 3 에뮬레이터로 XR 그리기 �
 | `models/office-diningchair.glb` | Sketchfab "Dining_chair_241120" ([링크](https://sketchfab.com/3d-models/none-a5aa4613bc5b46baba4d9254d6c9c038)) | 3D Error 404 | CC BY 4.0 |
 | `models/office-pottedtree.glb` | Sketchfab "Potted Tree" ([링크](https://sketchfab.com/3d-models/none-dd6c9d90421b4a99acdfebbddd4ccf75)) | dylanheyes | CC BY 4.0 |
 | `models/office-plantB.glb` | Sketchfab "Potted Plant, Mediterranean med leaf, low poly" ([링크](https://sketchfab.com/3d-models/none-bc7f26baef2a45d18dbd9a5d6d2ec565)) | dudecon | CC BY 4.0 |
+| `tex/sunset-sky_1k.hdr` | Poly Haven [Qwantani Sunset (Pure Sky)](https://polyhaven.com/a/qwantani_sunset_puresky) | Greg Zaal, Jarod Guest | CC0 |
+| `tex/night-sky_1k.hdr` | Poly Haven [Qwantani Night (Pure Sky)](https://polyhaven.com/a/qwantani_night_puresky) | Greg Zaal, Jarod Guest | CC0 |
+| `assets/cars/car-bmwe90.glb` | Sketchfab "BMW 320i E90 Low Polly" ([링크](https://sketchfab.com/3d-models/none-28f0bc2f0083417a8e521150529034d6)) | rifdanzz | CC BY 4.0 |
+| `assets/cars/car-renegade.glb` | Sketchfab "Jeep Renegade 2016" ([링크](https://sketchfab.com/3d-models/none-192f7e81dce84c6780434f692a0f96c5)) | pinceladas3d | CC BY 4.0 |
+| `assets/cars/car-kiri10.glb` | Sketchfab "Kiri '10 - Low poly model" ([링크](https://sketchfab.com/3d-models/none-7fd6e15785fa4aa9bfd6e31eb7c97ba6)) | DanielZhabotinsky | CC BY 4.0 |
+| `assets/cars/car-modelS.glb` | Sketchfab "Tesla Model S(civ)" ([링크](https://sketchfab.com/3d-models/none-565ff2a0b1b64637bfafb7f6ef1a4085)) | David_Holiday | CC BY 4.0 |
+| `assets/cars/car-ace11.glb` | Sketchfab "Ace '11 - Low Poly model" ([링크](https://sketchfab.com/3d-models/none-055ff8a21b8d4d279debca089e2fafcd)) | DanielZhabotinsky | CC BY 4.0 |
+| `assets/` 나머지 (가구·가로수·식물·사무실 바닥 텍스처) | 예전 실사 3D 자산 그대로. 출처는 `assets/README.md` | 각 파일 참조 | CC0, CC BY 4.0 |
 | `vendor/GLTFLoader.js`, `DRACOLoader.js`, `RGBELoader.js` | three.js r128 examples | three.js authors | MIT (`vendor/THREE-LICENSE.txt`) |
 | `vendor/draco/` | Google Draco 디코더 | Google | Apache 2.0 (`vendor/draco/LICENSE`) |
 
 CC BY 4.0 모델은 출처 표기가 의무이며, 이 표로 표기합니다(https://creativecommons.org/licenses/by/4.0/). 가구 모델과 일부 텍스처는 예전 실사 3D 작업(`codex/tower-360-validation` 브랜치 `new/360/assets/`)에서 같은 파일을 가져왔고, 그쪽 출처 기록과 같습니다. 모두 검토용 표현이며 실제 마감·가구 사양이 아닙니다.
+
+차량 5종은 Objaverse(allenai/objaverse, Hugging Face)의 같은 uid 파일을 받아 glTF-Transform 4.1.1로 텍스처 512px WebP, 면 수 단순화(레니게이드 제외), Draco 압축했습니다. 형상은 바꾸지 않고 축척과 방향만 맞춥니다.
+
+## 빛 굽기 (photoreal/tools/bake/)
+
+```bash
+node tools/bake/export.mjs <작업폴더> glass                 # 현재 우선 조합 장면을 glTF·층 정보·시간대별 태양으로 내보내기
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup -P tools/bake/bake.py -- <작업폴더> photoreal/bake --samples 32 --res 160
+python3 tools/prefetch-list.py                              # 미리받기 목록 갱신
+```
+
+Blender Cycles로 층마다 바닥 위·천장 아래 판이 받는 조도를 오전·오후·석양·야간 4개 시간대로 굽고, 시간대별 아틀라스 PNG 한 장으로 저장합니다. 해의 직사광은 실행 화면의 그림자 맵이 그리므로 굽기에서 뺍니다(낮: 하늘 직접광 + 해·하늘 반사광, 야간·지하: 조명 직접광 + 반사광). 평면 좌표로만 쓰므로 외장을 바꿔도 다시 굽지 않고, 층고가 바뀌면 같은 층 굽기를 늘려 씁니다. 1층 평면안, 주차 방식, 층수처럼 층 배치가 바뀌는 조합은 굽기 대상 조합의 값을 근사로 씁니다.

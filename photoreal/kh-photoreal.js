@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1030.c';
+  const VER = '1030.d';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -31,10 +31,22 @@
     PR.K = K;
     ui();
     scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (PR.on) frame(); }; })(scene.onBeforeRender);
+    // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다
+    setTimeout(prefetch, Q.get('pr') === '1' ? 0 : 2500);
     if (Q.get('pr') === '1') { await new Promise(r => setTimeout(r, 300)); preset(Q.get('pf') || 'glass'); enable(true).then(() => { const lv = Q.get('lv'); if (lv) goLevel(lv); }); }
   }
 
   /* ================= 1. 자산 ================= */
+  function prefetch() {
+    const c = navigator.connection; if (c && (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || ''))) { log('미리받기 생략(절약 모드)'); return; }
+    const q0 = f => BASE + f + (/^(bake|codex)\//.test(f) ? '?v=' + VER : '');
+    fetch(BASE + 'prefetch.json?v=' + VER).then(r => r.ok ? r.json() : null).then(async j => {
+      if (!j) return; const q = j.files.slice(), t0 = now(); PR.pre = { n: q.length, done: 0, bytes: j.bytes };
+      const worker = async () => { while (q.length) { const f = q.shift(); try { const r = await fetch(q0(f), { priority: 'low' }); await r.arrayBuffer(); } catch (e) {} PR.pre.done++; } };
+      await Promise.all([worker(), worker(), worker()]); PR.pre.ms = Math.round(now() - t0); log('미리받기 완료', PR.pre.ms + 'ms', Math.round(j.bytes / 1e6) + 'MB');
+    }).catch(() => {});
+  }
+
   let vendorP = null;
   function vendor() {
     return vendorP || (vendorP = Promise.all(['RGBELoader.js', 'GLTFLoader.js', 'DRACOLoader.js'].map(f => loadScript(BASE + 'vendor/' + f))));
@@ -66,17 +78,43 @@
   }
   // 하늘 HDR(Poly Haven, CC0) → PMREM. 받기 전에는 Wing 렌더 모드의 하늘 반사를 그대로 쓴다
   let envDay = null, envPark = null, envP = null, skyBG = null;
-  function loadEnv() {
-    if (envP) return envP;
-    envP = vendor().then(() => new Promise(res => {
-      new T.RGBELoader().setDataType(T.HalfFloatType).load(BASE + 'tex/daylight-sky_1k.hdr', h => {
-        const pm = new T.PMREMGenerator(R); envDay = pm.fromEquirectangular(h).texture; pm.dispose();
-        // 배경: 같은 하늘 사진(구름 포함)을 큐브로 바꿔 Wing 의 하늘 셰이더 대신 쓴다(낮 시간대만)
-        skyBG = new T.WebGLCubeRenderTarget(isMobile ? 512 : 1024, { type: T.HalfFloatType }).fromEquirectangularTexture(R, h).texture; h.dispose();
-        PR.t.env = Math.round(now() - PR.t.enable0); log('하늘 HDR', PR.t.env + 'ms'); res();
-      }, undefined, () => { log('하늘 HDR 실패'); res(); });
-    }));
-    return envP;
+  // 시간대별 하늘 사진(Poly Haven CC0): 낮(오전·오후), 석양, 야간. 사진 속 해(가장 밝은 화소)를 Wing 의 실제 태양 방위에 맞춰 돌린 뒤
+  // 배경 큐브와 환경광(PMREM)을 만든다. 시간대나 날짜·시각으로 해 방위가 바뀌면(5° 이상) 다시 만든다(약 30～60ms).
+  const SKY = { day: 'daylight-sky_1k.hdr', sunset: 'sunset-sky_1k.hdr', night: 'night-sky_1k.hdr' }, SKYD = {};
+  let skyCur = { key: '', az: 999, busy: false };
+  const half = h => { const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023; return e === 0 ? s * 6.1035e-5 * (f / 1024) : e === 31 ? 0 : s * Math.pow(2, e - 15) * (1 + f / 1024); };
+  function skyLoad(key) {
+    if (SKYD[key]) return SKYD[key];
+    return (SKYD[key] = vendor().then(() => new Promise(res => new T.RGBELoader().setDataType(T.HalfFloatType).load(BASE + 'tex/' + SKY[key], h => {
+      // 사진 속 해의 가로 위치(u): 위쪽 절반에서 가장 밝은 열
+      const { width: w, height: hh, data } = h.image; let best = -1, bu = 0.5;
+      for (let y = 0; y < hh / 2; y += 2) for (let x = 0; x < w; x += 2) { const i = (y * w + x) * 4, v = half(data[i]) + half(data[i + 1]) + half(data[i + 2]); if (v > best) { best = v; bu = x / w; } }
+      h.magFilter = h.minFilter = T.LinearFilter; h.generateMipmaps = false;
+      res({ tex: h, sunU: bu });
+    }, undefined, () => { log('하늘 실패', key); res(null); }))));
+  }
+  function loadEnv() { return skyLoad('day'); }
+  async function skyUpdate() {
+    const R3D = K.R3D, slot = bakeSlot(), key = slot === 'night' ? 'night' : slot === 'sunset' ? 'sunset' : 'day';
+    const d = K.sun.position, azW = Math.atan2(d.z, d.x);
+    if (skyCur.busy || (key === skyCur.key && Math.abs(azW - skyCur.az) < 0.09)) return;
+    skyCur.busy = true;
+    const sd = await skyLoad(key); if (!sd) { skyCur.busy = false; return; }
+    // 구 안쪽에 사진을 입혀 돌린 장면 → 큐브 카메라(배경) → PMREM(환경광)
+    const sc = new T.Scene(), geo = new T.SphereGeometry(100, 64, 32), mat = new T.MeshBasicMaterial({ map: sd.tex, side: T.BackSide, depthWrite: false });
+    mat.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]);   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
+    const sph = new T.Mesh(geo, mat); sph.rotation.y = (Math.PI - 2 * Math.PI * sd.sunU) - azW; sc.add(sph);
+    const size = isMobile ? 512 : 1024;
+    if (!skyCur.rt) { skyCur.rt = new T.WebGLCubeRenderTarget(size, { type: T.HalfFloatType, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter }); skyCur.cam = new T.CubeCamera(1, 1000, skyCur.rt); }
+    const keepTM = R.toneMapping, keepEnc = R.outputEncoding; R.toneMapping = T.NoToneMapping; R.outputEncoding = T.LinearEncoding;
+    skyCur.cam.update(R, sc);
+    const pm = new T.PMREMGenerator(R), env = pm.fromScene(sc, 0).texture; pm.dispose();
+    R.toneMapping = keepTM; R.outputEncoding = keepEnc;
+    geo.dispose(); mat.dispose();
+    if (skyCur.env && skyCur.env !== env) skyCur.env.dispose && skyCur.env.dispose();
+    skyCur.env = env; skyBG = skyCur.rt.texture; envDay = env;
+    skyCur.key = key; skyCur.az = azW; skyCur.busy = false;
+    if (PR.t.env == null && PR.t.enable0) { PR.t.env = Math.round(now() - PR.t.enable0); log('하늘', PR.t.env + 'ms'); }
   }
   // 지하 주차장 반사용 환경: 어두운 천장 + 밝은 LED 줄 + 베이지 벽(실행 중 PMREM, 약 20ms)
   function parkEnv() {
@@ -130,9 +168,19 @@
       if (o.light) {
         U.prAmb = { value: o.light.amb || new T.Color(0, 0, 0) };
         U.prK = { value: o.light.k || 0 };
-        let dec = 'uniform vec3 prAmb;uniform float prK;\n', add = 'irradiance+=prAmb*PI;';
-        if (o.light.lm) { U.prLM = { value: o.light.lm }; U.prBox = { value: o.light.box }; dec += 'uniform sampler2D prLM;uniform vec4 prBox;\n'; add += 'irradiance+=texture2D(prLM,(vPrW.xz-prBox.xy)*prBox.zw).rgb*prK*PI*(normalize(vPrN).y<-0.5?0.12:1.0);'; }
+        // 굽기(BAKE.u)는 모든 실내 재질이 같은 uniform 객체를 공유한다: 시간대·층이 바뀌면 한 번만 바꾸면 된다
+        Object.assign(U, { prBake: BAKE.u.tex, prBakeK: BAKE.u.k, prBakeOn: BAKE.u.on, prLv: BAKE.u.lv, prLvBox: BAKE.u.box, prLvN: BAKE.u.n, prAtlas: BAKE.u.atlas });
+        let dec = 'uniform vec3 prAmb;uniform float prK;uniform sampler2D prBake;uniform float prBakeK;uniform float prBakeOn;uniform vec4 prLv[16];uniform vec4 prLvBox[16];uniform int prLvN;uniform vec2 prAtlas;\n';
+        let add = 'float prFill=1.0-0.85*prBakeOn;irradiance+=prAmb*PI*prFill;';
+        if (o.light.lm) { U.prLM = { value: o.light.lm }; U.prBox = { value: o.light.box }; dec += 'uniform sampler2D prLM;uniform vec4 prBox;\n'; add += 'irradiance+=texture2D(prLM,(vPrW.xz-prBox.xy)*prBox.zw).rgb*prK*PI*prFill*(normalize(vPrN).y<-0.5?0.12:1.0);'; }
         if (o.light.cove) { U.prCove = { value: o.light.cove }; dec += 'uniform vec4 prCove;\n'; add += 'irradiance+=vec3(1.0,0.82,0.62)*prCove.z*PI*smoothstep(prCove.x,prCove.y,vPrW.y);'; }
+        // 구운 조도: 표면 높이로 층을 찾고(층 바닥～천장), 바닥 타일(위를 받는 빛)과 천장 타일(아래를 받는 빛)을 법선으로 섞는다
+        add += `if(prBakeOn>0.5){vec4 lv=vec4(0.0);vec4 bx=vec4(0.0);bool hit=false;
+  for(int i=0;i<16;i++){if(i>=prLvN)break;vec4 q=prLv[i];if(vPrW.y>=q.x-0.4&&vPrW.y<q.y+0.45){lv=q;bx=prLvBox[i];hit=true;}}
+  if(hit){vec2 uv=clamp(vec2((vPrW.x-bx.x)*bx.z,1.0-(vPrW.z-bx.y)*bx.w),0.004,0.996);
+    vec2 tf=vec2(mod(lv.z,prAtlas.x),floor(lv.z/prAtlas.x)),tc=vec2(mod(lv.w,prAtlas.x),floor(lv.w/prAtlas.x));
+    vec3 ef=pow(texture2D(prBake,(tf+uv)/prAtlas).rgb,vec3(2.2)),ec=pow(texture2D(prBake,(tc+uv)/prAtlas).rgb,vec3(2.2));
+    irradiance+=mix(ec,ef,clamp(normalize(vPrN).y*0.5+0.5,0.0,1.0))*prBakeK;iblIrradiance*=0.25;}}`;
         fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\n' + dec);
         fs = fs.replace('#include <lights_fragment_maps>', '#include <lights_fragment_maps>\n' + add);
       }
@@ -152,6 +200,49 @@
     mat.needsUpdate = true;
     return mat;
   }
+
+  /* ================= 2-1. 구운 빛 (Blender Cycles, 시간대 4개) =================
+     photoreal/bake/manifest.json 과 시간대별 아틀라스(bake-am|pm|sunset|night.png). 만드는 법은 photoreal/tools/bake/.
+     Wing 의 시간대(오전·오후·석양·야간)를 따르고, 날짜·시각을 직접 고르면 해 높이로 가장 가까운 시간대를 쓴다. */
+  const BAKE = { man: null, tex: {}, slot: null, sig: '', gain: { am: 1, pm: 1, sunset: 1, night: 1 },
+    u: { tex: { value: null }, k: { value: 0 }, on: { value: 0 }, lv: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, box: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, 0, 1, 1)) }, n: { value: 0 }, atlas: { value: new THREE.Vector2(1, 1) } } };
+  let bakeP = null;
+  function loadBake() {
+    return bakeP || (bakeP = fetch(BASE + 'bake/manifest.json?v=' + VER).then(r => r.ok ? r.json() : null).then(m => { BAKE.man = m; if (m) { BAKE.u.atlas.value.set(m.cols, m.rows); log('굽기 목록', Object.keys(m.slots).join(',')); } }).catch(() => log('굽기 없음')));
+  }
+  function bakeSlot() {
+    const R3D = K.R3D;
+    if (!R3D.custom) return R3D.time;
+    const c = R3D.sunNow; if (!c || c.el < -2) return 'night'; if (c.el < 7) return 'sunset'; return (R3D.ch || 12) < 12 ? 'am' : 'pm';
+  }
+  function bakeTex(slot) {
+    if (BAKE.tex[slot]) return BAKE.tex[slot];
+    const info = BAKE.man.slots[slot]; if (!info) return null;
+    const t = BAKE.tex[slot] = new T.Texture(); t.encoding = T.LinearEncoding; t.generateMipmaps = false; t.minFilter = T.LinearFilter; t.magFilter = T.LinearFilter; t.userData = { ready: false };
+    const img = new Image(); img.onload = () => { t.image = img; t.needsUpdate = true; t.userData.ready = true; if (PR.t.bake == null && PR.t.enable0) PR.t.bake = Math.round(now() - PR.t.enable0); }; img.src = BASE + 'bake/' + info.file + '?v=' + VER;
+    return t;
+  }
+  // 매 프레임: 시간대·층 배치가 바뀌었을 때만 uniform 을 바꾼다
+  function bakeUpdate() {
+    const m = BAKE.man; if (!m) { BAKE.u.on.value = 0; return; }
+    const slot = bakeSlot(), t = bakeTex(slot);
+    const sig = slot + '|' + K.LEVELS.map(l => l.key + K.floorTop(l).toFixed(2) + K.ceilOf(l).toFixed(2)).join(',');
+    if (t && t.userData.ready && sig !== BAKE.sig) {
+      BAKE.sig = sig; BAKE.slot = slot;
+      BAKE.u.tex.value = t; BAKE.u.k.value = m.slots[slot].scale * (BAKE.gain[slot] || 1);
+      let n = 0;
+      K.LEVELS.forEach(L => {
+        if (n >= 16 || L.kind === 'roof') return;
+        const b = m.levels.find(q => q.key === L.key) || m.levels.filter(q => q.kind === L.kind).pop(); if (!b) return;
+        // 층고가 바뀌어도 같은 층의 굽기를 늘려 쓴다(현재 층의 바닥·천장 높이 + 굽기의 평면 범위)
+        BAKE.u.lv.value[n].set(K.floorTop(L), K.ceilOf(L), b.tile[0], b.tile[1]);
+        const [x0, z0, x1, z1] = b.box; BAKE.u.box.value[n].set(x0, z0, 1 / (x1 - x0), 1 / (z1 - z0)); n++;
+      });
+      BAKE.u.n.value = n;
+    }
+    BAKE.u.on.value = BAKE.u.tex.value && BAKE.u.tex.value.userData.ready ? 1 : 0;
+  }
+  PR.bake = BAKE;
 
   /* ================= 3. 재질 처방 ================= */
   const lin = h => new T.Color(h).convertSRGBToLinear();
@@ -235,6 +326,10 @@
       if (orig === M.corewall || orig === M.core || orig === M.wellwall) return env(texMat('plaster-white', 1.2, { tint: 0xe3ddd2, ns: 0.3, light: { amb: new T.Color(0.25, 0.24, 0.23) } }), 0.4);
       // LED 줄 조명: 화면에서 빛나 보이게 밝기를 1 이상으로(블룸·톤매핑 기준)
       if (orig === BM2.light) { const m = new T.MeshBasicMaterial({ color: new T.Color(1, 0.98, 0.94).multiplyScalar(4) }); m.userData.lin = true; return m; }
+      // 장애인 주차 구역: 파란 바닥 도장(조명 받음)과 선명한 국제 장애인 표지(KS 표지 형태 근사), 경형 표시
+      if (orig === K.DISM) return env(paint(0x2b63c6, 0.42, 0.5, Lp));
+      if (orig.map && K.DIST && orig.map === K.DIST) return markMat('isa', Lp);
+      if (orig.map && K.KEIT && orig.map === K.KEIT) return markMat('kei', Lp);
       if (K.CARC.includes(orig)) return env(patch(Object.assign(std({ color: orig.color.clone(), metalness: 0.35, roughness: 0.25 }), { envMapIntensity: 1.4 }), { light: { amb: new T.Color(0.12, 0.12, 0.12), lm: LT.lm, box: LT.box, k: 0.4 } }));
       return null;
     }
@@ -257,6 +352,29 @@
       return null;
     }
     return null;
+  }
+  // 바닥 표시 글씨·기호: 큰 캔버스에 다시 그려 가까이서도 선명하게(투명 배경, 바닥 도장 위에 얹힘)
+  const MARK = {};
+  function markTex(kind) {
+    if (MARK[kind]) return MARK[kind];
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const g = c.getContext('2d');
+    g.clearRect(0, 0, 1024, 512); g.fillStyle = '#ffffff'; g.strokeStyle = '#ffffff'; g.lineCap = 'round'; g.lineJoin = 'round';
+    if (kind === 'isa') {
+      // 휠체어 표지: 머리, 몸, 팔, 다리, 바퀴
+      const x = 300, y = 250, s = 1.0;
+      g.beginPath(); g.arc(x - 20 * s, y - 150 * s, 30 * s, 0, 7); g.fill();
+      g.lineWidth = 34 * s; g.beginPath(); g.moveTo(x - 30 * s, y - 100 * s); g.lineTo(x - 40 * s, y + 10 * s); g.lineTo(x + 70 * s, y + 10 * s); g.lineTo(x + 110 * s, y + 110 * s); g.stroke();
+      g.beginPath(); g.moveTo(x - 35 * s, y - 50 * s); g.lineTo(x + 50 * s, y - 50 * s); g.stroke();
+      g.lineWidth = 26 * s; g.beginPath(); g.arc(x - 30 * s, y + 70 * s, 95 * s, -1.1, 4.0); g.stroke();
+      g.font = '700 150px "IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif'; g.textBaseline = 'middle'; g.fillText('장애인', 500, 200); g.font = '600 92px "IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif'; g.fillText('전용', 520, 350);
+    } else {
+      g.font = '700 260px "IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#f2c230'; g.fillText('경형', 512, 270);
+    }
+    const t = new T.CanvasTexture(c); t.anisotropy = 8; t.encoding = T.sRGBEncoding; return (MARK[kind] = t);
+  }
+  function markMat(kind, Lp) {
+    const m = std({ map: markTex(kind), transparent: true, alphaTest: 0.02, roughness: 0.5, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+    m.envMap = parkEnv(); return patch(m, { light: Lp });
   }
   function matFor(orig, zone, L, ctxFacade) {
     if (!orig || !orig.isMaterial || orig.userData.prMade) return orig;
@@ -404,7 +522,8 @@
       if (sync) {
         if (sync.includes('color')) m.color.copy(orig.color).multiplyScalar(e.glass ? 0.35 : 1);
         if (sync.includes('opacity')) m.opacity = orig.opacity;
-        if (sync.includes('emissive')) { m.emissive.copy(orig.emissive); m.emissiveIntensity = orig.emissiveIntensity; }
+        // 야간 창 불빛: 실내는 굽기(야간 조명)로 밝아 유리 너머로 보이므로, 유리 자체 발광은 약하게만 따른다
+        if (sync.includes('emissive')) { m.emissive.copy(orig.emissive); m.emissiveIntensity = orig.emissiveIntensity * (e.glass ? 0.15 : 1); }
       }
       if (orig.emissiveMap !== undefined && m.userData.prFacEm !== orig.emissiveMap && !m.userData.pr) {
         // 야간 창 불빛(원본 cityLights)이 바뀐 경우만 따라간다
@@ -413,17 +532,18 @@
       }
     });
     EXTRA.forEach(m => { if (m.envMapIntensity !== m.userData.prEnv) m.envMapIntensity = m.userData.prEnv; });
+    bakeUpdate();
     const R3D = K.R3D, night = R3D.time === 'night', inBase = K.I.on && K.Lv() && K.Lv().kind === 'base';
     const cube = R3D.cube && R3D.cube.texture;
     if (cube) CACHE.forEach(e => { if (e && e.glass && e.m.envMap !== cube) { e.m.envMap = cube; e.m.needsUpdate = true; } });
     if (inBase) { if (R.toneMappingExposure !== 0.95) R.toneMappingExposure = 0.95; if (K.amb.intensity !== 0.04) K.amb.intensity = 0.04; }
-    const useSky = skyBG && !night && R3D.time !== 'sunset' && !inBase && !K.I.on;
+    skyUpdate();
+    const wantSky = night ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day';
+    const useSky = skyBG && !inBase && skyCur.key === wantSky;   // 새 시간대 하늘을 받기 전에는 Wing 하늘을 보인다
     if (R3D.sky) R3D.sky.visible = !useSky;
     if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
     if (DIST) DIST.visible = !K.I.on || !inBase;
-    warm();
-    if (envDay && !night && !inBase && scene.environment !== envDay) { PR.wingEnv = scene.environment; scene.environment = envDay; }
-    if (night && scene.environment === envDay) scene.environment = PR.wingEnv || null;
+    if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
     // 층 묶음은 원본이 재건할 때마다 새로 생기므로 층 이름으로 매번 찾는다
     DR.groups.forEach(([g, key]) => { if (!key) return; const i = K.LEVELS.findIndex(l => l.key === key), lg = K.LG && K.LG[i]; g.visible = !!(lg && lg.visible && lg.parent); });
@@ -626,7 +746,7 @@
       requestAnimationFrame(() => requestAnimationFrame(() => { PR.t.firstFrame = Math.round(now() - PR.t.enable0); statLine(); }));
       panel(true);
       distantCity();
-      loadEnv(); envAssets();
+      loadEnv(); envAssets(); loadBake();
     } else {
       PR.on = false;
       swapOut();
