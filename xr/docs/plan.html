@@ -629,7 +629,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <tr><td>Q2 화면 모드 동일</td><td class="c"><span class="pill ok">통과</span></td><td>원본 대비 다른 화소 스케치 0%, 렌더 0.03%</td></tr>
 <tr><td>Q3, Q4 기능</td><td class="c"><span class="pill ok">통과</span></td><td>스모크 26항목(레이로 메뉴 누르기, 밖으로 나가기 시야 포함). 메뉴 미러, 시안 변경, 넘기기, 층 이동, 피규어, 웹 복귀</td></tr>
 <tr><td>Q5 프레임</td><td class="c"><span class="pill todo">실기기</span></td><td>9-2 대기열</td></tr>
-<tr><td>Q6 그리기 호출</td><td class="c"><span class="pill ok">통과</span></td><td>외부 196, 내부 140, 피규어 162, 렌더 146 (양안, 원래 약 6,700). 삼각형 17만</td></tr>
+<tr><td>Q6 그리기 호출</td><td class="c"><span class="pill ok">통과</span></td><td>외부 188, 내부 140, 피규어 184, 렌더 148 (양안, 원래 약 6,700). 삼각형 17만. 10-30: 건물 밖 몰입에서 땅 아래 메시 제외(실사 브랜치 외부 284→250)</td></tr>
 <tr><td>Q11, Q17 입력과 메뉴 크기</td><td class="c"><span class="pill ok">통과</span></td><td>핸드 메뉴 0.45m, 3열, 간격 12.3mm, 높이 28.1mm</td></tr>
 <tr><td>Q13 안정성</td><td class="c"><span class="pill ok">통과</span></td><td>10회 진입과 종료 후 지오메트리 +2, 텍스처 +1, 콘솔 오류 0(두 모드를 한 번씩 그린 뒤 기준. 첫 피규어 진입의 일회성 업로드 +56은 이후 늘지 않음)</td></tr>
 <tr><td>Q14 복구</td><td class="c"><span class="pill ok">통과</span></td><td>연결 통로 없음: 최소 기능 VR. XR 줄 전부 없음: 원본 정상</td></tr>
@@ -800,6 +800,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>P8</td><td>패스스루 없는 세션(비전 프로 WebXR 조건)에서 몰입과 가상 방 피규어 동작, 시선+핀치 선택 처리. 실제 비전 프로 확인과 model 요소(USDZ) 꺼내 보기는 USDZ 조합 파일이 생기면 진행. 호환 6/6</td><td><code>5b30ce4</code></td></tr>
 <tr><td>2026-10-30</td><td>P7</td><td>지니 모델 미도착(저장소에 GLB 없음, 뷰어에 불러오기 코드 없음)으로 후순위. 모델 납품 규격서 xr/docs/model-spec.md 작성. 계획서 v1.3(현재 결과, 실기기 대기열)</td><td>(이 커밋)</td></tr>
 <tr><td>2026-10-30</td><td>P4</td><td>1차 착용 확인 반영: 메뉴 레이 판정 수정, 밖으로 나가기 위치를 압구정로 정면으로, 체크리스트를 실제 상태로 최신화, XR 점검 페이지 추가</td><td><code>1030.p2</code></td></tr>
+<tr><td>2026-10-30</td><td>P2</td><td>실사 세션 제안 반영: 건물 밖 몰입에서 '지하 보기'가 꺼져 있으면 땅 아래 메시를 합치지도 그리지도 않음. 외부 196→188, 실사 브랜치 284→250</td><td><code>1030.p3</code></td></tr>
 </tbody></table></div>
 </section>
 </main>

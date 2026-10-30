@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p2';
+  const VER = '1030.p3';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -761,8 +761,8 @@
     },
     build() {
       this.clear();
-      const t0 = performance.now(), objs = this.visibleMeshes(), pts = this.parts(objs), buckets = new Map(), cache = new Map();
       scene.updateMatrixWorld(true);
+      const t0 = performance.now(), objs = this.visibleMeshes(), under = this.underground(objs), pts = this.parts(under.size ? objs.filter(o => !under.has(o)) : objs), buckets = new Map(), cache = new Map();
       for (const pt of pts) { const k = this.keyOf(pt); (buckets.get(k) || buckets.set(k, []).get(k)).push(pt); }
       const grp = new T.Group(); grp.name = 'khxr-proxy'; grp.userData.khxr = true;
       this.mats = this.mats || [];
@@ -783,9 +783,10 @@
       }
       cache.forEach(g => g.dispose());
       merged.forEach(o => { o.visible = false; this.hidden.push(o); });
+      under.forEach(o => { o.visible = false; this.hidden.push(o); });
       this.hiddenSet = new Set(this.hidden);
-      scene.add(grp); this.group = grp; this.sig = this.sigOf(objs);
-      this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, ms: Math.round(performance.now() - t0) };
+      scene.add(grp); this.group = grp; this.sig = this.sigOf(objs) + ':' + this.cullUnder();
+      this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, under: under.size, ms: Math.round(performance.now() - t0) };
       R.shadowMap.needsUpdate = true;
       log('최적화', JSON.stringify(this.stat));
     },
@@ -795,11 +796,19 @@
       (this.mats || []).forEach(m => m.dispose()); this.mats = [];
     },
     dirty() { this.need = true; },
+    // 몰입 VR에서 건물 밖이고 '지하 보기'가 꺼져 있으면 땅 아래에 완전히 묻힌 메시는 보이지 않으므로 합치지도 그리지도 않는다
+    cullUnder() { return S.mode === 'vr' && !(K.I && K.I.on) && !(document.getElementById('t-b1') || {}).checked && rigHeadWorld().y > -0.5; },
+    underground(objs) {
+      const out = new Set(); if (!this.cullUnder()) return out;
+      const b = new T.Box3();
+      for (const o of objs) { const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox(); b.copy(g.boundingBox).applyMatrix4(o.matrixWorld); if (b.max.y < -0.3) out.add(o); }
+      return out;
+    },
     check(time) {
       if (time - this.t < 500 && !this.need) return;
       this.t = time;
       this.hidden.forEach(m => { m.visible = true; });
-      const sig = this.sigOf(this.visibleMeshes());
+      const sig = this.sigOf(this.visibleMeshes()) + ':' + this.cullUnder();
       this.hidden.forEach(m => { m.visible = false; });
       if (sig !== this.sig || this.need) { this.need = false; this.build(); }
     }
