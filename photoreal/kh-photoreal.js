@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1031.a';
+  const VER = '1031.b';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -588,6 +588,7 @@
   function perf() {
     // 3) 가구 표시: 상태가 바뀔 때만 훑는다
     const dk = dressVisKey(); if (dk !== PF_.dvKey) { PF_.dvKey = dk; applyDressVis(); }
+    xrFlat();
     // 2) RenderPass 건너뛰기(한 번만 감싼다. 실사 3D 를 끄면 원래대로 그린다)
     const C = K.R3D.composer, rp = C && C.passes && C.passes[0];
     if (rp && !rp.prWrap && rp.constructor && rp.constructor.name === 'RenderPass' && K.R3D.ssao) {
@@ -634,7 +635,54 @@
     if (sig !== PF_.shSig) { PF_.shSig = sig; PF_.shDirty = true; }
     if (PF_.shDirty) { sm.needsUpdate = true; PF_.shDirty = false; }
   }
+  /* VR 그리기 호출: XR 계층은 같은 재질끼리 합쳐 그리므로 호출 수 ≈ 재질 종류 수 × 2(양안). 차량 5종과 가구 모델은 재질이 많아
+     실사 3D 를 켜면 336회(Wing 렌더 모드 184회)였다. VR 에서는 차량 전부와 건물 밖에서 보이는 가구를 '꼭짓점 색 + 공유 재질 하나'로
+     바꿔 한 묶음으로 합쳐지게 한다. 색은 재질 색 × 텍스처 평균색. 데스크톱과 VR 실내 가구는 원래 재질 그대로다 */
+  const FLAT = PR.flat = { mats: {}, geo: new Map(), avg: new Map(), key: '', on: [], off: Q.get('xrflat') === '0' };
+  function avgColor(m) {
+    if (FLAT.avg.has(m)) return FLAT.avg.get(m);
+    const c = m.color ? m.color.clone() : new T.Color(0.7, 0.7, 0.7), img = m.map && m.map.image;
+    if (img && (img.width || img.videoWidth)) { try { const cv = document.createElement('canvas'); cv.width = cv.height = 4; const g = cv.getContext('2d'); g.drawImage(img, 0, 0, 4, 4); const d = g.getImageData(0, 0, 4, 4).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < 64; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const t = new T.Color(r / 16 / 255, gg / 16 / 255, b / 16 / 255).convertSRGBToLinear(); c.multiply(t); } catch (e) {} }
+    if (m.transparent && m.opacity < 0.7) c.setRGB(0.03, 0.04, 0.05);   // 유리는 어두운 면으로
+    FLAT.avg.set(m, c); return c;
+  }
+  function flatGeo(o) {
+    const mats = Array.isArray(o.material) ? o.material : [o.material], key = o.geometry.uuid + '|' + mats.map(m => m.uuid).join(',');
+    if (FLAT.geo.has(key)) return FLAT.geo.get(key);
+    // 인덱스를 풀어 위치·법선만 새 배열로 읽는다(r128 의 toNonIndexed 는 glTF 의 교차 배치 속성을 잘못 읽는다)
+    const G0 = o.geometry, ix = G0.index, n = ix ? ix.count : G0.attributes.position.count, g = new T.BufferGeometry();
+    const rd = at => { if (!at) return null; const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const k = ix ? ix.getX(i) : i; a[i * 3] = at.getX(k); a[i * 3 + 1] = at.getY(k); a[i * 3 + 2] = at.getZ(k); } return new T.BufferAttribute(a, 3); };
+    g.setAttribute('position', rd(G0.attributes.position)); if (G0.attributes.normal) g.setAttribute('normal', rd(G0.attributes.normal)); else g.computeVertexNormals();
+    const col = new Float32Array(n * 3), groups = Array.isArray(o.material) && o.geometry.groups.length ? o.geometry.groups : [{ start: 0, count: n, materialIndex: 0 }];
+    groups.forEach(gr => { const c = avgColor(mats[gr.materialIndex] || mats[0]), st = gr.start, en = Math.min(n, st + gr.count); for (let i = st; i < en; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; } });
+    g.setAttribute('color', new T.BufferAttribute(col, 3)); g.computeBoundingSphere();
+    FLAT.geo.set(key, g); return g;
+  }
+  function xrFlat() {
+    const xr = R.xr.isPresenting, inside = K.I.on;
+    const Lv = inside && K.Lv && K.Lv(); const key = xr ? (inside ? 'in:' + (Lv ? Lv.key : '') : 'out') + '|' + ENV.added.length + '|' + (DR.group ? DR.group.uuid : '') + '|' + CUR.sig : '';
+    if (key === FLAT.key) return; FLAT.key = key;
+    FLAT.on.forEach(o => { o.geometry = o.userData.prFlat.g; o.material = o.userData.prFlat.m; delete o.userData.prFlat; }); FLAT.on = [];
+    if (!xr || FLAT.off) return;
+    // 구역별 공유 재질(실내 가구와 같은 조명 보정). 구역마다 한 묶음
+    const flatMat = zone => FLAT.mats[zone] || (FLAT.mats[zone] = (() => {
+      const m = std({ vertexColors: true, roughness: 0.5, metalness: 0.15 }), amb = zone === 'g' ? AMB.g() : zone === 'u' ? AMB.u() : zone === 'b' ? new T.Color(0.32, 0.32, 0.33) : null;
+      if (zone === 'b') m.envMap = parkEnv();
+      const r = amb ? patch(m, { light: { amb } }) : m; r.userData.prMade = true; keepEnv(r); return r; })());
+    const wp = new T.Vector3(), bx = new T.Box3(), sz = new T.Vector3();
+    const zoneAt = o => { bx.setFromObject(o); const L = bx.isEmpty() ? null : levelAtY((bx.min.y + bx.max.y) / 2); return !L ? 'x' : L.kind === 'base' ? 'b' : L.kind === 'ground' ? 'g' : 'u'; };
+    // 잎처럼 알파로 모양을 내는 재질은 단색으로 바꾸면 네모 카드가 되므로 그대로 둔다
+    const alphaShape = m => m.alphaTest > 0 || m.alphaMap || (m.transparent && m.map);
+    // 차량은 잎이 없으므로(유리·차체가 반투명 표시를 달고 있어도) 모두 바꾼다
+    const take = (o, car) => { if (!o.isMesh || o.isInstancedMesh || o.userData.prFlat || !o.material || o.userData.prLit) return; if (!car && (Array.isArray(o.material) ? o.material : [o.material]).some(alphaShape)) return; // 바닥 마감·큰 판(가로나 세로 3m 이상)은 텍스처가 보이는 면이라 그대로 둔다
+      if (!car) { bx.setFromObject(o).getSize(sz); if (Math.max(sz.x, sz.z) > 3) return; }
+      o.userData.prFlat = { g: o.geometry, m: o.material }; o.geometry = flatGeo(o); o.material = flatMat(zoneAt(o)); FLAT.on.push(o); };
+    ENV.added.forEach(c => c.traverse(o => take(o, true)));
+    if (DR.group) DR.groups.forEach(([g]) => { if (g.visible && (inside || !g.userData.prDeepG)) g.traverse(o => take(o, false)); });
+    PF_.shDirty = true;
+  }
   function perfOff() {
+    FLAT.on.forEach(o => { o.geometry = o.userData.prFlat.g; o.material = o.userData.prFlat.m; delete o.userData.prFlat; }); FLAT.on = []; FLAT.key = '';
     if (PF_.shAuto) { R.shadowMap.autoUpdate = true; PF_.shAuto = false; }
     R.shadowMap.needsUpdate = true; PF_.dvKey = ''; PF_.shSig = '';
   }
@@ -844,6 +892,8 @@
     litDress(extra);
     if (extra === DR.group) { tagDress(extra); PF_.dvKey = ''; }
   }
+  // 높이 y 가 속한 층: 바닥이 y 바로 아래(0.3m 여유)에 있는 층 중 가장 높은 층. 층 범위를 겹치게 찾으면 바닥 가까운 부품(의자 다리·화분)이 아래층으로 잡힌다
+  function levelAtY(y) { let best = null, bt = -1e9; K.LEVELS.forEach(l => { const ft = K.floorTop(l); if (l.kind !== 'roof' && ft - 0.3 <= y && ft > bt) { bt = ft; best = l; } }); return best; }
   // 가구마다 층(prLv)과 '외벽에서 먼 안쪽'(prDeep: 가장 가까운 외벽선까지 PR_DEEP m 넘음)을 적어 둔다. 밖에서 볼 때 안쪽 가구는 그리지 않는다
   function tagDress(root) {
     root.updateMatrixWorld(true);
@@ -855,7 +905,7 @@
       if (!o.isMesh || o.userData.prTagged) return;
       if (o.userData.prLv === undefined) {
         box.setFromObject(o); if (box.isEmpty()) return; box.getCenter(c);
-        const L = K.LEVELS.find(l => c.y >= K.floorTop(l) - 0.5 && c.y < K.floorTop(l) + Math.max(l.h, 3) + 0.5) || null;
+        const L = levelAtY(c.y);
         o.userData.prLv = L ? L.key : '';
         o.userData.prDeep = !!(L && L.poly && L.poly.length > 2 && edgeDist(c.x, c.z, polyOf(L)) > PR_DEEP);
       }
