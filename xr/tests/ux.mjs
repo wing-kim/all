@@ -270,6 +270,19 @@ const scenarios = {
     ok('걷기 속도 기본 초당 2.6m', r.setting === 2.6 && r.speed > 1.9, r);
     await ev(async () => { await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); });
   },
+  // 11. 실내 높이 치수(빨간 선, 원본에서 '항상 맨 앞'): 병합에서 빠지고 반투명 목록 맨 끝에서 그려짐, 끝나면 원복
+  async onTop() {
+    await ev(async () => { UX.clean(); await KHXRLayer.enter('vr'); await UX.f(10); KHXRLayer.goInside(); await new Promise(r => setTimeout(r, 900)); UX.head(0, 1.6, 0, -5, 0); await UX.f(30); await new Promise(r => setTimeout(r, 700)); await UX.f(5); });
+    const r = await ev(async () => {
+      const L = []; KHXR.scene.traverse(o => { if (!(o.isMesh || o.isLine)) return; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (!m || m.depthTest !== false || o.userData.khxr) return; let v = true; for (let q = o; q; q = q.parent) if (!q.visible && !(KHXRLayer.opt.hiddenSet && KHXRLayer.opt.hiddenSet.has(q))) v = false; L.push({ vis: v, ro: o.renderOrder, tr: m.transparent, merged: !!(KHXRLayer.opt.hiddenSet && KHXRLayer.opt.hiddenSet.has(o)), red: m.color && m.color.getHexString() === 'd6372c' }); });
+      const red = L.filter(x => x.red && x.vis);
+      return { total: L.length, red: red.length, allTop: red.every(x => x.ro >= 900 && x.tr), anyMerged: red.some(x => x.merged) };
+    });
+    await shot('ontop');
+    const back = await ev(async () => { await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); let tr = 0; KHXR.scene.traverse(o => { const m = o.material && (Array.isArray(o.material) ? o.material[0] : o.material); if (m && m.depthTest === false && m.color && m.color.getHexString() === 'd6372c' && m.transparent) tr++; }); return { stillTransparent: tr, kept: KHXRLayer.ontop.done.size }; });
+    ok('실내 높이 치수: 병합 제외, 맨 끝에 그림, 끝나면 원복', r.red > 0 && r.allTop && !r.anyMerged && back.stillTransparent === 0 && back.kept === 0, Object.assign(r, back));
+    await ev(() => { UX.head(0, 1.6, 0); UX.clean(false); });
+  },
 };
 
 try {

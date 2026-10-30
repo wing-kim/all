@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p10';
+  const VER = '1030.p11';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -141,7 +141,7 @@
     UI.onSessionStart();
   }
   function onEnd() {
-    R.setAnimationLoop(null); R.info.autoReset = true; clipMaterials(false);
+    R.setAnimationLoop(null); R.info.autoReset = true; clipMaterials(false); OnTop.clear();
     const leaving = S.mode;
     transferToDesktop(leaving);
     setVisualsFor(null);
@@ -592,6 +592,7 @@
     Photo.update();
     fadeTick(dt);
     if (S.opt) Opt.check(time);
+    OnTop.apply(time);
     // 피규어: 배경 비우고 대지 주변만
     let cp0 = null;
     if (S.mode === 'fig') { scene.background = null; scene.fog = null; R.setClearAlpha(S.ar ? 0 : 1); cp0 = R.clippingPlanes; R.clippingPlanes = []; cropPlanes(); clipMaterials(true, time); }
@@ -815,13 +816,32 @@
 
   /* ================= 11. 최적화 프록시 =================
      XR 동안만 같은 재질 메시를 합친 대체 메시를 쓰고 원본은 숨긴다. 원본이 장면을 바꾸면 다시 만든다. */
+  // 원본의 '항상 맨 앞' 표시(실내 높이 치수 빨간 선, 윤곽선 등: depthTest 꺼짐)는 그리는 순서에 따라 나중에 그린 물체에
+  // 덮인다. XR 동안은 반투명 목록의 맨 끝(renderOrder 크게)으로 보내 무엇이든 그 위에 그려지게 하고, 끝나면 원복
+  const OnTop = X.ontop = {
+    done: new Map(), t: 0,
+    is(o) { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !!m && m.depthTest === false && !o.userData.khxr; },
+    apply(time) {
+      if (time - this.t < 500) return; this.t = time;
+      (function walk(o) {
+        if (o === rig || o.userData.khxr) return;
+        if ((o.isMesh || o.isLine || o.isSprite || o.isPoints) && OnTop.is(o) && !OnTop.done.has(o)) {
+          const ms = Array.isArray(o.material) ? o.material : [o.material];
+          OnTop.done.set(o, { ro: o.renderOrder, tr: ms.map(m => m.transparent) });
+          o.renderOrder = 900 + Math.min(99, o.renderOrder || 0); ms.forEach(m => { if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } });
+        }
+        for (const c of o.children) walk(c);
+      })(scene);
+    },
+    clear() { this.done.forEach((v, o) => { o.renderOrder = v.ro; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m, i) => { if (m.transparent !== v.tr[i]) { m.transparent = v.tr[i]; m.needsUpdate = true; } }); }); this.done.clear(); this.t = 0; }
+  };
   const Opt = X.opt = {
     group: null, hidden: [], sig: '', t: 0, stat: null, need: false,
     visibleMeshes() {
       const out = [];
       (function walk(o) {
         if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
-        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o))) out.push(o);
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !OnTop.is(o)) out.push(o);
         for (const c of o.children) walk(c);
       })(scene);
       return out;

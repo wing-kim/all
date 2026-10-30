@@ -486,6 +486,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <div class="phase" id="p2"><h3>P2. 성능 <span class="pill ok">완료</span></h3>
 <p class="goal">퀘스트 3에서 모든 모드가 72fps를 유지합니다.</p>
 <ul class="chk">
+<li data-done>실내 높이 치수(빨간 선)처럼 원본이 '항상 맨 앞'으로 그리는 요소(depthTest 꺼짐)가 나중에 그려진 물체(반투명 유리·벽, 병합 덩어리)에 덮이던 문제 수정: XR 동안 병합에서 빼고 반투명 목록 맨 끝에 그림 <span class="small">10-30 Jack 설명으로 대상 특정</span></li>
 <li data-done>반투명 그리기 순서 보강: 합친 반투명 덩어리는 깊이를 쓰지 않게 해(XR 동안만) 가까운 반투명 면이 뒤의 벽 표시·유리 너머 요소를 지우지 않게 함. 6m 칸 나눔도 시험했으나 호출이 504회로 늘어 버림 <span class="small">10-30 3차 착용 반영, 실기기 재확인 필요</span></li>
 <li data-done>재질 묶기로 그리기 호출 200회 미만: 외부 196, 내부 140, 피규어 184, 렌더 148</li>
 <li data-done>그림자: 진입과 장면 변경 때만 계산. <span class="small">계획 변경: 해상도와 범위는 Wing 설정 그대로 둠(그리기 호출 예산 안이라 실기기 측정 후 판단)</span></li>
