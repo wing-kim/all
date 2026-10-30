@@ -45,5 +45,9 @@ while lat < LAT0 + dlat:
         lon += TILE
     lat += TILE
 os.makedirs(os.path.join(HERE, '.cache'), exist_ok=True)
+# 대지 주변 연속지적도(필지 경계): 좌표 맞춤용
+q = {'service': 'data', 'request': 'GetFeature', 'data': 'LP_PA_CBND_BUBUN', 'key': KEY, 'domain': DOMAIN, 'format': 'json', 'size': 100,
+     'crs': 'EPSG:4326', 'geometry': 'true', 'attribute': 'true', 'geomFilter': 'BOX(127.0206,37.5226,127.0218,37.5236)'}
+open(os.path.join(HERE, '.cache', 'parcels.json'), 'wb').write(urllib.request.urlopen('https://api.vworld.kr/req/data?' + urllib.parse.urlencode(q), timeout=60).read())
 json.dump(feats, open(os.path.join(HERE, '.cache', 'vworld.json'), 'w'), ensure_ascii=False)
 print('저장', len(feats))

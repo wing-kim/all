@@ -124,8 +124,16 @@ def load_vworld():
     return out
 
 # ---------------- 좌표 맞춤 ----------------
+SITE_PX = [(230, 172), (1598, 172), (1598, 872), (230, 1365)]   # Wing SITE (도면 px)
+SITE_JIBUN = ('529', '529-1', '529-8')                          # 신사동 529 외 2필지(합 747㎡ = Wing 749㎡)
+
+def rigid(A, B):
+    ca, cb = A.mean(0), B.mean(0); U, _, Vt = np.linalg.svd((A - ca).T @ (B - cb)); R = (U @ Vt).T
+    return R, cb - R @ ca
+
 def fit_transform(osm):
-    """ENU(m) → Wing XZ(m). 거울상(도면 Z 가 남쪽 아래)을 포함한 강체 변환, 축척 1 고정. 대지 두 건물의 꼭짓점을 대응시킨다"""
+    """ENU(m) → Wing XZ(m). 거울상(도면 Z 가 남쪽 아래)을 포함한 강체 변환, 축척 1 고정.
+    1차: 대지 두 건물(OSM)의 꼭짓점 대응. 2차: 브이월드 연속지적도의 대지 필지 3개를 합친 외곽 꼭짓점과 Wing SITE 네 꼭짓점 대응(있으면 이것을 씀)"""
     A, B = [], []
     c0 = np.mean([north_deg(*enu(*p)) for p in osm['775465793']['ring']], 0)
     w0 = np.mean([P(*q) for q in ANCHORS['775465793']], 0)
@@ -135,11 +143,25 @@ def fit_transform(osm):
             q = np.array(P(*q)); j = min(range(len(og)), key=lambda i: np.hypot(*(og[i] + w0 - c0 - q)))
             A.append(og[j]); B.append(q)
     A, B = np.array(A), np.array(B)
-    ca, cb = A.mean(0), B.mean(0); U, _, Vt = np.linalg.svd((A - ca).T @ (B - cb)); R = (U @ Vt).T
-    t = cb - R @ ca
-    res = np.hypot(*((R @ A.T).T + t - B).T)
+    R, t = rigid(A, B)
+    res_bld = np.hypot(*((R @ A.T).T + t - B).T)
+    info = {'method': 'site_buildings_osm', 'building_residual_m': res_bld}
+    pf = os.path.join(CACHE, 'parcels.json')
+    if os.path.exists(pf):
+        feats = json.load(open(pf))['response']['result']['featureCollection']['features']
+        rings = [f['geometry']['coordinates'][0][0][:-1] for f in feats if f['properties'].get('jibun', '').split()[0] in SITE_JIBUN]
+        if len(rings) == len(SITE_JIBUN):
+            pts = [np.array(north_deg(*enu(c[1], c[0]))) for r in rings for c in r]
+            W = [np.array(P(*q)) for q in SITE_PX]
+            for _ in range(3):   # 가장 가까운 필지 꼭짓점과 SITE 꼭짓점 대응 → 강체 맞춤 반복
+                A2 = np.array([min(pts, key=lambda p: np.hypot(*(R @ p + t - w))) for w in W]); B2 = np.array(W)
+                R, t = rigid(A2, B2)
+            res_site = np.hypot(*((R @ A2.T).T + t - B2).T)
+            res_bld = np.hypot(*((R @ A.T).T + t - B).T)
+            info = {'method': 'site_parcels_vworld', 'site_corner_residual_m': res_site, 'building_residual_m': res_bld,
+                    'parcel_area_m2': round(sum(area_centroid([tuple(north_deg(*enu(c[1], c[0]))) for c in r])[0] for r in rings), 1)}
     M = R @ np.vstack([EV, NV]).T          # ENU → XZ 2x2 (거울상 포함)
-    return M, t, res
+    return M, t, info
 
 # ---------------- 높이 추정 ----------------
 FLOOR_H = {'apt': 2.9, 'school': 3.8, 'office': 3.6, 'shop': 3.5, 'house': 3.0}
@@ -163,16 +185,20 @@ def estimate_floors(kind, area):
 
 # 재질 분류: 근경 로드뷰 값이 없으면 용도·높이로 정한다(추정)
 CLS_DEFAULT = {'apt': ('apt', '#e6e7e3'), 'school': ('brick', '#b8a48c'), 'house': ('paint', '#ddd6c8')}
-def default_cls(kind, h, area, rnd):
+def default_cls(kind, h, area, rnd, year=None):
+    """로드뷰 기록이 없는 건물의 재질·색 추정. 용도·높이와 사용승인 연도별 비율로 고른다(강남 저층 근생가 관찰 기반 가정)"""
     if kind in CLS_DEFAULT: return CLS_DEFAULT[kind]
-    if h >= 30 or area > 2500: return ('glass', '#8d9ea5') if rnd < 0.5 else ('stone', '#c8c4bb')
-    pal = [('tile', '#e2e0da'), ('paint', '#d8d2c6'), ('stone', '#cdc3b0'), ('brick', '#a3624c'), ('metal', '#9ea3a6'), ('glass', '#7f949c')]
-    w = [0.28, 0.24, 0.18, 0.12, 0.08, 0.10]
+    PAL = {'tile': '#e2e0da', 'paint': '#d8d2c6', 'stone': '#cdc3b0', 'brick': '#a3624c', 'metal': '#9ea3a6', 'glass': '#7f949c'}
+    if h >= 30 or area > 2500: w = {'glass': 0.45, 'stone': 0.4, 'metal': 0.15}
+    elif year and year >= 2010: w = {'glass': 0.3, 'stone': 0.3, 'metal': 0.2, 'tile': 0.1, 'paint': 0.1}
+    elif year and year >= 1995: w = {'stone': 0.3, 'tile': 0.3, 'glass': 0.15, 'paint': 0.15, 'metal': 0.1}
+    elif year: w = {'tile': 0.35, 'brick': 0.25, 'paint': 0.25, 'stone': 0.15}
+    else: w = {'tile': 0.28, 'paint': 0.24, 'stone': 0.18, 'brick': 0.12, 'metal': 0.08, 'glass': 0.10}
     acc = 0
-    for p, ww in zip(pal, w):
+    for k, ww in w.items():
         acc += ww
-        if rnd < acc: return p
-    return pal[0]
+        if rnd < acc: return k, PAL[k]
+    return k, PAL[k]
 
 def hash01(s):
     h = 2166136261
@@ -183,35 +209,86 @@ def main():
     osm, osm_time = load_osm()
     vw = load_vworld()
     near_rv = json.load(open(os.path.join(HERE, 'near_roadview.json')))
-    M, t, res = fit_transform(osm)
+    M, t, fitinfo = fit_transform(osm)
     to_w = lambda lat, lon: M @ np.array(enu(lat, lon)) + t
     site_c = np.mean([P(*q) for q in ANCHORS['775465793'] + ANCHORS['775465794']], 0)
 
-    # 브이월드 외곽선이 있으면 그것을 주 외곽선으로, OSM 은 겹치지 않는 것만 보충
+    # 브이월드 외곽선이 있으면 그것을 주 외곽선으로, OSM 은 브이월드에 없는 건물만 보충
+    site_poly = [P(*q) for q in SITE_PX]   # Wing SITE
+    _bbc = {}
+    def _bb(poly):
+        k = id(poly)
+        if k not in _bbc:
+            xs = [p[0] for p in poly]; zs = [p[1] for p in poly]; _bbc[k] = (min(xs), min(zs), max(xs), max(zs), poly)
+        return _bbc[k]
+    def inside(q, poly):
+        bb = _bb(poly)
+        if q[0] < bb[0] or q[0] > bb[2] or q[1] < bb[1] or q[1] > bb[3]: return False
+        c = False
+        for i in range(len(poly)):
+            (xi, zi), (xj, zj) = poly[i], poly[i - 1]
+            if (zi > q[1]) != (zj > q[1]) and q[0] < (xj - xi) * (q[1] - zi) / (zj - zi) + xi: c = not c
+        return c
     feats = []
     for v in vw:
-        feats.append({'src': 'vworld', 'id': 'vw:' + v['id'], 'ring': v['ring'], 'tags': {}, 'props': v['props']})
-    vw_cent = [np.mean([to_w(*p) for p in v['ring']], 0) for v in vw]
+        wp = [tuple(to_w(*p)) for p in v['ring']]
+        a, c = area_centroid(wp)
+        if inside(c, site_poly): continue                       # 우리 대지 안 건물(동광빌딩·3번지)은 Wing 장면에 있음
+        feats.append({'src': 'vworld', 'id': 'vw:' + v['id'], 'ring': v['ring'], 'tags': {}, 'props': dict(v['props']), 'wp': wp, 'c': c, 'a': a})
+    # 겹친 기록 정리: 한 건물의 중심이 다른 건물 외곽선 안에 있으면 같은 건물로 보고 넓은 쪽 외곽선 하나만 남긴다(층수·높이는 큰 값)
+    feats.sort(key=lambda f: -f['a'])
+    kept = []
+    for f in feats:
+        host = next((k for k in kept if inside(f['c'], k['wp']) or inside(k['c'], f['wp'])), None)
+        if host is None: kept.append(f); continue
+        for key in ('grnd_flr', 'height'):
+            try:
+                if float(f['props'].get(key) or 0) > float(host['props'].get(key) or 0): host['props'][key] = f['props'][key]
+            except ValueError: pass
+        if not (host['props'].get('bld_nm') or '').strip(): host['props']['bld_nm'] = f['props'].get('bld_nm', '')
+    feats = kept
+    vw_polys = [f['wp'] for f in feats]
+    osm_c = {}
     for oid, o in osm.items():
-        if oid in SITE_IDS: continue
-        if vw:
-            c = np.mean([to_w(*p) for p in o['ring']], 0)
-            if any(np.hypot(*(c - vc)) < 4 for vc in vw_cent): continue
-        feats.append({'src': 'osm', 'id': 'osm:' + oid, 'osm_id': oid, 'ring': o['ring'], 'tags': o['tags'], 'props': {}})
+        wp = [tuple(to_w(*p)) for p in o['ring']]; a, c = area_centroid(wp); osm_c[oid] = c
+        if oid in SITE_IDS or inside(c, site_poly): continue
+        if vw and any(inside(c, vp) for vp in vw_polys): continue
+        feats.append({'src': 'osm', 'id': 'osm:' + oid, 'osm_id': oid, 'ring': o['ring'], 'tags': o['tags'], 'props': {}, 'wp': wp, 'c': c})
+    for f in feats:
+        if 'c' not in f: f['wp'] = [tuple(to_w(*p)) for p in f['ring']]; f['c'] = area_centroid(f['wp'])[1]
+    def nearest(q, lim=8.0):
+        # q 를 품은 건물, 없으면 중심이 가장 가까운 건물(lim m 이내)
+        for f in feats:
+            if inside(q, f['wp']): return f
+        best = min(feats, key=lambda f: np.hypot(f['c'][0] - q[0], f['c'][1] - q[1]))
+        return best if np.hypot(best['c'][0] - q[0], best['c'][1] - q[1]) < lim else None
+    # OSM 에서 받은 이름·층수 태그는 브이월드 건물에도 넘겨 준다
+    for oid, o in osm.items():
+        if not vw or oid in SITE_IDS: continue
+        f = nearest(osm_c[oid], 3.0)
+        if f and f['src'] == 'vworld':
+            for k in ('name', 'building', 'building:levels', 'height', 'addr:housenumber', 'addr:street'):
+                if k in o['tags'] and k not in f['tags']: f['tags'][k] = o['tags'][k]
+            f.setdefault('osm_ids', []).append(oid)
 
-    # 로드뷰 기록을 건물에 연결(키 = OSM id, 또는 ll:위도,경도 → 가장 가까운 건물)
+    # 로드뷰 기록을 건물에 연결(키 = OSM id → 그 OSM 외곽선 중심을 품은 건물, 또는 ll:위도,경도)
     rv_by_id = {}
     for k, v in near_rv.items():
         if k.startswith('_'): continue
         if k.startswith('ll:'):
-            la, lo = map(float, k[3:].split(',')); q = to_w(la, lo)
-            best = min(feats, key=lambda f: np.hypot(*(np.mean([to_w(*p) for p in f['ring']], 0) - q)))
-            rv_by_id[best['id']] = v
-        else: rv_by_id['osm:' + k] = v
+            la, lo = map(float, k[3:].split(',')); q = tuple(to_w(la, lo))
+        else: q = osm_c[k]
+        f = nearest(q, 20.0 if k.startswith('ll:') else 8.0)
+        if f: rv_by_id[f['id']] = v
+        else: print('로드뷰 기록 연결 실패', k)
+    wing_ids = {}
+    for label, poly, wh, oid in WING:
+        f = nearest(osm_c[oid])
+        if f: wing_ids[label] = f['id']
 
     out, stats = [], {'near': 0, 'far': 0, 'verify': {}}
     for f in feats:
-        pts = [tuple(to_w(*p)) for p in f['ring']]
+        pts = f['wp']
         area, cen = area_centroid(pts)
         if area < 12: continue
         dist = float(np.hypot(*(np.array(cen) - site_c)))
@@ -228,6 +305,7 @@ def main():
             except ValueError: floors = None
             try: h = float(ht) if ht not in (None, '', '0', '0.0') else None
             except ValueError: h = None
+            if h and floors and not (2.4 <= h / floors <= 7.5): h = None   # 높이 값이 층수와 맞지 않으면 버림
             if floors or h: how.append('api')
         if floors is None and tags.get('building:levels'):
             try: floors = int(float(tags['building:levels'])); how.append('osm')
@@ -238,24 +316,33 @@ def main():
         fh = FLOOR_H[kind]
         if rv:
             fh = rv.get('floor_h', fh)
-            if rv.get('floors'): floors = rv['floors']
             how.insert(0, 'roadview')
         est = False
         if floors is None and h is None:
             floors = estimate_floors(kind, area); est = True; how.append('estimate')
-        if h is None or (rv and rv.get('floors')):
+        api_floors = floors if 'api' in how else None
+        if rv and rv.get('floors'): floors = rv['floors']
+        if h is None or (rv and rv.get('floors') and (api_floors is None or rv['floors'] != api_floors)):
             h = round(floors * fh + (1.2 if kind != 'apt' else 1.5), 1)   # 파라펫·옥탑 일부 포함
         if floors is None: floors = max(1, round(h / fh))
+        if f.get('osm_ids'): b_osm = f['osm_ids']
+        else: b_osm = [f['osm_id']] if f.get('osm_id') else []
         if rv: cls, color = rv['cls'], rv['color']
-        else: cls, color = default_cls(kind, h, area, hash01(f['id']))
-        name = (rv or {}).get('name') or tags.get('name') or props.get('bld_nm') or ''
+        else:
+            yr = props.get('useapr_day') or ''
+            cls, color = default_cls(kind, h, area, hash01(f['id']), int(yr[:4]) if yr[:4].isdigit() else None)
+        name = (rv or {}).get('name') or tags.get('name') or (props.get('bld_nm') or '').strip() or ''
         if not name and tags.get('addr:housenumber'):
             name = (tags.get('addr:street') or '') + ' ' + tags['addr:housenumber']
         b = {
             'id': f['id'], 'name': name.strip(), 'src': f['src'], 'near': near, 'dist': round(dist, 1),
-            'outline': [[round(x, 2), round(z, 2)] for x, z in pts], 'h': h, 'floors': floors, 'floor_h': fh,
-            'cls': cls, 'color': color, 'verify': how[0] if how else 'estimate', 'verify_all': how, 'estimated': est,
+            'outline': [[round(x, 2 if near else 1), round(z, 2 if near else 1)] for x, z in pts], 'h': round(h, 1), 'floors': floors, 'floor_h': fh,
+            'osm': b_osm, 'cls': cls, 'color': color, 'verify': how[0] if how else 'estimate', 'verify_all': how, 'estimated': est,
         }
+        if not b['osm']: del b['osm']
+        if len(how) <= 1: del b['verify_all']
+        if api_floors and api_floors != floors: b['floors_api'] = api_floors
+        if props.get('useapr_day'): b['approved'] = props['useapr_day']
         if rv:
             for k in ('shop_glass', 'windows', 'ref', 'note'):
                 if k in rv: b[k] = rv[k]
@@ -268,12 +355,12 @@ def main():
     diffs = []
     byid = {b['id']: b for b in out}
     for label, poly, wh, oid in WING:
-        b = byid.get('osm:' + oid)
+        b = byid.get(wing_ids.get(label))
         if not b: continue
         wpts = [P(*q) for q in poly]; wa, wc = area_centroid(wpts); ba, bc = area_centroid([tuple(p) for p in b['outline']])
         d = float(np.hypot(wc[0] - bc[0], wc[1] - bc[1]))
         diffs.append({'wing': label, 'id': b['id'], 'name': b['name'], 'wing_h': wh, 'h': b['h'], 'floors': b['floors'],
-                      'verify': b['verify'], 'centroid_offset_m': round(d, 1), 'wing_area': round(wa), 'area': round(ba)})
+                      'verify': b['verify'], 'floors_api': b.get('floors_api'), 'centroid_offset_m': round(d, 1), 'wing_area': round(wa), 'area': round(ba)})
 
     meta = {
         'about': '케이프혼타워 주변 건물(근경 250m, 원경 1.2km). 좌표는 Wing 월드 좌표(m): x = (px-914)/41.6, z = (py-770)/41.6, y 위쪽. outline 은 [x, z] 목록',
@@ -282,7 +369,9 @@ def main():
             'enu_origin_latlon': [LAT0, LON0], 'enu_scale_m_per_deg': [KX, KY],
             'enu_to_world_2x2': [[round(v, 8) for v in r] for r in M.tolist()], 'enu_to_world_t': [round(v, 4) for v in t.tolist()],
             'note': 'world[x,z] = M @ [east_m, north_m] + t, east_m = (lon-lon0)*kx, north_m = (lat-lat0)*ky. 거울상 포함 강체 변환(축척 1)',
-            'anchor_residual_m': {'max': round(float(res.max()), 2), 'rms': round(float(np.sqrt((res ** 2).mean())), 2), 'n_points': int(len(res))},
+            'method': fitinfo['method'],
+            **{k: ({'max': round(float(v.max()), 2), 'rms': round(float(np.sqrt((v ** 2).mean())), 2), 'n_points': int(len(v))} if isinstance(v, np.ndarray) else v)
+               for k, v in fitinfo.items() if k != 'method'},
             'north_deg_effective': round(math.degrees(math.atan2(-(M @ [0, 1])[1], -(M @ [0, 1])[0])), 2),
         },
         'classes': sorted({b['cls'] for b in out}),
