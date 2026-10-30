@@ -5231,7 +5231,7 @@ function clipX(poly,X,left){const out=[],ins=q=>left?q[0]<=X+1e-6:q[0]>=X-1e-6;
 
 // ---- three ----
 const host=document.getElementById('viewer');
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.localClippingEnabled=true;
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setClearAlpha(1);renderer.localClippingEnabled=true;   // [XR] alpha: 퀘스트 패스스루(피규어)용, 화면은 불투명 유지
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 host.prepend(renderer.domElement);
@@ -7629,9 +7629,11 @@ buildContext();existBuilding();
   document.getElementById('t-cmpapt').addEventListener('change',e=>{CMP.apt=e.target.checked;applyCmp()});
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
+window.KHXR={renderer,scene,camera,controls,enterInt,exitInt,placeLevel,setDoll,floorTop,resize,go,walkable,get LEVELS(){return LEVELS},get I(){return I},get anim(){return anim},set anim(v){anim=v},get R3D(){return R3D}};   // [XR] VR 보기(xr/kh-xr.js) 연결 통로
 let last=performance.now();
 (function loop(now){
-  requestAnimationFrame(loop);const dt=Math.min(0.1,(now-last)/1000);last=now;
+  requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;   // [XR] VR 중에는 xr/kh-xr.js 가 그림
+  const dt=Math.min(0.1,(now-last)/1000);last=now;
   if(I.on&&!I.doll){if(anim){let t=Math.min(1,(now-anim.s)/800);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
     step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
   if(I.on&&I.doll)step(dt);
@@ -7822,6 +7824,7 @@ let last=performance.now();
 })();
 </script>
 
+<script src="../xr/kh-xr.js"></script>   <!-- [XR] VR·피규어 보기 -->
 
 </body>
 </html>
