@@ -91,6 +91,26 @@ try {
   await shot('05b-vr-render');
   await ev(() => { document.querySelector('input[name=vmode][value=sketch]').click(); }); await new Promise(r => setTimeout(r, 1000));
 
+  // 실사 사진 액자
+  const photo = await ev(async () => { KHXRLayer.photo.open(KHXRLayer.photo.extList()); for (let i = 0; i < 40 && KHXRLayer.photo.loading; i++) await new Promise(r => setTimeout(r, 200)); const r = { n: KHXRLayer.photo.list.length, ok: KHXRLayer.photo.ok }; KHXRLayer.photo.close(); return r; });
+  ok('실사 사진 액자(외관)', photo.n >= 1 && photo.ok, photo);
+  // 핸드 입력: 메뉴 3열·가까이, 핀치로 피규어 잡기 준비
+  const hand = await ev(async () => {
+    await KHEMU.remote.dispatch('set_input_mode', { mode: 'hand' });
+    const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 10; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
+    KHXRLayer.ui.openMenu(); await new Promise(r => s.requestAnimationFrame(() => r()));
+    const cells = KHXRLayer.ui.cells().filter(c => /^r:|^b:|^c:|^lv:/.test(c.key));
+    const xs = [...new Set(cells.map(c => Math.round(c.x)))].length;
+    const menu = KHXR.scene.getObjectByName('khxr-menu'); const sc = menu ? menu.scale.x : 0;
+    const gapPx = cells.length > 1 ? Math.min(...cells.slice(1).map((c, i) => c.y === cells[i].y ? c.x - (cells[i].x + cells[i].w) : 999)) : 0;
+    const gapMM = gapPx / 1024 * 1.0 * sc * 1000, hMM = (cells[0] ? cells[0].h : 0) / 768 * 0.75 * sc * 1000;
+    KHXRLayer.ui.closeMenu();
+    await KHEMU.remote.dispatch('set_input_mode', { mode: 'controller' });
+    for (let i = 0; i < 5; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
+    return { input: 'hand', cols: xs, scale: +sc.toFixed(2), gapMM: +gapMM.toFixed(1), cellHmm: +hMM.toFixed(1) };
+  });
+  ok('핸드 메뉴: 3열, 0.45m, 간격 12mm·높이 22mm 이상', hand.cols === 3 && Math.abs(hand.scale - 0.45) < 0.01 && hand.gapMM >= 12 && hand.cellHmm >= 22, hand);
+
   // 웹 화면 복귀
   await ev(() => KHXRLayer.goInside()); await frames(40);
   const before = await ev(() => ({ key: KHXR.LEVELS[KHXR.I.li].key }));

@@ -317,8 +317,8 @@
       c.addEventListener('disconnected', () => { line.visible = false; c.userData.src = null; });
       c.addEventListener('selectstart', () => onSelectStart(c));
       c.addEventListener('selectend', () => onSelectEnd(c));
-      c.addEventListener('squeezestart', () => { c.userData.sq = true; Grab.update(); });
-      c.addEventListener('squeezeend', () => { c.userData.sq = false; Grab.update(); });
+      c.addEventListener('squeezestart', () => { if (c.userData.uiHit && c.userData.uiHit.where === 'menu') { UI.dragStart(c); return; } c.userData.sq = true; Grab.update(); });
+      c.addEventListener('squeezeend', () => { if (UI.dragging() === c) { UI.dragEnd(); return; } c.userData.sq = false; Grab.update(); });
       rig.add(c); ctrls.push(c);
       const h = R.xr.getHand(i); h.userData.khxr = true; rig.add(h); c.userData.handObj = h;
       const grip = R.xr.getControllerGrip(i); rig.add(grip); c.userData.grip = grip;
@@ -337,11 +337,12 @@
     const u = c.userData;
     if (u.uiHit) { u.pressUI = u.uiHit; return; }
     if (S.mode === 'vr') u.aim = true;
-    else if (S.mode === 'fig') Fig.selectStart(c);
+    else if (S.mode === 'fig') { if (u.isHand) { u.pinchHold = true; Grab.update(); } else Fig.selectStart(c); }
   }
   function onSelectEnd(c) {
     const u = c.userData;
     if (u.pressUI) { const h = u.pressUI; u.pressUI = null; if (u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
+    if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
     if (u.aim) { u.aim = false; if (u.hit) fade(() => teleportTo(u.hit), 0.6); u.hit = null; X.marker.visible = false; }
   }
   const prevBtn = new WeakMap();
@@ -354,7 +355,7 @@
       if (edge(4)) { if (S.mode === 'vr') stepFloor(+1); else Fig.levelHint(+1); }
       if (edge(5)) { if (S.mode === 'vr') stepFloor(-1); else Fig.levelHint(-1); }
       if (edge(3) && h === 'left') UI.toggleMenu();
-      if (edge(1) && S.mode === 'vr' && !UI.menuOpen()) { if (K.I && K.I.on) goOutside(); else goInside(); }
+      if (edge(1) && S.mode === 'vr' && !UI.menuOpen() && !ctrls.some(c => c.userData.uiHit)) { if (K.I && K.I.on) goOutside(); else goInside(); }
       if (h === 'left' && S.mode === 'vr' && Math.hypot(ax, ay) > 0.15) walk(ax, ay, dt);
       if (h === 'right') {
         if (S.mode === 'vr') {
@@ -406,6 +407,8 @@
     Grab.tick();
     updateRays();
     UI.update(time, dt);
+    Labels.update();
+    Photo.update();
     fadeTick(dt);
     if (S.opt) Opt.check(time);
     // 피규어: 배경 비우고 대지 주변만
@@ -618,9 +621,9 @@
       tex = new T.CanvasTexture(cv);
       panel = new T.Mesh(new T.PlaneGeometry(1.0, 0.75), new T.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, side: T.DoubleSide }));
       panel.renderOrder = 1001; panel.visible = false; panel.userData.khxr = true; panel.name = 'khxr-menu';
-      qcv = document.createElement('canvas'); qcv.width = 512; qcv.height = 220; qg = qcv.getContext('2d');
+      qcv = document.createElement('canvas'); qcv.width = 512; qcv.height = 320; qg = qcv.getContext('2d');
       qtex = new T.CanvasTexture(qcv);
-      quick = new T.Mesh(new T.PlaneGeometry(0.2, 0.086), new T.MeshBasicMaterial({ map: qtex, transparent: true, depthTest: false, side: T.DoubleSide }));
+      quick = new T.Mesh(new T.PlaneGeometry(0.2, 0.125), new T.MeshBasicMaterial({ map: qtex, transparent: true, depthTest: false, side: T.DoubleSide }));
       quick.renderOrder = 1000; quick.userData.khxr = true; quick.name = 'khxr-quick'; quick.visible = false;
     }
     /* ----- 항목 만들기: 원본 DOM 을 읽는다 ----- */
@@ -683,7 +686,8 @@
         { t: '보기', sec: [
           { h: '현황과 신축', items: radios('era') }, { h: '겹쳐 보기', items: radios('mixq') },
           { h: '주변', items: checks(['t-city', 't-ctx', 't-b1', 't-limits', 't-frame']) },
-          { h: '단면', items: inside ? buttons('#secBtn,#secAllBtn') : [] }] },
+          { h: '단면', items: inside ? buttons('#secBtn,#secAllBtn') : [] },
+          { h: '실사 사진', items: Photo.items() }] },
       ];
       // 기타: 위에서 쓰지 않은 원본 패널 그룹 자동 수집
       used.clear(); T0.forEach(t => t.sec.forEach(s => s.items.forEach(i => used.add(i.key))));
@@ -711,7 +715,8 @@
     }
     function layout(T0) {
       const out = []; const tb = T0[tab] || T0[0];
-      const COL = 4, gap = 10, cw = (W - 48 - gap * (COL - 1)) / COL, ch = 60, top = 168, bottom = H - 76;
+      const hand = S.input === 'hand';   // 손: 누르는 영역 사이 12mm 이상(0.45m 거리에서 약 28px)
+      const COL = hand ? 3 : 4, gap = hand ? 28 : 10, cw = (W - 48 - gap * (COL - 1)) / COL, ch = hand ? 64 : 60, top = 168, bottom = H - 76;
       const pages = [[]]; let y = top;
       tb.sec.forEach(sec => {
         if (!sec.items.length) return;
@@ -780,24 +785,29 @@
     /* ----- 빠른 막대: 층 표시 + 4 버튼 ----- */
     function drawQuick() {
       const q = qg, L = curLevel(); qcells = [];
-      q.clearRect(0, 0, 512, 220);
-      q.fillStyle = 'rgba(14,18,20,.92)'; q.beginPath(); q.roundRect ? q.roundRect(4, 4, 504, 212, 24) : q.rect(4, 4, 504, 212); q.fill();
+      q.clearRect(0, 0, 512, 320);
+      const qh = S.input === 'hand' ? 312 : 212;
+      q.fillStyle = 'rgba(14,18,20,.92)'; q.beginPath(); q.roundRect ? q.roundRect(4, 4, 504, qh, 24) : q.rect(4, 4, 504, qh); q.fill();
       q.fillStyle = '#7fd6ff'; q.font = '600 22px ' + FONT; q.fillText(S.mode === 'fig' ? '모형 보기' : '케이프혼타워', 24, 40);
       q.fillStyle = '#f2f0ea'; q.font = '700 40px ' + FONT; q.fillText(S.mode === 'fig' ? '1:' + Math.round(1 / S.fig.scale) : (L ? (L.name || L.key) : '건물 밖'), 24, 88);
-      const btns = S.mode === 'fig'
+      const hand = S.input === 'hand';
+      const row1 = S.mode === 'fig'
         ? [['q:in', '몰입', () => X.setMode('vr')], ['q:s+', '크게', () => { S.fig.scale = clampScale(S.fig.scale * 1.25); }], ['q:s-', '작게', () => { S.fig.scale = clampScale(S.fig.scale / 1.25); }], ['q:menu', '메뉴', () => toggleMenu()]]
         : [['q:up', '▲ 위층', () => stepFloor(1)], ['q:dn', '▼ 아래층', () => stepFloor(-1)], ['q:io', K.I && K.I.on ? '밖으로' : '안으로', () => (K.I && K.I.on ? goOutside() : goInside())], ['q:menu', '메뉴', () => toggleMenu()]];
-      btns.forEach(([k, t, a], i) => {
-        const c = { key: k, x: 16 + i * 122, y: 112, w: 114, h: 92, label: t, act: a }; qcells.push(c);
+      const row2 = hand ? [['q:cp', '◀ 시안', () => cycle(-1)], ['q:cn', '시안 ▶', () => cycle(1)],
+        S.mode === 'fig' ? ['q:rl', '↶ 돌리기', () => { S.fig.yaw -= Math.PI / 8; }] : ['q:rl', '↶ 30°', () => snapTurn(Math.PI / 6)],
+        S.mode === 'fig' ? ['q:rr', '돌리기 ↷', () => { S.fig.yaw += Math.PI / 8; }] : ['q:rr', '30° ↷', () => snapTurn(-Math.PI / 6)]] : [];
+      [row1, row2].forEach((row, r) => row.forEach(([k, t, a], i) => {
+        const c = { key: k, x: 16 + i * 122, y: 112 + r * 104, w: 114, h: 92, label: t, act: a }; qcells.push(c);
         q.fillStyle = hover === k ? 'rgba(127,214,255,.3)' : 'rgba(255,255,255,.1)'; q.beginPath(); q.roundRect ? q.roundRect(c.x, c.y, c.w, c.h, 14) : q.rect(c.x, c.y, c.w, c.h); q.fill();
         q.fillStyle = '#fff'; q.font = '600 24px ' + FONT; q.textAlign = 'center'; q.fillText(t, c.x + c.w / 2, c.y + 56); q.textAlign = 'left';
-      });
+      }));
       if (S.input !== 'hand') { q.fillStyle = '#9a978f'; q.font = '400 17px ' + FONT; q.fillText(S.mode === 'fig' ? '그립 잡기 · 두 손 크기' : 'A/X 위 · B/Y 아래 · 그립 밖', 250, 40); }
       qtex.needsUpdate = true;
     }
     /* ----- 열기/닫기와 배치(입력 방식별 거리) ----- */
     function openMenu() {
-      open = true;
+      open = true; Help.hide();
       const hand = S.input === 'hand', D = hand ? 0.45 : 1.0, s = D / 1.0;
       const h = xrCam.position.clone(), d = new T.Vector3(0, 0, -1).applyQuaternion(xrCam.quaternion); d.y = 0; if (d.lengthSq() < 1e-4) d.set(0, 0, -1); d.normalize();
       if (!panel.parent) rig.add(panel);
@@ -806,14 +816,18 @@
       panel.scale.setScalar(s); panel.visible = true;
       draw(); click();
     }
-    function closeMenu() { open = false; panel.visible = false; hover = ''; }
+    function closeMenu() { open = false; panel.visible = false; hover = ''; dragC = null; }
+    let dragC = null;
+    function dragStart(c) { dragC = c; c.attach(panel); }
+    function dragEnd() { if (!dragC) return; rig.attach(panel); const q = panel.quaternion, e = new T.Euler().setFromQuaternion(q, 'YXZ'); panel.rotation.set(0, e.y, 0); dragC = null; }
     function toggleMenu() { open ? closeMenu() : openMenu(); }
     /* ----- 히트 판정 ----- */
     function cellAt(list, uv, w, h) { const x = uv.x * w, y = (1 - uv.y) * h; return list.find(c => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) || null; }
     function raycast(ray) {
       let best = null;
       if (open && panel.visible) { const h = ray.intersectObject(panel, false)[0]; if (h) { const c = cellAt(cells, h.uv, W, H); best = { key: c ? c.key : 'panel', cell: c, distance: h.distance, where: 'menu' }; } }
-      if (!best && quick.visible) { const h = ray.intersectObject(quick, false)[0]; if (h) { const c = cellAt(qcells, h.uv, 512, 220); best = { key: c ? c.key : 'quick', cell: c, distance: h.distance, where: 'quick' }; } }
+      if (!best && quick.visible) { const h = ray.intersectObject(quick, false)[0]; if (h) { const c = cellAt(qcells, h.uv, 512, 320); best = { key: c ? c.key : 'quick', cell: c, distance: h.distance, where: 'quick' }; } }
+      if (!best) best = Photo.raycast(ray);
       return best;
     }
     function activate(hit) {
@@ -831,7 +845,7 @@
         const H0 = c.userData.handObj; if (!c.userData.isHand || !H0 || !H0.joints) continue;
         const tip = H0.joints['index-finger-tip']; if (!tip || !tip.visible) continue;
         const wp = tip.getWorldPosition(V(0, 0, 0));
-        for (const [mesh, list, w, h] of [[panel, cells, W, H], [quick, qcells, 512, 220]]) {
+        for (const [mesh, list, w, h] of [[panel, cells, W, H], [quick, qcells, 512, 320]]) {
           if (!mesh.visible || (mesh === panel && !open)) continue;
           const lp = mesh.worldToLocal(wp.clone()); const sx = mesh.geometry.parameters.width, sy = mesh.geometry.parameters.height;
           if (Math.abs(lp.x) > sx / 2 || Math.abs(lp.y) > sy / 2) continue;
@@ -897,10 +911,103 @@
       if (dirtyFlag && !open) drawQuick();
     }
     function onSessionStart() { detectInput(); drawQuick(); Help.maybe(); }
-    function onSessionEnd() { closeMenu(); quick.visible = false; if (panel.parent) panel.parent.remove(panel); Help.hide(); }
-    return { init, raycast, activate, update, toggleMenu, openMenu, closeMenu, menuOpen: () => open, cycle, toast, detectInput, onSessionStart, onSessionEnd,
+    function onSessionEnd() { Photo.close(); if (Labels.g) Labels.g.visible = false; closeMenu(); quick.visible = false; if (panel.parent) panel.parent.remove(panel); Help.hide(); }
+    return { init, raycast, activate, update, toggleMenu, dragStart, dragEnd, dragging: () => dragC, openMenu, closeMenu, menuOpen: () => open, cycle, toast, detectInput, onSessionStart, onSessionEnd,
       dirty: () => { dirtyFlag = true; }, dirtySoon: () => { soon = performance.now() + 150; }, cells: () => cells, qcells: () => qcells, setTab: i => { tab = i; page = 0; dirtyFlag = true; }, tabs: () => tabs().map(t => t.t + ':' + t.sec.reduce((n, s) => n + s.items.length, 0)) };
   })();
+
+  /* ================= 12-1. 모형 층 라벨 ================= */
+  const Labels = X.labels = {
+    g: null, sig: '',
+    update() {
+      const want = S.mode === 'fig' && K.full && K.LEVELS;
+      if (!want) { if (this.g) this.g.visible = false; return; }
+      const sig = K.LEVELS.map(l => l.key + ':' + floorY(l).toFixed(2)).join('|') + S.center.x.toFixed(1);
+      if (sig !== this.sig) this.build(sig);
+      this.g.visible = true;
+      // 글자가 늘 사용자 쪽을 보게(모형이 돌아도)
+      const head = xrCam.getWorldPosition(V(0, 0, 0));
+      this.g.children.forEach(m => { m.lookAt(head.x, m.getWorldPosition(V(0, 0, 0)).y, head.z); });
+    },
+    build(sig) {
+      if (this.g) { this.g.children.forEach(m => { m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); }); scene.remove(this.g); }
+      const g = this.g = new T.Group(); g.userData.khxr = true; this.sig = sig;
+      const ox = S.center.x + 16, oz = S.center.z + 16;   // 건물 모서리 바깥쪽 기둥처럼
+      K.LEVELS.forEach(L => {
+        const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c = cv.getContext('2d');
+        c.fillStyle = 'rgba(14,18,20,.85)'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#fff'; c.font = '700 30px ' + FONT; c.fillText(L.name || L.key, 12, 42);
+        c.fillStyle = '#7fd6ff'; c.font = '400 22px ' + FONT; if (L.area) c.fillText(Math.round(L.area / 3.3058) + '평', 120, 42);
+        const m = new T.Mesh(new T.PlaneGeometry(8, 2), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), transparent: true, depthTest: false }));
+        m.renderOrder = 998; m.position.set(ox, floorY(L) + 1.6, oz); g.add(m);
+      });
+      scene.add(g);
+    }
+  };
+
+  /* ================= 12-2. 실사 사진 액자 ================= */
+  const Photo = X.photo = {
+    mesh: null, list: [], i: 0, tex: null, loading: false,
+    man() { return window.PH && window.PH.man; },
+    url(path) { const P = window.PH, m = this.man(); return P.src.base + m.tiers.std + path + (m.h && m.h[path] ? '?v=' + m.h[path] : ''); },
+    extList() {
+      const m = this.man(); if (!m || !m.ext) return [];
+      const st = window.CH && CH.state, emode = (document.querySelector('input[name=emode]:checked') || {}).value;
+      const d = emode === 'preset' ? (m.ext.preset || {})[st.pdesign] : (m.ext.finish || {})[st.cfin];
+      if (!d || !d.img) return [];
+      return Object.entries(d.img).map(([a, p]) => ({ t: (d.name || '') + ' ' + a + '°', p }));
+    },
+    intList() {
+      const m = this.man(), L = curLevel(); if (!m || !m.int || !L) return [];
+      const k = /^B(\d)/.test(L.key) ? 'pb' + L.key[1] : /^(\d)F/.test(L.key) ? 'f' + L.key[0] : /^PH|roof/i.test(L.key) ? 'roof' : null;
+      const d = k && m.int[k]; if (!d || !d.img) return [];
+      return Object.entries(d.img).map(([a, p]) => ({ t: (d.name || L.key) + ' ' + a.replace(/^\d+_/, ''), p }));
+    },
+    items() {
+      const out = [];
+      if (this.extList().length) out.push({ key: 'ph:ext', label: '외관 실사 사진', sub: '지금 시안', act: () => this.open(this.extList()) });
+      if (this.intList().length) out.push({ key: 'ph:int', label: '이 층 실사 사진', sub: (curLevel() || {}).key, act: () => this.open(this.intList()) });
+      if (this.mesh) out.push({ key: 'ph:close', label: '사진 닫기', act: () => this.close() });
+      return out;
+    },
+    open(list) {
+      if (!list.length) return;
+      this.list = list; this.i = 0;
+      if (!this.mesh) {
+        this.cv = document.createElement('canvas'); this.cv.width = 1600; this.cv.height = 1130; this.g = this.cv.getContext('2d');
+        this.tex = new T.CanvasTexture(this.cv);
+        this.mesh = new T.Mesh(new T.PlaneGeometry(1.6, 1.13), new T.MeshBasicMaterial({ map: this.tex, depthTest: false, transparent: true }));
+        this.mesh.renderOrder = 1003; this.mesh.userData.khxr = true; this.mesh.name = 'khxr-photo';
+      }
+      const h = xrCam.position.clone(), d = V(0, 0, -1).applyQuaternion(xrCam.quaternion); d.y = 0; if (d.lengthSq() < 1e-4) d.set(0, 0, -1); d.normalize();
+      rig.add(this.mesh); this.mesh.position.copy(h).addScaledVector(d, 1.9); this.mesh.position.y = h.y; this.mesh.rotation.set(0, Math.atan2(-d.x, -d.z), 0);
+      this.show();
+    },
+    show() {
+      const it = this.list[this.i], g = this.g; this.loading = true; this.paint(null, it);
+      const img = new Image(); img.crossOrigin = 'anonymous';
+      img.onload = () => { this.loading = false; this.ok = true; this.paint(img, it); };
+      img.onerror = () => { this.loading = false; this.ok = false; this.paint(null, it, '사진을 불러오지 못했습니다'); };
+      img.src = this.url(it.p);
+    },
+    paint(img, it, err) {
+      const g = this.g; g.fillStyle = '#0e1214'; g.fillRect(0, 0, 1600, 1130);
+      if (img) g.drawImage(img, 0, 0, 1600, 1000);
+      g.fillStyle = '#f2f0ea'; g.font = '600 40px ' + FONT; g.fillText((err || (this.loading ? '불러오는 중… ' : '')) + it.t + '  (' + (this.i + 1) + '/' + this.list.length + ')', 30, 1080);
+      this.cells = [{ key: 'ph:prev', x: 1090, y: 1020, w: 160, h: 100, label: '◀', act: () => { this.i = (this.i - 1 + this.list.length) % this.list.length; this.show(); } },
+        { key: 'ph:next', x: 1260, y: 1020, w: 160, h: 100, label: '▶', act: () => { this.i = (this.i + 1) % this.list.length; this.show(); } },
+        { key: 'ph:x', x: 1430, y: 1020, w: 150, h: 100, label: '닫기', act: () => this.close() }];
+      this.cells.forEach(c => { g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(c.x, c.y, c.w, c.h); g.fillStyle = '#fff'; g.font = '600 40px ' + FONT; g.textAlign = 'center'; g.fillText(c.label, c.x + c.w / 2, c.y + 64); g.textAlign = 'left'; });
+      this.tex.needsUpdate = true;
+    },
+    close() { if (this.mesh && this.mesh.parent) this.mesh.parent.remove(this.mesh); this.mesh = null; },
+    raycast(ray) {
+      if (!this.mesh || !this.mesh.parent) return null;
+      const h = ray.intersectObject(this.mesh, false)[0]; if (!h) return null;
+      const x = h.uv.x * 1600, y = (1 - h.uv.y) * 1130, c = (this.cells || []).find(c => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h);
+      return { key: c ? c.key : 'photo', cell: c, distance: h.distance, where: 'photo' };
+    },
+    update() {}
+  };
 
   /* ================= 13. 첫 안내 ================= */
   const Help = {
