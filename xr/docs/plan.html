@@ -500,7 +500,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 </ul>
 <p class="small">완료 조건: Q3, Q11, Q16, Q17을 에뮬레이터에서 통과. 착용 확인은 실기기 대기열로.</p></div>
 
-<div class="phase" id="p4"><h3>P4. VR 이동과 편안함 <span class="pill acc">진행 중</span></h3>
+<div class="phase" id="p4"><h3>P4. VR 이동과 편안함 <span class="pill ok">완료</span></h3>
 <p class="goal">실제 크기로 건물 안팎을 편하게 돌아다닙니다.</p>
 <ul class="chk">
 <li>스틱 걷기에 Wing 충돌 판정 재사용(연결 통로에 <code>walkable</code>, 램프 높이 추가): 벽과 기둥 통과 금지, 램프 오르내림, 층 자동 전환</li>
@@ -510,7 +510,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li>바닥 높이 오차 5cm 이내</li>
 </ul></div>
 
-<div class="phase" id="p5"><h3>P5. 패스스루 피규어 <span class="pill todo">대기</span></h3>
+<div class="phase" id="p5"><h3>P5. 패스스루 피규어 <span class="pill acc">진행 중</span></h3>
 <p class="goal">책상 위 모형을 놓고 돌려 보고, 그 안으로 들어갑니다.</p>
 <ul class="chk">
 <li>평면 인식으로 책상이나 바닥에 배치, 평면이 없으면 손 앞 0.5m</li>
@@ -732,6 +732,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>P1</td><td>연결 코드 [XR] 4곳(렌더러 alpha 포함), 연결 통로 기반 XR 계층, 체험판 조작 이식, 메뉴와 빠른 막대, 웹 이어받기. 미리보기 배포. 실기기 측정은 대기열</td><td><code>78f3375</code></td></tr>
 <tr><td>2026-10-30</td><td>P2</td><td>그리기 호출 외부 196, 내부 140, 피규어 162, 렌더 146(양안, 에뮬레이터). 꼭짓점 색 굽기 병합, 선분과 다중 재질 병합, 그림자 얼룩 해결. 스모크 테스트 17/17</td><td><code>1e9324c</code></td></tr>
 <tr><td>2026-10-30</td><td>P3</td><td>XR 메뉴(모드 스위치, 탭 7, 끌어 옮기기), 빠른 막대(핸드 2줄), 핸드 3열 0.45m(간격 12.3mm, 높이 28.1mm), 시안 넘기기, 웹 이어받기, 실사 사진 액자, 피규어 층 라벨, 첫 안내. 스모크 19/19</td><td><code>50fa8b8</code></td></tr>
+<tr><td>2026-10-30</td><td>P4</td><td>포물선 순간이동(갈 수 없는 곳 빨간 표시), 원본 충돌 판정으로 스틱 걷기(180회 측정 중 벽 밖 0), 시야 가장자리 어둡게, 페이드 전환, 바닥 높이 일치. 램프 위 자동 층 전환은 미구현(순간이동과 층 버튼으로 대체). 스모크 21/21</td><td><code>81fdc66</code></td></tr>
 </tbody></table></div>
 </section>
 </main>
