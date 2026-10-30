@@ -7,7 +7,8 @@
     "smoke": "node smoke.mjs",
     "compat": "node compat.mjs",
     "ux": "node ux.mjs",
-    "check": "node smoke.mjs && node compat.mjs && node ux.mjs"
+    "check": "node smoke.mjs && node compat.mjs && node ux.mjs && node mp.mjs",
+    "mp": "node mp.mjs"
   },
   "dependencies": {
     "pngjs": "7.0.0",

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p11';
+  const VER = '1031.m1';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -92,17 +92,23 @@
 
   /* ================= 2. 진입 버튼(화면) ================= */
   async function addButtons() {
-    if (!window.isSecureContext || !navigator.xr) { log('WebXR 없음: 화면 모드만'); return; }
-    const [vr, ar] = await Promise.all(['immersive-vr', 'immersive-ar'].map(m => navigator.xr.isSessionSupported(m).catch(() => false)));
+    const xrOk = window.isSecureContext && navigator.xr;
+    const [vr, ar] = xrOk ? await Promise.all(['immersive-vr', 'immersive-ar'].map(m => navigator.xr.isSessionSupported(m).catch(() => false))) : [false, false];
     X.support = { vr, ar };
-    if (!vr && !ar) return;
+    if (!xrOk) log('WebXR 없음: 화면 모드만');
     const st = document.createElement('style');
     st.textContent = '#khxr-bar{position:fixed;left:14px;bottom:44px;z-index:9999;display:flex;gap:8px;flex-wrap:wrap}#khxr-bar button{display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:8px;border:1px solid rgba(0,0,0,.08);background:#1f5c55;color:#fff;font:600 14px ' + FONT + ';cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.18)}#khxr-bar button.alt{background:#fff;color:#1f5c55}#khxr-bar small{opacity:.6;font-weight:400;font-size:11px}#khxr-bar button:focus-visible{outline:3px solid #7fd6ff}';
     document.head.appendChild(st);
     const bar = document.createElement('div'); bar.id = 'khxr-bar';
     const mk = (t, m, cls) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = t; b.onclick = () => enter(m).catch(e => { log('진입 실패', e.message); alert('XR을 시작하지 못했습니다: ' + e.message); }); bar.appendChild(b); };
-    if (vr || ar) mk('VR로 들어가기 <small>' + VER + '</small>', 'vr');
-    mk(ar ? '내 공간에 놓기' : '모형으로 보기', 'fig', 'alt');
+    if (vr || ar) { mk('VR로 들어가기 <small>' + VER + '</small>', 'vr'); mk(ar ? '내 공간에 놓기' : '모형으로 보기', 'fig', 'alt'); }
+    if (K.full) {   // 멀티플레이: 누를 때만 모듈·통신 라이브러리를 받는다(평소 로딩·성능 영향 없음)
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'alt'; b.id = 'khxr-mp';
+      b.innerHTML = Q.get('room') ? '멀티플레이 참가 <small>방 ' + Q.get('room').slice(0, 8) + '</small>' : '멀티플레이';
+      b.onclick = async () => { try { if (!window.KHMP) await loadScript(BASE + 'kh-mp.js?v=' + VER); window.KHMP.open(); } catch (e) { alert('멀티플레이를 불러오지 못했습니다: ' + (e.message || e)); } };
+      bar.appendChild(b);
+    }
+    if (!bar.children.length) return;
     document.body.appendChild(bar);
     log('XR 버튼 표시', JSON.stringify(X.support));
   }
@@ -472,6 +478,7 @@
       if (edge(4)) { if (S.mode === 'vr') stepFloor(+1); else { S.fig.scale = clampScale(S.fig.scale * 1.25); UI.dirty(); } }
       if (edge(5)) { if (S.mode === 'vr') stepFloor(-1); else { S.fig.scale = clampScale(S.fig.scale / 1.25); UI.dirty(); } }
       if (edge(3) && h === 'left') UI.toggleMenu();
+      if (edge(3) && h === 'right' && X.mp && X.mp.joined) X.mp.toggleLaser();
       if (edge(1) && S.mode === 'vr' && !UI.menuOpen() && !ctrls.some(c => c.userData.uiHit)) { if (K.I && K.I.on) goOutside(); else goInside(); }
       if (h === 'left' && S.mode === 'vr' && Math.hypot(ax, ay) > 0.15) walk(ax, ay, dt);
       if (h === 'right') {
@@ -592,6 +599,7 @@
     Hot.update();
     Photo.update();
     fadeTick(dt);
+    for (const f of X.hooks) f(dt, time);   // 멀티플레이 등 덧붙인 모듈
     if (S.opt) Opt.check(time);
     OnTop.apply(time);
     // 피규어: 배경 비우고 대지 주변만
@@ -814,6 +822,13 @@
   const CROPS = [[18, '건물만'], [45, '건물과 블록'], [250, '미성아파트 포함']];
   X.setMode = m => fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); });
   X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.arc = arc; X.teleportTo = teleportTo; X.pickables = pickables; X.visibleForPick = visibleForPick;
+  X.firstSolid = firstSolid; X.ctrls = ctrls; X.store = store; X.hooks = []; X.floorY = floorY; X.sortedLevels = sortedLevels;
+  // 다른 사람 곁으로 가기(멀티플레이 모이기): li 는 그 사람이 있는 층(밖이면 -1)
+  X.goTo = (pt, yaw, li) => fade(() => {
+    if (li >= 0 && K.full && K.LEVELS[li]) { if (!K.I.on) K.enterInt(); if (K.I.doll) K.setDoll(false); if (K.I.li !== li) K.placeLevel(li, true); wingTarget(); placeUser(V(pt.x, floorY(K.LEVELS[li]), pt.z), yaw); }
+    else { if (K.I && K.I.on) K.exitInt(); wingTarget(); placeUser(V(pt.x, pt.y, pt.z), yaw); }
+    afterChange();
+  });
 
   /* ================= 11. 최적화 프록시 =================
      XR 동안만 같은 재질 메시를 합친 대체 메시를 쓰고 원본은 숨긴다. 원본이 장면을 바꾸면 다시 만든다. */
@@ -1094,6 +1109,7 @@
         { h: '메뉴', items: [{ key: 'set:mass', label: '매스 조정 보이기', check: true, on: () => S.showMass, act: () => { S.showMass = !S.showMass; store.set('showMass', S.showMass); } }, { key: 'set:help', label: '조작 안내 보기', act: () => Help.show(true) }] },
         { h: '성능', items: [{ key: 'set:opt', label: '메시 합치기 최적화', check: true, on: () => S.opt, act: () => { S.opt = !S.opt; if (S.opt) Opt.build(); else Opt.clear(); } }] },
         { h: Q.get('xrdebug') ? '로그' : '', items: Q.get('xrdebug') ? X.log.slice(-6).map((l, k) => ({ key: 'log' + k, label: l.slice(0, 40) })) : [] }] });
+      if (X.mp && X.mp.joined) T0.push({ t: '함께', sec: X.mp.menu() });
       return T0;
     }
     /* ----- 그리기 ----- */

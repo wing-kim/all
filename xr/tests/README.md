@@ -10,7 +10,8 @@ cd xr/tests && npm install
 node smoke.mjs --shots   # 기능 26항목 + 그리기 호출 기준(< 200), 화면은 out/
 node compat.mjs          # 원본과 화면 동일(Q2), 대체 경로(Q14), 반복 진입 메모리(Q13)
 node ux.mjs              # 사용감 시나리오(실제 자세와 버튼으로만 조작), 화면은 out/ux-*.png
-npm run check            # 세 가지 모두
+node mp.mjs              # 멀티플레이 28항목(브라우저 4개를 실제 공개 중계망으로 연결, 인터넷 필요)
+npm run check            # 네 가지 모두
 ```
 
 - `fallback.html?mode=nobridge|noxr`: Wing 이 연결 통로 줄 없이 올린 경우를 흉내 냅니다.
