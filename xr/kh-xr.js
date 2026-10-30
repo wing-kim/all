@@ -136,6 +136,7 @@
     S.center = buildingCenter();
     if (mode === 'fig') { setMode('fig', { fromDesktop: true }); }
     else { setMode('vr'); placeFromDesktop(); }
+    OnTop.apply(0, true);
     if (S.opt) Opt.build();
     R.setAnimationLoop(frame);
     UI.onSessionStart();
@@ -821,17 +822,18 @@
   const OnTop = X.ontop = {
     done: new Map(), t: 0,
     is(o) { const m = Array.isArray(o.material) ? o.material[0] : o.material; return !!m && m.depthTest === false && !o.userData.khxr; },
-    apply(time) {
-      if (time - this.t < 500) return; this.t = time;
+    apply(time, force) {
+      if (!force && time - this.t < 500) return; this.t = time; let changed = false;
       (function walk(o) {
         if (o === rig || o.userData.khxr) return;
         if ((o.isMesh || o.isLine || o.isSprite || o.isPoints) && OnTop.is(o) && !OnTop.done.has(o)) {
           const ms = Array.isArray(o.material) ? o.material : [o.material];
           OnTop.done.set(o, { ro: o.renderOrder, tr: ms.map(m => m.transparent) });
-          o.renderOrder = 900 + Math.min(99, o.renderOrder || 0); ms.forEach(m => { if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } });
+          o.renderOrder = 900 + Math.min(99, o.renderOrder || 0); ms.forEach(m => { if (!m.transparent) { m.transparent = true; m.needsUpdate = true; } }); changed = true;
         }
         for (const c of o.children) walk(c);
       })(scene);
+      if (changed && S.opt) Opt.dirty();     // 병합 열쇠에 순서가 들어가므로 다시 합침(맨 앞 요소끼리 한 덩어리, 맨 끝에)
     },
     clear() { this.done.forEach((v, o) => { o.renderOrder = v.ro; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m, i) => { if (m.transparent !== v.tr[i]) { m.transparent = v.tr[i]; m.needsUpdate = true; } }); }); this.done.clear(); this.t = 0; }
   };
@@ -841,7 +843,7 @@
       const out = [];
       (function walk(o) {
         if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
-        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !OnTop.is(o)) out.push(o);
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o))) out.push(o);
         for (const c of o.children) walk(c);
       })(scene);
       return out;
