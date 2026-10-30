@@ -90,6 +90,13 @@ const scenarios = {
     await ev(async () => { UX.head(0.5, 1.3, -0.1, -20, 70); await UX.f(8); }); await shot('fig-look-side');
     await ev(async () => { UX.head(0, 1.6, 0, 0, 0); UX.clean(false); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); });
     ok('피규어 모습 화면 저장(육안 검토)', true);
+    // 양안 일치: 자르기는 재질마다(눈마다 변환). 렌더러 전체 자르기는 비어 있어야 함(r128 은 가운데 카메라 기준이라 두 눈이 어긋남)
+    const st = await ev(async () => { await KHXRLayer.enter('fig'); await UX.f(40); await new Promise(r => setTimeout(r, 700)); await UX.f(5);
+      let n = 0, withP = 0; KHXR.scene.traverse(o => { if (o.isMesh && o.visible && !o.userData.khxr) { n++; const m = Array.isArray(o.material) ? o.material[0] : o.material; if (m && m.clippingPlanes && m.clippingPlanes.length === 4) withP++; } });
+      const g = KHXR.renderer.clippingPlanes.length; await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300));
+      let left = 0; KHXR.scene.traverse(o => { const m = o.material && (Array.isArray(o.material) ? o.material[0] : o.material); if (m && m.clippingPlanes && m.clippingPlanes.length === 4) left++; });
+      return { global: g, visibleMeshes: n, clippedPerMaterial: withP, leftAfterExit: left }; });
+    ok('피규어 양안 일치: 자르기는 재질마다, 끝나면 원복', st.global === 0 && st.clippedPerMaterial === st.visibleMeshes && st.leftAfterExit === 0, st);
   },
   // 3. 밖에서 출입구까지: 바로가기 지점이 있고, 레이로 눌러 문 앞으로 감
   async hotspot() {
@@ -102,10 +109,14 @@ const scenarios = {
       await UX.press('right'); await new Promise(r => setTimeout(r, 900)); await UX.f(5);
       const eye = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3()), look = new THREE.Vector3(); KHXRLayer.xrCam.getWorldDirection(look); look.y = 0; look.normalize();
       const toDoor = h.door.clone().sub(eye).setY(0).normalize();
-      return { n, names: H.list.map(x => x.name), hover, dist: +Math.hypot(eye.x - h.at.x, eye.z - h.at.z).toFixed(2), facing: +look.dot(toDoor).toFixed(2) };
+      // 이름표 방향: 밖에서 볼 때 글자 왼쪽(A)→오른쪽(B)이 보는 사람의 오른쪽 방향이어야 함(뒷면이면 반대)
+      const head = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3()), tp = H.tags.geometry.attributes.position.array, k0 = (H.list.length - 1) * 18;
+      const A = new THREE.Vector3(tp[k0], tp[k0 + 1], tp[k0 + 2]), B = new THREE.Vector3(tp[k0 + 3], tp[k0 + 4], tp[k0 + 5]), vd = A.clone().add(B).multiplyScalar(0.5).sub(head);
+      const right = vd.clone().cross(new THREE.Vector3(0, 1, 0)).normalize(), tagFacing = +B.clone().sub(A).normalize().dot(right).toFixed(2);
+      return { n, tagFacing, names: H.list.map(x => x.name), hover, dist: +Math.hypot(eye.x - h.at.x, eye.z - h.at.z).toFixed(2), facing: +look.dot(toDoor).toFixed(2) };
     });
     await shot('hotspot');
-    ok('출입구 바로가기: 지점 표시와 레이로 이동', r.n >= 2 && r.hover === 'hot' && r.dist < 0.6 && r.facing > 0.9, r);
+    ok('출입구 바로가기: 지점 표시와 레이로 이동, 이름표 앞면', r.n >= 2 && r.hover === 'hot' && r.dist < 0.6 && r.facing > 0.9 && r.tagFacing > 0.9, r);
     await ev(async () => { UX.rest(); UX.clean(false); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); });
   },
   // 4. 순간이동만으로 밖 스폰 지점에서 정면 출입구를 거쳐 1층 안까지(사람처럼 문 쪽으로 30° 위를 겨눔)
@@ -213,6 +224,51 @@ const scenarios = {
     await shot('menu-slider');
     ok('메뉴: 시각 막대 끌기', sl.v1 !== undefined && sl.v1 > sl.v0 && sl.v1 > sl.min + (sl.max - sl.min) * 0.7, sl);
     await ev(async () => { KHXRLayer.ui.closeMenu(); UX.rest(); UX.clean(false); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); document.querySelector('input[name=vmode][value=sketch]').click(); });
+  },
+  // 9. 메뉴 창: 아래 막대를 잡아 옮기고, 모서리를 잡아 키움(크기는 기억)
+  async menuWin() {
+    await ev(async () => { UX.clean(); try { localStorage.removeItem('khxr.menuScaleC'); } catch (e) {} await KHXRLayer.enter('vr'); await UX.f(10); KHXRLayer.goInside(); await new Promise(r => setTimeout(r, 900)); UX.head(0, 1.6, 0, 0, 0); await UX.f(5); KHXRLayer.ui.openMenu(); await UX.f(5); });
+    const mv = await ev(async () => {
+      const P = KHXRLayer.ui.panel(), [bar] = P.userData.ctl, R = KHEMU.controllers.right, from = new THREE.Vector3(0.15, 1.3, -0.1);
+      const F0 = KHXRLayer.ui.panelFront(), b0 = bar.getWorldPosition(new THREE.Vector3());
+      UX.aim('right', from, b0); await UX.f(3); const hover = (KHXR.renderer.xr.getController(1).userData.uiHit || {}).where;
+      R.updateButtonValue('trigger', 1); await UX.f(3);
+      const fw = KHXRLayer.rig.localToWorld(from.clone()), dir0 = b0.clone().sub(fw);
+      for (let k = 1; k <= 10; k++) { const d = dir0.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -0.05 * k); UX.aim('right', from, fw.clone().add(d)); await UX.f(2); }
+      R.updateButtonValue('trigger', 0); await UX.f(3);
+      const F1 = KHXRLayer.ui.panelFront(), head = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3());
+      const f = new THREE.Vector3(0, 0, -1).applyQuaternion(P.getWorldQuaternion(new THREE.Quaternion())), toHead = head.clone().sub(F1).setY(0).normalize();
+      return { hover, moved: +F0.distanceTo(F1).toFixed(2), facing: +(-f.dot(toHead)).toFixed(2), menuOpen: KHXRLayer.ui.menuOpen() };
+    });
+    await shot('menu-moved');
+    ok('메뉴 창: 아래 막대로 옮기기(사용자를 봄)', mv.hover === 'win' && mv.moved > 0.3 && mv.facing > 0.95 && mv.menuOpen, mv);
+    const rs = await ev(async () => {
+      const P = KHXRLayer.ui.panel(), cr = P.userData.ctl[2], R = KHEMU.controllers.right, from = new THREE.Vector3(0.15, 1.3, -0.1);
+      const F = KHXRLayer.ui.panelFront(), c0 = cr.getWorldPosition(new THREE.Vector3()), s0 = P.scale.x;
+      UX.aim('right', from, c0); await UX.f(3); R.updateButtonValue('trigger', 1); await UX.f(3);
+      for (let k = 1; k <= 8; k++) { UX.aim('right', from, F.clone().add(c0.clone().sub(F).multiplyScalar(1 + 0.05 * k))); await UX.f(2); }
+      R.updateButtonValue('trigger', 0); await UX.f(3);
+      const F1 = KHXRLayer.ui.panelFront();
+      return { s0, s1: +P.scale.x.toFixed(2), frontKept: +F.distanceTo(F1).toFixed(3), saved: localStorage.getItem('khxr.menuScaleC') };
+    });
+    await shot('menu-resized');
+    ok('메뉴 창: 모서리로 크기 키우기(앞면 고정, 기억)', rs.s1 > 1.3 && rs.frontKept < 0.05 && rs.saved && +JSON.parse(rs.saved) > 1.3, rs);
+    await ev(async () => { KHXRLayer.ui.closeMenu(); try { localStorage.removeItem('khxr.menuScaleC'); } catch (e) {} UX.rest(); UX.clean(false); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); });
+  },
+  // 10. 오른쪽 스틱 위아래로 외관 시안이 바뀌지 않음, 걷기 속도 초당 2.6m
+  async stickWalk() {
+    await ev(async () => { await KHXRLayer.enter('vr'); await UX.f(10); KHXRLayer.goOutside(); await new Promise(r => setTimeout(r, 900)); await UX.f(5); });
+    const r = await ev(async () => {
+      const a = (document.querySelector('input[name=dsg]:checked') || {}).value, R = KHEMU.controllers.right;
+      R.updateAxes('thumbstick', 0, -1); await UX.f(30); R.updateAxes('thumbstick', 0, 1); await UX.f(30); R.updateAxes('thumbstick', 0, 0); await UX.f(3);
+      const b = (document.querySelector('input[name=dsg]:checked') || {}).value;
+      const L = KHEMU.controllers.left, p0 = KHXRLayer.rig.position.clone(), t0 = performance.now(); L.updateAxes('thumbstick', 0, -1); await UX.f(60); L.updateAxes('thumbstick', 0, 0); const t1 = performance.now(); await UX.f(2);
+      const dist = KHXRLayer.rig.position.distanceTo(p0);
+      return { before: a, after: b, speed: +(dist / ((t1 - t0) / 1000)).toFixed(2), setting: KHXRLayer.state.walkSpeed };
+    });
+    ok('오른쪽 스틱으로 시안이 바뀌지 않음', r.before === r.after, r);
+    ok('걷기 속도 기본 초당 2.6m', r.setting === 2.6 && r.speed > 1.9, r);
+    await ev(async () => { await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); });
   },
 };
 
