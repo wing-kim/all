@@ -10,7 +10,7 @@ const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.
 const p = await b.newPage(); await p.setViewport({ width: 1280, height: 800 });
 const errs = []; p.on('pageerror', e => errs.push(String(e)));
 await p.goto(BASE + '/new/3d-model.html?xremu=1&pr=1&pf=glass', { waitUntil: 'load', timeout: 120000 });
-await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support && window.KHPRLayer && KHPRLayer.on && KHPRLayer.t.dress != null && KHPRLayer.t.warm != null, { timeout: 60000 });
+await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support && window.KHPRLayer && KHPRLayer.on && KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null && KHPRLayer.t.warm != null, { timeout: 60000 });
 const ev = (f, ...a) => p.evaluate(f, ...a);
 const frames = n => ev(async n => { const s = KHXR.renderer.xr.getSession(); let c = 0, t = 0; for (let i = 0; i < n; i++) await new Promise(r => s.requestAnimationFrame(() => r())); c = KHXR.renderer.info.render.calls; t = KHXR.renderer.info.render.triangles; return { calls: c, tris: t }; }, n);
 const res = {};

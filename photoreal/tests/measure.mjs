@@ -11,7 +11,7 @@ const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.
 const p = await b.newPage();
 if (dev === 'mobile') await p.emulate({ viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
 else await p.setViewport({ width: 1600, height: 900 });
-await p.setCacheEnabled(process.env.WARM === '1');
+await p.setCacheEnabled(true);   // 새 프로필이라 처음엔 빈 저장소. WAIT=ms 를 주면 그만큼 기다렸다가(미리받기) 켠다
 const errs = []; p.on('pageerror', e => errs.push(String(e))); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
 const res = { dev, base: BASE, at: new Date().toISOString() };
 const t0 = Date.now();
@@ -19,6 +19,7 @@ await p.goto(BASE + '/new/3d-model.html' + (process.env.QS || ''), { waitUntil: 
 res.pageLoad = Date.now() - t0;
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-pr'), { timeout: 60000 });
 res.wingReady = Date.now() - t0;
+if (process.env.WAIT) { await new Promise(r => setTimeout(r, +process.env.WAIT)); res.waitedMs = +process.env.WAIT; res.prefetch = await p.evaluate(() => KHPRLayer.pre || null); }
 const frames = n => `await new Promise(r=>{let k=0;const f=()=>{if(++k>=${n})r();else requestAnimationFrame(f)};requestAnimationFrame(f)})`;
 const shot = async n => { await p.evaluate(new Function(`return (async()=>{${frames(3)}})()`)); await p.screenshot({ path: OUT + dev + '-' + n + '.jpg', type: 'jpeg', quality: 82 }); };
 // 우선 조합의 원본 렌더 모드 화면(비교용)
@@ -27,8 +28,8 @@ await shot('0-wing-render');
 res.wingRenderInfo = await p.evaluate(() => KHPRLayer.frameInfo());
 // 켜기
 res.enable = await p.evaluate(new Function(`return (async()=>{const t=performance.now();const e=document.getElementById('vm-pr');e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));const sync=performance.now()-t;${frames(2)};const first=performance.now()-t;
-  const t1=performance.now();while((KHPRLayer.t.assets==null||KHPRLayer.t.dress==null||KHPRLayer.t.env==null||KHPRLayer.t.warm==null)&&performance.now()-t1<60000)await new Promise(r=>setTimeout(r,50));${frames(2)};
-  return {syncMs:Math.round(sync),firstFrameMs:Math.round(first),assetsMs:KHPRLayer.t.assets,envMs:KHPRLayer.t.env,dressMs:KHPRLayer.t.dress,warmMs:KHPRLayer.t.warm,allReadyMs:Math.round(performance.now()-t)}})()`));
+  const t1=performance.now();while((KHPRLayer.t.assets==null||KHPRLayer.t.dress==null||KHPRLayer.t.env2==null||KHPRLayer.t.env==null||KHPRLayer.t.warm==null)&&performance.now()-t1<60000)await new Promise(r=>setTimeout(r,50));${frames(2)};
+  return {syncMs:Math.round(sync),firstFrameMs:Math.round(first),assetsMs:KHPRLayer.t.assets,envMs:KHPRLayer.t.env,dressMs:KHPRLayer.t.dress,propsMs:KHPRLayer.t.env2,bakeMs:KHPRLayer.t.bake,warmMs:KHPRLayer.t.warm,allReadyMs:Math.round(performance.now()-t)}})()`));
 await shot('1-glass');
 res.info = {};
 const info = async k => { res.info[k] = await p.evaluate(async () => { const d = KHPRLayer.diag(); const f = await KHPRLayer.frameInfo(); return { calls: f.calls, tris: f.tris, programs: f.programs, mats: d.mats, textures: d.textures, warm: d.t.warm, swap: d.stat.swap }; }); };

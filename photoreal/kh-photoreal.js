@@ -537,6 +537,7 @@
     const cube = R3D.cube && R3D.cube.texture;
     if (cube) CACHE.forEach(e => { if (e && e.glass && e.m.envMap !== cube) { e.m.envMap = cube; e.m.needsUpdate = true; } });
     if (inBase) { if (R.toneMappingExposure !== 0.95) R.toneMappingExposure = 0.95; if (K.amb.intensity !== 0.04) K.amb.intensity = 0.04; }
+    warm();
     skyUpdate();
     const wantSky = night ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day';
     const useSky = skyBG && !inBase && skyCur.key === wantSky;   // 새 시간대 하늘을 받기 전에는 Wing 하늘을 보인다
@@ -556,7 +557,7 @@
   let warmG = null, warmMs = [];
   function warm() {
     if (warmG) { scene.remove(warmG); warmG = null; }
-    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && warmMs.length) { PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); } return; }
+    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && DR.group) { PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); } return; }
     const props = R.properties, cam = window.KHXR.camera;
     warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
     const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3));
