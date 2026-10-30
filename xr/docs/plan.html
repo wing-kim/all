@@ -537,7 +537,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li>모델 로딩 중 XR 진입 시 대기 표시</li>
 </ul></div>
 
-<div class="phase" id="p8"><h3>P8. 비전 프로 확장 <span class="pill acc">진행 중</span></h3>
+<div class="phase" id="p8"><h3>P8. 비전 프로 확장 <span class="pill ok">완료</span></h3>
 <p class="goal">같은 주소에서 비전 프로 몰입 VR을 지원합니다.</p>
 <ul class="chk">
 <li><code>immersive-vr</code> 진입, 시선과 핀치로 메뉴 조작</li>
@@ -735,6 +735,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>P4</td><td>포물선 순간이동(갈 수 없는 곳 빨간 표시), 원본 충돌 판정으로 스틱 걷기(180회 측정 중 벽 밖 0), 시야 가장자리 어둡게, 페이드 전환, 바닥 높이 일치. 램프 위 자동 층 전환은 미구현(순간이동과 층 버튼으로 대체). 스모크 21/21</td><td><code>81fdc66</code></td></tr>
 <tr><td>2026-10-30</td><td>P5</td><td>자리 잡기(앵커 복원, 책상 면 감지, 눈앞), 받침, 범위 선택 3종, 다시 놓기, 모형 지점으로 들어가기(층 자동), 두 손 크기와 회전, A/X·B/Y 배율. 앵커와 책상 감지는 에뮬레이터 미지원이라 실기기 확인 대기. 스모크 24/24</td><td><code>a6241a7</code></td></tr>
 <tr><td>2026-10-30</td><td>P6</td><td>호환 점검 5/5: 화면 모드 원본과 동일(스케치 0%, 렌더 0.03% 차이), 연결 통로 없을 때 최소 기능 VR, XR 줄 전부 없을 때 원본 정상, 10회 진입·종료 후 증가 지오메트리 44·텍스처 17(XR 계층). 관찰: Wing 원본은 외관 시안 4회 변경만으로 지오메트리 576개 증가(XR 무관). 스모크 24/24</td><td><code>d6c9e50</code></td></tr>
+<tr><td>2026-10-30</td><td>P8</td><td>패스스루 없는 세션(비전 프로 WebXR 조건)에서 몰입과 가상 방 피규어 동작, 시선+핀치 선택 처리. 실제 비전 프로 확인과 model 요소(USDZ) 꺼내 보기는 USDZ 조합 파일이 생기면 진행. 호환 6/6</td><td><code>5b30ce4</code></td></tr>
 </tbody></table></div>
 </section>
 </main>
