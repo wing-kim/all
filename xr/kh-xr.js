@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p3';
+  const VER = '1030.p4';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -702,7 +702,7 @@
       const out = [];
       (function walk(o) {
         if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
-        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && !o.isInstancedMesh && o.geometry && o.geometry.attributes.position) out.push(o);
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o))) out.push(o);
         for (const c of o.children) walk(c);
       })(scene);
       return out;
@@ -715,7 +715,8 @@
         if (Array.isArray(o.material)) {
           const gs = o.geometry.groups && o.geometry.groups.length ? o.geometry.groups : [{ start: 0, count: Infinity, materialIndex: 0 }];
           gs.forEach(gr => { const m = o.material[gr.materialIndex]; if (m && m.visible !== false) out.push({ o, m, kind, gr, multi: true }); });
-        } else if (o.material && o.material.visible !== false) out.push({ o, m: o.material, kind, gr: null, multi: false });
+        } else if (o.isInstancedMesh) { for (let i = 0; i < o.count; i++) out.push({ o, m: o.material, kind, gr: null, multi: false, inst: i }); }
+        else if (o.material && o.material.visible !== false) out.push({ o, m: o.material, kind, gr: null, multi: false });
       }
       return out;
     },
@@ -734,7 +735,13 @@
         q4(a.roughness), q4(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
         Object.keys(o.geometry.attributes).sort().join(','), o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
     },
+    // 인스턴스 메시(가구 등)는 인스턴스마다 펼쳐 같은 재질끼리 합친다. 너무 크거나 인스턴스 색·여러 재질이면 그대로 둔다
+    instOk(o) { return !o.instanceColor && !Array.isArray(o.material) && o.material && o.material.visible !== false && o.count * o.geometry.attributes.position.count <= 400000; },
     piece(pt, cache) {
+      if (pt.inst != null) {
+        const g = pt.o.geometry.index ? pt.o.geometry.toNonIndexed() : pt.o.geometry.clone(), m = new T.Matrix4();
+        pt.o.getMatrixAt(pt.inst, m); g.applyMatrix4(m.premultiply(pt.o.matrixWorld)); return g;
+      }
       let g = cache.get(pt.o);
       if (!g) { g = pt.o.geometry.index ? pt.o.geometry.toNonIndexed() : pt.o.geometry.clone(); g.applyMatrix4(pt.o.matrixWorld); cache.set(pt.o, g); }
       if (!pt.gr) return g;
@@ -801,7 +808,13 @@
     underground(objs) {
       const out = new Set(); if (!this.cullUnder()) return out;
       const b = new T.Box3();
-      for (const o of objs) { const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox(); b.copy(g.boundingBox).applyMatrix4(o.matrixWorld); if (b.max.y < -0.3) out.add(o); }
+      const bi = new T.Box3(), m = new T.Matrix4();
+      for (const o of objs) {
+        const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox();
+        if (o.isInstancedMesh) { b.makeEmpty(); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m); b.union(bi.copy(g.boundingBox).applyMatrix4(m.premultiply(o.matrixWorld))); } }
+        else b.copy(g.boundingBox).applyMatrix4(o.matrixWorld);
+        if (b.max.y < -0.3) out.add(o);
+      }
       return out;
     },
     check(time) {
