@@ -50,6 +50,33 @@ try {
   ok('위층 이동과 바닥 높이 일치', up.key !== '1F' && Math.abs(up.rigY - up.floor) < 0.05, up);
   await shot('03-vr-int');
 
+  // 걷기: 원본 충돌 판정으로 벽을 통과하지 않음
+  const walk = await ev(async () => {
+    const s = KHXR.renderer.xr.getSession(), L = KHXR.LEVELS[KHXR.I.li], f = () => new Promise(r => s.requestAnimationFrame(() => r()));
+    let prev = KHXRLayer.rig.position.clone(), path = 0, bad = 0, n = 0;
+    for (const [x, y] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+      KHEMU.controllers.left.updateAxes('thumbstick', x, y);
+      for (let i = 0; i < 45; i++) { await f(); const h = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3()); n++; if (!KHXR.walkable(h.x, h.z, L)) bad++; path += KHXRLayer.rig.position.distanceTo(prev); prev = KHXRLayer.rig.position.clone(); }
+    }
+    KHEMU.controllers.left.updateAxes('thumbstick', 0, 0); await f();
+    return { moved: +path.toFixed(2), samples: n, outside: bad };
+  });
+  ok('스틱 걷기와 벽 충돌', walk.moved > 0.3 && walk.outside === 0, walk);
+  // 포물선 순간이동
+  const tp = await ev(async () => {
+    const s = KHXR.renderer.xr.getSession(), f = () => new Promise(r => s.requestAnimationFrame(() => r()));
+    const c = KHEMU.controllers.right; c.position.set(0.2, 1.2, -0.3); { const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.5, 0, 0)); c.quaternion.set(q.x, q.y, q.z, q.w); }
+    for (let i = 0; i < 3; i++) await f();
+    const before = KHXRLayer.rig.position.clone();
+    c.updateButtonValue('trigger', 1); for (let i = 0; i < 6; i++) await f();
+    const mk = KHXRLayer.marker, aimOk = mk.visible && mk.material.color.getHex() === 0x7fd6ff;
+    const U = KHXR.renderer.xr.getController(1).userData, U0 = KHXR.renderer.xr.getController(0).userData; const dbg = { r: { hand: U.hand, aim: U.aim, hit: !!U.hit, ui: !!U.uiHit, press: !!U.pressUI }, l: { hand: U0.hand, aim: U0.aim, hit: !!U0.hit, ui: !!U0.uiHit } };
+    c.updateButtonValue('trigger', 0); await f(); await new Promise(r => setTimeout(r, 900)); await f();
+    c.quaternion.set(0, 0, 0, 1);
+    return { aimOk, moved: +KHXRLayer.rig.position.distanceTo(before).toFixed(2), dbg, fade: !!KHXRLayer.state.fade };
+  });
+  ok('포물선 순간이동', tp.aimOk && tp.moved > 0.5, tp);
+
   // 메뉴
   await ev(() => KHXRLayer.ui.openMenu()); await frames(5);
   const menu = await ev(() => ({ tabs: KHXRLayer.ui.tabs(), cells: KHXRLayer.ui.cells().length }));

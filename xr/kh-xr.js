@@ -61,7 +61,7 @@
   const S = X.state = {
     mode: null, session: null, sessionMode: null, ar: false, entering: false,
     fig: { pos: null, yaw: 0, scale: 1 / 150, crop: 45 }, center: null,
-    turn: store.get('turn', 'snap'), showMass: store.get('showMass', false), opt: !Q.get('noopt'),
+    turn: store.get('turn', 'snap'), vignette: store.get('vignette', true), moving: 0, showMass: store.get('showMass', false), opt: !Q.get('noopt'),
     input: 'controller', lastTurn: 0, saved: null, fade: null
   };
   function init(k) {
@@ -75,6 +75,13 @@
     xrCam = new T.PerspectiveCamera(70, 1, 0.08, 5000); xrCam.name = 'khxr-cam'; rig.add(xrCam);
     fadeMesh = new T.Mesh(new T.SphereGeometry(0.25, 16, 12), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, side: T.BackSide, depthTest: false, depthWrite: false }));
     fadeMesh.renderOrder = 10000; fadeMesh.visible = false; xrCam.add(fadeMesh);
+    {   // 이동 중 시야 가장자리 어둡게: 가운데가 뚫린 원판
+      const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d');
+      const gr = c.createRadialGradient(128, 128, 60, 128, 128, 128); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
+      c.fillStyle = gr; c.fillRect(0, 0, 256, 256);
+      X.vig = new T.Mesh(new T.PlaneGeometry(0.5, 0.5), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), transparent: true, opacity: 0, depthTest: false, depthWrite: false }));
+      X.vig.position.z = -0.12; X.vig.renderOrder = 9999; X.vig.visible = false; xrCam.add(X.vig);
+    }
     X.rig = rig; X.xrCam = xrCam;
     initControllers();
     UI.init();
@@ -237,6 +244,7 @@
       if (!okX) mv.x = 0; if (!okZ) mv.z = 0;
     }
     rig.position.add(mv);
+    S.moving = 1;
   }
   function afterChange() { S.center = S.center || buildingCenter(); R.shadowMap.needsUpdate = true; UI.dirty(); }
 
@@ -343,7 +351,7 @@
     const u = c.userData;
     if (u.pressUI) { const h = u.pressUI; u.pressUI = null; if (u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
     if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
-    if (u.aim) { u.aim = false; if (u.hit) fade(() => teleportTo(u.hit), 0.6); u.hit = null; X.marker.visible = false; }
+    if (u.aim) { u.aim = false; const pt = u.hit; if (pt) fade(() => teleportTo(pt), 0.6); u.hit = null; X.marker.visible = false; }
   }
   const prevBtn = new WeakMap();
   function pollGamepads(dt, time) {
@@ -360,7 +368,7 @@
       if (h === 'right') {
         if (S.mode === 'vr') {
           if (S.turn === 'snap') { if (Math.abs(ax) > 0.7 && !S.turnHeld) { snapTurn(ax > 0 ? -Math.PI / 6 : Math.PI / 6); S.turnHeld = true; } else if (Math.abs(ax) < 0.3) S.turnHeld = false; }
-          else if (Math.abs(ax) > 0.15) snapTurn(-ax * 1.6 * dt);
+          else if (Math.abs(ax) > 0.15) { snapTurn(-ax * 1.6 * dt); S.moving = 1; }
         } else if (S.mode === 'fig') {
           if (Math.abs(ax) > 0.15) S.fig.yaw += ax * 1.4 * dt;
         }
@@ -379,30 +387,65 @@
       let len = 3;
       const uh = UI.raycast(X.ray); if (uh) { u.uiHit = uh; len = uh.distance; }
       if (!uh && u.aim && S.mode === 'vr') {
-        u.hit = null; let dist = 3;
-        X.ray.far = 60;
-        for (const h of X.ray.intersectObjects(pickables(), true)) {
-          const m = h.object.material; if (!visibleChain(h.object) || (m && (m.visible === false || (m.transparent && m.opacity < 0.2)))) continue;
-          dist = h.distance;
-          if (h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6) u.hit = h.point.clone();
-          break;
-        }
-        len = dist; if (u.hit) anyHit = u.hit;
-      }
+        const r = arc(X.ray.ray.origin, X.ray.ray.direction);
+        u.hit = r.ok ? r.point : null; u.arcPts = r.pts; len = 0.3;
+        if (u.hit) anyHit = u.hit; else X.badHit = r.point;
+      } else u.arcPts = null;
       u.line.scale.z = len / Math.max(rig.scale.x, 1e-6);
       u.line.material.color.set(u.uiHit ? 0xffffff : (u.aim && !u.hit ? 0xff7a6b : 0x7fd6ff));
     }
-    const mk = X.marker;
-    if (anyHit) { if (!mk.parent) scene.add(mk); mk.visible = true; mk.position.copy(anyHit).y += 0.02; } else mk.visible = false;
+    const mk = X.marker, aimC = ctrls.find(c => c.userData.arcPts);
+    drawArc(aimC ? aimC.userData.arcPts : null, !!anyHit);
+    if (anyHit || (aimC && X.badHit)) { if (!mk.parent) scene.add(mk); mk.visible = true; mk.position.copy(anyHit || X.badHit).y += 0.02; mk.material.color.set(anyHit ? 0x7fd6ff : 0xff7a6b); } else mk.visible = false;
+    X.badHit = null;
+  }
+  // 순간이동 포물선: 손이 가리키는 방향으로 던진 곡선이 처음 닿는 곳. 위를 향한 면이고(건물 안이면) 걸을 수 있는 곳이어야 함
+  function arc(o, dir) {
+    const pts = [o.clone()], v = dir.clone().multiplyScalar(8), g = -9.8, dt = 0.06;
+    let p = o.clone();
+    for (let i = 0; i < 26; i++) {
+      const q = p.clone().addScaledVector(v, dt); v.y += g * dt;
+      const seg = q.clone().sub(p), L = seg.length();
+      X.ray.set(p, seg.normalize()); X.ray.far = L;
+      const hits = X.ray.intersectObjects(pickables(), true);
+      for (const h of hits) {
+        if (!visibleForPick(h.object)) continue;
+        const m = h.object.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.2))) continue;
+        pts.push(h.point.clone());
+        const up = h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6;
+        const L0 = curLevel();
+        const walkOk = !L0 || !K.walkable || Math.abs(h.point.y - floorY(L0)) > 1.5 || K.walkable(h.point.x, h.point.z, L0);
+        return { ok: up && walkOk, point: h.point.clone(), pts };
+      }
+      pts.push(q); p = q;
+      if (p.y < -60) break;
+    }
+    return { ok: false, point: null, pts };
+  }
+  let arcLine = null;
+  function drawArc(pts, ok) {
+    if (!arcLine) {
+      arcLine = new T.Line(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(30 * 3), 3)), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.9, depthTest: false }));
+      arcLine.renderOrder = 999; arcLine.frustumCulled = false; arcLine.userData.khxr = true;
+    }
+    if (!pts) { arcLine.visible = false; return; }
+    if (!arcLine.parent) scene.add(arcLine);
+    const a = arcLine.geometry.attributes.position; const n = Math.min(30, pts.length);
+    for (let i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
+    arcLine.geometry.setDrawRange(0, n); a.needsUpdate = true;
+    arcLine.material.color.set(ok ? 0x7fd6ff : 0xff7a6b); arcLine.visible = true;
   }
   function visibleChain(o) { for (; o; o = o.parent) if (!o.visible) return false; return true; }
-  function pickables() { return scene.children.filter(o => o !== rig && o !== X.marker && !o.userData.khxr && o.type !== 'DirectionalLight'); }
+  function pickables() { return scene.children.filter(o => o !== rig && o !== X.marker && !o.userData.khxr && o !== Opt.group && o.type !== 'DirectionalLight'); }
+  function visibleForPick(o) { const hid = Opt.hiddenSet; for (; o; o = o.parent) if (!o.visible && !(hid && hid.has(o))) return false; return true; }
 
   /* ================= 7. 프레임 ================= */
   let last = 0;
   function frame(time) {
     const dt = Math.min(0.1, (time - (last || time)) / 1000); last = time;
+    S.moving = Math.max(0, S.moving - dt * 4);
     pollGamepads(dt, time);
+    const vo = S.vignette && S.mode === 'vr' ? Math.min(0.85, S.moving * 0.85) : 0; X.vig.material.opacity = vo; X.vig.visible = vo > 0.02;
     if (S.mode === 'fig') { Fig.update(dt); applyFigRig(); }
     Grab.tick();
     updateRays();
@@ -588,13 +631,14 @@
       }
       cache.forEach(g => g.dispose());
       merged.forEach(o => { o.visible = false; this.hidden.push(o); });
+      this.hiddenSet = new Set(this.hidden);
       scene.add(grp); this.group = grp; this.sig = this.sigOf(objs);
       this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, ms: Math.round(performance.now() - t0) };
       R.shadowMap.needsUpdate = true;
       log('최적화', JSON.stringify(this.stat));
     },
     clear() {
-      this.hidden.forEach(m => { m.visible = true; }); this.hidden = [];
+      this.hidden.forEach(m => { m.visible = true; }); this.hidden = []; this.hiddenSet = null;
       if (this.group) { this.group.children.forEach(c => c.geometry.dispose()); scene.remove(this.group); this.group = null; }
       (this.mats || []).forEach(m => m.dispose()); this.mats = [];
     },
@@ -701,6 +745,7 @@
       T0.push({ t: '기타', sec: etc });
       T0.push({ t: '설정', sec: [
         { h: '회전', items: [{ key: 'set:snap', label: '30° 끊어 돌기', on: () => S.turn === 'snap', act: () => { S.turn = 'snap'; store.set('turn', 'snap'); } }, { key: 'set:smooth', label: '부드럽게 돌기', on: () => S.turn === 'smooth', act: () => { S.turn = 'smooth'; store.set('turn', 'smooth'); } }] },
+        { h: '편안함', items: [{ key: 'set:vig', label: '이동 중 시야 가장자리 어둡게', check: true, on: () => S.vignette, act: () => { S.vignette = !S.vignette; store.set('vignette', S.vignette); } }] },
         { h: '메뉴', items: [{ key: 'set:mass', label: '매스 조정 보이기', check: true, on: () => S.showMass, act: () => { S.showMass = !S.showMass; store.set('showMass', S.showMass); } }, { key: 'set:help', label: '조작 안내 보기', act: () => Help.show(true) }] },
         { h: '성능', items: [{ key: 'set:opt', label: '메시 합치기 최적화', check: true, on: () => S.opt, act: () => { S.opt = !S.opt; if (S.opt) Opt.build(); else Opt.clear(); } }] },
         { h: Q.get('xrdebug') ? '로그' : '', items: Q.get('xrdebug') ? X.log.slice(-6).map((l, k) => ({ key: 'log' + k, label: l.slice(0, 40) })) : [] }] });
