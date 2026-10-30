@@ -455,8 +455,8 @@
       const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/');
       const gl = new T.GLTFLoader(); gl.setDRACOLoader(dl);
       const one = f => new Promise(res => gl.load(BASE + 'models/' + f + '.glb', g => res(g.scene), undefined, () => { log('모델 실패', f); res(null); }));
-      return Promise.all(['office-diningchair', 'office-barstool', 'office-pottedtree', 'office-plantB'].map(one)).then(([chair, stool, tree, plant]) => {
-        FUR.models = { chair, stool, tree, plant }; PR.t.models = Math.round(now() - PR.t.enable0); log('가구 모델', PR.t.models + 'ms');
+      return Promise.all(['office-diningchair', 'office-pottedtree', 'office-plantB'].map(one)).then(([chair, tree, plant]) => {
+        FUR.models = { chair, tree, plant }; PR.t.models = Math.round(now() - PR.t.enable0); log('가구 모델', PR.t.models + 'ms');
         FUR.sig = ''; if (PR.on) furnish();
       });
     });
