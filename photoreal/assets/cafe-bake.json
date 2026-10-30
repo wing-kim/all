@@ -1,0 +1,64 @@
+{
+  "sourceSha256": "a5bef3abef0754278863d7737b9ac98cafe39d19a8fd9d43503d5fcffbf3a770",
+  "layout": [
+    {
+      "x": -10,
+      "z": -8,
+      "r": 0.66
+    },
+    {
+      "x": -10,
+      "z": -4,
+      "r": 0.66
+    },
+    {
+      "x": -10,
+      "z": 0,
+      "r": 0.66
+    },
+    {
+      "x": -10,
+      "z": 4,
+      "r": 0.66
+    },
+    {
+      "x": -6,
+      "z": -4,
+      "r": 0.66
+    },
+    {
+      "x": -6,
+      "z": 0,
+      "r": 0.66
+    },
+    {
+      "x": -6,
+      "z": 4,
+      "r": 0.66
+    },
+    {
+      "x": -2.3,
+      "z": -2,
+      "w": 1.1,
+      "d": 3.4
+    },
+    {
+      "x": -4.4,
+      "z": -9.2,
+      "w": 7.2,
+      "d": 1.05
+    }
+  ],
+  "bounds": [
+    -14,
+    -14,
+    2,
+    10
+  ],
+  "size": 512,
+  "samples": 64,
+  "rayDistance": 2.5,
+  "triangles": 80420,
+  "bakeMs": 4238,
+  "scope": "fixed cafe furniture contact AO only, not indirect-light or sun bake"
+}

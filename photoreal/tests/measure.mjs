@@ -27,8 +27,8 @@ await shot('0-wing-render');
 res.wingRenderInfo = await p.evaluate(() => KHPRLayer.frameInfo());
 // 켜기
 res.enable = await p.evaluate(new Function(`return (async()=>{const t=performance.now();const e=document.getElementById('vm-pr');e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));const sync=performance.now()-t;${frames(2)};const first=performance.now()-t;
-  const t1=performance.now();while((KHPRLayer.t.assets==null||KHPRLayer.t.models==null||KHPRLayer.t.env==null||KHPRLayer.t.warm==null)&&performance.now()-t1<60000)await new Promise(r=>setTimeout(r,50));${frames(2)};
-  return {syncMs:Math.round(sync),firstFrameMs:Math.round(first),assetsMs:KHPRLayer.t.assets,envMs:KHPRLayer.t.env,modelsMs:KHPRLayer.t.models,warmMs:KHPRLayer.t.warm,allReadyMs:Math.round(performance.now()-t)}})()`));
+  const t1=performance.now();while((KHPRLayer.t.assets==null||KHPRLayer.t.dress==null||KHPRLayer.t.env==null||KHPRLayer.t.warm==null)&&performance.now()-t1<60000)await new Promise(r=>setTimeout(r,50));${frames(2)};
+  return {syncMs:Math.round(sync),firstFrameMs:Math.round(first),assetsMs:KHPRLayer.t.assets,envMs:KHPRLayer.t.env,dressMs:KHPRLayer.t.dress,warmMs:KHPRLayer.t.warm,allReadyMs:Math.round(performance.now()-t)}})()`));
 await shot('1-glass');
 res.info = {};
 const info = async k => { res.info[k] = await p.evaluate(async () => { const d = KHPRLayer.diag(); const f = await KHPRLayer.frameInfo(); return { calls: f.calls, tris: f.tris, programs: f.programs, mats: d.mats, textures: d.textures, warm: d.t.warm, swap: d.stat.swap }; }); };

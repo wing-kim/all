@@ -1,0 +1,25 @@
+{
+  "signature": {
+    "hash": "715cb916",
+    "triangles": 333582,
+    "sum": [
+      -2120863405,
+      1442072301,
+      3167959694,
+      -19330819405
+    ]
+  },
+  "sha256": "e5aab2e29d1adae9564639e7c47e51ba666def8e474edfd07e8b338dacd972f0",
+  "sourceSha256": "50e99375cf8037d7f1d5eb38cb433255da0f208e3bec13167cb11d321dfe2767",
+  "version": 2,
+  "extent": 112,
+  "size": 512,
+  "samples": 32,
+  "rayDistance": 24,
+  "receiverHeight": 0.38,
+  "triangles": 333582,
+  "bakeMs": 7937,
+  "minAO": 0.3020347457049868,
+  "meanAO": 0.8344302449082248,
+  "scope": "context (surrounding buildings) opaque meshes from the running scene; tower excluded; time-independent sky occlusion (bounce PNG kept for study, not loaded at runtime), not full GI"
+}

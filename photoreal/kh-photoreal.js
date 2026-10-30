@@ -105,8 +105,11 @@
     // XR 병합은 텍스처 없는 재질을 복제해 꼭짓점 색으로 굽는데, 복제본에는 셰이더 보강이 따라가지 않는다 → 보강 재질은 흰 텍스처를 붙여 굽기 대상에서 뺀다
     if (!mat.map) mat.map = WHITE();
     const key = ['pr', o.world ? 'w' : '', o.roof ? 'r' : '', o.under ? 'u' : '', o.glass ? 'g' : '', o.light ? 'l' + (o.light.lm ? 'm' : '') + (o.light.cove ? 'c' : '') : ''].join('');
-    mat.customProgramCacheKey = () => key;
-    mat.onBeforeCompile = sh => {
+    // 원래 재질이 가진 셰이더 보강(예: glTF 스페큘러·글로시니스 재질)은 지우지 않고 먼저 실행한다
+    const prev = mat.onBeforeCompile !== T.Material.prototype.onBeforeCompile ? mat.onBeforeCompile : null, prevKey = prev ? mat.customProgramCacheKey() : '';
+    mat.customProgramCacheKey = () => prevKey + key;
+    mat.onBeforeCompile = (sh, rr) => {
+      if (prev) prev.call(mat, sh, rr);
       const U = sh.uniforms;
       let vs = sh.vertexShader, fs = sh.fragmentShader;
       vs = VERT_DECL + vs.replace('#include <project_vertex>', '#include <project_vertex>' + VERT_MAIN);
@@ -381,7 +384,8 @@
     CUR.swapped = [];
     CUR.levels = K.LEVELS; CUR.sig = K.LEVELS.map(l => l.key + l.y.toFixed(1)).join(',');
     G1 = null;
-    furnish();   // 1층 가구 배치(→ 1층 라이트맵 G1)
+    dress();   // 실내 꾸밈(비동기, 층 배치가 같으면 다시 만들지 않음)
+    placeCars(); placeTrees();
     let n = swapIn(K.bld, zoneOf);
     // 주변(도로·지면·주변 건물·차량)은 처음 한 번 + 지면은 매번(원본이 다시 만든다)
     n += swapIn(K.site); n += swapIn(K.city, null, true); n += swapIn(K.ctx, null, true); n += swapIn(K.exist, null, true); n += swapIn(K.R3D.props);
@@ -422,7 +426,7 @@
     if (night && scene.environment === envDay) scene.environment = PR.wingEnv || null;
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
     // 층 묶음은 원본이 재건할 때마다 새로 생기므로 층 이름으로 매번 찾는다
-    FUR.groups.forEach(([g, key]) => { const i = K.LEVELS.findIndex(l => l.key === key), lg = K.LG && K.LG[i]; g.visible = !!(lg && lg.visible && lg.parent); });
+    DR.groups.forEach(([g, key]) => { if (!key) return; const i = K.LEVELS.findIndex(l => l.key === key), lg = K.LG && K.LG[i]; g.visible = !!(lg && lg.visible && lg.parent); });
   }
 
   /* ================= 5-1. 셰이더 미리 준비 =================
@@ -446,114 +450,140 @@
     }
     if (n) { scene.add(warmG); warmMs.push(n); }
   }
-  /* ================= 6. 1층 실내 가구 ================= */
-  const FUR = { group: null, groups: [], models: null, sig: '' };
-  let gltfP = null;
-  function loadModels() {
-    if (gltfP) return gltfP;
-    gltfP = vendor().then(() => {
-      const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/');
-      const gl = new T.GLTFLoader(); gl.setDRACOLoader(dl);
-      const one = f => new Promise(res => gl.load(BASE + 'models/' + f + '.glb', g => res(g.scene), undefined, () => { log('모델 실패', f); res(null); }));
-      return Promise.all(['office-diningchair', 'office-pottedtree', 'office-plantB'].map(one)).then(([chair, tree, plant]) => {
-        FUR.models = { chair, tree, plant }; PR.t.models = Math.round(now() - PR.t.enable0); log('가구 모델', PR.t.models + 'ms');
-        FUR.sig = ''; if (PR.on) furnish();
-      });
+  /* ================= 6. 실내 꾸밈 =================
+     예전 실사 3D(codex/tower-360-validation)의 카페·사무실(2F～6F)·주차장 배치 모듈을 그대로 불러 쓴다.
+     그 모듈들은 원래도 Wing 의 r128 장면 객체를 만들던 코드라 이 장면에 바로 붙는다(photoreal/codex/, 자산은 photoreal/assets/).
+     층 배치(층 이름·높이·평면)가 같으면 외장만 바뀐 재생성에서는 다시 만들지 않는다. */
+  const DR = { group: null, sig: '', busy: false, again: false, ready: null, timber: null, groups: [], mats: new Map() };
+  function codexScripts() {
+    return DR.ready || (DR.ready = vendor().then(() => Promise.all(['codex/cafe.js', 'codex/office.js', 'codex/interior-models.js'].map(f => loadScript(BASE + f + '?v=' + VER))))
+      .then(() => { window.PARKING_FLOORS = ['B1', 'B2', 'B3']; }));
+  }
+  function dressSig() { return K.LEVELS.map(l => l.key + ':' + l.kind + ':' + l.y.toFixed(2) + ':' + l.h.toFixed(2) + ':' + JSON.stringify(l.poly)).join('|'); }
+  async function timber() {
+    if (DR.timber) return DR.timber;
+    const m = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55 });
+    m.map = tex('furniture-veneer', 'color'); m.normalMap = tex('furniture-veneer', 'normal'); m.roughnessMap = tex('furniture-veneer', 'rough'); m.normalScale.set(0.06, 0.06);
+    m.userData.illustrativeTimber = true; return (DR.timber = m);
+  }
+  async function dress() {
+    const sig = dressSig();
+    if (sig === DR.sig && DR.group && DR.group.parent) return;
+    if (DR.busy) { DR.again = true; return; }
+    DR.busy = true; const t0 = now();
+    try {
+      await codexScripts();
+      const extra = new T.Group(); extra.name = 'pr-dress'; extra.userData.interiorPlantAnchors = [];
+      // 모듈이 기대하는 연결 객체(예전 TOWER_LAB_CONTEXT 의 일부). M.stone 은 빈 객체로 넘겨 원본 1층 바닥을 건드리지 않게 한다.
+      const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, scene, M: { stone: {} }, city: K.city, site: K.site };
+      await window.dressTowerCafe(C, extra, await timber());
+      for (const key of window.OFFICE_FLOORS || []) await window.dressTowerOffice(C, extra, key);
+      for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
+      if (window.swapInteriorModels) await window.swapInteriorModels(C, extra);
+      placePlants(extra);
+      litDress(extra);
+      if (DR.group) { scene.remove(DR.group); }
+      DR.group = extra; DR.sig = sig; scene.add(extra);
+      DR.groups = extra.children.map(g => [g, levelKeyOf(g)]);
+      PR.stat.dressMs = Math.round(now() - t0); PR.stat.dressObjects = (() => { let n = 0; extra.traverse(o => { if (o.isMesh) n++; }); return n; })();
+      if (PR.t.dress == null && PR.t.enable0) PR.t.dress = Math.round(now() - PR.t.enable0);
+      log('실내 꾸밈', PR.stat.dressMs + 'ms', PR.stat.dressObjects + '개');
+    } catch (e) { log('실내 꾸밈 실패', e && e.message); console.warn(e); }
+    DR.busy = false;
+    if (DR.again) { DR.again = false; dress(); }
+  }
+  function levelKeyOf(g) {
+    if (g.userData.fitoutFloor) return g.userData.fitoutFloor;
+    const m = /^(B\d|\dF|PH\d)/.exec(g.name || ''); if (m) return m[1];
+    if (/cafe/i.test(g.name || '')) return '1F';
+    // 이름이 없으면 높이로 층을 찾는다
+    const b = new T.Box3().setFromObject(g); if (b.isEmpty()) return null; const y = (b.min.y + b.max.y) / 2;
+    const L = K.LEVELS.find(l => y >= K.floorTop(l) - 0.3 && y < K.floorTop(l) + l.h); return L ? L.key : null;
+  }
+  // 꾸밈 재질에 층별 실내 조명 수준을 더한다(실시간 광원 없이). 같은 재질이라도 층 종류별로 복제
+  function litDress(root) {
+    root.updateMatrixWorld(true);
+    const wp = new T.Vector3();
+    root.traverse(o => {
+      if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
+      o.getWorldPosition(wp);
+      const L = K.LEVELS.find(l => wp.y >= K.floorTop(l) - 0.5 && wp.y < K.floorTop(l) + Math.max(l.h, 3) + 2) || null;
+      const zone = !L ? 'x' : L.kind === 'base' ? 'b' : L.kind === 'ground' ? 'g' : 'u';
+      const m0 = o.material; if (m0.isMeshBasicMaterial || !m0.isMeshStandardMaterial || (m0.emissiveIntensity > 1 && m0.emissive && m0.emissive.getHex())) return;
+      const key = m0.uuid + '|' + zone;
+      let m = DR.mats.get(key);
+      if (!m) {
+        const amb = zone === 'g' ? AMB.g() : zone === 'u' ? AMB.u() : zone === 'b' ? new T.Color(0.32, 0.32, 0.33) : null;
+        m = amb ? patch(m0.clone(), { light: { amb } }) : m0;
+        keepEnv(m); m.userData.prMade = true; DR.mats.set(key, m); if (m !== m0) WARM.push(m);
+      }
+      o.material = m;
     });
-    return gltfP;
   }
-  // 모델 → 재질별 InstancedMesh 묶음(그리기 호출 = 재질 수). 크기는 높이 기준으로 맞춘다
-  function instancer(model, height, list, light) {
-    const out = [];
-    if (!model || !list.length) return out;
-    model.updateMatrixWorld(true);
-    const bb = new T.Box3().setFromObject(model), s = height / Math.max(0.01, bb.max.y - bb.min.y), c = bb.getCenter(new T.Vector3());
-    const parts = []; model.traverse(o => { if (o.isMesh) parts.push(o); });
-    const M0 = new T.Matrix4(), tmp = new T.Matrix4(), q = new T.Quaternion(), up = new T.Vector3(0, 1, 0);
-    parts.forEach(p => {
-      let mat = p.material;
-      if (!mat.userData.prLit) { mat = mat.clone(); mat.envMapIntensity = 0.6; patch(mat, { light }); mat.userData.prLit = true; mat.userData.prMade = true; keepEnv(mat); p.material = mat; }
-      const im = new T.InstancedMesh(p.geometry, mat, list.length);
-      list.forEach((it, k) => {
-        q.setFromAxisAngle(up, it.r || 0);
-        M0.compose(new T.Vector3(it.x, it.y, it.z), q, new T.Vector3(s, s, s));
-        tmp.makeTranslation(-c.x, -bb.min.y, -c.z); M0.multiply(tmp).multiply(p.matrixWorld);
-        im.setMatrixAt(k, M0);
-      });
-      im.castShadow = true; im.receiveShadow = true; im.userData.prSkip = true; out.push(im);
+  /* ================= 6-2. 거리 소품: 차량·가로수·실내 화분 =================
+     Wing 의 단순 형상 차(도로·주차장 모두)를 실제 차 모델(CC BY, 5종)로 바꾸고, 예전 실사 3D 의 가로수를 둔다.
+     가로수는 우리 건물 앞 압구정로 보도(1층을 가리던 자리)에는 두지 않는다. */
+  const CARS = [{ f: 'bmwe90', len: 4.53 }, { f: 'renegade', len: 4.24 }, { f: 'kiri10', len: 4.7 }, { f: 'modelS', len: 4.97 }, { f: 'ace11', len: 4.0 }];
+  const ENV = { p: null, cars: null, tree: null, plant: null, group: null, hidden: [], added: [] };
+  function gltf() { if (!gltf.l) { const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/'); gltf.l = new T.GLTFLoader(); gltf.l.setDRACOLoader(dl); } return gltf.l; }
+  const loadGLB = f => new Promise(res => gltf().load(BASE + f, g => res(g.scene), undefined, () => { log('모델 실패', f); res(null); }));
+  function envAssets() {
+    return ENV.p || (ENV.p = vendor().then(() => Promise.all([...CARS.map(c => loadGLB('assets/cars/car-' + c.f + '.glb')), loadGLB('assets/street-tree.glb'), loadGLB('assets/interior-foliage.glb')]))
+      .then(r => {
+        ENV.cars = r.slice(0, CARS.length).map((sc, i) => sc && normModel(sc, CARS[i].len, true)).filter(Boolean);
+        ENV.tree = r[CARS.length]; ENV.plant = r[CARS.length + 1];
+        PR.t.env2 = Math.round(now() - PR.t.enable0); log('거리 소품', PR.t.env2 + 'ms');
+        if (PR.on) { placeCars(); placeTrees(); if (DR.group) placePlants(DR.group); }
+      }));
+  }
+  // 바닥 중심을 원점에, 긴 축을 X(Wing 차의 길이 방향)로, 길이를 실제 치수로 맞춘 묶음
+  function normModel(sc, len, car) {
+    sc.updateMatrixWorld(true);
+    const b = new T.Box3().setFromObject(sc), sz = b.getSize(new T.Vector3()), s = len / Math.max(sz.x, sz.z);
+    sc.position.set(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2);
+    const inner = new T.Group(); inner.add(sc); inner.scale.setScalar(s); if (car && sz.z > sz.x) inner.rotation.y = Math.PI / 2;
+    const outer = new T.Group(); outer.add(inner);
+    outer.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.userData.prSkip = true; } });
+    return outer;
+  }
+  function placeCars() {
+    if (!ENV.cars || !ENV.cars.length) return;
+    const olds = [];
+    [K.bld, K.R3D.props].forEach(root => root.traverse(o => { if (o.userData.car && !o.userData.prRep) olds.push(o); }));
+    olds.forEach((o, i) => {
+      const k = Math.abs(Math.round(o.position.x * 7 + o.position.z * 3)) % ENV.cars.length;
+      const c = ENV.cars[k].clone(true); c.userData.prCar = true;
+      c.position.copy(o.position); c.rotation.copy(o.rotation);
+      o.parent.add(c); o.userData.prRep = true; o.visible = false; ENV.hidden.push(o); ENV.added.push(c);
+      litDress(c);
     });
-    return out;
   }
-  function furnish() {
-    const L = K.LEVELS.find(l => l.kind === 'ground');
-    if (!L) return;
-    const sig = K.LEVELS.map(l => l.key + l.y.toFixed(1) + l.poly.length).join(',') + '|' + JSON.stringify(L.poly) + '|' + !!FUR.models;
-    if (sig === FUR.sig && FUR.group && FUR.group.parent) return;
-    FUR.sig = sig;
-    if (FUR.group) { scene.remove(FUR.group); FUR.group.traverse(o => { if (o.isInstancedMesh) o.dispose && o.dispose(); }); }
-    const grp = FUR.group = new T.Group(); grp.name = 'pr-furniture'; FUR.groups = [];
-    const li = K.LEVELS.indexOf(L), lg = K.LG && K.LG[li];
-    const sub = new T.Group(); grp.add(sub); FUR.groups.push([sub, L.key]);
-    const ft = K.floorTop(L), top = K.ceilOf(L);
-    const inPoly = K.inPoly, poly = L.poly, S = 41.6;
-    const obst = (L.obst || []).filter(Boolean), cols = L.cols || [];
-    const C = K.coreFor ? K.coreFor(L) : null, blocks = (L.blocks || []).map(b => b.r);
-    // 가구가 놓일 수 있는 자리: 평면 안, 외벽에서 1.1m, 기둥 0.9m, 코어·장애물 밖
-    const ok = (px, py, m) => {
-      if (!inPoly([px, py], poly)) return false;
-      for (let a = 0; a < 8; a++) { const ang = a * Math.PI / 4; if (!inPoly([px + Math.cos(ang) * m * S, py + Math.sin(ang) * m * S], poly)) return false; }
-      if (cols.some(c => Math.hypot(c[0] - px, c[1] - py) < 0.95 * S)) return false;
-      if (obst.some(o => o && o.length > 2 && inPoly([px, py], o))) return false;
-      if (blocks.some(r => r && px > r[0] - 0.8 * S && px < r[2] + 0.8 * S && py > r[1] - 0.8 * S && py < r[3] + 0.8 * S)) return false;
-      if (C) { const rs = ['elev', 'eps', 'stair', 'wc', 'r'].map(k => C[k]).filter(r => Array.isArray(r) && r.length === 4); if (rs.some(r => px > Math.min(r[0], r[2]) - 0.9 * S && px < Math.max(r[0], r[2]) + 0.9 * S && py > Math.min(r[1], r[3]) - 0.9 * S && py < Math.max(r[1], r[3]) + 0.9 * S)) return false; }
-      return true;
-    };
-    const xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
-    const tables = [], chairs = [], pend = [], plants = [];
-    const step = 2.9 * S;
-    for (let px = Math.min(...xs) + 1.6 * S; px < Math.max(...xs); px += step) for (let py = Math.min(...ys) + 1.6 * S; py < Math.max(...ys); py += step * 0.9) {
-      if (!ok(px, py, 1.45)) continue;
-      const [x, z] = K.P(px, py); tables.push({ x, z });
-      [[0.62, 0, -Math.PI / 2], [-0.62, 0, Math.PI / 2]].forEach(([dx, dz, r]) => chairs.push({ x: x + dx, y: ft, z: z + dz, r }));
-      pend.push({ x, z });
-    }
-    // 화분: 창가 쪽 남는 자리
-    // 화분: 외벽에서 0.6～1.4m 띠 안, 서로 3.5m 이상, 식탁과 1.4m 이상
-    for (let px = Math.min(...xs) + 0.6 * S; px < Math.max(...xs); px += 0.8 * S) for (let py = Math.min(...ys) + 0.6 * S; py < Math.max(...ys); py += 0.8 * S) {
-      if (!ok(px, py, 0.6) || ok(px, py, 1.4)) continue;
-      const [x, z] = K.P(px, py);
-      if (tables.some(t => Math.hypot(t.x - x, t.z - z) < 1.4) || plants.some(q => Math.hypot(q.x - x, q.z - z) < 3.5)) continue;
-      plants.push({ x, y: ft, z, r: (px * 7 + py) % 6 });
-    }
-    // 바닥 라이트맵: 펜던트 아래 따뜻한 웅덩이
-    G1 = bakeLM('g|' + sig, pend.map(p => ({ x: p.x, z: p.z })), polyBounds(L), { base: 'rgb(40,32,24)', r: 2.6, col: 'rgba(255,214,160,0.9)', mid: 'rgba(160,120,80,0.35)' });
-    const amb = AMB.g(), light = { amb };
-    // 식탁: 원목 상판(인스턴스 상자) + 검은 다리
-    if (tables.length) {
-      const topM = texMat('furniture-veneer', 1.8, { tint: 0xd9b48a, light }), legM = patch(std({ color: lin(0x222222), metalness: 0.6, roughness: 0.4 }), { light });
-      topM.userData.prMade = legM.userData.prMade = true; keepEnv(topM); keepEnv(legM);
-      const tg = new T.BoxGeometry(0.85, 0.04, 0.85), lgeo = new T.CylinderGeometry(0.035, 0.05, 0.71, 10);
-      const ti = new T.InstancedMesh(tg, topM, tables.length), lI = new T.InstancedMesh(lgeo, legM, tables.length), m4 = new T.Matrix4();
-      tables.forEach((t, k) => { ti.setMatrixAt(k, m4.makeTranslation(t.x, ft + 0.74, t.z)); lI.setMatrixAt(k, m4.makeTranslation(t.x, ft + 0.36, t.z)); });
-      [ti, lI].forEach(o => { o.castShadow = o.receiveShadow = true; o.userData.prSkip = true; sub.add(o); });
-      // 펜던트: 천장에서 내려오는 줄 + 따뜻한 갓(빛나는 재질)
-      const cordM = std({ color: 0x111111 }), shadeM = new T.MeshBasicMaterial({ color: new T.Color(1.0, 0.66, 0.3).multiplyScalar(1.3) });
-      cordM.userData.prMade = shadeM.userData.prMade = true; keepEnv(cordM); shadeM.userData.lin = true;
-      const drop = Math.max(0.6, top - ft - 2.6), cg = new T.CylinderGeometry(0.006, 0.006, drop, 4), sg = new T.CylinderGeometry(0.035, 0.035, 0.34, 12);
-      const ci = new T.InstancedMesh(cg, cordM, pend.length), si = new T.InstancedMesh(sg, shadeM, pend.length);
-      pend.forEach((p, k) => { ci.setMatrixAt(k, m4.makeTranslation(p.x, top - drop / 2, p.z)); si.setMatrixAt(k, m4.makeTranslation(p.x, top - drop - 0.2, p.z)); });
-      [ci, si].forEach(o => { o.userData.prSkip = true; sub.add(o); });
-    }
-    if (FUR.models) {
-      const mdl = FUR.models;
-      instancer(mdl.chair, 0.86, chairs.map(c => Object.assign({}, c)), light).forEach(o => sub.add(o));
-      instancer(mdl.tree, 2.1, plants.filter((_, i) => i % 2 === 0), light).forEach(o => sub.add(o));
-      instancer(mdl.plant, 1.0, plants.filter((_, i) => i % 2 === 1), light).forEach(o => sub.add(o));
-    }
-    PR.stat.furniture = { tables: tables.length, chairs: chairs.length, plants: plants.length };
-    scene.add(grp);
+  function placeTrees() {
+    if (!ENV.tree || ENV.group) return;
+    const g = ENV.group = new T.Group(); g.name = 'pr-street';
+    const tree = normModel(ENV.tree.clone(true), 1, false), b = new T.Box3().setFromObject(tree), h = b.max.y - b.min.y;
+    // 잎 카드: 양면, 알파 잘라내기(정렬 없이 그려 퀘스트에서도 가볍다), 가을 톤은 Wing 계절에 맞춰 약하게
+    tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; if (K.R3D.season === 'autumn') m.color.setRGB(1.08, 1.0, 0.82); } m.userData.lin = true; m.needsUpdate = true; } });
+    const walk = px => 1365 - 0.3604 * (px - 230) + 305;
+    // 예전 위치에서 압구정로 쪽 우리 건물 앞(x=120, y 0～1365) 네 그루는 뺐다
+    [[1550, walk(1550)], [120, -690], [120, -1000], [120, -1500], [-1240, 200], [-1240, 650], [-1240, 1050], [-1240, -690], [1850, walk(1850)], [2200, walk(2200)], [2550, walk(2550)], [-1240, 1550], [-1240, -1000]].forEach((q, i) => {
+      const t = tree.clone(true), s = (9.2 + (i % 3) * 0.8) / h; t.scale.setScalar(s);
+      const [x, z] = K.P(q[0], q[1]); t.position.set(x, 0.18, z); t.rotation.y = i * 2.399; g.add(t);
+    });
+    scene.add(g);
   }
-
+  function placePlants(extra) {
+    if (!ENV.plant) return;
+    const anchors = (extra.userData.interiorPlantAnchors || []).slice(0, 14);
+    const plant = normModel(ENV.plant.clone(true), 1, false), b = new T.Box3().setFromObject(plant), h = b.max.y - b.min.y;
+    anchors.forEach((a, i) => { const p = plant.clone(true), s = (a.height || 1.4) / h; p.scale.setScalar(s); p.position.set(a.x, a.y, a.z); p.rotation.y = i * 1.7; extra.add(p); });
+    litDress(extra);
+  }
+  function envOff() {
+    ENV.added.forEach(c => c.parent && c.parent.remove(c)); ENV.added = [];
+    ENV.hidden.forEach(o => { o.visible = true; o.userData.prRep = false; }); ENV.hidden = [];
+    if (ENV.group) { scene.remove(ENV.group); ENV.group = null; }
+  }
   /* ================= 6-1. 원경 도시 =================
      Wing 의 주변 블록(약 200m) 바깥을 비워 두면 땅 끝이 보여 모형처럼 보인다. 250～1,100m 에 낮은 해상도의 도시 덩어리를
      인스턴스 상자 한 묶음(그리기 호출 1회)으로 깐다. 실제 건물이 아니라 원경 분위기용이다(보고서에 명시). */
@@ -596,11 +626,12 @@
       requestAnimationFrame(() => requestAnimationFrame(() => { PR.t.firstFrame = Math.round(now() - PR.t.enable0); statLine(); }));
       panel(true);
       distantCity();
-      loadEnv(); loadModels();
+      loadEnv(); envAssets();
     } else {
       PR.on = false;
       swapOut();
-      if (FUR.group) { scene.remove(FUR.group); FUR.group = null; FUR.sig = ''; }
+      if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
+      envOff();
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
