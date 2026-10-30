@@ -104,6 +104,19 @@ try {
   ok('피규어 전환(세션 유지)', fig.mode === 'fig' && fig.bg && fig.scale > 20, fig);
   ok('피규어 그리기 호출 < 200', calls < 200, calls);
   await shot('05-fig');
+  const place = await ev(async () => { await new Promise(r => setTimeout(r, 2200)); const p = KHXRLayer.state.fig.pos; return { placed: KHXRLayer.fig.placed, pos: p && p.toArray().map(v => +v.toFixed(2)), base: !!(KHXR.scene.getObjectByName('khxr-base') || {}).visible, anchor: !!KHXRLayer.fig.anchor, log: KHXRLayer.log.filter(l => /앵커|놓았/.test(l)).slice(-2) }; });
+  ok('피규어 자리 잡기와 받침', place.placed && place.pos && place.pos[1] > 0.3 && place.pos[1] < 1.4 && place.base, place);
+  const crop = await ev(async () => { const c = KHXRLayer.ui; KHXRLayer.state.fig.crop = 18; const s = KHXR.renderer.xr.getSession(); await new Promise(r => s.requestAnimationFrame(() => r())); return { crop: KHXRLayer.state.fig.crop, baseW: +KHXR.scene.getObjectByName('khxr-base').scale.x.toFixed(1) }; });
+  ok('모형 범위 바꾸기', crop.crop === 18 && crop.baseW === 36, crop);
+  // 모형의 3층 한 점을 가리켜 들어가기
+  const enter = await ev(async () => {
+    const L = KHXR.LEVELS.find(l => l.key === '3F'); const c = KHXRLayer.state.center;
+    const s = KHXR.renderer.xr.getSession(), f = () => new Promise(r => s.requestAnimationFrame(() => r()));
+    KHXRLayer.fig.enterAt(new THREE.Vector3(c.x + 1, KHXR.floorTop(L) + 0.2, c.z + 1)); for (let i = 0; i < 5; i++) await f();
+    return { mode: KHXRLayer.state.mode, inside: KHXR.I.on, key: KHXR.I.on && KHXR.LEVELS[KHXR.I.li].key, rigY: +KHXRLayer.rig.position.y.toFixed(2), floor: +KHXR.floorTop(L).toFixed(2), scale: KHXRLayer.rig.scale.x };
+  });
+  ok('모형 지점으로 들어가기(3층)', enter.mode === 'vr' && enter.key === '3F' && Math.abs(enter.rigY - enter.floor) < 0.05 && enter.scale === 1, enter);
+  await ev(() => KHXRLayer.setMode('fig')); await frames(30);
   await ev(() => KHXRLayer.setMode('vr')); await frames(40);
   const back = await ev(() => ({ mode: KHXRLayer.state.mode, scale: KHXRLayer.rig.scale.x, bg: KHXR.scene.background !== null }));
   ok('피규어 → 몰입 복귀', back.mode === 'vr' && back.scale === 1 && back.bg, back);

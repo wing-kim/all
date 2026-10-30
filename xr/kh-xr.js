@@ -150,7 +150,7 @@
     scene.remove(rig);
     R.shadowMap.autoUpdate = S.saved.shAuto; R.shadowMap.needsUpdate = true;
     R.setClearAlpha(1);
-    S.session = null; S.mode = null;
+    S.session = null; S.mode = null; Fig.placed = false; Fig.anchor = null; if (Fig.base) Fig.base.visible = false;
     if (K.resize) K.resize();
     log('세션 종료 → 웹 화면');
   }
@@ -261,6 +261,7 @@
         S.fig.yaw = Math.atan2(from.x - S.center.x, from.z - S.center.z);
       }
       S.mode = 'fig';
+      if (!Fig.placed) { Fig.placed = true; setTimeout(async () => { if (!(await Fig.restore())) Fig.place(); }, 1500); }
     } else {
       S.mode = 'vr';
       if (prev === 'fig') { rig.scale.set(1, 1, 1); }
@@ -326,7 +327,7 @@
       c.addEventListener('selectstart', () => onSelectStart(c));
       c.addEventListener('selectend', () => onSelectEnd(c));
       c.addEventListener('squeezestart', () => { if (c.userData.uiHit && c.userData.uiHit.where === 'menu') { UI.dragStart(c); return; } c.userData.sq = true; Grab.update(); });
-      c.addEventListener('squeezeend', () => { if (UI.dragging() === c) { UI.dragEnd(); return; } c.userData.sq = false; Grab.update(); });
+      c.addEventListener('squeezeend', () => { if (UI.dragging() === c) { UI.dragEnd(); return; } c.userData.sq = false; Grab.update(); if (S.mode === 'fig' && !Grab.g) Fig.saveAnchor(); });
       rig.add(c); ctrls.push(c);
       const h = R.xr.getHand(i); h.userData.khxr = true; rig.add(h); c.userData.handObj = h;
       const grip = R.xr.getControllerGrip(i); rig.add(grip); c.userData.grip = grip;
@@ -351,6 +352,7 @@
     const u = c.userData;
     if (u.pressUI) { const h = u.pressUI; u.pressUI = null; if (u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
     if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
+    if (S.mode === 'fig' && !u.isHand) { Fig.selectEnd(c); return; }
     if (u.aim) { u.aim = false; const pt = u.hit; if (pt) fade(() => teleportTo(pt), 0.6); u.hit = null; X.marker.visible = false; }
   }
   const prevBtn = new WeakMap();
@@ -360,8 +362,8 @@
       const was = prevBtn.get(src) || [], b = gp.buttons.map(x => x && x.pressed), edge = k => b[k] && !was[k];
       const ax = gp.axes.length >= 4 ? gp.axes[2] : gp.axes[0] || 0, ay = gp.axes.length >= 4 ? gp.axes[3] : gp.axes[1] || 0;
       const h = src.handedness;
-      if (edge(4)) { if (S.mode === 'vr') stepFloor(+1); else Fig.levelHint(+1); }
-      if (edge(5)) { if (S.mode === 'vr') stepFloor(-1); else Fig.levelHint(-1); }
+      if (edge(4)) { if (S.mode === 'vr') stepFloor(+1); else { S.fig.scale = clampScale(S.fig.scale * 1.25); UI.dirty(); } }
+      if (edge(5)) { if (S.mode === 'vr') stepFloor(-1); else { S.fig.scale = clampScale(S.fig.scale / 1.25); UI.dirty(); } }
       if (edge(3) && h === 'left') UI.toggleMenu();
       if (edge(1) && S.mode === 'vr' && !UI.menuOpen() && !ctrls.some(c => c.userData.uiHit)) { if (K.I && K.I.on) goOutside(); else goInside(); }
       if (h === 'left' && S.mode === 'vr' && Math.hypot(ax, ay) > 0.15) walk(ax, ay, dt);
@@ -534,11 +536,101 @@
     }
   };
   const clampScale = s => Math.min(1 / 20, Math.max(1 / 1000, s));
-  const Fig = {
-    update() {},
-    selectStart(c) { X.ray.far = 10; },
-    levelHint() {}
+  const Fig = X.fig = {
+    base: null, target: null, anchor: null, placed: false,
+    // 처음 놓을 자리: 감지된 책상 면 → 없으면 눈앞 0.55m, 눈높이보다 0.55m 아래
+    place() { this.want = 'place'; },
+    doPlace() {
+      const h = xrCam.position.clone(), d = V(0, 0, -1).applyQuaternion(xrCam.quaternion); d.y = 0; if (d.lengthSq() < 1e-4) d.set(0, 0, -1); d.normalize();
+      const head = h.lengthSq() ? h : V(0, 1.6, 0);
+      const t = this.table(head, d);
+      S.fig.pos = t || head.clone().addScaledVector(d, 0.55).setY(Math.max(0.4, head.y - 0.55));
+      this.placed = true; this.doAnchor();
+      UI.toast(t ? '책상 위에 놓았습니다' : '눈앞에 놓았습니다 (그립으로 옮기기)');
+    },
+    table(head, d) {   // plane-detection: 0.5~1.3m 높이의 수평면 중 시선 앞쪽에서 가장 가까운 곳
+      try {
+        const f = R.xr.getFrame && R.xr.getFrame(), ref = R.xr.getReferenceSpace(); if (!f || !f.detectedPlanes || !ref) return null;
+        let best = null, bd = 9;
+        f.detectedPlanes.forEach(pl => {
+          if (pl.orientation && pl.orientation !== 'horizontal') return;
+          const pose = f.getPose(pl.planeSpace, ref); if (!pose) return;
+          const p = pose.transform.position, v = V(p.x, p.y, p.z);
+          if (v.y < 0.45 || v.y > 1.3) return;
+          const rel = v.clone().sub(head); rel.y = 0; const dist = rel.length(); if (dist > 2.5 || rel.normalize().dot(d) < 0.3) return;
+          if (dist < bd) { bd = dist; best = v; }
+        });
+        return best ? best.add(V(0, 0.01, 0)) : null;
+      } catch (e) { return null; }
+    },
+    saveAnchor() { this.wantAnchor = true; },
+    async doAnchor() {
+      try {
+        const f = R.xr.getFrame && R.xr.getFrame(), ref = R.xr.getReferenceSpace(); if (!f || !f.createAnchor) return;
+        const p = S.fig.pos; const a = await f.createAnchor(new XRRigidTransform({ x: p.x, y: p.y, z: p.z }), ref);
+        if (this.anchor && this.anchor.delete) this.anchor.delete();
+        this.anchor = a;
+        if (a && a.requestPersistentHandle) { const hd = await a.requestPersistentHandle(); const old = store.get('anchor', null); if (old && old !== hd && S.session.deletePersistentAnchor) S.session.deletePersistentAnchor(old).catch(() => {}); store.set('anchor', hd); }
+        store.set('figState', { yaw: S.fig.yaw, scale: S.fig.scale, crop: S.fig.crop });
+      } catch (e) { log('앵커 저장 생략', e.message); }
+    },
+    async restore() {   // 지난번 자리(영구 앵커)에 다시 놓기
+      try {
+        const hd = store.get('anchor', null); if (!hd || !S.session.restorePersistentAnchor) return false;
+        this.anchor = await S.session.restorePersistentAnchor(hd);
+        const st = store.get('figState', null); if (st) Object.assign(S.fig, st);
+        this.placed = true; UI.toast('지난번 자리에 놓았습니다'); return true;
+      } catch (e) { log('앵커 복원 실패', e.message); return false; }
+    },
+    update() {
+      if (this.want === 'place') { this.want = null; this.doPlace(); }
+      if (this.wantAnchor) { this.wantAnchor = false; this.doAnchor(); }
+      // 앵커가 있으면 그 위치를 따른다(헤드셋이 원점을 다시 잡아도 같은 자리)
+      try {
+        if (this.anchor && !Grab.g) { const f = R.xr.getFrame(), ref = R.xr.getReferenceSpace(); const pose = f && this.anchor.anchorSpace && f.getPose(this.anchor.anchorSpace, ref); if (pose) { const p = pose.transform.position; S.fig.pos.set(p.x, p.y, p.z); } }
+      } catch (e) {}
+      this.baseUpdate();
+    },
+    baseUpdate() {   // 모형 받침: 자른 범위만 한 판
+      if (!this.base) {
+        this.base = new T.Mesh(new T.BoxGeometry(1, 1, 1), new T.MeshStandardMaterial({ color: 0xe9e6df, roughness: 0.9 }));
+        this.base.userData.khxr = true; this.base.receiveShadow = true; this.base.name = 'khxr-base';
+      }
+      const on = S.mode === 'fig';
+      if (on && !this.base.parent) scene.add(this.base);
+      this.base.visible = on;
+      if (on) { const r = S.fig.crop; this.base.scale.set(r * 2, 3, r * 2); this.base.position.set(S.center.x, -1.6, S.center.z); }
+    },
+    // 컨트롤러 트리거: 모형의 한 점을 가리켜 놓으면 그 자리로 들어간다
+    selectStart(c) {
+      aim(c); X.ray.far = 20 * Math.max(1, rig.scale.x);
+      const hit = X.ray.intersectObjects(pickables(), true).find(h => visibleForPick(h.object));
+      this.target = hit ? { p: hit.point.clone(), c } : null;
+      if (this.target) { const mk = X.marker; if (!mk.parent) scene.add(mk); mk.visible = true; mk.position.copy(hit.point); mk.scale.setScalar(rig.scale.x * 0.25); }
+    },
+    selectEnd(c) {
+      const t = this.target; this.target = null; X.marker.scale.setScalar(1);
+      if (!t || t.c !== c) return;
+      fade(() => this.enterAt(t.p), 0.6);
+    },
+    enterAt(p) {
+      setMode('vr');
+      const lv = K.full ? sortedLevels() : [];
+      const c = S.center, r = Math.hypot(p.x - c.x, p.z - c.z);
+      let li = -1; for (const s of lv) if (p.y >= s.y - 0.3) li = s.i;
+      if (K.full && r < 14 && li >= 0 && p.y > 0.5) {   // 건물을 가리켰으면 그 높이의 층, 가리킨 자리로
+        if (!K.I.on) K.enterInt(); K.placeLevel(li, true); wingTarget();
+        const L = K.LEVELS[li], ok = !K.walkable || K.walkable(p.x, p.z, L);
+        const q = ok ? p : wingTarget().p;
+        placeUser(V(q.x, floorY(L), q.z), yawOf(q, c));
+      } else {
+        if (K.full && K.I.on) K.exitInt();
+        placeUser(V(p.x, Math.max(0, p.y), p.z), yawOf(p, c));
+      }
+      afterChange();
+    }
   };
+  const CROPS = [[18, '건물만'], [45, '건물과 블록'], [250, '미성아파트 포함']];
   X.setMode = m => fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); });
   X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside;
 
@@ -710,6 +802,7 @@
       const levels = K.full ? sortedLevels().slice().reverse().map(s => ({ key: 'lv:' + s.i, label: s.L.name || s.L.key, sub: s.L.use ? String(s.L.use).slice(0, 14) : '', on: () => K.I.on && K.I.li === s.i, act: () => goLevel(s.i) })) : [];
       const T0 = [
         { t: '이동', sec: [
+          { h: S.mode === 'fig' ? '모형 범위' : '', items: S.mode === 'fig' ? CROPS.map(([r, t]) => ({ key: 'crop:' + r, label: t, on: () => S.fig.crop === r, act: () => { S.fig.crop = r; Fig.saveAnchor(); } })).concat([{ key: 'fig:place', label: '다시 놓기 (책상 찾기)', act: () => Fig.place() }]) : [] },
           { h: '시점', items: buttons('.views [data-v]').filter(b => b.key !== 'b:v-int').map(b => Object.assign(b, { act: (el => () => goView(el))(document.getElementById(b.key.slice(2))) })) },
           { h: '층', items: levels },
           { h: '', items: [{ key: 'x:out', label: inside ? '건물 밖으로' : '건물 안으로 (1층)', act: () => inside ? goOutside() : goInside() }] },
@@ -847,7 +940,7 @@
         q.fillStyle = hover === k ? 'rgba(127,214,255,.3)' : 'rgba(255,255,255,.1)'; q.beginPath(); q.roundRect ? q.roundRect(c.x, c.y, c.w, c.h, 14) : q.rect(c.x, c.y, c.w, c.h); q.fill();
         q.fillStyle = '#fff'; q.font = '600 24px ' + FONT; q.textAlign = 'center'; q.fillText(t, c.x + c.w / 2, c.y + 56); q.textAlign = 'left';
       }));
-      if (S.input !== 'hand') { q.fillStyle = '#9a978f'; q.font = '400 17px ' + FONT; q.fillText(S.mode === 'fig' ? '그립 잡기 · 두 손 크기' : 'A/X 위 · B/Y 아래 · 그립 밖', 250, 40); }
+      if (S.input !== 'hand') { q.fillStyle = '#9a978f'; q.font = '400 17px ' + FONT; q.fillText(S.mode === 'fig' ? '그립 잡기 · A/X 크게 · B/Y 작게' : 'A/X 위 · B/Y 아래 · 그립 밖', 250, 40); }
       qtex.needsUpdate = true;
     }
     /* ----- 열기/닫기와 배치(입력 방식별 거리) ----- */
