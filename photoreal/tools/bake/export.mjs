@@ -1,5 +1,5 @@
 // 빛 굽기 1단계: 실사 3D 장면(현재 조합)을 Blender 로 넘길 glTF 와 층·태양 정보로 내보낸다.
-// node export.mjs <출력폴더> [pf=glass]   (BASE 기본 http://localhost:8791)
+// node export.mjs <출력폴더> [pf=glass]   (BASE 기본 http://localhost:8791, puppeteer-core 는 photoreal/tests 의 것을 NODE_PATH 로)
 // - 재질은 굽기에 필요한 값만 남긴 단순 재질로 바꾼다. 이름 머리: G_ 유리(빛이 통과), L_ 조명(빛을 냄), S_ 그 밖
 // - 층별 바닥 높이·천장 높이·평면 범위와 시간대별(오전·오후·석양·야간) 태양 방향을 bake-input.json 에 남긴다
 import puppeteer from 'puppeteer-core';
