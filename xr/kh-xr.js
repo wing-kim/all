@@ -504,48 +504,96 @@
       const out = [];
       (function walk(o) {
         if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
-        if (o.isMesh && !o.isSkinnedMesh && !o.isInstancedMesh && o.geometry && o.geometry.attributes.position && !Array.isArray(o.material)) out.push(o);
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && !o.isInstancedMesh && o.geometry && o.geometry.attributes.position) out.push(o);
         for (const c of o.children) walk(c);
       })(scene);
       return out;
     },
-    sigOf(list) { let h = list.length; for (const m of list) h = (h * 31 + m.id) | 0; return h + ':' + list.length; },
-    merge(list) {
-      const names = Object.keys(list[0].geometry.attributes);
-      let total = 0;
-      const geos = list.map(m => { const g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(); g.applyMatrix4(m.matrixWorld); total += g.attributes.position.count; return g; });
+    // 그릴 조각: 일반 메시, 선분, 재질이 여러 개인 메시는 그룹별로 나눈 조각
+    parts(list) {
+      const out = [];
+      for (const o of list) {
+        const kind = o.isLineSegments ? 'L' : 'M';
+        if (Array.isArray(o.material)) {
+          const gs = o.geometry.groups && o.geometry.groups.length ? o.geometry.groups : [{ start: 0, count: Infinity, materialIndex: 0 }];
+          gs.forEach(gr => { const m = o.material[gr.materialIndex]; if (m && m.visible !== false) out.push({ o, m, kind, gr, multi: true }); });
+        } else if (o.material && o.material.visible !== false) out.push({ o, m: o.material, kind, gr: null, multi: false });
+      }
+      return out;
+    },
+    sigOf(list) {   // 메시 집합 + 재질 교체 + 색 변경(원본의 색상 견본은 메시를 다시 만들지 않음)까지 감지
+      let h = list.length;
+      for (const m of list) { h = (h * 31 + m.id) | 0; for (const a of (Array.isArray(m.material) ? m.material : [m.material])) { if (!a) continue; h = (h * 31 + a.id) | 0; if (a.color) h = (h * 31 + a.color.getHex()) | 0; h = (h * 31 + Math.round((a.opacity == null ? 1 : a.opacity) * 100)) | 0; } }
+      return h + ':' + list.length;
+    },
+    // 묶음 열쇠: 텍스처가 없는 단색 재질은 색을 꼭짓점 색으로 구워 같은 성질(거칠기·금속성 등)끼리 한 번에 그린다
+    texKey(a) { return ['map', 'emissiveMap', 'envMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap', 'lightMap'].map(k => a[k] ? a[k].uuid : '').join(','); },
+    keyOf(pt) {
+      const q4 = v => (Math.round((v || 0) * 4) / 4).toFixed(2);   // 거칠기·금속성은 0.25 단위로 묶음
+      const a = pt.m, o = pt.o, hx = c => (c && c.getHexString ? c.getHexString() : '');
+      const bake = !a.map && !a.vertexColors && !!a.color && !a.isLineDashedMaterial;
+      return [pt.kind, a.type, bake ? 'VC' : a.uuid, hx(a.emissive), +(a.emissiveIntensity || 0).toFixed(2), this.texKey(a), a.transparent, +(a.opacity == null ? 1 : a.opacity).toFixed(2), a.side,
+        q4(a.roughness), q4(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
+        Object.keys(o.geometry.attributes).sort().join(','), o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
+    },
+    piece(pt, cache) {
+      let g = cache.get(pt.o);
+      if (!g) { g = pt.o.geometry.index ? pt.o.geometry.toNonIndexed() : pt.o.geometry.clone(); g.applyMatrix4(pt.o.matrixWorld); cache.set(pt.o, g); }
+      if (!pt.gr) return g;
+      const n = g.attributes.position.count, st = Math.max(0, pt.gr.start), en = Math.min(n, st + pt.gr.count), out = new T.BufferGeometry();
+      for (const k in g.attributes) { const at = g.attributes[k], sz = at.itemSize; out.setAttribute(k, new T.BufferAttribute(at.array.slice(st * sz, en * sz), sz, at.normalized)); }
+      return out;
+    },
+    merge(pts, bake, cache) {
+      const geos = pts.map(pt => this.piece(pt, cache)), names = Object.keys(geos[0].attributes);
+      let total = 0; geos.forEach(g => { total += g.attributes.position.count; });
       const out = new T.BufferGeometry();
       for (const n of names) {
         const a0 = geos[0].attributes[n], arr = new a0.array.constructor(total * a0.itemSize);
-        let off = 0; for (const g of geos) { arr.set(g.attributes[n].array, off); off += g.attributes[n].array.length; }
+        let off = 0; for (const g of geos) { const src = g.attributes[n]; if (src) arr.set(src.array, off); off += g.attributes.position.count * a0.itemSize; }
         out.setAttribute(n, new T.BufferAttribute(arr, a0.itemSize, a0.normalized));
       }
-      geos.forEach(g => g.dispose()); out.computeBoundingSphere(); return out;
+      if (bake) {
+        const col = new Float32Array(total * 3); let off = 0;
+        pts.forEach((pt, i) => { const c = pt.m.color, n = geos[i].attributes.position.count; for (let k = 0; k < n; k++) { col[off++] = c.r; col[off++] = c.g; col[off++] = c.b; } });
+        out.setAttribute('color', new T.BufferAttribute(col, 3));
+      }
+      geos.forEach(g => { if (!cache.has(g)) g.dispose(); });
+      out.computeBoundingSphere(); return out;
     },
     build() {
       this.clear();
-      const t0 = performance.now(), meshes = this.visibleMeshes(), buckets = new Map();
+      const t0 = performance.now(), objs = this.visibleMeshes(), pts = this.parts(objs), buckets = new Map(), cache = new Map();
       scene.updateMatrixWorld(true);
-      for (const m of meshes) {
-        const k = m.material.uuid + '|' + Object.keys(m.geometry.attributes).sort().join(',') + '|' + m.castShadow + m.receiveShadow + '|' + m.renderOrder;
-        (buckets.get(k) || buckets.set(k, []).get(k)).push(m);
-      }
+      for (const pt of pts) { const k = this.keyOf(pt); (buckets.get(k) || buckets.set(k, []).get(k)).push(pt); }
       const grp = new T.Group(); grp.name = 'khxr-proxy'; grp.userData.khxr = true;
-      for (const list of buckets.values()) {
-        if (list.length < 2) continue;
-        const mesh = new T.Mesh(this.merge(list), list[0].material);
-        mesh.castShadow = list[0].castShadow; mesh.receiveShadow = list[0].receiveShadow; mesh.renderOrder = list[0].renderOrder;
-        mesh.matrixAutoUpdate = false; grp.add(mesh);
-        list.forEach(m => { m.visible = false; this.hidden.push(m); });
+      this.mats = this.mats || [];
+      const merged = new Set();
+      // 재질이 여러 개인 메시는 일부 조각만 합치면 나머지가 사라지므로, 조각이 속한 묶음은 크기와 상관없이 모두 만든다
+      const multiObjs = new Set(pts.filter(p => p.multi).map(p => p.o));
+      for (const [k, list] of buckets) {
+        const bake = k.split('|')[2] === 'VC';
+        const must = list.some(p => multiObjs.has(p.o));
+        if (list.length < 2 && !bake && !must) continue;
+        let mat = list[0].m;
+        if (bake) { mat = mat.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true; mat.needsUpdate = true; this.mats.push(mat); }
+        const geo = this.merge(list, bake, cache);
+        const obj = list[0].kind === 'L' ? new T.LineSegments(geo, mat) : new T.Mesh(geo, mat);
+        obj.castShadow = list[0].o.castShadow; obj.receiveShadow = list[0].o.receiveShadow; obj.renderOrder = list[0].o.renderOrder;
+        obj.matrixAutoUpdate = false; grp.add(obj);
+        list.forEach(p => merged.add(p.o));
       }
-      scene.add(grp); this.group = grp; this.sig = this.sigOf(meshes);
-      this.stat = { meshes: meshes.length, merged: grp.children.length, ms: Math.round(performance.now() - t0) };
+      cache.forEach(g => g.dispose());
+      merged.forEach(o => { o.visible = false; this.hidden.push(o); });
+      scene.add(grp); this.group = grp; this.sig = this.sigOf(objs);
+      this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, ms: Math.round(performance.now() - t0) };
       R.shadowMap.needsUpdate = true;
       log('최적화', JSON.stringify(this.stat));
     },
     clear() {
       this.hidden.forEach(m => { m.visible = true; }); this.hidden = [];
       if (this.group) { this.group.children.forEach(c => c.geometry.dispose()); scene.remove(this.group); this.group = null; }
+      (this.mats || []).forEach(m => m.dispose()); this.mats = [];
     },
     dirty() { this.need = true; },
     check(time) {
