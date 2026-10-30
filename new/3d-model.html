@@ -7630,6 +7630,7 @@ buildContext();existBuilding();
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
 window.KHXR={renderer,scene,camera,controls,enterInt,exitInt,placeLevel,setDoll,floorTop,resize,go,walkable,get LEVELS(){return LEVELS},get I(){return I},get anim(){return anim},set anim(v){anim=v},get R3D(){return R3D}};   // [XR] VR 보기(xr/kh-xr.js) 연결 통로
+window.KHPR={M,FM,DZM,BM2,RMAT,R3D,CARC,carGlass,CAR,TEX,WT,wmat,CM2,DM,FX,MPK,CFM,CGL,ROOFL,LVCM,bld,city,ctx,exist,site,sun,hemi,amb,P,inPoly,centroid,ceilOf,floorTop,coreFor,applyTime,get state(){return state},get LEVELS(){return LEVELS},get LG(){return LG},get I(){return I},get Lv(){return Lv}};   // [PR] 실사 3D(photoreal/kh-photoreal.js) 연결 통로
 let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;   // [XR] VR 중에는 xr/kh-xr.js 가 그림
@@ -7825,6 +7826,7 @@ let last=performance.now();
 </script>
 
 <script src="../xr/kh-xr.js"></script>   <!-- [XR] VR·피규어 보기 -->
+<script src="../photoreal/kh-photoreal.js"></script>   <!-- [PR] 실사 3D 보기 -->
 
 </body>
 </html>
