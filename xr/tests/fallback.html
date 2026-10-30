@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>XR 대체 경로 시험</title></head>
+<body>불러오는 중…
+<script>
+/* 시험용: Wing 이 연결 통로 줄 없이 3d-model.html 을 올린 경우를 흉내 낸다.
+   ?mode=nobridge  연결 통로·루프 조건만 지움(스크립트 태그는 남음) → XR 최소 기능으로 동작해야 함
+   ?mode=noxr      [XR] 표시 줄을 모두 지움 → XR 없이 원본처럼 동작해야 함 */
+(async () => {
+  const q = new URLSearchParams(location.search), mode = q.get('mode') || 'nobridge';
+  const src = new URL('../../new/3d-model.html', location.href);
+  let html = await (await fetch(src, { cache: 'no-cache' })).text();
+  html = html.replace(/^window\.KHXR=.*\[XR\].*$/m, '');
+  html = html.replace(/if\(renderer\.xr\.isPresenting\)return;\s*\/\/ \[XR\][^\n]*/, '');
+  if (mode === 'noxr') html = html.replace(/^.*<script src="\.\.\/xr\/kh-xr\.js"><\/script>.*$/m, '');
+  html = html.replace(/<head([^>]*)>/i, m => m + '<base href="' + src.href + '">');
+  document.open(); document.write(html); document.close();
+})();
+</script></body></html>

@@ -3,6 +3,11 @@
   "private": true,
   "type": "module",
   "description": "케이프혼타워 XR 자동 시험(헤드리스 Chrome + IWER 에뮬레이터)",
-  "scripts": { "smoke": "node smoke.mjs" },
-  "dependencies": { "puppeteer-core": "23.11.1" }
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "pngjs": "7.0.0",
+    "puppeteer-core": "23.11.1"
+  }
 }
