@@ -99,10 +99,9 @@ try {
   // 순간이동 뒤에도 실제 컨트롤러 레이가 메뉴에 닿아 눌리는지(실기기에서 레이가 안 닿던 문제의 재발 방지)
   const rayPress = await ev(async () => {
     const s = KHXR.renderer.xr.getSession(), f = () => new Promise(r => s.requestAnimationFrame(() => r()));
-    const panel = KHXR.scene.getObjectByName('khxr-menu'), cell = KHXRLayer.ui.cells().find(c => c.key === 'tab:2');
-    if (!panel || !cell) return { ok: false, why: 'no panel/cell' };
-    panel.updateMatrix();
-    const tgt = new THREE.Vector3((cell.x + cell.w / 2) / 1024 - 0.5, 0.75 * (0.5 - (cell.y + cell.h / 2) / 768), 0).applyMatrix4(panel.matrix);   // 리그 기준 좌표
+    const cell = KHXRLayer.ui.cells().find(c => c.key === 'tab:2');
+    if (!cell) return { ok: false, why: 'no cell' };
+    const tgt = KHXRLayer.rig.worldToLocal(KHXRLayer.ui.cellPoint(cell));   // 리그 기준 좌표
     const c = KHEMU.controllers.right, from = new THREE.Vector3(0.15, 1.3, -0.1);
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), tgt.clone().sub(from).normalize());
     c.position.set(from.x, from.y, from.z); c.quaternion.set(q.x, q.y, q.z, q.w);
@@ -136,9 +135,9 @@ try {
   ok('피규어 전환(세션 유지)', fig.mode === 'fig' && fig.bg && fig.scale > 20, fig);
   ok('피규어 그리기 호출 < 200', calls < 200, calls);
   await shot('05-fig');
-  const place = await ev(async () => { await new Promise(r => setTimeout(r, 2200)); const p = KHXRLayer.state.fig.pos; return { placed: KHXRLayer.fig.placed, pos: p && p.toArray().map(v => +v.toFixed(2)), base: !!(KHXR.scene.getObjectByName('khxr-base') || {}).visible, anchor: !!KHXRLayer.fig.anchor, log: KHXRLayer.log.filter(l => /앵커|놓았/.test(l)).slice(-2) }; });
+  const place = await ev(async () => { await new Promise(r => setTimeout(r, 2200)); const p = KHXRLayer.state.fig.pos; return { placed: KHXRLayer.fig.placed, pos: p && p.toArray().map(v => +v.toFixed(2)), base: !!(KHXRLayer.fig.base || {}).visible, anchor: !!KHXRLayer.fig.anchor, log: KHXRLayer.log.filter(l => /앵커|놓았/.test(l)).slice(-2) }; });
   ok('피규어 자리 잡기와 받침', place.placed && place.pos && place.pos[1] > 0.3 && place.pos[1] < 1.4 && place.base, place);
-  const crop = await ev(async () => { const c = KHXRLayer.ui; KHXRLayer.state.fig.crop = 18; const s = KHXR.renderer.xr.getSession(); await new Promise(r => s.requestAnimationFrame(() => r())); return { crop: KHXRLayer.state.fig.crop, baseW: +KHXR.scene.getObjectByName('khxr-base').scale.x.toFixed(1) }; });
+  const crop = await ev(async () => { const c = KHXRLayer.ui; KHXRLayer.state.fig.crop = 18; const s = KHXR.renderer.xr.getSession(); await new Promise(r => s.requestAnimationFrame(() => r())); return { crop: KHXRLayer.state.fig.crop, baseW: +KHXRLayer.fig.base.userData.box.scale.x.toFixed(1) }; });
   ok('모형 범위 바꾸기', crop.crop === 18 && crop.baseW === 36, crop);
   // 모형의 3층 한 점을 가리켜 들어가기
   const enter = await ev(async () => {
@@ -171,17 +170,18 @@ try {
     await KHEMU.remote.dispatch('set_input_mode', { mode: 'hand' });
     const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 10; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
     KHXRLayer.ui.openMenu(); await new Promise(r => s.requestAnimationFrame(() => r()));
-    const cells = KHXRLayer.ui.cells().filter(c => /^r:|^b:|^c:|^lv:/.test(c.key));
+    const cells = KHXRLayer.ui.cells().filter(c => /^r:|^b:|^c:/.test(c.key) && !c.seg);
     const xs = [...new Set(cells.map(c => Math.round(c.x)))].length;
-    const menu = KHXR.scene.getObjectByName('khxr-menu'); const sc = menu ? menu.scale.x : 0;
-    const gapPx = cells.length > 1 ? Math.min(...cells.slice(1).map((c, i) => c.y === cells[i].y ? c.x - (cells[i].x + cells[i].w) : 999)) : 0;
-    const gapMM = gapPx / 1024 * 1.0 * sc * 1000, hMM = (cells[0] ? cells[0].h : 0) / 768 * 0.75 * sc * 1000;
+    const P = KHXRLayer.ui.panel(), mmPx = P.geometry.parameters.width / 1728 * 1000;
+    const head = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3()), dist = P.getWorldPosition(new THREE.Vector3()).setY(head.y).distanceTo(head);
+    const gapPx = cells.length > 1 ? Math.min(...cells.slice(1).map((c, i) => Math.abs(c.y - cells[i].y) < 1 ? c.x - (cells[i].x + cells[i].w) : 999)) : 0;
+    const gapMM = gapPx * mmPx, hMM = (cells[0] ? cells[0].h : 0) * mmPx, sc = dist;
     KHXRLayer.ui.closeMenu();
     await KHEMU.remote.dispatch('set_input_mode', { mode: 'controller' });
     for (let i = 0; i < 5; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
     return { input: 'hand', cols: xs, scale: +sc.toFixed(2), gapMM: +gapMM.toFixed(1), cellHmm: +hMM.toFixed(1) };
   });
-  ok('핸드 메뉴: 3열, 0.45m, 간격 12mm·높이 22mm 이상', hand.cols === 3 && Math.abs(hand.scale - 0.45) < 0.01 && hand.gapMM >= 12 && hand.cellHmm >= 22, hand);
+  ok('핸드 메뉴: 평면 0.5m 안쪽, 간격 12mm·높이 22mm 이상', hand.cols >= 2 && hand.scale > 0.35 && hand.scale < 0.6 && hand.gapMM >= 12 && hand.cellHmm >= 22, hand);
 
   // 웹 화면 복귀
   await ev(() => KHXRLayer.goInside()); await frames(40);

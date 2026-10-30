@@ -143,6 +143,7 @@ html{scroll-behavior:smooth}
   <a href="#quality">9. 품질 체크리스트</a>
   <a href="#results">9-1. 현재 결과</a>
   <a href="#device">9-2. 실기기 대기열</a>
+  <a href="#selfcheck">9-3. 자체 검토 체계</a>
   <a href="#team">10. 협업 약속</a>
   <a href="#risk">11. 위험과 대응</a>
   <a href="#agent">12. 에이전트 작업 규칙</a>
@@ -495,7 +496,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <div class="phase" id="p3"><h3>P3. 메뉴와 핸드 UI, 웹 전환 <span class="pill ok">완료</span></h3>
 <p class="goal">7-1장 명세대로 VR 안에서 설정을 바꿔 가며 보고, 웹 화면과 자유롭게 오갑니다.</p>
 <ul class="chk">
-<li data-done>XR 메뉴: 모드 스위치(몰입, 피규어, 웹 화면으로), 탭 7개(이동, 외관, 실내, 빛과 시간, 보기, 기타, 설정), 그립으로 위치 옮기기</li>
+<li data-done>XR 메뉴 2판: 컨트롤러는 1.25m 곡면(약 72°), 핸드는 0.48m 평면. 왼쪽 세로 탭, 오른쪽 본문은 페이지 대신 스크롤(레이로 끌기, 스틱, ▲▼). 탭별 형태: 이동=층 단면 막대와 시점, 외관=시안 사진 카드, 빛과 시간=구간 버튼과 시각 막대(끌어서 맞춤), 켜고 끄는 항목=스위치 <span class="small">10-30 2차 착용 반영, 근거는 Meta·visionOS 지침과 건축 VR 사례 조사</span></li>
 <li data-done>빠른 막대: 왼쪽 컨트롤러 위, 핸드는 왼손바닥을 돌리면 손목 위</li>
 <li data-done>입력별 배치: 핸드 0.45m 3열 직접 누르기, 컨트롤러 1.0m 레이. 간격 12.3mm, 높이 28.1mm. 가리킴, 클릭음, 진동</li>
 <li data-done>컨트롤러 레이로 메뉴 누르기. <span class="small">10-30 실기기에서 레이가 메뉴에 닿지 않던 문제 수정(순간이동 계산이 광선 길이를 줄여 둔 채 남김). 재발 방지 시험 추가</span></li>
@@ -512,7 +513,9 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <p class="goal">실제 크기로 건물 안팎을 편하게 돌아다닙니다.</p>
 <ul class="chk">
 <li data-done>스틱 걷기에 Wing 충돌 판정(<code>walkable</code>) 재사용, 벽과 기둥 통과 금지</li>
-<li>램프 오르내림과 층 자동 전환. <span class="small">미구현(층 이동은 버튼과 A/B·X/Y로 대체)</span></li>
+<li data-done>계단과 램프 걷기: 원본 데스크톱 걷기 규칙 재사용, 계단은 단 높이(약 17cm)씩, 층 자동 전환. 밖의 차량 램프로 걸어 내려가면 지하 실내로 <span class="small">10-30 2차 착용 반영</span></li>
+<li data-done>순간이동 사거리 약 7m → 17m, 바닥 선·도로 턱·유리문 판정 정리, 밖에서 1층 바닥을 가리키면 바로 실내로</li>
+<li data-done>출입구 바로가기 지점 5곳(빛기둥·이름표). 레이로 가리키고 트리거, 메뉴 이동 탭에서도 선택</li>
 <li data-done>순간이동 포물선과 착지 표시, 불가 지점 빨간색</li>
 <li data-done>건물 밖으로: 압구정로 정면 약 34m, 건물까지 시야가 트인 자리를 골라 정면을 봄. <span class="small">10-30 추가: 예전에는 남쪽 이웃 건물 뒤에 놓이던 문제 수정</span></li>
 <li data-done>시점과 층 이동은 짧은 페이드</li>
@@ -527,7 +530,8 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li data-done>책상이나 바닥 평면 인식으로 배치, 없으면 눈앞 0.5m <span class="small">(평면 인식 자체는 실기기 확인 대기)</span></li>
 <li data-done>두 손 그립 크기와 회전, 한 손 그립 이동. 1:20에서 1:1000</li>
 <li data-done>범위 선택: 건물만, 건물과 블록(45m), 미성아파트 포함</li>
-<li data-done>받침 원판과 그림자</li>
+<li data-done>받침: 두께 약 2.2cm의 어두운 옆면과 흰 테두리로 모형 경계를 분명히, 자르기 경계에 걸친 주변 건물은 통째로 숨김, 지하층 라벨은 지하 보기일 때만 <span class="small">10-30 2차 착용 반영</span></li>
+<li data-done>피규어에서 손 막대·메뉴·레이가 모형 자르기 평면에 잘려 안 보이고 안 눌리던 문제 수정(손·메뉴는 자르기 없는 별도 패스)</li>
 <li data-dev>앵커로 지난번 자리 기억(에뮬레이터는 앵커를 지원하지 않아 실기기 확인 대기)</li>
 <li data-done>모형의 한 점을 가리켜 그 층으로 들어가기, 피규어로 돌아가기</li>
 </ul></div>
@@ -643,6 +647,7 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <h2>9-2. 실기기 확인 대기열</h2>
 <p>퀘스트 3을 USB로 연결하거나 Jack이 미리보기 주소로 착용 확인한 결과를 받아 처리합니다.</p>
 <ul class="chk">
+<li>10-30 2차 착용 반영본(1030.p8) 재확인: 피규어 손 막대와 경계, 출입구 바로가기와 17m 순간이동, 계단 한 단씩, 램프로 지하, 새 메뉴(곡면·스크롤·사진 카드·시각 막대)</li>
 <li data-done>10-30 착용 확인 1차: 메뉴는 뜨지만 컨트롤러 레이가 닿지 않음 → 수정(1030.p2), 밖으로 나가면 건물이 안 보이는 자리 → 압구정로 정면으로 수정</li>
 <li>1030.p2 재확인: 메뉴 탭과 버튼을 레이로 눌러 외관·실내·빛과 시간 바꾸기, 밖으로 나가기 위치</li>
 <li>예전 실사 3D(WebGPU)를 VR로 옮길 수 있는지: 점검 페이지 <code>xr/probe.html</code>의 두 버튼 결과(13-2장)</li>
@@ -655,6 +660,19 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li>대시보드 iframe 안에서 XR 진입 가능 여부(P9)</li>
 <li>비전 프로 Safari(기기 확보 시)</li>
 </ul>
+</section>
+
+<section id="selfcheck">
+<h2>9-3. 자체 검토 체계</h2>
+<p>실기기에서 문제가 나오기 전에 먼저 찾도록, 시험을 두 갈래로 나눴습니다. 기능 시험(<code>smoke.mjs</code>, <code>compat.mjs</code>)은 기능이 동작하는지를, 사용감 시나리오(<code>xr/tests/ux.mjs</code>)는 실제 사람이 쓰는 자세로 손이 닿고 보이고 갈 수 있는지를 봅니다. <code>npm run check</code>로 세 가지를 한 번에 돌립니다.</p>
+<table><thead><tr><th>원칙</th><th>내용</th></tr></thead><tbody>
+<tr><td>재현 먼저</td><td>착용 중 나온 문제는 같은 자세와 입력으로 실패하는 시나리오를 먼저 만들고 실패를 확인한 뒤 고칩니다</td></tr>
+<tr><td>실제 입력만</td><td>내부 함수 대신 컨트롤러 위치와 방향, 트리거, 스틱, 머리 방향으로만 조작합니다</td></tr>
+<tr><td>눈으로 확인</td><td>웹 패널을 숨긴 눈높이 화면(<code>out/ux-*.png</code>)을 고칠 때마다 열어 봅니다</td></tr>
+<tr><td>예산 합산</td><td>한 프레임의 모든 패스(가상 방, 손·메뉴)를 합산해 그리기 호출 200회 미만</td></tr>
+<tr><td>실기기 도구</td><td>퀘스트 USB 연결 시 Meta 개발 도구로 화면·로그·성능 추적. 이 맥에 <code>adb</code> 설치 필요(무료)</td></tr>
+</tbody></table>
+<p>현재 시나리오 11개: 피규어 범위 밖 손 막대 누르기, 피규어 모습, 출입구 바로가기, 순간이동만으로 밖에서 1층 안까지, 출입구 앞 착지 판정, 계단 걸어 오르기, 램프로 지하 내려가기, 메뉴 레이 끌어 스크롤, 시각 막대 끌기, 콘솔 오류.</p>
 </section>
 
 <section id="team">
@@ -802,6 +820,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>P4</td><td>1차 착용 확인 반영: 메뉴 레이 판정 수정, 밖으로 나가기 위치를 압구정로 정면으로, 체크리스트를 실제 상태로 최신화, XR 점검 페이지 추가</td><td><code>1030.p2</code></td></tr>
 <tr><td>2026-10-30</td><td>P2</td><td>실사 세션 제안 반영: 건물 밖 몰입에서 '지하 보기'가 꺼져 있으면 땅 아래 메시를 합치지도 그리지도 않음. 외부 196→188, 실사 브랜치 284→250</td><td><code>1030.p3</code></td></tr>
 <tr><td>2026-10-30</td><td>P2</td><td>인스턴스 메시(가구)도 인스턴스별로 펼쳐 같은 재질끼리 합침. 실사 브랜치 외부 202～230, 1층 204, B1 236. 합치기 전후 화면 동일</td><td><code>1030.p4</code></td></tr>
+<tr><td>2026-10-30</td><td>P3</td><td>2차 착용 반영: 피규어 손 UI 자르기·경계, 출입구 바로가기와 순간이동 17m, 계단 한 단씩과 램프로 지하, 메뉴 2판(곡면·세로 탭·스크롤·사진 카드·시각 막대), 사용감 시나리오 시험 ux.mjs</td><td><code>1030.p8</code></td></tr>
 </tbody></table></div>
 </section>
 </main>

@@ -4,7 +4,10 @@
   "type": "module",
   "description": "케이프혼타워 XR 자동 시험(헤드리스 Chrome + IWER 에뮬레이터)",
   "scripts": {
-    "smoke": "node smoke.mjs"
+    "smoke": "node smoke.mjs",
+    "compat": "node compat.mjs",
+    "ux": "node ux.mjs",
+    "check": "node smoke.mjs && node compat.mjs && node ux.mjs"
   },
   "dependencies": {
     "pngjs": "7.0.0",

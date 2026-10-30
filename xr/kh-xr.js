@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p4';
+  const VER = '1030.p8';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -141,7 +141,7 @@
     UI.onSessionStart();
   }
   function onEnd() {
-    R.setAnimationLoop(null);
+    R.setAnimationLoop(null); R.info.autoReset = true;
     const leaving = S.mode;
     transferToDesktop(leaving);
     setVisualsFor(null);
@@ -247,7 +247,13 @@
     });
   }
   function rigHeadWorld() { return xrCam.getWorldPosition(V(0, 0, 0)); }
-  function teleportTo(pt) { const yaw = rig.rotation.y; placeUser(pt, yaw); }
+  function teleportTo(pt, yaw = rig.rotation.y) {
+    const rp = rampAt(pt);
+    if (rp) { placeUser(V(pt.x, stepY(rp), pt.z), yaw); followLevel(rig.position.y); return; }
+    const L = enterLevelAt(pt);
+    if (L) { K.enterInt(); if (K.I.doll) K.setDoll(false); K.placeLevel(K.LEVELS.indexOf(L), true); wingTarget(); placeUser(V(pt.x, floorY(L), pt.z), yaw); afterChange(); return; }
+    placeUser(pt, yaw);
+  }
   function snapTurn(a) {
     const h = rigHeadWorld();
     rig.position.sub(h).applyAxisAngle(V(0, 1, 0), a).add(h); rig.rotation.y += a;
@@ -256,14 +262,41 @@
     const d = new T.Vector3(); xrCam.getWorldDirection(d); d.y = 0; if (d.lengthSq() < 1e-6) return; d.normalize();
     const side = V(-d.z, 0, d.x), sp = 1.6 * dt;
     const mv = d.multiplyScalar(-ay * sp).add(side.multiplyScalar(ax * sp));
-    const L = curLevel();
-    if (L && K.walkable) {     // 원본 걷기 충돌 판정 재사용(벽·기둥). 축별로 미끄러지기
-      const h = rigHeadWorld();
-      const okX = K.walkable(h.x + mv.x, h.z, L), okZ = K.walkable(h.x, h.z + mv.z, L);
-      if (!okX) mv.x = 0; if (!okZ) mv.z = 0;
+    const h = rigHeadWorld(), foot = rig.position.y;
+    if (K.full && K.rampHit && K.toPx) {   // 원본 데스크톱 걷기 규칙: 벽·램프 난간 막기, 계단·램프는 높이를 따라감
+      const under = r => (r && r.y - foot > 0.6 ? null : r);
+      const ok = (nx, nz) => {
+        const L = curLevel(), a = K.toPx(h.x, h.z), b = K.toPx(nx, nz), r = under(K.rampHit(b, foot));
+        if ((L && Math.abs(foot - floorY(L)) < 1.2 && (L.walls || []).some(w => K.xSeg(a, b, w))) || K.rampWallX(a, b, foot)) return false;
+        if (r) return Math.abs(r.y - foot) < 0.6;
+        if (!L) return true;
+        if (Math.abs(floorY(L) - foot) >= 0.6) return false;
+        return K.walkable(nx, nz, L);
+      };
+      if (!ok(h.x + mv.x, h.z + mv.z)) { if (ok(h.x + mv.x, h.z)) mv.z = 0; else if (ok(h.x, h.z + mv.z)) mv.x = 0; else return; }
+      rig.position.add(mv);
+      const p = rigHeadWorld(), r = under(K.rampHit(K.toPx(p.x, p.z), foot));
+      if (r) { rig.position.y = stepY(r); followLevel(rig.position.y); }
+      else if (curLevel()) rig.position.y = floorY(curLevel());
+    } else {
+      const L = curLevel();
+      if (L && K.walkable) { const okX = K.walkable(h.x + mv.x, h.z, L), okZ = K.walkable(h.x, h.z + mv.z, L); if (!okX) mv.x = 0; if (!okZ) mv.z = 0; }
+      rig.position.add(mv);
     }
-    rig.position.add(mv);
     S.moving = 1;
+  }
+  // 계단(원본 STW)은 단 높이(약 17cm)씩 끊어서, 램프는 경사 그대로
+  function stepY(r) {
+    const E = r.r.E, k = r.k, dE = E[k + 1] - E[k];
+    if (!(K.STW || []).includes(r.r) || Math.abs(dE) < 0.3) return r.y;
+    const n = Math.max(1, Math.round(Math.abs(dE) / 0.17)), t = Math.max(0, Math.min(1, (r.y + 0.03 - E[k]) / dE));
+    return E[k] + dE * Math.round(t * n) / n;
+  }
+  // 발 높이가 어느 층 바닥에 닿으면 그 층으로(밖에서 램프로 내려가면 실내 보기로)
+  function followLevel(y) {
+    const li = K.levelAtFoot ? K.levelAtFoot(y) : -1;
+    if (!K.I.on) { if (y < -0.5 || li >= 0 && y > 0.5) { K.enterInt(); if (K.I.doll) K.setDoll(false); K.placeLevel(li >= 0 ? li : K.levelAtFoot(-3.9), true); wingTarget(); afterChange(); } return; }
+    if (li >= 0 && li !== K.I.li) { K.quietLevel(li); afterChange(); }
   }
   function afterChange() { S.center = S.center || buildingCenter(); R.shadowMap.needsUpdate = true; UI.dirty(); }
 
@@ -303,6 +336,7 @@
       if (!bgSaved) bgSaved = { bg: scene.background, fog: scene.fog };
       if (!hiddenBg.length) hideBig();
     } else if (bgSaved) {
+      Fig.untrim(); Fig.trimSig = '';
       hiddenBg.forEach(o => { o.visible = o.userData.khxrVis; }); hiddenBg.length = 0;
       scene.background = bgSaved.bg; scene.fog = bgSaved.fog; bgSaved = null;
     }
@@ -354,7 +388,10 @@
     return S._crop.p;
   }
   // r128 양안 절두체 합치기 오류 보정(rig 확대 시 가까운 모형이 컬링됨): 컬링 직전 넉넉한 대칭 절두체로
+  let uiScene = null;   // 피규어 때 rig(손·메뉴·레이)만 자르기 없이 덧그리는 장면
+  function fixArrayCam(c) { if (c && c.isArrayCamera && rig.scale.x !== 1) { const n = 0.01, e = n * Math.tan(Math.PI / 3); c.projectionMatrix.makePerspective(-e, e, e, -e, n, 200); } }
   function patchCull() {
+    uiScene = new T.Scene(); uiScene.onBeforeRender = (r, s, c) => fixArrayCam(c);
     const prev = scene.onBeforeRender;
     scene.onBeforeRender = function (r, s, c) {
       if (c && c.isArrayCamera && rig.scale.x !== 1) { const n = 0.01, e = n * Math.tan(Math.PI / 3); c.projectionMatrix.makePerspective(-e, e, e, -e, n, 200); }
@@ -396,7 +433,7 @@
   function startSelect(c) {   // 포즈가 갱신된 프레임에서 실제 판정
     const u = c.userData; u.pending = false;
     if (!u.uiHit) { aim(c); const h = UI.raycast(X.ray); if (h) u.uiHit = h; }
-    if (u.uiHit) { u.pressUI = u.uiHit; return; }
+    if (u.uiHit) { u.pressUI = u.uiHit; UI.pressStart(c, u.uiHit); return; }
     if (S.mode === 'vr') { if (u.src && u.src.targetRayMode === 'transient-pointer') return; u.aim = true; }
     else if (S.mode === 'fig') { if (u.isHand || (u.src && u.src.targetRayMode === 'transient-pointer')) { u.pinchHold = true; Grab.update(); } else Fig.selectStart(c); }
   }
@@ -405,7 +442,7 @@
     if (u.pending) {   // 한 프레임 안에 누르고 뗀 짧은 탭: 지금 판정해서 메뉴만 누른다
       u.pending = false; aim(c); const h = UI.raycast(X.ray); if (h) UI.activate(h); return;
     }
-    if (u.pressUI) { const h = u.pressUI; u.pressUI = null; if (u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
+    if (u.pressUI) { const h = u.pressUI; u.pressUI = null; const moved = UI.pressEnd(c); if (!moved && u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
     if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
     if (S.mode === 'fig' && !u.isHand) { Fig.selectEnd(c); return; }
     if (u.aim) { u.aim = false; const pt = u.hit; if (pt) fade(() => teleportTo(pt), 0.6); u.hit = null; X.marker.visible = false; }
@@ -429,8 +466,9 @@
         } else if (S.mode === 'fig') {
           if (Math.abs(ax) > 0.15) S.fig.yaw += ax * 1.4 * dt;
         }
-        // 조합 넘기기(위아래)
-        if (Math.abs(ay) > 0.7 && !S.cycleHeld) { UI.cycle(ay > 0 ? 1 : -1); S.cycleHeld = true; } else if (Math.abs(ay) < 0.3) S.cycleHeld = false;
+        // 메뉴를 가리키고 있으면 스크롤, 아니면 조합 넘기기(위아래)
+        if (ctrls.some(c => c.userData.uiHit && c.userData.uiHit.where === 'menu')) { if (Math.abs(ay) > 0.15) UI.scrollBy(ay * 1100 * dt); }
+        else if (Math.abs(ay) > 0.7 && !S.cycleHeld) { UI.cycle(ay > 0 ? 1 : -1); S.cycleHeld = true; } else if (Math.abs(ay) < 0.3) S.cycleHeld = false;
       }
       prevBtn.set(src, b);
     }
@@ -443,6 +481,7 @@
       aim(c);
       let len = 3;
       const uh = UI.raycast(X.ray); if (uh) { u.uiHit = uh; len = uh.distance; }
+      if (u.pressUI && uh) UI.pressMove(c, uh);
       if (u.pending) startSelect(c);
       if (!uh && u.aim && S.mode === 'vr') {
         const r = arc(X.ray.ray.origin, X.ray.ray.direction);
@@ -458,37 +497,63 @@
     X.badHit = null;
   }
   // 순간이동 포물선: 손이 가리키는 방향으로 던진 곡선이 처음 닿는 곳. 위를 향한 면이고(건물 안이면) 걸을 수 있는 곳이어야 함
+  const ARC_V = 13, ARC_N = 60;   // 초속 13m로 던진 곡선(45°에서 약 17m), 최대 60구간
   function arc(o, dir) {
-    const pts = [o.clone()], v = dir.clone().multiplyScalar(8), g = -9.8, dt = 0.06;
+    const pts = [o.clone()], v = dir.clone().multiplyScalar(ARC_V), g = -9.8, dt = 0.05;
     let p = o.clone();
-    for (let i = 0; i < 26; i++) {
+    for (let i = 0; i < ARC_N; i++) {
       const q = p.clone().addScaledVector(v, dt); v.y += g * dt;
-      const seg = q.clone().sub(p), L = seg.length();
-      X.ray.set(p, seg.normalize()); X.ray.far = L;
-      const hits = X.ray.intersectObjects(pickables(), true);
-      for (const h of hits) {
-        if (!visibleForPick(h.object)) continue;
-        const m = h.object.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.2))) continue;
-        pts.push(h.point.clone());
-        const up = h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6;
-        const L0 = curLevel();
-        const walkOk = !L0 || !K.walkable || Math.abs(h.point.y - floorY(L0)) > 1.5 || K.walkable(h.point.x, h.point.z, L0);
-        return { ok: up && walkOk, point: h.point.clone(), pts };
+      const seg = q.clone().sub(p), L = seg.length(), sd = seg.clone().normalize();
+      const h = firstSolid(p, sd, L);
+      if (h) {
+        let point = h.point.clone(), up = isUp(h);
+        if (!up) {     // 도로 턱·문턱·계단 앞면처럼 낮은 세로면이면 바로 뒤의 윗면을 찾는다
+          const back = point.clone().addScaledVector(V(sd.x, 0, sd.z).normalize(), 0.12).add(V(0, 0.45, 0));
+          const d = firstSolid(back, V(0, -1, 0), 0.9);
+          if (d && isUp(d)) { point = d.point.clone(); up = true; }
+        }
+        pts.push(point);
+        return { ok: up && landOk(point), point, pts };
       }
       pts.push(q); p = q;
       if (p.y < -60) break;
     }
     return { ok: false, point: null, pts };
   }
+  // 바닥이 될 수 있는 첫 면: 선·점·글자판, 투명한 것, 숨긴 것은 건너뜀
+  function firstSolid(o, d, far) {
+    X.ray.set(o, d); X.ray.near = 0; X.ray.far = far;
+    for (const h of X.ray.intersectObjects(pickables(), true)) {
+      const ob = h.object; if (!ob.isMesh || ob.isSprite || !visibleForPick(ob)) continue;
+      const m = Array.isArray(ob.material) ? ob.material[0] : ob.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.9))) continue;   // 보이는 유리 너머로도 갈 수 있게(유리문·통창)
+      return h;
+    }
+    return null;
+  }
+  function isUp(h) { return !!h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6; }
+  function rampAt(pt) { if (!K.rampHit || !K.toPx) return null; const r = K.rampHit(K.toPx(pt.x, pt.z), pt.y); return r && Math.abs(r.y - pt.y) < 0.35 ? r : null; }
+  function landOk(pt) {
+    if (rampAt(pt)) return true;     // 계단 단·램프 위
+    const L0 = curLevel();
+    if (L0) return !K.walkable || Math.abs(pt.y - floorY(L0)) > 1.5 || K.walkable(pt.x, pt.z, L0);
+    const L1 = enterLevelAt(pt); return !L1 || !K.walkable || K.walkable(pt.x, pt.z, L1);   // 밖에서 건물 1층 바닥을 가리키면 그 층 걷기 판정
+  }
+  // 건물 밖에서 건물 안 바닥을 가리켰을 때 들어갈 층(1층 높이 근처만)
+  function enterLevelAt(pt) {
+    if (!K.full || (K.I && K.I.on) || !K.bld || !K.LEVELS) return null;
+    const b = new T.Box3().setFromObject(K.bld); if (pt.x < b.min.x || pt.x > b.max.x || pt.z < b.min.z || pt.z > b.max.z) return null;
+    let best = null; K.LEVELS.forEach((L, i) => { const d = Math.abs(floorY(L) - pt.y); if (d < 0.6 && (!best || d < best.d)) best = { i, L, d }; });
+    return best ? best.L : null;
+  }
   let arcLine = null;
   function drawArc(pts, ok) {
     if (!arcLine) {
-      arcLine = new T.Line(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(30 * 3), 3)), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.9, depthTest: false }));
+      arcLine = new T.Line(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3)), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.9, depthTest: false }));
       arcLine.renderOrder = 999; arcLine.frustumCulled = false; arcLine.userData.khxr = true;
     }
     if (!pts) { arcLine.visible = false; return; }
     if (!arcLine.parent) scene.add(arcLine);
-    const a = arcLine.geometry.attributes.position; const n = Math.min(30, pts.length);
+    const a = arcLine.geometry.attributes.position; const n = Math.min(64, pts.length);
     for (let i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
     arcLine.geometry.setDrawRange(0, n); a.needsUpdate = true;
     arcLine.material.color.set(ok ? 0x7fd6ff : 0xff7a6b); arcLine.visible = true;
@@ -501,6 +566,7 @@
   let last = 0;
   function frame(time) {
     const dt = Math.min(0.1, (time - (last || time)) / 1000); last = time;
+    R.info.autoReset = false; R.info.reset();   // 한 프레임에 여러 번 그리므로(가상 방·UI 패스) 프레임 단위로 합산
     S.moving = Math.max(0, S.moving - dt * 4);
     pollGamepads(dt, time);
     const vo = S.vignette && S.mode === 'vr' ? Math.min(0.85, S.moving * 0.85) : 0; X.vig.material.opacity = vo; X.vig.visible = vo > 0.02;
@@ -509,6 +575,7 @@
     updateRays();
     UI.update(time, dt);
     Labels.update();
+    Hot.update();
     Photo.update();
     fadeTick(dt);
     if (S.opt) Opt.check(time);
@@ -518,12 +585,20 @@
     else if (S.ar) R.setClearAlpha(1);
     xrCam.near = S.mode === 'fig' ? 0.02 : 0.08; xrCam.far = S.mode === 'fig' ? 60 : 5000;
     rig.updateMatrixWorld(true);
+    const split = S.mode === 'fig';     // 피규어: 모형만 자르고, 손·메뉴·레이(rig 안)는 잘리지 않게 따로 그림
+    if (split) rig.visible = false;
     if (Room.g && Room.g.visible) {
       Room.update(); const cpR = R.clippingPlanes; R.clippingPlanes = [];
       R.render(Room.scene, xrCam);
       R.clippingPlanes = cpR; const ac = R.autoClear; R.autoClear = false; R.render(scene, xrCam); R.autoClear = ac;
     } else R.render(scene, xrCam);
     if (cp0) R.clippingPlanes = cp0;
+    if (split) {
+      rig.visible = true; uiScene.add(rig);
+      const cpU = R.clippingPlanes, ac = R.autoClear; R.clippingPlanes = []; R.autoClear = false;
+      R.render(uiScene, xrCam);
+      R.clippingPlanes = cpU; R.autoClear = ac; scene.add(rig);
+    }
   }
 
   /* ================= 8. 화면 전환 효과 ================= */
@@ -651,16 +726,46 @@
       } catch (e) {}
       this.baseUpdate();
     },
-    baseUpdate() {   // 모형 받침: 자른 범위만 한 판
+    baseUpdate() {   // 모형 받침: 자른 범위만 한 판. 자르기 평면에 옆면이 같이 잘리지 않게 자르기 없는 장면(uiScene)에 둔다
       if (!this.base) {
-        this.base = new T.Mesh(new T.BoxGeometry(1, 1, 1), new T.MeshStandardMaterial({ color: 0xe9e6df, roughness: 0.9 }));
-        this.base.userData.khxr = true; this.base.receiveShadow = true; this.base.name = 'khxr-base';
+        const side = new T.MeshBasicMaterial({ color: 0x4a5056 }), top = new T.MeshBasicMaterial({ color: 0xd9d5cc }), bot = new T.MeshBasicMaterial({ color: 0x2e3236 });
+        const g = this.base = new T.Group(); g.name = 'khxr-base'; g.userData.khxr = true;
+        const box = new T.Mesh(new T.BoxGeometry(1, 1, 1).translate(0, -0.5, 0), [side, side, top, bot, side, side]);
+        const rim = new T.LineSegments(new T.EdgesGeometry(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }));
+        g.add(box, rim); g.userData.box = box; g.userData.rim = rim;
       }
       const on = S.mode === 'fig';
-      if (on && !this.base.parent) scene.add(this.base);
+      if (on && this.base.parent !== uiScene) uiScene.add(this.base);
       this.base.visible = on;
-      if (on) { const r = S.fig.crop; this.base.scale.set(r * 2, 3, r * 2); this.base.position.set(S.center.x, -1.6, S.center.z); }
+      if (on) {
+        const r = S.fig.crop, th = 0.022 / S.fig.scale;    // 실제 두께 약 2.2cm
+        this.base.position.set(S.center.x, -0.05, S.center.z);
+        this.base.userData.box.scale.set(r * 2, th, r * 2);
+        this.base.userData.rim.scale.set(r * 2, 1, r * 2); this.base.userData.rim.position.y = 0.06 / (150 * S.fig.scale);
+      }
+      this.trimUpdate();
     },
+    // 자르기 경계에 걸친 주변 건물은 단면이 드러나 어색하므로 통째로 숨긴다(땅·도로처럼 납작한 것만 잘라서 보임)
+    trimmed: [], trimSig: '',
+    trimUpdate() {
+      const on = S.mode === 'fig' && K.full;
+      const sig = on ? [S.fig.crop, S.center.x.toFixed(1), S.center.z.toFixed(1), scene.children.length].join(',') : '';
+      if (sig === this.trimSig) return;
+      this.untrim(); this.trimSig = sig; if (!on) return;
+      const c = S.center, r = S.fig.crop + 0.5, b = new T.Box3();
+      for (const top of scene.children) {
+        if (!top.isGroup || top === K.bld || top === rig || top.userData.khxr || top === Opt.group || !top.visible) continue;
+        for (const o of top.children) {
+          if (!o.visible || o.userData.khxr) continue;
+          b.setFromObject(o); if (b.isEmpty() || b.max.y - b.min.y < 2.5) continue;
+          const inside = b.min.x >= c.x - r && b.max.x <= c.x + r && b.min.z >= c.z - r && b.max.z <= c.z + r;
+          const away = b.max.x < c.x - r || b.min.x > c.x + r || b.max.z < c.z - r || b.min.z > c.z + r;
+          if (!inside && !away) { o.visible = false; this.trimmed.push(o); }
+        }
+      }
+      if (this.trimmed.length && S.opt) Opt.dirty();
+    },
+    untrim() { if (!this.trimmed.length) return; this.trimmed.forEach(o => { o.visible = true; }); this.trimmed = []; if (S.opt) Opt.dirty(); },
     // 컨트롤러 트리거: 모형의 한 점을 가리켜 놓으면 그 자리로 들어간다
     selectStart(c) {
       aim(c); X.ray.far = 20 * Math.max(1, rig.scale.x);
@@ -692,7 +797,7 @@
   };
   const CROPS = [[18, '건물만'], [45, '건물과 블록'], [250, '미성아파트 포함']];
   X.setMode = m => fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); });
-  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.pickables = pickables; X.visibleForPick = visibleForPick;
+  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.arc = arc; X.teleportTo = teleportTo; X.pickables = pickables; X.visibleForPick = visibleForPick;
 
   /* ================= 11. 최적화 프록시 =================
      XR 동안만 같은 재질 메시를 합친 대체 메시를 쓰고 원본은 숨긴다. 원본이 장면을 바꾸면 다시 만든다. */
@@ -829,16 +934,24 @@
 
   /* ================= 12. 메뉴(공간 UI) ================= */
   const UI = X.ui = (function () {
-    const W = 1024, H = 768;
-    let cv, g, tex, panel, open = false, cells = [], hover = '', tab = 0, page = 0, toastMsg = '', toastT = 0, dirtyFlag = true, lastDraw = 0, soon = 0;
+    // 메뉴 캔버스: 왼쪽 세로 탭 레일 + 오른쪽 스크롤 본문. 컨트롤러는 1.25m 곡면(약 72°), 핸드는 0.48m 평면(검지로 누름)
+    const W = 1728, H = 900, RAIL = 216, CX = 240, CY = 104, CW = W - CX - 56, CH = H - CY - 52;
+    const CURVE = { r: 1.25, a: 72 * Math.PI / 180 }, FLAT = { w: 0.70, d: 0.48 };
+    let cv, g, tex, panel, panelC, panelF, open = false, cells = [], hover = '', tab = 0, toastMsg = '', toastT = 0, dirtyFlag = true, lastDraw = 0, soon = 0;
+    const scroll = {}; let contentH = 0; const thumbs = new Map();
     let cycleTarget = null;    // 조합 넘기기 대상 {name, mode}
     let qcv, qg, qtex, quick, qcells = [];
     const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h); };
     function init() {
       cv = document.createElement('canvas'); cv.width = W; cv.height = H; g = cv.getContext('2d');
-      tex = new T.CanvasTexture(cv);
-      panel = new T.Mesh(new T.PlaneGeometry(1.0, 0.75), new T.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, side: T.DoubleSide }));
-      panel.renderOrder = 1001; panel.visible = false; panel.userData.khxr = true; panel.name = 'khxr-menu';
+      tex = new T.CanvasTexture(cv); tex.anisotropy = 4;
+      const mat = new T.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, side: T.DoubleSide });
+      const ch = CURVE.r * CURVE.a * H / W, cg = new T.CylinderGeometry(CURVE.r, CURVE.r, ch, 48, 1, true, Math.PI - CURVE.a / 2, CURVE.a);
+      const uv = cg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));   // 안쪽에서 볼 때 좌우가 맞게
+      panelC = new T.Mesh(cg, mat); panelC.userData.curve = { r: CURVE.r, a: CURVE.a, h: ch };
+      panelF = new T.Mesh(new T.PlaneGeometry(FLAT.w, FLAT.w * H / W), mat);
+      [panelC, panelF].forEach(m => { m.renderOrder = 1001; m.visible = false; m.userData.khxr = true; m.name = 'khxr-menu'; });
+      panel = panelC;
       qcv = document.createElement('canvas'); qcv.width = 512; qcv.height = 320; qg = qcv.getContext('2d');
       qtex = new T.CanvasTexture(qcv);
       quick = new T.Mesh(new T.PlaneGeometry(0.2, 0.125), new T.MeshBasicMaterial({ map: qtex, transparent: true, depthTest: false, side: T.DoubleSide }));
@@ -888,6 +1001,7 @@
           { h: '시점', items: buttons('.views [data-v]').filter(b => b.key !== 'b:v-int').map(b => Object.assign(b, { act: (el => () => goView(el))(document.getElementById(b.key.slice(2))) })) },
           { h: '층', items: levels },
           { h: '', items: [{ key: 'x:out', label: inside ? '건물 밖으로' : '건물 안으로 (1층)', act: () => inside ? goOutside() : goInside() }] },
+          { h: inside || S.mode !== 'vr' ? '' : '출입구 바로가기', items: inside || S.mode !== 'vr' ? [] : (Hot.list || []).map((h, i) => ({ key: 'hotm:' + i, label: h.name, act: () => { closeMenu(); Hot.go(i); } })) },
           { h: '내부 시점', items: inside ? buttons('[data-c],[data-w]') : [] }] },
         { t: '외관', sec: [
           { h: '추천 시안', items: radios('dsg', 'preset') }, { h: '시안 색상', items: swatches('sw-dsg') },
@@ -933,75 +1047,158 @@
       if (g.measureText(t).width > w) { while (t.length > 1 && g.measureText(t + '…').width > w) t = t.slice(0, -1); t += '…'; }
       return t;
     }
-    function layout(T0) {
-      const out = []; const tb = T0[tab] || T0[0];
-      const hand = S.input === 'hand';   // 손: 누르는 영역 사이 12mm 이상(0.45m 거리에서 약 28px)
-      const COL = hand ? 3 : 4, gap = hand ? 28 : 10, cw = (W - 48 - gap * (COL - 1)) / COL, ch = hand ? 64 : 60, top = 168, bottom = H - 76;
-      const pages = [[]]; let y = top;
-      tb.sec.forEach(sec => {
-        if (!sec.items.length) return;
-        const rows = Math.ceil(sec.items.length / COL), need = (sec.h ? 34 : 0) + rows * (ch + gap);
-        if (y + Math.min(need, (sec.h ? 34 : 0) + ch + gap) > bottom && pages[pages.length - 1].length) { pages.push([]); y = top; }
-        if (sec.h) { pages[pages.length - 1].push({ head: sec.h, x: 28, y }); y += 34; }
-        sec.items.forEach((it, k) => {
-          const c = k % COL; if (k && c === 0) y += ch + gap;
-          if (y + ch > bottom) { pages.push([]); y = top; if (sec.h) { pages[pages.length - 1].push({ head: sec.h + ' (계속)', x: 28, y }); y += 34; } }
-          pages[pages.length - 1].push(Object.assign({ x: 24 + c * (cw + gap), y, w: cw, h: ch }, it));
-        });
-        y += ch + gap + 8;
-      });
-      return pages;
+    // 시안 사진 썸네일(원본 사진 저장소). 불러오면 다시 그림
+    function thumbOf(kind, v) {
+      const m = Photo.man(); if (!m || !m.ext) return null;
+      const d = (m.ext[kind] || {})[v]; if (!d || !d.img) return null;
+      const p = d.img['045'] || Object.values(d.img)[0]; if (!p) return null;
+      const url = Photo.url(p); let t = thumbs.get(url);
+      if (!t) { t = new Image(); t.crossOrigin = 'anonymous'; t.onload = () => { dirtyFlag = true; }; t.src = url; thumbs.set(url, t); }
+      return t;
+    }
+    function sunSlider() {
+      const el = document.getElementById('sun-hour'); if (!el || el.closest('[hidden]')) return [];
+      const min = +el.min || 5, max = +el.max || 20, step = +el.step || 0.5;
+      return [{ key: 'sl:sun-hour', slider: true, label: '시각', min, max, step, get: () => +el.value,
+        set: v => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); },
+        commit: () => { el.dispatchEvent(new Event('change', { bubbles: true })); const b = document.getElementById('sun-apply'); if (b && !b.disabled) b.click(); },
+        fmt: v => { const h = Math.floor(v), mm = Math.round((v - h) * 60); return h + '시' + (mm ? ' ' + mm + '분' : ''); } }];
+    }
+    // 탭마다 본문 배치(본문 좌표). 반환: {cells, heads, h}
+    function layout(tb) {
+      const hand = S.input === 'hand', gap = hand ? 30 : 16, out = [], heads = [];
+      let y = 8;
+      const head = (t, x = 0) => { if (t) { heads.push({ t, x, y }); y += 44; } };
+      const grid = (items, cols, ch, x0 = 0, w = CW) => {
+        if (!items.length) return; const cw = (w - gap * (cols - 1)) / cols;
+        items.forEach((it, k) => { const c = k % cols, r = (k / cols) | 0; out.push(Object.assign({ x: x0 + c * (cw + gap), y: y + r * (ch + gap), w: cw, h: ch }, it)); });
+        y += Math.ceil(items.length / cols) * (ch + gap) + 14;
+      };
+      const seg = items => { if (!items.length) return; const n = items.length, cw = (CW - gap * (n - 1)) / n; items.forEach((it, k) => out.push(Object.assign({ x: k * (cw + gap), y, w: cw, h: hand ? 84 : 72, seg: true }, it))); y += (hand ? 84 : 72) + 26; };
+      const sw = items => { if (!items.length) return; const d = hand ? 84 : 72; items.forEach((it, k) => out.push(Object.assign({ x: k * (d + gap + 6), y, w: d, h: d, round: true }, it))); y += d + 26; };
+      const col = hand ? 3 : 4;
+      for (const sec of tb.sec) {
+        const it = sec.items; if (!it.length) continue;
+        if (sec.kind === 'floors') {     // 층 단면: 위층이 위, 지금 층 강조. 왼쪽 열 전체
+          const fh = hand ? 84 : 70, x0 = 0, w = 300; let fy = y; heads.push({ t: sec.h, x: x0, y: fy }); fy += 44;
+          it.forEach(f => { out.push(Object.assign({ x: x0, y: fy, w, h: fh, floor: true }, f)); fy += fh + (hand ? 30 : 8); });
+          tb._side = { x: w + 40, top: y, bottom: fy }; continue;
+        }
+        const x0 = tb._side ? tb._side.x : 0, w = CW - x0;
+        if (sec.h) { heads.push({ t: sec.h, x: x0, y }); y += 44; }
+        if (sec.kind === 'thumbs') grid(it, hand ? 3 : 4, hand ? 230 : 210, x0, w);
+        else if (sec.kind === 'seg') seg(it);
+        else if (sec.kind === 'swatch') sw(it);
+        else if (sec.kind === 'slider') { it.forEach(s0 => out.push(Object.assign({ x: x0, y, w, h: 128 }, s0))); y += 128 + 26; }
+        else grid(it, sec.cols || (tb._side ? Math.max(2, col - 1) : col), hand ? 84 : 76, x0, w);
+      }
+      if (tb._side) y = Math.max(y, tb._side.bottom); delete tb._side;
+      return { cells: out, heads, h: y };
+    }
+    function viewTabs() {     // 탭 데이터에 본문 형태를 붙임
+      const T0 = tabs();
+      T0.forEach(t => t.sec.forEach(sec => {
+        if (/^층$/.test(sec.h)) sec.kind = 'floors';
+        else if (sec.h === '추천 시안') { sec.kind = 'thumbs'; sec.items.forEach(i => { i.thumb = thumbOf('preset', i.key.split(':')[2]); }); }
+        else if (sec.h === '마감재') { sec.kind = 'thumbs'; sec.items.forEach(i => { i.thumb = thumbOf('finish', i.key.split(':')[2]); }); }
+        else if (/색상$/.test(sec.h)) sec.kind = 'swatch';
+        else if (/^(보기 방식|시간대|계절|창 크기|현황과 신축|회전)$/.test(sec.h)) sec.kind = 'seg';
+      }));
+      T0.forEach(t => { const i = t.sec.findIndex(x => x.kind === 'floors'); if (i > 0) t.sec.unshift(t.sec.splice(i, 1)[0]); });
+      const lt = T0.find(t => t.t === '빛과 시간');
+      if (lt && !lt.sec.some(x => x.h === '시간대' && x.items.length)) lt.sec.push({ h: '', items: [{ key: 'info:sun', info: true, label: '시간대·계절·시각은 보기 방식을 렌더로 바꾸면 나타납니다' }], cols: 1 });
+      if (lt) { const i = lt.sec.findIndex(x => /^시각/.test(x.h)); if (i >= 0) lt.sec[i] = { h: '시각 (끌어서 맞추고 놓으면 적용)', kind: 'slider', items: sunSlider() }; }
+      return T0;
     }
     function draw() {
       if (!open) return;
-      const T0 = tabs(); if (tab >= T0.length) tab = 0;
-      const pages = layout(T0); if (page >= pages.length) page = pages.length - 1;
+      const T0 = viewTabs(); if (tab >= T0.length) tab = 0;
+      const tb = T0[tab], L0 = layout(tb); contentH = L0.h;
+      const maxS = Math.max(0, contentH - CH); scroll[tab] = Math.max(0, Math.min(maxS, scroll[tab] || 0)); const sy = scroll[tab];
       cells = [];
       g.clearRect(0, 0, W, H);
-      g.fillStyle = 'rgba(14,18,20,.95)'; rr(0, 0, W, H, 28); g.fill();
-      g.strokeStyle = 'rgba(127,214,255,.35)'; g.lineWidth = 2; rr(1, 1, W - 2, H - 2, 28); g.stroke();
-      // 상단: 모드 스위치와 위치
+      g.fillStyle = 'rgba(14,18,20,.95)'; rr(0, 0, W, H, 34); g.fill();
+      g.strokeStyle = 'rgba(127,214,255,.35)'; g.lineWidth = 2; rr(1, 1, W - 2, H - 2, 34); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.04)'; rr(8, 8, RAIL, H - 16, 28); g.fill();
+      // 위: 위치와 모드 스위치
       const L = curLevel();
-      g.fillStyle = '#7fd6ff'; g.font = '600 22px ' + FONT; g.fillText('케이프혼타워', 28, 50);
-      g.fillStyle = '#f2f0ea'; g.font = '700 26px ' + FONT; g.fillText(S.mode === 'fig' ? '모형 1:' + Math.round(1 / S.fig.scale) : (L ? (L.name || L.key) : '건물 밖'), 190, 50);
+      g.fillStyle = '#7fd6ff'; g.font = '600 24px ' + FONT; g.fillText('케이프혼타워', CX, 52);
+      g.fillStyle = '#f2f0ea'; g.font = '700 34px ' + FONT; g.fillText(S.mode === 'fig' ? '모형 1:' + Math.round(1 / S.fig.scale) : (L ? (L.name || L.key) : '건물 밖'), CX + 180, 56);
       const modes = [['vr', '몰입'], ['fig', S.ar ? '피규어' : '모형'], ['web', '웹 화면으로']];
-      let mx = W - 24 - 3 * 150 - 2 * 8 - 72;
-      modes.forEach(([m, t]) => { cells.push({ key: 'mode:' + m, x: mx, y: 18, w: 150, h: 52, label: t, mode: m, on: () => S.mode === m, act: () => (m === 'web' ? exitToWeb() : X.setMode(m)) }); mx += 158; });
-      cells.push({ key: 'close', x: W - 24 - 64, y: 18, w: 64, h: 52, label: '✕', act: () => closeMenu() });
-      // 탭
-      const tw = (W - 48 - 8 * (T0.length - 1)) / T0.length;
-      T0.forEach((t, i) => cells.push({ key: 'tab:' + i, x: 24 + i * (tw + 8), y: 92, w: tw, h: 56, label: t.t, tab: i, on: () => tab === i, act: () => { tab = i; page = 0; } }));
-      // 내용
-      const items = pages[page] || [];
-      items.forEach(c => { if (c.head) { g.fillStyle = '#7fd6ff'; g.font = '600 20px ' + FONT; g.fillText(c.head, c.x, c.y + 24); } else cells.push(c); });
-      // 아래: 쪽 넘기기와 안내
-      if (pages.length > 1) {
-        cells.push({ key: 'pg:-', x: 24, y: H - 64, w: 120, h: 48, label: '◀ 이전', act: () => { page = Math.max(0, page - 1); } });
-        cells.push({ key: 'pg:+', x: 152, y: H - 64, w: 120, h: 48, label: '다음 ▶', act: () => { page = Math.min(pages.length - 1, page + 1); } });
-        g.fillStyle = '#9a978f'; g.font = '400 20px ' + FONT; g.fillText((page + 1) + ' / ' + pages.length, 290, H - 32);
+      let mx = W - 40 - 84 - 3 * 190 - 2 * 10;
+      modes.forEach(([m, t]) => { cells.push({ key: 'mode:' + m, x: mx, y: 18, w: 190, h: 66, label: t, mode: m, on: () => S.mode === m, act: () => (m === 'web' ? exitToWeb() : X.setMode(m)) }); mx += 200; });
+      cells.push({ key: 'close', x: W - 40 - 84, y: 18, w: 84, h: 66, label: '✕', act: () => closeMenu() });
+      // 왼쪽 세로 탭
+      const th = Math.min(110, (H - 40 - 8 * (T0.length - 1)) / T0.length);
+      T0.forEach((t, i) => cells.push({ key: 'tab:' + i, x: 20, y: 20 + i * (th + 8), w: RAIL - 24, h: th, label: t.t, tab: i, on: () => tab === i, act: () => { tab = i; } }));
+      // 본문(잘라서 스크롤)
+      g.save(); g.beginPath(); g.rect(CX - 8, CY, CW + 16, CH); g.clip();
+      L0.heads.forEach(h => { g.fillStyle = '#7fd6ff'; g.font = '600 24px ' + FONT; g.fillText(h.t, CX + h.x, CY + h.y - sy + 30); });
+      const body = L0.cells.map(c => Object.assign({}, c, { x: CX + c.x, y: CY + c.y - sy })).filter(c => c.y + c.h > CY && c.y < CY + CH);
+      body.forEach(c => drawCell(c, true)); g.restore();
+      body.forEach(c => { const y0 = Math.max(c.y, CY), y1 = Math.min(c.y + c.h, CY + CH); if (y1 - y0 > 20) cells.push(Object.assign(c, { hy0: y0, hy1: y1 })); });
+      // 스크롤 막대와 위·아래 버튼(손으로도 누를 수 있게)
+      if (maxS > 0) {
+        const bx = W - 44, bh = CH - 2 * 72, kh = Math.max(60, bh * CH / contentH), ky = CY + 72 + (bh - kh) * sy / maxS;
+        g.fillStyle = 'rgba(255,255,255,.08)'; rr(bx + 8, CY + 72, 16, bh, 8); g.fill(); g.fillStyle = 'rgba(127,214,255,.7)'; rr(bx + 8, ky, 16, kh, 8); g.fill();
+        cells.push({ key: 'sc:-', x: bx - 6, y: CY, w: 44, h: 64, label: '▲', act: () => scrollBy(-CH * 0.6) });
+        cells.push({ key: 'sc:+', x: bx - 6, y: CY + CH - 64, w: 44, h: 64, label: '▼', act: () => scrollBy(CH * 0.6) });
       }
-      g.fillStyle = '#8a877f'; g.font = '400 18px ' + FONT; g.textAlign = 'right';
-      g.fillText(S.input === 'hand' ? '검지로 누르기 · 멀면 핀치' : '트리거로 선택 · 왼쪽 스틱 누르기로 닫기 · 오른쪽 스틱 위아래로 넘기기', W - 28, H - 32); g.textAlign = 'left';
-      // 셀 그리기
-      for (const c of cells) {
-        const hov = hover === c.key, on = c.on ? c.on() : false, off = c.off ? c.off() : false;
-        if (c.color) {
-          g.fillStyle = c.color; rr(c.x, c.y, c.w, c.h, 12); g.fill();
-          if (on || hov) { g.strokeStyle = on ? '#7fd6ff' : '#fff'; g.lineWidth = 4; rr(c.x + 2, c.y + 2, c.w - 4, c.h - 4, 12); g.stroke(); }
-          continue;
-        }
-        g.fillStyle = on ? '#1f5c55' : hov && !off ? 'rgba(127,214,255,.25)' : 'rgba(255,255,255,.07)'; rr(c.x, c.y, c.w, c.h, 12); g.fill();
-        if (on) { g.strokeStyle = '#7fd6ff'; g.lineWidth = 3; rr(c.x + 1.5, c.y + 1.5, c.w - 3, c.h - 3, 12); g.stroke(); }
-        const pre = c.check ? (on ? '☑ ' : '☐ ') : '';
-        g.fillStyle = off ? '#5d5b56' : on ? '#fff' : '#e8e5dd';
-        const center = c.tab != null || c.mode || c.key === 'close' || /^pg:/.test(c.key);
-        if (center) { g.textAlign = 'center'; g.fillText(fit(pre + c.label, c.w - 16, 24, 600), c.x + c.w / 2, c.y + c.h / 2 + 8); g.textAlign = 'left'; }
-        else if (c.sub) { g.fillText(fit(pre + c.label, c.w - 22, 22, 600), c.x + 12, c.y + 27); g.fillStyle = '#9a978f'; g.fillText(fit(c.sub, c.w - 22, 16, 400), c.x + 12, c.y + 50); }
-        else g.fillText(fit(pre + c.label, c.w - 22, 22, 600), c.x + 12, c.y + c.h / 2 + 8);
-      }
-      if (toastMsg && performance.now() < toastT) { g.fillStyle = 'rgba(31,92,85,.95)'; rr(W / 2 - 220, H / 2 - 40, 440, 80, 16); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(fit(toastMsg, 400, 26, 600), W / 2, H / 2 + 9); g.textAlign = 'left'; }
+      cells.filter(c => c.tab != null || c.mode || c.key === 'close' || /^sc:/.test(c.key)).forEach(c => drawCell(c, false));
+      if (toastMsg && performance.now() < toastT) { g.fillStyle = 'rgba(31,92,85,.95)'; rr(W / 2 - 300, H / 2 - 50, 600, 100, 20); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(fit(toastMsg, 560, 32, 600), W / 2, H / 2 + 11); g.textAlign = 'left'; }
+      g.fillStyle = '#8a877f'; g.font = '400 20px ' + FONT; g.textAlign = 'right';
+      g.fillText(S.input === 'hand' ? '검지로 누르기 · ▲▼로 넘기기' : '트리거로 선택 · 가리킨 채 오른쪽 스틱 위아래로 스크롤 · 그립으로 창 옮기기', W - 40, H - 16); g.textAlign = 'left';
       tex.needsUpdate = true; lastDraw = performance.now(); dirtyFlag = false;
     }
+    function drawCell(c) {
+      const hov = hover === c.key, on = c.on ? c.on() : false, off = c.off ? c.off() : false;
+      if (c.round || c.color) {   // 색 견본: 원
+        const r = Math.min(c.w, c.h) / 2; g.fillStyle = c.color || '#888'; g.beginPath(); g.arc(c.x + r, c.y + r, r - 4, 0, 7); g.fill();
+        if (on || hov) { g.strokeStyle = on ? '#7fd6ff' : '#fff'; g.lineWidth = 5; g.beginPath(); g.arc(c.x + r, c.y + r, r - 2, 0, 7); g.stroke(); }
+        return;
+      }
+      if (c.info) { g.fillStyle = '#9a978f'; g.font = '400 24px ' + FONT; g.fillText(c.label, c.x + 4, c.y + c.h / 2 + 8); return; }
+      if (c.slider) {     // 시각 막대: 눈금, 손잡이, 지금 값
+        const v = c.get(), f = (v - c.min) / (c.max - c.min), tx = c.x + 40, tw = c.w - 80, ty = c.y + 78;
+        g.fillStyle = 'rgba(255,255,255,.07)'; rr(c.x, c.y, c.w, c.h, 16); g.fill();
+        const grd = g.createLinearGradient(tx, 0, tx + tw, 0); grd.addColorStop(0, '#2b3a55'); grd.addColorStop(0.25, '#f0b56a'); grd.addColorStop(0.5, '#fff4d6'); grd.addColorStop(0.8, '#f08a5a'); grd.addColorStop(1, '#2b2f4a');
+        g.fillStyle = grd; rr(tx, ty - 8, tw, 16, 8); g.fill();
+        g.fillStyle = '#9a978f'; g.font = '400 20px ' + FONT; g.textAlign = 'center';
+        for (let h = Math.ceil(c.min); h <= c.max; h++) { const x = tx + tw * (h - c.min) / (c.max - c.min); g.fillRect(x - 1, ty + 12, 2, h % 3 ? 8 : 14); if (h % 3 === 0) g.fillText(h + '시', x, ty + 44); }
+        const kx = tx + tw * f; g.fillStyle = hov || on ? '#7fd6ff' : '#fff'; g.beginPath(); g.arc(kx, ty, 22, 0, 7); g.fill();
+        g.fillStyle = '#f2f0ea'; g.font = '700 30px ' + FONT; g.fillText(c.fmt(v), kx, c.y + 40); g.textAlign = 'left';
+        return;
+      }
+      g.fillStyle = on ? '#1f5c55' : hov && !off ? 'rgba(127,214,255,.25)' : 'rgba(255,255,255,.07)'; rr(c.x, c.y, c.w, c.h, 16); g.fill();
+      if (on) { g.strokeStyle = '#7fd6ff'; g.lineWidth = 3; rr(c.x + 1.5, c.y + 1.5, c.w - 3, c.h - 3, 16); g.stroke(); }
+      g.fillStyle = off ? '#5d5b56' : on ? '#fff' : '#e8e5dd';
+      if (c.thumb !== undefined) {   // 사진 카드
+        const ih = c.h - 62;
+        if (c.thumb && c.thumb.complete && c.thumb.naturalWidth) { g.save(); rr(c.x + 6, c.y + 6, c.w - 12, ih - 6, 12); g.clip(); const im = c.thumb, s0 = Math.max((c.w - 12) / im.naturalWidth, (ih - 6) / im.naturalHeight); g.drawImage(im, c.x + 6 + (c.w - 12 - im.naturalWidth * s0) / 2, c.y + 6 + (ih - 6 - im.naturalHeight * s0) / 2, im.naturalWidth * s0, im.naturalHeight * s0); g.restore(); }
+        else { g.fillStyle = 'rgba(255,255,255,.05)'; rr(c.x + 6, c.y + 6, c.w - 12, ih - 6, 12); g.fill(); g.fillStyle = off ? '#5d5b56' : '#e8e5dd'; }
+        g.fillStyle = off ? '#5d5b56' : on ? '#fff' : '#e8e5dd'; g.fillText(fit(c.label, c.w - 24, 26, 600), c.x + 12, c.y + c.h - 22); return;
+      }
+      if (c.check) {    // 켜고 끄는 항목: 오른쪽 스위치
+        const sx = c.x + c.w - 74, sy0 = c.y + c.h / 2 - 16; g.fillStyle = on ? '#3fa98f' : 'rgba(255,255,255,.18)'; rr(sx, sy0, 58, 32, 16); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(on ? sx + 42 : sx + 16, sy0 + 16, 12, 0, 7); g.fill();
+        g.fillStyle = off ? '#5d5b56' : '#e8e5dd'; g.fillText(fit(c.label, c.w - 100, 26, 600), c.x + 16, c.y + c.h / 2 + 9); return;
+      }
+      const center = c.tab != null || c.mode || c.seg || c.key === 'close' || /^sc:/.test(c.key);
+      if (center) { g.textAlign = 'center'; g.fillText(fit(c.label, c.w - 16, c.tab != null ? 30 : 28, 600), c.x + c.w / 2, c.y + c.h / 2 + 10); g.textAlign = 'left'; }
+      else if (c.sub) { g.fillText(fit(c.label, c.w - 26, 26, 600), c.x + 14, c.y + c.h / 2 - 4); g.fillStyle = '#9a978f'; g.fillText(fit(c.sub, c.w - 26, 19, 400), c.x + 14, c.y + c.h / 2 + 24); }
+      else g.fillText(fit(c.label, c.w - 26, 26, 600), c.x + 14, c.y + c.h / 2 + 9);
+    }
+    function scrollBy(d) { scroll[tab] = (scroll[tab] || 0) + d; dirtyFlag = true; }
+    // 트리거를 누른 채 끌기: 시각 막대는 값, 그 밖의 본문은 스크롤(20px 넘게 움직이면 누름 취소)
+    let pdrag = null;
+    function pressStart(c, hit) { if (!hit || hit.where !== 'menu' || !hit.uv) return; pdrag = { c, y0: hit.uv.y, s0: scroll[tab] || 0, moved: false, cell: hit.cell }; }
+    function pressMove(c, hit) {
+      if (!pdrag || pdrag.c !== c || !hit || hit.where !== 'menu' || !hit.uv) return;
+      const cell = pdrag.cell;
+      if (cell && cell.slider) { const tx = cell.x + 40, tw = cell.w - 80, f = Math.max(0, Math.min(1, (hit.uv.x * W - tx) / tw)); const v = Math.round((cell.min + f * (cell.max - cell.min)) / cell.step) * cell.step; if (v !== cell.get()) { cell.set(v); dirtyFlag = true; } pdrag.moved = true; return; }
+      const dy = (hit.uv.y - pdrag.y0) * H; if (Math.abs(dy) > 20) pdrag.moved = true;
+      if (pdrag.moved) { scroll[tab] = pdrag.s0 - dy; dirtyFlag = true; }
+    }
+    function pressEnd(c) { const d = pdrag; if (!d || d.c !== c) return false; pdrag = null; if (d.cell && d.cell.slider) { d.cell.commit(); click(); dirtyFlag = true; return true; } return d.moved; }
     /* ----- 빠른 막대: 층 표시 + 4 버튼 ----- */
     function drawQuick() {
       const q = qg, L = curLevel(); qcells = [];
@@ -1028,13 +1225,23 @@
     /* ----- 열기/닫기와 배치(입력 방식별 거리) ----- */
     function openMenu() {
       open = true; Help.hide();
-      const hand = S.input === 'hand', D = hand ? 0.45 : 1.0, s = D / 1.0;
+      const hand = S.input === 'hand', want = hand ? panelF : panelC;
+      if (panel !== want) { if (panel.parent) panel.parent.remove(panel); panel.visible = false; panel = want; }
       const h = xrCam.position.clone(), d = new T.Vector3(0, 0, -1).applyQuaternion(xrCam.quaternion); d.y = 0; if (d.lengthSq() < 1e-4) d.set(0, 0, -1); d.normalize();
-      if (!panel.parent) rig.add(panel);
-      panel.position.copy(h).addScaledVector(d, D); panel.position.y = h.y - (hand ? 0.22 : 0.12);
-      panel.quaternion.copy(new T.Quaternion().setFromAxisAngle(V(0, 1, 0), Math.atan2(h.x - panel.position.x, h.z - panel.position.z)));
-      panel.scale.setScalar(s); panel.visible = true;
+      if (panel.parent !== rig) rig.add(panel);
+      const yaw = Math.atan2(-d.x, -d.z);
+      if (hand) { panel.position.copy(h).addScaledVector(d, FLAT.d); panel.position.y = h.y - 0.22; panel.rotation.set(-0.25, yaw, 0, 'YXZ'); }
+      else { panel.position.set(h.x, h.y - 0.1, h.z); panel.rotation.set(0, yaw, 0); }   // 곡면의 중심이 머리
+      panel.scale.setScalar(1); panel.visible = true;
       draw(); click();
+    }
+    // 칸 중심의 월드 좌표(시험·안내용). 곡면이면 원통 위의 점
+    function cellPoint(c) {
+      const u = (c.x + c.w / 2) / W, v = (c.y + c.h / 2) / H;
+      let lp;
+      if (panel.userData.curve) { const C = panel.userData.curve, th = Math.PI - C.a / 2 + (1 - u) * C.a; lp = V(C.r * Math.sin(th), (0.5 - v) * C.h, C.r * Math.cos(th)); }
+      else { const P = panel.geometry.parameters; lp = V((u - 0.5) * P.width, (0.5 - v) * P.height, 0); }
+      panel.updateMatrixWorld(true); return panel.localToWorld(lp);
     }
     function closeMenu() { open = false; panel.visible = false; hover = ''; dragC = null; }
     let dragC = null;
@@ -1042,12 +1249,13 @@
     function dragEnd() { if (!dragC) return; rig.attach(panel); const q = panel.quaternion, e = new T.Euler().setFromQuaternion(q, 'YXZ'); panel.rotation.set(0, e.y, 0); dragC = null; }
     function toggleMenu() { open ? closeMenu() : openMenu(); }
     /* ----- 히트 판정 ----- */
-    function cellAt(list, uv, w, h) { const x = uv.x * w, y = (1 - uv.y) * h; return list.find(c => x >= c.x && x <= c.x + c.w && y >= c.y && y <= c.y + c.h) || null; }
+    function cellAt(list, uv, w, h) { const x = uv.x * w, y = (1 - uv.y) * h; return list.find(c => x >= c.x && x <= c.x + c.w && y >= (c.hy0 != null ? c.hy0 : c.y) && y <= (c.hy1 != null ? c.hy1 : c.y + c.h)) || null; }
     function raycast(ray) {
       let best = null;
-      if (open && panel.visible) { const h = ray.intersectObject(panel, false)[0]; if (h) { const c = cellAt(cells, h.uv, W, H); best = { key: c ? c.key : 'panel', cell: c, distance: h.distance, where: 'menu' }; } }
+      if (open && panel.visible) { const h = ray.intersectObject(panel, false)[0]; if (h) { const c = cellAt(cells, h.uv, W, H); best = { key: c ? c.key : 'panel', cell: c, distance: h.distance, where: 'menu', uv: { x: h.uv.x, y: 1 - h.uv.y } }; } }
       if (!best && quick.visible) { const h = ray.intersectObject(quick, false)[0]; if (h) { const c = cellAt(qcells, h.uv, 512, 320); best = { key: c ? c.key : 'quick', cell: c, distance: h.distance, where: 'quick' }; } }
       if (!best) best = Photo.raycast(ray);
+      if (!best) best = Hot.raycast(ray);
       return best;
     }
     function activate(hit) {
@@ -1066,7 +1274,7 @@
         const tip = H0.joints['index-finger-tip']; if (!tip || !tip.visible) continue;
         const wp = tip.getWorldPosition(V(0, 0, 0));
         for (const [mesh, list, w, h] of [[panel, cells, W, H], [quick, qcells, 512, 320]]) {
-          if (!mesh.visible || (mesh === panel && !open)) continue;
+          if (!mesh.visible || (mesh === panel && !open) || !mesh.geometry.parameters.width) continue;
           const lp = mesh.worldToLocal(wp.clone()); const sx = mesh.geometry.parameters.width, sy = mesh.geometry.parameters.height;
           if (Math.abs(lp.x) > sx / 2 || Math.abs(lp.y) > sy / 2) continue;
           const depth = lp.z * mesh.getWorldScale(V()).z;
@@ -1131,9 +1339,9 @@
       if (dirtyFlag && !open) drawQuick();
     }
     function onSessionStart() { detectInput(); drawQuick(); Help.maybe(); }
-    function onSessionEnd() { Photo.close(); if (Labels.g) Labels.g.visible = false; closeMenu(); quick.visible = false; if (panel.parent) panel.parent.remove(panel); Help.hide(); }
+    function onSessionEnd() { Photo.close(); if (Labels.g) Labels.g.visible = false; closeMenu(); quick.visible = false; [panelC, panelF].forEach(m => { if (m.parent) m.parent.remove(m); }); Help.hide(); }
     return { init, raycast, activate, update, toggleMenu, dragStart, dragEnd, dragging: () => dragC, openMenu, closeMenu, menuOpen: () => open, cycle, toast, detectInput, onSessionStart, onSessionEnd,
-      dirty: () => { dirtyFlag = true; }, dirtySoon: () => { soon = performance.now() + 150; }, cells: () => cells, qcells: () => qcells, setTab: i => { tab = i; page = 0; dirtyFlag = true; }, tabs: () => tabs().map(t => t.t + ':' + t.sec.reduce((n, s) => n + s.items.length, 0)) };
+      dirty: () => { dirtyFlag = true; }, dirtySoon: () => { soon = performance.now() + 150; }, cells: () => cells, qcells: () => qcells, setTab: i => { tab = i; dirtyFlag = true; }, cellPoint, pressStart, pressMove, pressEnd, scrollBy, scrollOf: () => scroll[tab] || 0, contentH: () => contentH, panel: () => panel, tabs: () => tabs().map(t => t.t + ':' + t.sec.reduce((n, s) => n + s.items.length, 0)) };
   })();
 
   /* ================= 12-1. 모형 층 라벨 ================= */
@@ -1142,7 +1350,8 @@
     update() {
       const want = S.mode === 'fig' && K.full && K.LEVELS;
       if (!want) { if (this.g) this.g.visible = false; return; }
-      const sig = K.LEVELS.map(l => l.key + ':' + floorY(l).toFixed(2)).join('|') + S.center.x.toFixed(1);
+      const ug = !!(document.getElementById('t-b1') || {}).checked;
+      const sig = K.LEVELS.map(l => l.key + ':' + floorY(l).toFixed(2)).join('|') + S.center.x.toFixed(1) + ug;
       if (sig !== this.sig) this.build(sig);
       this.g.visible = true;
       // 글자가 늘 사용자 쪽을 보게(모형이 돌아도)
@@ -1150,18 +1359,94 @@
       this.g.children.forEach(m => { m.lookAt(head.x, m.getWorldPosition(V(0, 0, 0)).y, head.z); });
     },
     build(sig) {
-      if (this.g) { this.g.children.forEach(m => { m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); }); scene.remove(this.g); }
+      if (this.g) { this.g.children.forEach(m => { m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); }); if (this.g.parent) this.g.parent.remove(this.g); }
       const g = this.g = new T.Group(); g.userData.khxr = true; this.sig = sig;
       const ox = S.center.x + 16, oz = S.center.z + 16;   // 건물 모서리 바깥쪽 기둥처럼
+      const ug = !!(document.getElementById('t-b1') || {}).checked;
       K.LEVELS.forEach(L => {
+        if (floorY(L) < -0.5 && !ug) return;    // 땅 아래 층 라벨은 받침 밑에 떠 보여 헷갈리므로 지하 보기일 때만
         const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64; const c = cv.getContext('2d');
         c.fillStyle = 'rgba(14,18,20,.85)'; c.fillRect(0, 0, 256, 64); c.fillStyle = '#fff'; c.font = '700 30px ' + FONT; c.fillText(L.name || L.key, 12, 42);
         c.fillStyle = '#7fd6ff'; c.font = '400 22px ' + FONT; if (L.area) c.fillText(Math.round(L.area / 3.3058) + '평', 120, 42);
         const m = new T.Mesh(new T.PlaneGeometry(8, 2), new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), transparent: true, depthTest: false }));
         m.renderOrder = 998; m.position.set(ox, floorY(L) + 1.6, oz); g.add(m);
       });
-      scene.add(g);
+      uiScene.add(g);   // 자르기 경계에 걸려 잘리지 않게 자르기 없는 패스에서 그림
     }
+  };
+
+  /* ================= 11-2. 바로가기 지점(출입구 앞) ================= */
+  // 건물 밖 몰입에서 원본 라벨 중 출입구(Ent·출입·램프)를 골라, 그 앞 바닥에 빛기둥 표시. 레이로 가리키고 트리거를 누르면 문을 보고 그 자리로
+  const Hot = X.hot = {
+    g: null, list: [], sig: '', hover: -1,
+    want() { return S.mode === 'vr' && K.full && !(K.I && K.I.on) && !!K.labels; },
+    pick() {
+      const c = S.center || buildingCenter();
+      return (K.labels || []).filter(l => l.fl && l.v && l.v.y < 1.5 && /Ent|출입|램프|계단/.test(l.el ? l.el.textContent : '')).map(l => {
+        const t = (l.el.innerHTML || '').replace(/<\/b>/g, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(), d = V(l.v.x - c.x, 0, l.v.z - c.z); if (d.lengthSq() < 1e-4) d.set(-1, 0, 0); d.normalize();
+        return { name: t, door: V(l.v.x, 0, l.v.z), at: V(l.v.x, 0, l.v.z).addScaledVector(d, 1.8) };
+      });
+    },
+    // 그리기 호출을 아끼려고 모든 지점의 고리·빛기둥을 한 메시(꼭짓점 색), 이름표를 한 메시(한 장의 텍스처)로 그린다
+    build() {
+      if (this.g) { this.g.traverse(o => { if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } if (o.geometry) o.geometry.dispose(); }); scene.remove(this.g); }
+      const g = this.g = new T.Group(); g.userData.khxr = true; g.name = 'khxr-hot';
+      this.list = this.pick(); const n = this.list.length; if (!n) { scene.add(g); return; }
+      const parts = [], hits = [];
+      this.list.forEach((h, i) => {
+        const d = firstSolid(V(h.at.x, 3, h.at.z), V(0, -1, 0), 6); if (d) h.at.y = d.point.y;
+        const ring = new T.RingGeometry(0.32, 0.45, 32).rotateX(-Math.PI / 2).translate(h.at.x, h.at.y + 0.03, h.at.z);
+        const beam = new T.CylinderGeometry(0.06, 0.06, 2.2, 10, 1, true).translate(h.at.x, h.at.y + 1.1, h.at.z);
+        [ring, beam].forEach(q => { const g2 = q.index ? q.toNonIndexed() : q; g2.userData = { i }; parts.push(g2); });
+        const hit = new T.Mesh(new T.CylinderGeometry(0.7, 0.7, 2.9, 10).translate(0, 1.45, 0), new T.MeshBasicMaterial({ visible: false }));
+        hit.position.copy(h.at); hit.userData.i = i; hits.push(hit);
+      });
+      let total = 0; parts.forEach(q => { total += q.attributes.position.count; });
+      const pos = new Float32Array(total * 3), col = new Float32Array(total * 3), owner = new Uint8Array(total); let o = 0;
+      parts.forEach(q => { const a = q.attributes.position.array; pos.set(a, o * 3); owner.fill(q.userData.i, o, o + q.attributes.position.count); o += q.attributes.position.count; q.dispose(); });
+      const mg = new T.BufferGeometry(); mg.setAttribute('position', new T.BufferAttribute(pos, 3)); mg.setAttribute('color', new T.BufferAttribute(col, 3));
+      const marks = new T.Mesh(mg, new T.MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7, depthWrite: false, side: T.DoubleSide }));
+      marks.frustumCulled = false; this.owner = owner; this.marks = marks;
+      // 이름표: 512×112 칸을 세로로 쌓은 한 장
+      const cv = document.createElement('canvas'); cv.width = 512; cv.height = 112 * n; const q = cv.getContext('2d');
+      this.list.forEach((h, i) => { q.fillStyle = 'rgba(14,18,20,.88)'; q.beginPath(); q.roundRect ? q.roundRect(0, i * 112, 512, 112, 28) : q.rect(0, i * 112, 512, 112); q.fill(); q.fillStyle = '#fff'; q.font = '700 40px ' + FONT; q.textAlign = 'center'; q.fillText(h.name.slice(0, 16), 256, i * 112 + 70); });
+      const tg = new T.BufferGeometry(), tp = new Float32Array(n * 6 * 3), tu = new Float32Array(n * 6 * 2);
+      this.list.forEach((h, i) => { const v0 = 1 - (i + 1) / n, v1 = 1 - i / n; tu.set([0, v0, 1, v0, 1, v1, 0, v0, 1, v1, 0, v1], i * 12); });
+      tg.setAttribute('position', new T.BufferAttribute(tp, 3)); tg.setAttribute('uv', new T.BufferAttribute(tu, 2));
+      const tags = new T.Mesh(tg, new T.MeshBasicMaterial({ map: new T.CanvasTexture(cv), transparent: true, depthWrite: false, side: T.DoubleSide }));
+      tags.frustumCulled = false; this.tags = tags;
+      g.add(marks, tags, ...hits); this.hits = hits; this.colorSig = '';
+      scene.add(g);
+    },
+    update() {
+      const on = this.want();
+      if (!on) { if (this.g) this.g.visible = false; return; }
+      const sig = (K.labels || []).length + ':' + (S.center ? S.center.x.toFixed(1) : '');
+      if (sig !== this.sig || !this.g) { this.sig = sig; this.build(); }
+      this.g.visible = true; if (!this.list.length) return;
+      const head = xrCam.getWorldPosition(V(0, 0, 0)), hk = ctrls.map(c => c.userData.uiHit).find(h => h && h.where === 'hot'), hi = hk ? hk.cell.i : -1;
+      if (this.colorSig !== hi) {    // 가리킨 지점만 흰색
+        this.colorSig = hi; const c = this.marks.geometry.attributes.color;
+        for (let k = 0; k < this.owner.length; k++) { const w = this.owner[k] === hi; c.setXYZ(k, w ? 1 : 0.5, w ? 1 : 0.84, w ? 1 : 1); }
+        c.needsUpdate = true;
+      }
+      // 이름표는 사용자 쪽을 보고, 멀수록 크게
+      const tp = this.tags.geometry.attributes.position;
+      this.list.forEach((h, i) => {
+        const far = Math.max(1, head.distanceTo(h.at) / 12), w = 0.8 * far, ht = 0.175 * far, cy = h.at.y + 2.2 + ht;
+        const dx = head.x - h.at.x, dz = head.z - h.at.z, L = Math.hypot(dx, dz) || 1, rx = -dz / L * w, rz = dx / L * w;
+        const A = [h.at.x - rx, cy - ht, h.at.z - rz], B = [h.at.x + rx, cy - ht, h.at.z + rz], C = [h.at.x + rx, cy + ht, h.at.z + rz], D = [h.at.x - rx, cy + ht, h.at.z - rz];
+        tp.array.set([...A, ...B, ...C, ...A, ...C, ...D], i * 18);
+      });
+      tp.needsUpdate = true;
+    },
+    raycast(ray) {
+      if (!this.g || !this.g.visible || !this.hits || !this.hits.length) return null;
+      const hs = ray.intersectObjects(this.hits, false); if (!hs.length) return null;
+      const i = hs[0].object.userData.i;
+      return { key: 'hot:' + i, where: 'hot', distance: hs[0].distance, cell: { key: 'hot:' + i, i, act: () => Hot.go(i) } };
+    },
+    go(i) { const h = this.list[i]; if (!h) return; fade(() => { placeUser(h.at, yawOf(h.at, h.door)); afterChange(); UI.toast(h.name); }, 0.5); }
   };
 
   /* ================= 12-2. 실사 사진 액자 ================= */
