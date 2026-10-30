@@ -7827,16 +7827,18 @@ let last=performance.now();
 <script>
 // ---------- VR 보기 (WebXR) — 2026.10.30 추가. 3d-model.html 본체는 그대로 두고 이 블록 + KHXR 연결 한 줄만 더함 ----------
 // 조작(Quest 기준): 트리거 누른 채 바닥 가리키기 → 놓으면 순간이동 · A/X = 위층 · B/Y = 아래층 · 그립 = 건물 밖으로
-//                   왼손 스틱 = 천천히 걷기 · 오른손 스틱 좌우 = 30° 회전
+//                   왼손 스틱 = 천천히 걷기 · 오른손 스틱 좌우 = 30° 회전 · 스틱 누르기 = 디자인 메뉴 열기/닫기
+// 디자인 메뉴: 오른쪽 패널의 라디오·체크박스를 그대로 읽어 VR 안에 띄우고, 고르면 패널의 그 버튼을 눌러 줌(기존 로직 재사용)
 (function(){
-const VR_VER='1030.1432';
+const VR_VER='1030.1553';
 function boot(){const K=window.KHXR;if(!K||!window.THREE)return setTimeout(boot,300);
   const {renderer,scene,camera,controls}=K,V3=THREE.Vector3;
   renderer.xr.enabled=true;renderer.xr.setReferenceSpaceType('local-floor');
+  const FONT='"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
 
   // ---- 버튼 ----
   const st=document.createElement('style');
-  st.textContent='#vrBtn{position:fixed;left:14px;bottom:44px;z-index:9999;display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.08);background:#1f5c55;color:#fff;font:600 13px "IBM Plex Sans KR",-apple-system,"Malgun Gothic",sans-serif;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 3px 10px rgba(0,0,0,.18)}#vrBtn:hover:not(:disabled){background:#17483f}#vrBtn:disabled{background:#6b7472;opacity:.75;cursor:default}#vrBtn svg{width:18px;height:18px}#vrBtn small{font:400 10px "IBM Plex Mono",monospace;opacity:.6}@media (max-width:760px){#vrBtn{bottom:auto;top:auto;bottom:calc(14px + env(safe-area-inset-bottom));left:auto;right:14px}}';
+  st.textContent='#vrBtn{position:fixed;left:14px;bottom:44px;z-index:9999;display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.08);background:#1f5c55;color:#fff;font:600 13px "IBM Plex Sans KR",-apple-system,"Malgun Gothic",sans-serif;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 3px 10px rgba(0,0,0,.18)}#vrBtn:hover:not(:disabled){background:#17483f}#vrBtn:disabled{background:#6b7472;opacity:.75;cursor:default}#vrBtn svg{width:18px;height:18px}#vrBtn small{font:400 10px "IBM Plex Mono",monospace;opacity:.6}@media (max-width:760px){#vrBtn{bottom:calc(14px + env(safe-area-inset-bottom));left:auto;right:14px}}';
   document.head.appendChild(st);
   const btn=document.createElement('button');btn.id='vrBtn';btn.type='button';btn.disabled=true;
   const ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="7" width="19" height="11" rx="3"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg>';
@@ -7853,46 +7855,110 @@ function boot(){const K=window.KHXR;if(!K||!window.THREE)return setTimeout(boot,
   const tmpM=new THREE.Matrix4(),head=new V3();
   const markM=new THREE.MeshBasicMaterial({color:0x7fd6ff,transparent:true,opacity:.9,depthTest:false,side:THREE.DoubleSide});
   const marker=new THREE.Mesh(new THREE.RingGeometry(0.22,0.3,40).rotateX(-Math.PI/2),markM);marker.renderOrder=999;marker.visible=false;
-  const ctrls=[0,1].map(i=>{const c=renderer.xr.getController(i);
-    const g=new THREE.BufferGeometry().setFromPoints([new V3(0,0,0),new V3(0,0,-1)]);
-    const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0x7fd6ff,transparent:true,opacity:.7}));line.scale.z=4;line.visible=false;c.add(line);
-    c.userData={line,aim:false,hit:null,hand:i===0?'left':'right'};
-    c.addEventListener('connected',e=>{c.userData.hand=e.data.handedness;if(e.data.handedness==='left')c.add(hud);line.visible=true});
-    c.addEventListener('disconnected',()=>{line.visible=false});
-    c.addEventListener('selectstart',()=>{c.userData.aim=true});
-    c.addEventListener('selectend',()=>{c.userData.aim=false;if(c.userData.hit)teleport(c.userData.hit);c.userData.hit=null;marker.visible=false;line.scale.z=4});
-    return c});
 
   // ---- 왼손 안내 패널 ----
   const cv=document.createElement('canvas');cv.width=512;cv.height=200;const cx=cv.getContext('2d');
   const tex=new THREE.CanvasTexture(cv);
   const hud=new THREE.Mesh(new THREE.PlaneGeometry(0.2,0.078),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthTest:false}));
   hud.position.set(0,0.07,-0.06);hud.rotation.x=-0.7;hud.renderOrder=1000;
+  const rr=(g,x,y,w,h,r)=>{g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,r);else g.rect(x,y,w,h)};
   function hudDraw(){const I=K.I,L=I.on?K.LEVELS[I.li]:null;
-    cx.clearRect(0,0,512,200);cx.fillStyle='rgba(16,18,22,.88)';cx.beginPath();cx.roundRect?cx.roundRect(4,4,504,192,22):cx.rect(4,4,504,192);cx.fill();
-    cx.fillStyle='#7fd6ff';cx.font='600 26px "IBM Plex Sans KR",sans-serif';cx.fillText('케이프혼타워',28,46);
-    cx.fillStyle='#f2f0ea';cx.font='700 58px "IBM Plex Sans KR",sans-serif';cx.fillText(L?L.name:'외부',28,112);
-    if(L&&L.use){cx.font='400 24px "IBM Plex Sans KR",sans-serif';cx.fillStyle='#b9b6ae';cx.fillText(String(L.use).slice(0,18),200,108)}
-    cx.font='400 20px "IBM Plex Sans KR",sans-serif';cx.fillStyle='#9a978f';
-    cx.fillText('트리거 이동 · A/X 위층 · B/Y 아래층',28,150);cx.fillText('그립 건물 밖 · 오른스틱 회전',28,178);tex.needsUpdate=true}
+    cx.clearRect(0,0,512,200);cx.fillStyle='rgba(16,18,22,.88)';rr(cx,4,4,504,192,22);cx.fill();
+    cx.fillStyle='#7fd6ff';cx.font='600 26px '+FONT;cx.fillText('케이프혼타워',28,46);
+    cx.fillStyle='#f2f0ea';cx.font='700 58px '+FONT;cx.fillText(L?L.name:'외부',28,112);
+    if(L&&L.use){cx.font='400 24px '+FONT;cx.fillStyle='#b9b6ae';cx.fillText(String(L.use).slice(0,18),200,108)}
+    cx.font='400 20px '+FONT;cx.fillStyle='#9a978f';
+    cx.fillText('트리거 이동 · A/X 위층 · B/Y 아래층 · 그립 밖',28,150);cx.fillText('스틱 누르기 = 디자인 메뉴 · 오른스틱 회전',28,178);tex.needsUpdate=true}
+
+  // ---- 디자인 메뉴 (VR 안에 떠 있는 판) ----
+  const MW=1024,MH=768;
+  const mcv=document.createElement('canvas');mcv.width=MW;mcv.height=MH;const mg=mcv.getContext('2d');
+  const mtex=new THREE.CanvasTexture(mcv);
+  const menu=new THREE.Mesh(new THREE.PlaneGeometry(0.96,0.72),new THREE.MeshBasicMaterial({map:mtex,transparent:true,depthTest:false,side:THREE.DoubleSide}));
+  menu.renderOrder=1001;menu.visible=false;
+  const TABS=[
+    {t:'추천 시안',g:[{name:'dsg',mode:'preset'}]},
+    {t:'마감재',g:[{name:'cfin',mode:'combo'}]},
+    {t:'입면 형태',g:[{name:'form',mode:'combo'}]},
+    {t:'평면 · 주차',g:[{h:'현황 / 신축',name:'era'},{h:'주차 방식',name:'sch'},{h:'1층 안',name:'g1'},{h:'최상층',ids:['t-use7']}]},
+    {t:'창 · 주변',g:[{h:'창 크기',name:'win'},{h:'주변 표시',ids:['t-city','t-ctx']}]}];
+  const M={tab:0,cells:[],hoverKey:''};
+  const isOff=(inp,mode)=>inp.disabled||!!(mode?inp.closest('.sec[hidden]'):inp.closest('[hidden]'));   // 시안/조합 항목은 방식 전환 전엔 숨겨져 있어도 고를 수 있음
+  const txtOf=inp=>{const lb=inp.closest('label');if(!lb)return{t:inp.id,s:''};const sm=lb.querySelector('small');
+    let t='';lb.childNodes.forEach(n=>{if(n.nodeType===3)t+=n.textContent;else if(n.nodeType===1&&n!==sm&&n.tagName!=='INPUT')t+=n.textContent});return{t:t.replace(/\s+/g,' ').trim(),s:sm?sm.textContent.trim():''}};
+  function fit(g,t,w,size,weight){let s=size;g.font=weight+' '+s+'px '+FONT;while(s>15&&g.measureText(t).width>w){s--;g.font=weight+' '+s+'px '+FONT}
+    if(g.measureText(t).width>w){while(t.length>1&&g.measureText(t+'…').width>w)t=t.slice(0,-1);t+='…'}return t}
+  function after(){[80,500].forEach(ms=>setTimeout(()=>{if(!rig)return;collect();menuDraw();hudDraw()},ms))}
+  function pick(o){if(isOff(o.inp,o.mode))return;
+    if(o.mode){const em=document.getElementById(o.mode==='preset'?'em-preset':'em-combo');if(em&&!em.checked)em.click()}
+    if(o.inp.type==='radio'&&o.inp.checked)return after();
+    o.inp.click();after()}
+  function menuDraw(){const g=mg,cells=[];g.clearRect(0,0,MW,MH);
+    g.fillStyle='rgba(14,16,20,.94)';rr(g,0,0,MW,MH,28);g.fill();g.strokeStyle='rgba(127,214,255,.35)';g.lineWidth=2;rr(g,1,1,MW-2,MH-2,28);g.stroke();
+    // 탭
+    const tw=(MW-48-12*5-70)/TABS.length;
+    TABS.forEach((T,i)=>{const x=24+i*(tw+12);cells.push({x,y:20,w:tw,h:64,key:'tab'+i,act:()=>{M.tab=i;menuDraw()},tab:i,label:T.t})});
+    cells.push({x:MW-24-70,y:20,w:70,h:64,key:'close',act:()=>closeMenu(),label:'✕'});
+    // 항목
+    const T=TABS[M.tab];let y=104;const COL=4,gap=10,cw=(MW-48-gap*(COL-1))/COL,ch=66;const heads=[];
+    T.g.forEach(G=>{if(G.h){heads.push({t:G.h,y});y+=40}
+      const ins=G.name?[...document.querySelectorAll('input[name="'+G.name+'"]')]:(G.ids||[]).map(id=>document.getElementById(id)).filter(Boolean);
+      ins.forEach((inp,k)=>{const c=k%COL,x=24+c*(cw+gap);if(k&&c===0)y+=ch+gap;cells.push({x,y,w:cw,h:ch,key:inp.id||G.name+k,inp,mode:G.mode,act:null})});
+      if(ins.length)y+=ch+gap+6});
+    cells.forEach(c=>{if(c.inp)c.act=()=>pick(c)});
+    // 그리기
+    heads.forEach(h=>{g.fillStyle='#7fd6ff';g.font='600 22px '+FONT;g.fillText(h.t,28,h.y+28)});
+    const emode=(document.querySelector('input[name=emode]:checked')||{}).value;
+    cells.forEach(c=>{const hov=M.hoverKey.split('|').includes(c.key);
+      if(c.tab!=null||c.key==='close'){const on=c.tab===M.tab;g.fillStyle=on?'#1f5c55':hov?'rgba(255,255,255,.14)':'rgba(255,255,255,.06)';rr(g,c.x,c.y,c.w,c.h,14);g.fill();
+        g.fillStyle=on?'#fff':'#c9c6be';const t=fit(g,c.label,c.w-16,26,600);g.textAlign='center';g.fillText(t,c.x+c.w/2,c.y+42);g.textAlign='left';return}
+      const off=isOff(c.inp,c.mode),on=c.inp.checked&&(!c.mode||c.mode===emode);
+      g.fillStyle=on?'#1f5c55':hov&&!off?'rgba(127,214,255,.22)':'rgba(255,255,255,.07)';rr(g,c.x,c.y,c.w,c.h,12);g.fill();
+      if(on){g.strokeStyle='#7fd6ff';g.lineWidth=3;rr(g,c.x+1.5,c.y+1.5,c.w-3,c.h-3,12);g.stroke()}
+      const {t,s}=txtOf(c.inp),pre=c.inp.type==='checkbox'?(c.inp.checked?'☑ ':'☐ '):'';
+      g.fillStyle=off?'#5d5b56':on?'#fff':'#e8e5dd';
+      if(s){g.fillText(fit(g,pre+t,c.w-24,24,600),c.x+12,c.y+30);g.fillStyle=off?'#4d4b47':'#9a978f';g.fillText(fit(g,s,c.w-24,17,400),c.x+12,c.y+54)}
+      else g.fillText(fit(g,pre+t,c.w-24,24,600),c.x+12,c.y+42)});
+    g.fillStyle='#8a877f';g.font='400 18px '+FONT;
+    g.fillText(M.tab===0?'추천 시안을 고르면 "추천 시안" 방식으로 바뀝니다':(M.tab<3?'마감재·입면을 고르면 "직접 조합" 방식으로 바뀝니다':'트리거로 선택 · 스틱 누르기로 닫기'),28,MH-22);
+    M.cells=cells;mtex.needsUpdate=true}
+  const cellAt=uv=>{const x=uv.x*MW,y=(1-uv.y)*MH;return M.cells.find(c=>x>=c.x&&x<=c.x+c.w&&y>=c.y&&y<=c.y+c.h)||null};
+  function openMenu(){head.setFromMatrixPosition(camera.matrixWorld);const d=new V3();camera.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-4)d.set(0,0,-1);d.normalize();
+    if(menu.parent)menu.parent.remove(menu);scene.add(menu);menu.position.copy(head).addScaledVector(d,1.0);menu.position.y=head.y-0.12;
+    menu.lookAt(head.x,menu.position.y,head.z);rig.attach(menu);menu.visible=true;menuDraw()}
+  function closeMenu(){menu.visible=false;M.hoverKey=''}
+  const toggleMenu=()=>menu.visible?closeMenu():openMenu();
+
+  const ctrls=[0,1].map(i=>{const c=renderer.xr.getController(i);
+    const g=new THREE.BufferGeometry().setFromPoints([new V3(0,0,0),new V3(0,0,-1)]);
+    const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0x7fd6ff,transparent:true,opacity:.7}));line.scale.z=4;line.visible=false;c.add(line);
+    c.userData={line,aim:false,hit:null,mh:null,on:false,hand:i===0?'left':'right'};
+    c.addEventListener('connected',e=>{c.userData.hand=e.data.handedness;c.userData.on=true;if(e.data.handedness==='left')c.add(hud);line.visible=true});
+    c.addEventListener('disconnected',()=>{line.visible=false;c.userData.on=false});
+    c.addEventListener('selectstart',()=>{c.userData.aim=true});
+    c.addEventListener('selectend',()=>{const u=c.userData;u.aim=false;
+      if(u.mh){if(u.mh.act)u.mh.act()}else if(u.hit)teleport(u.hit);
+      u.hit=null;marker.visible=false});
+    return c});
 
   // ---- 배치 ----
   function placeAt(x,y,z,look){rig.position.set(x,y,z);rig.rotation.set(0,Math.atan2(-(look.x-x),-(look.z-z)),0)}
   function outside(T,C){let dx=C.x-T.x,dz=C.z-T.z,d=Math.hypot(dx,dz);if(d<1){dx=-1;dz=0;d=1}placeAt(T.x+dx/d*32,0,T.z+dz/d*32,T)}
-  function collect(){CAND=[];scene.traverse(o=>{if(o.isMesh)CAND.push(o)});const own=new Set();rig.traverse(o=>own.add(o));CAND=CAND.filter(o=>!own.has(o)&&o!==marker)}
+  function collect(){CAND=[];scene.traverse(o=>{if(o.isMesh)CAND.push(o)});const own=new Set();rig.traverse(o=>own.add(o));CAND=CAND.filter(o=>!own.has(o)&&o!==marker&&o!==menu)}
   function fromDesktopView(){// placeLevel / exitInt 가 정해 준 데스크톱 시점을 읽어 그 자리로 옮김
     const A=K.anim;let p,t;if(A){p=A.p1.clone();t=A.t1.clone();K.anim=null}else{p=camera.position.clone();t=controls.target.clone()}return {p,t}}
   function sortedLevels(){return K.LEVELS.map((L,i)=>({i,y:K.floorTop(L)})).sort((a,b)=>a.y-b.y)}
   function goLevel(li){if(!K.I.on)K.enterInt();if(K.I.doll)K.setDoll(false);K.placeLevel(li,true);
-    const {p,t}=fromDesktopView(),L=K.LEVELS[li];placeAt(p.x,K.floorTop(L),p.z,t);camera.position.set(0,0,0);collect();hudDraw()}
+    const {p,t}=fromDesktopView(),L=K.LEVELS[li];placeAt(p.x,K.floorTop(L),p.z,t);camera.position.set(0,0,0);collect();hudDraw();if(menu.visible)openMenu()}
   function stepFloor(dir){const S=sortedLevels();
     if(!K.I.on){const g=S.findIndex(s=>K.LEVELS[s.i].key==='1F');goLevel(S[g>=0?g:0].i);return}
     const k=S.findIndex(s=>s.i===K.I.li),n=k+dir;if(n>=0&&n<S.length)goLevel(S[n].i)}
   function goOutside(){if(K.I.on)K.exitInt();const {p,t}=fromDesktopView();
-    const C=(saved&&!saved.on)?saved.p:(Math.hypot(p.x-t.x,p.z-t.z)>5?p:new V3(t.x-1,0,t.z));outside(t,C);camera.position.set(0,0,0);collect();hudDraw()}
+    const C=(saved&&!saved.on)?saved.p:(Math.hypot(p.x-t.x,p.z-t.z)>5?p:new V3(t.x-1,0,t.z));outside(t,C);camera.position.set(0,0,0);collect();hudDraw();if(menu.visible)openMenu()}
   function teleport(pt){head.setFromMatrixPosition(camera.matrixWorld);rig.position.set(pt.x-(head.x-rig.position.x),pt.y,pt.z-(head.z-rig.position.z))}
   function snapTurn(a){head.setFromMatrixPosition(camera.matrixWorld);rig.position.sub(head).applyAxisAngle(new V3(0,1,0),a).add(head);rig.rotation.y+=a}
   const visChain=o=>{for(;o;o=o.parent)if(!o.visible)return false;return true};
+  window.KHVR={openMenu:()=>rig&&openMenu(),closeMenu,cells:()=>M.cells,setTab:i=>{M.tab=i;menuDraw()},get menuOpen(){return menu.visible}};
 
   // ---- 시작 / 종료 ----
   btn.onclick=async()=>{if(session){session.end();return}
@@ -7910,9 +7976,9 @@ function boot(){const K=window.KHXR;if(!K||!window.THREE)return setTimeout(boot,
     rig.add(camera);camera.position.set(0,0,0);camera.quaternion.identity();
     if(!hud.parent)ctrls[0].add(hud);
     collect();hudDraw();label('VR 종료');renderer.setAnimationLoop(frame)}
-  function onEnd(){renderer.setAnimationLoop(null);session=null;
+  function onEnd(){renderer.setAnimationLoop(null);session=null;closeMenu();if(menu.parent)menu.parent.remove(menu);
     if(rig){rig.remove(camera);scene.remove(rig);scene.remove(marker);rig=null}
-    renderer.shadowMap.autoUpdate=saved.sh;camera.fov=saved.fov;camera.near=K.I.on?0.1:saved.near;camera.up.set(0,1,0);
+    renderer.shadowMap.autoUpdate=saved.sh;renderer.shadowMap.needsUpdate=true;camera.fov=saved.fov;camera.near=K.I.on?0.1:saved.near;camera.up.set(0,1,0);
     if(K.I.on)K.placeLevel(K.I.li,true);
     else if(saved.on)K.go('corner',true);
     else{camera.position.copy(saved.p);camera.quaternion.copy(saved.q);controls.target.copy(saved.t)}
@@ -7923,18 +7989,24 @@ function boot(){const K=window.KHXR;if(!K||!window.THREE)return setTimeout(boot,
   function frame(now){const dt=Math.min(0.1,(now-(last||now))/1000);last=now;
     if(session)for(const src of session.inputSources){const gp=src.gamepad;if(!gp)continue;
       const was=prev.get(src)||[],b=gp.buttons.map(x=>x&&x.pressed),edge=k=>b[k]&&!was[k];
-      if(edge(4))stepFloor(+1);if(edge(5))stepFloor(-1);if(edge(1))goOutside();
+      if(edge(4))stepFloor(+1);if(edge(5))stepFloor(-1);if(edge(1))goOutside();if(edge(3))toggleMenu();
       const ax=gp.axes.length>=4?gp.axes[2]:gp.axes[0]||0,ay=gp.axes.length>=4?gp.axes[3]:gp.axes[1]||0;
       if(src.handedness==='right'){if(turnArmed&&Math.abs(ax)>0.7){snapTurn(ax>0?-Math.PI/6:Math.PI/6);turnArmed=false}else if(Math.abs(ax)<0.3)turnArmed=true}
       else if(Math.hypot(ax,ay)>0.15){const d=new V3();camera.getWorldDirection(d);d.y=0;d.normalize();const r=new V3(-d.z,0,d.x);
         rig.position.addScaledVector(d,-ay*2*dt).addScaledVector(r,ax*2*dt)}
       prev.set(src,b)}
-    ctrls.forEach(c=>{const u=c.userData;if(!u.aim)return;
+    let anyHit=null;const hk=[];
+    ctrls.forEach(c=>{const u=c.userData;u.mh=null;if(!u.on&&!u.aim)return;
       tmpM.identity().extractRotation(c.matrixWorld);rc.ray.origin.setFromMatrixPosition(c.matrixWorld);rc.ray.direction.set(0,0,-1).applyMatrix4(tmpM);
-      u.hit=null;let dist=4;
-      for(const h of rc.intersectObjects(CAND,false)){const m=h.object.material;if(!visChain(h.object)||(m&&(m.visible===false||(m.transparent&&m.opacity<0.2))))continue;
-        dist=h.distance;if(h.face){const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);if(n.y>0.6)u.hit=h.point.clone()}break}
-      u.line.scale.z=dist;markM.color.set(u.hit?0x7fd6ff:0xff7a6b);marker.visible=!!u.hit;if(u.hit)marker.position.copy(u.hit).y+=0.02});
+      let len=4;
+      if(menu.visible){const h=rc.intersectObject(menu,false)[0];if(h){len=h.distance;u.mh=cellAt(h.uv);u.hit=null;if(u.mh)hk.push(u.mh.key)}}
+      if(!u.mh&&u.aim){u.hit=null;let dist=4;
+        for(const h of rc.intersectObjects(CAND,false)){const m=h.object.material;if(!visChain(h.object)||(m&&(m.visible===false||(m.transparent&&m.opacity<0.2))))continue;
+          dist=h.distance;if(h.face){const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);if(n.y>0.6)u.hit=h.point.clone()}break}
+        len=dist;if(u.hit)anyHit=u.hit;markM.color.set(u.hit?0x7fd6ff:0xff7a6b)}
+      u.line.scale.z=len});
+    marker.visible=!!anyHit;if(anyHit)marker.position.copy(anyHit).y+=0.02;
+    const key=hk.join('|');if(menu.visible&&key!==M.hoverKey){M.hoverKey=key;menuDraw()}
     renderer.render(scene,camera)}
 }
 boot();
