@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1030.e';
+  const VER = '1030.f';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -736,19 +736,104 @@
      Wing 의 근사 주변 건물 덩어리는 실사 3D 동안 장면에서 떼어 두고(끄면 되돌림), 신축 모드에서는 Wing 이 가정한
      미성아파트 재건축 고층 동(100m 이상)을 살리고 실측 자료의 현재 미성 단지는 뺀다. */
   const CTX = { p: null, now: null, next: null, detached: [] };
+  /* 주변 건물 외벽: 재질 분류마다 실제 재료 사진(벽) + 그 분류의 창 형태를 4칸 × 2층 캔버스에 그린다.
+     건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵 G 로 벽·유리 판별). 거칠기(G)·금속성(B), 노멀(창이 들어가 있음)도 함께 만든다.
+     UV 는 kh-context 규칙(u = 벽 길이 / 3.2m, v = 높이 / 층고)이라 반복은 (1/4, 1/2). */
+  const FW = { imgs: null, mats: {} };
+  function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
+  async function facadeImgs() {
+    if (FW.imgs) return FW.imgs;
+    const names = { tile: 'plaster-white', paint: 'wall-beige', stone: 'facade-granite', brick: 'brick', metal: 'concrete-wall', apt: 'plaster-white', glass: 'concrete-wall' };
+    const out = {}; await Promise.all(Object.entries(names).map(async ([k, n]) => { out[k] = await loadImg(BASE + 'tex/' + n + '_color.webp'); }));
+    return (FW.imgs = out);
+  }
+  function facadeCanvas(cls) {
+    const W = 1024, H = 512, BW = W / 4, FH = H / 2, img = FW.imgs[cls] || FW.imgs.tile;
+    const col = document.createElement('canvas'); col.width = W; col.height = H; const g = col.getContext('2d');
+    const rm = document.createElement('canvas'); rm.width = W; rm.height = H; const r = rm.getContext('2d');
+    const hm = new Float32Array(W * H).fill(1);
+    let seed = cls.length * 977 + 13; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    // 벽: 재료 사진을 실제 크기로(1칸 3.2m = 256px → 80px/m), 밝게 중립화해 건물색이 곱해지게
+    const tileM = { brick: 1.0, stone: 1.8, tile: 1.2, paint: 3, metal: 2.7, apt: 1.2, glass: 2.7 }[cls] || 1.2, px = 80 * tileM;
+    for (let y = 0; y < H; y += px) for (let x = 0; x < W; x += px) if (img) g.drawImage(img, x, y, px, px);
+    g.globalCompositeOperation = 'luminosity'; g.fillStyle = cls === 'brick' ? 'rgba(0,0,0,0)' : 'rgba(205,205,205,0.55)'; g.fillRect(0, 0, W, H); g.globalCompositeOperation = 'source-over';
+    if (cls === 'tile' || cls === 'apt') { g.strokeStyle = 'rgba(120,120,120,0.35)'; g.lineWidth = 1; for (let y = 0; y < H; y += 10) { g.beginPath(); g.moveTo(0, y + 0.5); g.lineTo(W, y + 0.5); g.stroke(); } for (let x = 0; x < W; x += 20) { g.beginPath(); g.moveTo(x + 0.5, 0); g.lineTo(x + 0.5, H); g.stroke(); } }
+    if (cls === 'metal') { g.fillStyle = 'rgba(40,40,40,0.35)'; for (let x = 0; x < W; x += BW / 3) g.fillRect(x, 0, 2, H); }
+    r.fillStyle = 'rgb(0,220,0)'; r.fillRect(0, 0, W, H);   // 벽: 거칠기 0.86, 금속성 0
+    const frame = cls === 'brick' || cls === 'stone' ? '#26282a' : cls === 'glass' ? '#9aa3a8' : '#d9dbdc';
+    // 창 하나: 유리(층마다 조금씩 다른 블라인드·실내 밝기) + 틀, 가림판·거칠기·높이 기록
+    function win(x, y, w, h, opt = {}) {
+      x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+      const shade = 0.75 + rnd() * 0.5, blind = rnd() < 0.55 ? rnd() * 0.6 : 0;
+      // 유리 밑바탕: 하늘·맞은편 건물이 비친 밝은 청회색(위)에서 실내 어둠(아래)으로
+      const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, `rgb(${150 * shade | 0},${168 * shade | 0},${182 * shade | 0})`); gr.addColorStop(0.55, `rgb(${92 * shade | 0},${106 * shade | 0},${118 * shade | 0})`); gr.addColorStop(1, `rgb(${52 * shade | 0},${60 * shade | 0},${68 * shade | 0})`);
+      g.fillStyle = gr; g.fillRect(x, y, w, h);
+      if (blind > 0.05) { g.fillStyle = `rgba(${200 + rnd() * 40 | 0},${190 + rnd() * 30 | 0},${170 + rnd() * 30 | 0},0.85)`; g.fillRect(x, y, w, h * blind); g.fillStyle = 'rgba(0,0,0,0.12)'; for (let yy = y; yy < y + h * blind; yy += 4) g.fillRect(x, yy, w, 1); }
+      g.fillStyle = frame; const t = opt.frame || 4; g.fillRect(x, y, w, t); g.fillRect(x, y + h - t, w, t); g.fillRect(x, y, t, h); g.fillRect(x + w - t, y, t, h);
+      (opt.mull || []).forEach(f => g.fillRect(x + w * f - t / 2, y, t, h)); if (opt.transom) g.fillRect(x, y + h * opt.transom, w, t);
+      r.fillStyle = 'rgb(0,26,0)'; r.fillRect(x + t, y + t, w - 2 * t, h - 2 * t);   // 유리: 거칠기 0.1, 비금속(반사색이 유리색에 물들지 않게)
+      for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) hm[yy * W + xx] = (xx < x + t || xx >= x + w - t || yy < y + t || yy >= y + h - t) ? 0.75 : 0.25;
+    }
+    // 벽 풍화: 층마다 조금 다른 밝기, 창 아래 빗물 자국, 아래로 갈수록 약간 어둡게(창을 그리기 전에)
+    for (let f = 0; f < 2; f++) for (let b = 0; b < 4; b++) {
+      const x0 = b * BW, y0 = f * FH, k = (rnd() - 0.5) * 0.14;
+      g.fillStyle = k > 0 ? `rgba(255,255,255,${k})` : `rgba(0,0,0,${-k})`; g.globalCompositeOperation = 'source-atop';
+      g.fillRect(x0, y0, BW, FH);
+      for (let n = 0; n < 3; n++) { const sx = x0 + BW * (0.2 + rnd() * 0.6), sw = 3 + rnd() * 8, gr2 = g.createLinearGradient(0, y0 + FH * 0.7, 0, y0 + FH); gr2.addColorStop(0, 'rgba(60,55,50,0.18)'); gr2.addColorStop(1, 'rgba(60,55,50,0)'); g.fillStyle = gr2; g.fillRect(sx, y0 + FH * 0.72, sw, FH * 0.28); }
+      g.globalCompositeOperation = 'source-over';
+    }
+    for (let f = 0; f < 2; f++) for (let b = 0; b < 4; b++) {
+      const x0 = b * BW, y0 = f * FH;   // 캔버스 위쪽 = 높은 층(v 큰 쪽): 층 안에서 위 0, 아래 FH
+      if (cls === 'tile' || cls === 'paint') win(x0 + BW * 0.2, y0 + FH * 0.22, BW * 0.6, FH * 0.5, { mull: [0.5] });
+      else if (cls === 'brick') { win(x0 + BW * 0.22, y0 + FH * 0.18, BW * 0.56, FH * 0.56, { mull: [0.5], transom: 0.3, frame: 5 }); g.fillStyle = 'rgba(60,40,32,0.6)'; g.fillRect(x0 + BW * 0.2, y0 + FH * 0.12, BW * 0.6, FH * 0.05); }
+      else if (cls === 'stone') { win(x0, y0 + FH * 0.28, BW, FH * 0.42, { mull: [0.33, 0.66], frame: 3 }); }
+      else if (cls === 'metal') { win(x0 + BW * 0.04, y0 + FH * 0.3, BW * 0.92, FH * 0.38, { mull: [0.5], frame: 3 }); }
+      else if (cls === 'apt') { win(x0 + BW * 0.08, y0 + FH * 0.15, BW * 0.84, FH * 0.62, { mull: [0.33, 0.66], frame: 4 });
+        g.fillStyle = 'rgba(235,236,236,0.95)'; g.fillRect(x0 + BW * 0.06, y0 + FH * 0.62, BW * 0.88, 3); g.fillRect(x0 + BW * 0.06, y0 + FH * 0.77, BW * 0.88, 5);
+        for (let k = 0; k < 9; k++) g.fillRect(x0 + BW * (0.06 + k * 0.11), y0 + FH * 0.62, 2, FH * 0.15); }
+      else if (cls === 'glass') { win(x0, y0, BW, FH * 0.78, { mull: [0.5], frame: 3 }); g.fillStyle = 'rgb(58,70,80)'; g.fillRect(x0, y0 + FH * 0.78, BW, FH * 0.22); r.fillStyle = 'rgb(0,30,0)'; r.fillRect(x0, y0 + FH * 0.78, BW, FH * 0.22);
+        for (let yy = y0 + FH * 0.78 | 0; yy < y0 + FH; yy++) for (let xx = x0; xx < x0 + BW; xx++) hm[yy * W + xx] = 0.4; }
+      else if (cls === 'shop') { win(x0, y0 + FH * 0.18, BW, FH * 0.82, { mull: [0.5], frame: 5 }); g.fillStyle = 'rgb(45,48,52)'; g.fillRect(x0, y0, BW, FH * 0.18); }
+      if (cls !== 'glass' && cls !== 'shop' && cls !== 'metal') { g.fillStyle = 'rgba(0,0,0,0.10)'; g.fillRect(x0, y0 + FH - 6, BW, 6); }   // 층 줄눈
+    }
+    // 벽·유리 구분은 거칠기 맵(G < 60 이면 유리)으로 셰이더에서 읽는다(캔버스는 투명 화소의 색을 지우므로 알파는 쓰지 않는다)
+    const nc = document.createElement('canvas'); nc.width = W; nc.height = H; const ng = nc.getContext('2d'), no = ng.createImageData(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const hx = hm[y * W + ((x + 1) % W)] - hm[y * W + ((x - 1 + W) % W)], hy = hm[((y + 1) % H) * W + x] - hm[((y - 1 + H) % H) * W + x];
+      const nx = -hx * 2.5, ny = hy * 2.5, l = Math.hypot(nx, ny, 1), o = (y * W + x) * 4;
+      no.data[o] = (nx / l * 0.5 + 0.5) * 255; no.data[o + 1] = (ny / l * 0.5 + 0.5) * 255; no.data[o + 2] = (1 / l * 0.5 + 0.5) * 255; no.data[o + 3] = 255;
+    }
+    ng.putImageData(no, 0, 0);
+    return { col, rm, nc };
+  }
+  function ctxFacadeMat(cls) {
+    const key = { far_light: 'tile', far_dark: 'brick', far_glass: 'glass' }[cls] || cls;
+    if (cls === 'roof') return null;
+    if (FW.mats[cls]) return FW.mats[cls];
+    if (!['tile', 'paint', 'stone', 'glass', 'brick', 'metal', 'apt', 'shop'].includes(key)) return null;
+    const c = FW.cv && FW.cv[key] || (FW.cv = FW.cv || {}, FW.cv[key] = facadeCanvas(key));
+    const mk = (cv, srgb) => { const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(0.25, 0.5); t.anisotropy = isMobile ? 4 : 8; if (srgb) t.encoding = T.sRGBEncoding; return t; };
+    const m = new T.MeshStandardMaterial({ map: mk(c.col, true), roughnessMap: mk(c.rm), metalnessMap: mk(c.rm), normalMap: mk(c.nc), roughness: 1, metalness: 1, vertexColors: key !== 'shop' });
+    m.normalScale.set(0.9, 0.9); m.envMapIntensity = 1.0; m.userData.lin = true; m.userData.prEnv = 1.0; EXTRA.add(m);
+    // 건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵으로 벽 판별)
+    m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#ifdef USE_COLOR\n float prWall = step(0.24, texture2D(roughnessMap, vUv).g);\n diffuseColor.rgb *= mix(vec3(1.0), vColor, prWall);\n#endif'); };
+    m.customProgramCacheKey = () => 'prctxwall';
+    return (FW.mats[cls] = m);
+  }
   function inPolyW(p, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, zi] = poly[i], [xj, zj] = poly[j]; if ((zi > p[1]) !== (zj > p[1]) && p[0] < (xj - xi) * (p[1] - zi) / (zj - zi) + xi) c = !c; } return c; }
   function ctxLoad() {
     return CTX.p || (CTX.p = loadScript(BASE + 'context/kh-context.js?v=' + VER).then(async () => {
       const url = BASE + 'context/buildings.json?v=' + VER;
       const area = [[[-9400, -480], [-1430, -480], [-1430, 10400], [-9400, 10400]], [[-10700, -5100], [-5600, -5100], [-5600, -480], [-10700, -480]]].map(q => q.map(p => K.P(p[0], p[1])));
       const redev = b => { const o = b.outline, c = [o.reduce((s, q) => s + q[0], 0) / o.length, o.reduce((s, q) => s + q[1], 0) / o.length]; return area.some(a => inPolyW(c, a)) && b.cls === 'apt'; };
-      CTX.now = await window.KHContext.load(url, { near: true, far: true });
-      CTX.next = await window.KHContext.load(url, { near: true, far: true, filter: b => !redev(b) });
+      await facadeImgs();
+      CTX.now = await window.KHContext.load(url, { near: true, far: true, material: ctxFacadeMat });
+      CTX.next = await window.KHContext.load(url, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) });
       // 창 패턴 캔버스 재질에 실사 보강(창 반사·벽 질감·창 깊이). 건물 색은 꼭짓점 색
       const up = new Map();
       [CTX.now, CTX.next].forEach(g => { g.name = 'pr-context'; g.traverse(o => {
         if (!o.isMesh) return; o.castShadow = o.receiveShadow = true; const m0 = o.material;
-        if (m0 && m0.map && m0.map.image && m0.map.image.getContext) { let m = up.get(m0); if (!m) { m = facadeMat(m0, 1.25); m.vertexColors = true; m.color.set(0xffffff); m.userData.lin = true; keepEnv(m); up.set(m0, m); } o.material = m; }
+        if (m0 && !m0.userData.prMadeCtx && !Object.values(FW.mats).includes(m0) && m0.map && m0.map.image && m0.map.image.getContext) { let m = up.get(m0); if (!m) { m = facadeMat(m0, 1.25); m.vertexColors = true; m.color.set(0xffffff); m.userData.lin = true; keepEnv(m); up.set(m0, m); } o.material = m; }
       }); });
       PR.stat.context = CTX.now.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', CTX.now.userData.stats.buildings + '동');
       if (PR.on) ctxOn();
