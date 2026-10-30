@@ -1,0 +1,577 @@
+<meta charset="utf-8">
+<title>케이프혼타워 XR 계획서</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 왼쪽 고정 목차 + 본문 한 줄 흐름(넓은 표·목업은 본문 폭 전체). 색은 Wing 뷰어의 청록 강조색을 그대로 이어 쓴다 */
+:root{
+  --bg:#f4f6f5; --paper:#ffffff; --ink:#18201e; --muted:#5b6764; --line:#d5dcd9;
+  --accent:#1f5f5b; --accent-soft:#e3efed; --ok:#2e7d4f; --ok-soft:#e2f2e8; --warn:#9a6a12; --warn-soft:#f8eed8; --bad:#a3392f; --bad-soft:#f7e3e0;
+  --code:#eef2f1;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111615; --paper:#182120; --ink:#e3ebe8; --muted:#9aa8a4; --line:#2c3a37;
+  --accent:#6fc2b8; --accent-soft:#1d3532; --ok:#7fd3a0; --ok-soft:#1b3326; --warn:#e6bc6a; --warn-soft:#3a2f17; --bad:#f0968b; --bad-soft:#3d211e; --code:#1f2b29; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111615; --paper:#182120; --ink:#e3ebe8; --muted:#9aa8a4; --line:#2c3a37;
+  --accent:#6fc2b8; --accent-soft:#1d3532; --ok:#7fd3a0; --ok-soft:#1b3326; --warn:#e6bc6a; --warn-soft:#3a2f17; --bad:#f0968b; --bad-soft:#3d211e; --code:#1f2b29; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.7 var(--f-body);margin:0}
+.wrap{display:grid;grid-template-columns:230px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding-block:32px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;font-size:13px;max-height:calc(100vh - 48px);overflow:auto}
+nav.toc b{display:block;font-size:12px;letter-spacing:.06em;color:var(--muted);margin-bottom:8px}
+nav.toc a{display:block;color:var(--ink);text-decoration:none;padding:4px 0 4px 10px;border-left:2px solid var(--line)}
+nav.toc a:hover,nav.toc a:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+main{min-width:0}
+header.top{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:8px}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+h1{font-size:32px;line-height:1.25;margin:10px 0 8px;text-wrap:balance}
+h2{font-size:22px;margin:56px 0 12px;padding-top:8px;text-wrap:balance;scroll-margin-top:16px}
+h3{font-size:17px;margin:28px 0 8px}
+p{max-width:72ch;margin:8px 0}
+.meta{color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 18px}
+code,.mono{font-family:var(--f-mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre{font-family:var(--f-mono);font-size:13px;background:var(--code);padding:14px;border-radius:var(--r);overflow-x:auto;line-height:1.55}
+a{color:var(--accent)}
+.lead{font-size:16.5px;max-width:70ch}
+.tbl{overflow-x:auto;margin:12px 0;border:1px solid var(--line);border-radius:var(--r);background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+th{font-weight:600;background:var(--accent-soft);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.c{text-align:center;white-space:nowrap}
+.pill{display:inline-block;font:500 11.5px/1.6 var(--f-mono);padding:1px 8px;border-radius:999px;white-space:nowrap}
+.ok{background:var(--ok-soft);color:var(--ok)} .warn{background:var(--warn-soft);color:var(--warn)} .bad{background:var(--bad-soft);color:var(--bad)} .todo{background:var(--code);color:var(--muted)} .acc{background:var(--accent-soft);color:var(--accent)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid1{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0}
+.card h4{margin:0 0 6px;font-size:15px}
+.card p{margin:4px 0;font-size:14px}
+.k{font:600 26px/1.1 var(--f-body);color:var(--accent)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 var(--r) var(--r) 0;margin:14px 0;max-width:80ch}
+.note.w{border-color:var(--warn);background:var(--warn-soft)}
+figure{margin:0}
+figcaption{font-size:12.5px;color:var(--muted);margin-top:6px}
+/* 목업 */
+.mock{position:relative;border-radius:12px;overflow:hidden;background:#0d1110;border:1px solid var(--line)}
+.mock img{display:block;width:100%;height:auto}
+.browser{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.browser .bar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);font:12px var(--f-mono);color:var(--muted)}
+.browser .dots{display:flex;gap:5px}.browser .dots i{width:9px;height:9px;border-radius:50%;background:var(--line);display:block}
+.browser .url{flex:1;min-width:0;background:var(--code);border-radius:6px;padding:3px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone{width:min(260px,100%);margin:0 auto;border:10px solid #1b2220;border-radius:34px;overflow:hidden;background:#000}
+.phone img{display:block;width:100%}
+.callout{position:absolute;background:rgba(17,24,22,.88);color:#fff;font-size:12.5px;line-height:1.45;padding:7px 10px;border-radius:8px;max-width:30%}
+.callout b{color:#8fe0d4}
+.dot{position:absolute;width:22px;height:22px;border-radius:50%;background:#1f5f5b;color:#fff;font:600 12px/22px var(--f-body);text-align:center;box-shadow:0 0 0 3px rgba(255,255,255,.75)}
+.hmd{border-radius:28px;padding:10px;background:#0b0f0e}
+.hmd .view{position:relative;border-radius:20px;overflow:hidden}
+.hmd .view img{display:block;width:100%}
+/* 목표 공간 패널(XR 안 메뉴) 목업 */
+.xpanel{position:absolute;left:3%;top:8%;width:30%;background:rgba(20,27,26,.94);color:#e8f1ee;border-radius:14px;padding:10px;font-size:11px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.xpanel .tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.xpanel .tabs span{padding:3px 7px;border-radius:999px;background:rgba(255,255,255,.08)}
+.xpanel .tabs span.on{background:#2f7d6d}
+.xpanel .row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.06);margin-top:4px}
+.xpanel .row.on{background:#2f7d6d}
+.xpanel .sw{display:flex;gap:4px;margin-top:6px}
+.xpanel .sw i{flex:1;height:26px;border-radius:6px;display:block;border:2px solid transparent}
+.xpanel .sw i.on{border-color:#8fe0d4}
+.xpanel .foot{display:flex;gap:4px;margin-top:8px}
+.xpanel .foot span{flex:1;text-align:center;padding:5px;border-radius:7px;background:rgba(255,255,255,.12)}
+.ring{position:absolute;border:3px solid #8fe0d4;border-radius:50%;box-shadow:0 0 12px #8fe0d4}
+.wrist{position:absolute;left:3%;top:8%;width:24%;background:rgba(20,27,26,.94);color:#e8f1ee;border-radius:12px;padding:9px;font-size:11px}
+.wrist .row{padding:5px 8px;border-radius:7px;background:rgba(255,255,255,.08);margin-top:4px;display:flex;justify-content:space-between}
+.wrist .row.on{background:#2f7d6d}
+.scalechip{position:absolute;background:#fff;color:#1f5f5b;font:600 12px var(--f-mono);padding:3px 9px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+/* 구조도 */
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;align-items:stretch;margin:14px 0}
+.flow .n{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px;font-size:13px;min-width:0}
+.flow .n b{display:block;font-size:13.5px;margin-bottom:4px}
+.flow .n.ours{border-color:var(--accent);box-shadow:inset 0 3px 0 var(--accent)}
+.flow .n.wing{box-shadow:inset 0 3px 0 #b5a27b}
+.flow .ar{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:20px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;background:var(--accent)}
+.legend span.w::before{background:#b5a27b}
+ol.steps,ul.plain{padding-left:20px;max-width:80ch}
+ol.steps li,ul.plain li{margin:4px 0}
+.phase{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin:14px 0}
+.phase h3{margin:0 0 4px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.phase .goal{color:var(--muted);font-size:14px;margin:0 0 10px}
+.chk{list-style:none;padding:0;margin:8px 0}
+.chk li{padding:5px 0 5px 26px;position:relative;font-size:14px;border-top:1px dashed var(--line)}
+.chk li:first-child{border-top:0}
+.chk li::before{content:"";position:absolute;left:2px;top:9px;width:13px;height:13px;border:1.5px solid var(--muted);border-radius:3px}
+.chk li[data-done]::before{background:var(--ok);border-color:var(--ok)}
+.chk li[data-done]::after{content:"";position:absolute;left:6px;top:11px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.small{font-size:13px;color:var(--muted)}
+@media (max-width:640px){.xpanel,.wrist{font-size:9px;width:40%}.callout{display:none}}
+@media (max-width:900px){
+  .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  nav.toc{position:static;max-height:none;margin-bottom:20px;columns:2}
+  .grid2,.grid3{grid-template-columns:minmax(0,1fr)}
+  .flow{grid-template-columns:minmax(0,1fr)}
+  .flow .ar{transform:rotate(90deg);height:18px}
+  h1{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="목차">
+  <b>목차</b>
+  <a href="#use">0. 이 문서 쓰는 법</a>
+  <a href="#summary">1. 요약</a>
+  <a href="#target">2. 목표 결과물과 목업</a>
+  <a href="#wing">3. Wing 작업 분석</a>
+  <a href="#arch">4. 구조</a>
+  <a href="#tech">5. 기술 결정</a>
+  <a href="#spike">6. 스파이크 검증 결과</a>
+  <a href="#matrix">7. 기능 지원 범위</a>
+  <a href="#phases">8. 단계별 계획</a>
+  <a href="#quality">9. 품질 체크리스트</a>
+  <a href="#team">10. 협업 약속</a>
+  <a href="#risk">11. 위험과 대응</a>
+  <a href="#agent">12. 에이전트 작업 규칙</a>
+  <a href="#open">13. 결정이 필요한 항목</a>
+  <a href="#log">14. 진행 기록</a>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">Kapehorn Tower · WebXR</div>
+  <h1>케이프혼타워 XR 계획서</h1>
+  <div class="meta">
+    <span>작성 2026-10-30</span><span>기준 저장소 wing-kim/all</span><span>작업 브랜치 <code>feature/webxr</code></span><span>문서 위치 <code>xr/docs/plan.html</code></span><span>버전 v1.0</span>
+  </div>
+</header>
+
+<section id="use">
+<h2>0. 이 문서 쓰는 법</h2>
+<p>이 문서는 케이프혼타워 WebXR 작업의 기준 문서입니다. 사람과 AI 에이전트 모두 작업을 시작하기 전에 이 문서를 처음부터 읽고, 작업을 마치면 8장의 상태 표시와 14장의 진행 기록을 고칩니다. 이 문서와 코드가 다르면 코드를 직접 확인하고, 차이를 진행 기록에 남긴 뒤 문서를 고칩니다.</p>
+<div class="note">상태 표시는 네 가지입니다. <span class="pill ok">완료</span> <span class="pill acc">진행 중</span> <span class="pill todo">대기</span> <span class="pill bad">막힘</span>. 체크리스트 항목은 끝나면 <code>&lt;li data-done&gt;</code>로 바꿉니다.</div>
+</section>
+
+<section id="summary">
+<h2>1. 요약</h2>
+<p class="lead">Wing이 계속 발전시키고 있는 케이프혼타워 3D 웹뷰(<code>new/3d-model.html</code>)를 <b>Wing 파일을 한 줄도 고치지 않고</b> 메타 퀘스트 3에서 실제 크기 몰입 VR과 패스스루 피규어로 볼 수 있게 만듭니다. 지니가 새로 만드는 모델은 Wing이 뷰어에 올리고, XR은 그 결과를 자동으로 이어받습니다. PC와 모바일 사용자는 지금과 똑같은 화면을 봅니다.</p>
+<div class="grid3">
+  <div class="card"><h4>원칙 1. Wing 무수정</h4><p>XR 계층은 별도 폴더 <code>xr/</code>에만 둡니다. Wing의 HTML을 그대로 불러와 실행 직전에 XR 기능만 끼워 넣습니다.</p></div>
+  <div class="card"><h4>원칙 2. Wing 기능 자동 반영</h4><p>XR 메뉴는 Wing 화면의 버튼과 입력을 읽어 만듭니다. Wing이 기능을 추가하면 XR 메뉴에도 바로 나타납니다.</p></div>
+  <div class="card"><h4>원칙 3. 같은 웹, 기기별 모드</h4><p>같은 페이지가 PC와 모바일에서는 기존 3D로, 퀘스트에서는 VR 버튼과 피규어 버튼이 추가된 형태로 열립니다.</p></div>
+</div>
+<h3>현재 위치</h3>
+<p><span class="pill ok">P0 완료</span> 기술 스파이크를 마쳤습니다. Wing 원본을 고치지 않고 VR 진입, 패스스루 피규어, Wing 메뉴의 공간 패널 미러, 성능 최적화(그리기 호출 90% 감소)까지 에뮬레이터에서 확인했습니다(커밋 <code>b521cee</code>). 다음은 <span class="pill acc">P1 실기기 기준선</span>입니다. 퀘스트 3를 연결해 실제 프레임 수치와 입력을 측정합니다.</p>
+</section>
+
+<section id="target">
+<h2>2. 목표 결과물과 목업</h2>
+<div class="tbl"><table>
+<thead><tr><th>주소</th><th>누가 관리</th><th>무엇</th></tr></thead>
+<tbody>
+<tr><td><code>wing-kim.github.io/all/new/3d-model.html</code></td><td>Wing</td><td>기존 3D 웹뷰. 그대로 유지합니다.</td></tr>
+<tr><td><code>wing-kim.github.io/all/xr/</code></td><td>우리(XR)</td><td>XR 진입 주소. Wing 웹뷰를 그대로 띄우고 XR 기능을 더합니다. PC와 모바일에서는 Wing 화면과 같습니다.</td></tr>
+<tr><td>(선택) 같은 주소 통합</td><td>Wing 결정</td><td>Wing이 원하면 <code>3d-model.html</code>에 스크립트 한 줄을 넣어 기존 주소에서도 XR 버튼이 나오게 할 수 있습니다. 출시 단계(P9)에서 제안합니다.</td></tr>
+</tbody></table></div>
+
+<div class="grid2" style="margin-top:18px">
+<figure>
+  <div class="browser"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">wing-kim.github.io/all/xr/</span></div>
+    <div class="mock" style="border:0;border-radius:0">
+      <img src="img/desktop-wrapper.jpg" alt="PC 브라우저에서 연 XR 주소. Wing 3D 웹뷰가 그대로 보이고 아래쪽에 VR 버튼과 피규어 버튼이 있다">
+      <span class="dot" style="left:30%;top:30%">1</span>
+      <span class="dot" style="left:48%;top:86%">2</span>
+    </div>
+  </div>
+  <figcaption><b>PC(맥, 윈도우)</b> ① Wing 화면과 기능이 그대로입니다. ② "VR로 들어가기", "내 공간에 놓기" 버튼은 WebXR을 지원하는 기기(퀘스트 브라우저)에서만 나타납니다. 이 화면은 에뮬레이터로 퀘스트를 흉내 내 버튼이 보이는 상태입니다. 일반 PC에서는 버튼이 없습니다.</figcaption>
+</figure>
+<figure>
+  <div class="phone"><img src="img/mobile-wrapper.jpg" alt="휴대폰 화면에서 연 XR 주소. Wing 모바일 화면과 같다"></div>
+  <figcaption style="text-align:center"><b>모바일</b> Wing의 모바일 화면과 같습니다. XR 버튼은 나오지 않습니다(실제 검증 화면, 375×812).</figcaption>
+</figure>
+</div>
+
+<div class="grid1" style="margin-top:22px">
+<figure>
+  <div class="hmd"><div class="view">
+    <img src="img/vr-interior-render.jpg" alt="퀘스트 VR 안에서 본 1층 내부">
+    <div class="xpanel" aria-label="목표 공간 패널 목업">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>케이프혼타워</b><span style="opacity:.7">1F · 실제 크기</span></div>
+      <div class="tabs"><span>시점</span><span class="on">층</span><span>외관</span><span>내부</span><span>빛과 시간</span><span>표시</span><span>사진</span></div>
+      <div class="row">B1 주차</div><div class="row on">1F 카페 <span>현재</span></div><div class="row">2F</div><div class="row">3F 사무</div>
+      <div class="foot"><span>피규어로 보기</span><span>나가기</span></div>
+    </div>
+    <span class="ring" style="left:56%;top:74%;width:9%;height:6%"></span>
+    <span class="callout" style="right:3%;top:6%"><b>왼손 메뉴</b> Wing 패널의 모든 그룹이 탭으로 나뉘어 나옵니다. 트리거나 핀치로 누릅니다.</span>
+    <span class="callout" style="right:3%;bottom:6%"><b>이동</b> 바닥을 가리켜 텔레포트, 왼쪽 스틱으로 걷기, 오른쪽 스틱으로 30도 회전</span>
+  </div></div>
+  <figcaption><b>퀘스트 몰입 VR(1:1)</b> 배경은 실제 검증 화면(렌더 모드, 벽돌 외장)이고, 왼쪽 메뉴와 텔레포트 표시는 목표 디자인 목업입니다.</figcaption>
+</figure>
+<figure>
+  <div class="hmd"><div class="view">
+    <img src="img/ar-figure-brick.jpg" alt="패스스루 피규어 검증 화면" style="transform:scale(1.9);transform-origin:66% 44%">
+    <span class="scalechip" style="left:56%;top:12%">1 : 120</span>
+    <div class="wrist" aria-label="목표 피규어 메뉴 목업">
+      <b>피규어</b>
+      <div class="row on">안으로 들어가기</div>
+      <div class="row">범위 <span>건물 + 블록</span></div>
+      <div class="row">크기 <span>1:120</span></div>
+      <div class="row">외관 바꾸기</div>
+    </div>
+    <span class="callout" style="right:3%;bottom:6%"><b>두 손 그립</b> 벌리면 크기, 돌리면 각도. 한 손 그립은 위치 이동</span>
+  </div></div>
+  <figcaption><b>퀘스트 패스스루 피규어</b> 책상 위에 모형을 놓고 크기와 각도를 바꿉니다. 외관을 바꾸면 모형이 바로 바뀝니다(검증 완료). 에뮬레이터는 실제 방 대신 흰 배경을 보여 줍니다.</figcaption>
+</figure>
+</div>
+
+<h3>스파이크에서 실제로 렌더한 화면</h3>
+<div class="grid3">
+  <figure><div class="mock"><img src="img/vr-exterior-stereo.jpg" alt="VR 외부 코너 시점 양안 화면"></div><figcaption>VR 진입 직후, Wing의 "코너 투시" 위치로 사용자가 옮겨진 양안 화면</figcaption></figure>
+  <figure><div class="mock"><img src="img/vr-interior-stereo.jpg" alt="VR 내부 양안 화면"></div><figcaption>패널에서 "내부 보기"를 누르면 Wing 내부 시점(눈높이 1.7m)으로 이동</figcaption></figure>
+  <figure><div class="mock"><img src="img/ar-figure.jpg" alt="피규어 모드 화면"></div><figcaption>피규어 모드. 대지 주변 45m만 남기고 잘라 디오라마처럼 보입니다</figcaption></figure>
+</div>
+</section>
+
+<section id="wing">
+<h2>3. Wing 작업 분석</h2>
+<p>Wing 저장소 <code>main</code>(최신 <code>25b111a</code>, 2026-10-16, 내부 버전 v93)을 전수 조사했습니다. XR이 지원해야 할 대상은 <code>new/3d-model.html</code> 하나이고, 나머지 페이지는 2D 대시보드라 퀘스트 브라우저에서 일반 웹으로 열립니다.</p>
+<div class="tbl"><table>
+<thead><tr><th>파일</th><th>내용</th><th>XR 관련</th></tr></thead>
+<tbody>
+<tr><td><code>new/3d-model.html</code> (1.1MB)</td><td>three.js r128과 예제 라이브러리를 모두 인라인으로 담은 단일 파일 3D 뷰어. 도면 좌표를 미터로 바꿔 건물을 코드로 생성(41.6px = 1m)</td><td class="c"><span class="pill acc">대상</span></td></tr>
+<tr><td><code>new/index.html</code></td><td>신축 진행 대시보드. "3D 모델" 탭이 <code>3d-model.html</code>을 iframe으로 넣음(<code>allow="fullscreen"</code>만 있어 iframe 안에서는 XR이 막힘)</td><td class="c"><span class="pill warn">연결 필요</span></td></tr>
+<tr><td><code>newbuild/*</code>, <code>test/*</code>, <code>bluepica/</code></td><td>공사, 상권지도, 리포트 등 2D 대시보드</td><td class="c"><span class="pill todo">해당 없음</span></td></tr>
+<tr><td><code>wing-kim/kapehorn-media(-hd)</code></td><td>실사 사진 저장소. 외부 시안 35종 × 7방향, 층별 내부 사진. 360° 파노라마가 아니라 1600×1000 일반 렌더 사진</td><td class="c"><span class="pill acc">XR 사진 패널</span></td></tr>
+</tbody></table></div>
+
+<h3>3D 뷰어 기능 목록 (XR이 모두 지원해야 할 범위)</h3>
+<div class="tbl"><table>
+<thead><tr><th>영역</th><th>Wing 기능</th><th>원본 구현</th></tr></thead>
+<tbody>
+<tr><td>시점</td><td>내부 보기, 코너 투시, 압구정로 정면, 6M도로 측면, 출입구와 램프, 배치(위), 옥상과 태양광, 미성아파트 방향, 원경 (9종)</td><td><code>.views [data-v]</code> → <code>go(v)</code>, 900ms 카메라 트윈</td></tr>
+<tr><td>내부</td><td>층 칩(B3에서 PH2, 주차안에 따라 다름), 표시 토글 8종(라벨, 윗층 투시, 외벽 치수, 천장고, 실 이름, 주차 대수, 램프, 램프 설명), 층 단면, 종단면 2종, 모서리 시점 4종, 코어 확대, 엘리베이터 홀, 창밖 보기 4종, 360° 회전</td><td><code>#intui</code>, <code>enterInt</code>, <code>placeLevel</code>, <code>setDoll</code>, <code>setSection</code></td></tr>
+<tr><td>걷기</td><td>WASD와 방향키, 화면 패드, 바닥 클릭 이동, 미니맵 클릭. 벽, 기둥, 램프 높이 충돌 처리. 층은 발 높이로 자동 전환</td><td><code>step</code>, <code>walkable</code>, <code>rampHit</code> (클로저 안)</td></tr>
+<tr><td>현황과 신축</td><td>현황(동광빌딩), 신축, 비교(겹쳐 보기 0에서 100, 윤곽선, 미성 겹쳐 보기, 천천히 돌리기)</td><td><code>input[name=era]</code>, <code>CMP</code></td></tr>
+<tr><td>보기 방식</td><td>스케치, 렌더(SSAO, Bloom, FXAA 후처리), 실사(사진 뷰어), 화면 이미지 저장</td><td><code>input[name=vmode]</code>, <code>setRender</code>, <code>PH.set</code>, <code>capture</code></td></tr>
+<tr><td>빛과 시간</td><td>오전, 오후, 석양, 밤. 계절 4종. 날짜와 시각 지정, 하루 재생, 주변 야간 조명, 고품질, AO</td><td><code>applyTime</code>, <code>solar()</code>(위도 37.52°, KST)</td></tr>
+<tr><td>설계 조합</td><td>주차 방식 4안, 1층 안 4종과 옵션 7개, 외부 디자인(조합: 마감 15종 × 형태 17종, 시안: 20종, 색상 견본 14색), 창 크기 4종</td><td>모두 <code>build()</code>로 건물 재생성</td></tr>
+<tr><td>매스 조정</td><td>층수 4에서 8, 1층 층고, 기준층 층고 슬라이더</td><td><code>build()</code> 재생성</td></tr>
+<tr><td>화면 표시</td><td>라벨, 주변 라벨, 건축한계선, 프레임, 지면 반투명, 주변 건물, 도시</td><td>그룹 visible 직접 변경</td></tr>
+<tr><td>화면 요소</td><td>3D 위치에 붙는 DOM 라벨, 층 HUD, 미니맵, 나침반(해와 그림자 방향)</td><td>매 프레임 DOM 갱신</td></tr>
+</tbody></table></div>
+
+<h3>XR 설계에 영향을 주는 사실</h3>
+<ul class="plain">
+<li>앱 코드 전체가 즉시 실행 함수(IIFE) 하나 안에 있어 renderer, scene, camera, 상태 변수가 밖으로 노출되지 않습니다. 밖에서 볼 수 있는 것은 <code>window.CH</code>(state), <code>window.PH</code>(사진 뷰어), <code>THREE</code> 정도입니다.</li>
+<li>설계 조합을 바꾸면 <code>build()</code>가 건물 메시를 모두 지우고 다시 만듭니다. 그래서 XR 쪽은 특정 메시를 붙잡지 않고, 매번 장면을 다시 읽어야 합니다.</li>
+<li>Wing은 GitHub 웹 업로드로 <code>main</code>에 파일을 통째로 덮어쓰는 방식으로 일합니다. 구조가 예고 없이 바뀔 수 있으니 XR 쪽에 자동 호환 점검이 필요합니다(P2).</li>
+<li>Wing 장면은 PC에서 프레임당 그리기 호출이 약 3,280회, VR 양안에서 약 6,700회입니다. 퀘스트 3 권장치(200회 미만)를 크게 넘습니다. 그래서 XR 쪽 최적화가 필수입니다(6장, P6).</li>
+</ul>
+</section>
+
+<section id="arch">
+<h2>4. 구조</h2>
+<div class="flow">
+  <div class="n wing"><b>지니 모델</b>GLB, 미터 단위. Wing이 뷰어에 통합합니다.</div>
+  <div class="n wing"><b>Wing 뷰어</b><code>new/3d-model.html</code>. 기능과 화면의 원본입니다.</div>
+  <div class="n ours"><b>XR 래퍼</b><code>xr/index.html</code>이 원본을 그대로 받아 실행합니다.</div>
+  <div class="n ours"><b>XR 계층</b><code>xr/kh-xr.js</code>를 앱 스크립트 직전에 주입합니다.</div>
+  <div class="n ours"><b>헤드셋</b>VR 1:1, 패스스루 피규어, 공간 패널</div>
+</div>
+<div class="legend"><span class="w">Wing과 지니 영역(우리는 읽기만)</span><span>우리 영역(<code>xr/</code> 폴더만)</span></div>
+
+<h3>XR 계층이 하는 일</h3>
+<div class="tbl"><table>
+<thead><tr><th>기능</th><th>방법</th><th>Wing 코드에 미치는 영향</th></tr></thead>
+<tbody>
+<tr><td>객체 확보</td><td><code>THREE.WebGLRenderer</code>, <code>Scene</code>, <code>OrbitControls</code>, <code>EffectComposer</code>, <code>Sky</code> 생성자를 감싸 인스턴스를 붙잡음. 렌더러는 <code>alpha:true</code>와 <code>xr.enabled</code>를 켜서 만들고 화면에서는 불투명하게 유지</td><td>없음(같은 객체를 그대로 씀)</td></tr>
+<tr><td>렌더 루프 이전</td><td>문서 파싱 중 처음 등록된 rAF 콜백을 Wing 메인 루프로 기억. XR 중에는 이 루프를 XR 프레임 안에서 실행</td><td>없음(루프 내용 그대로)</td></tr>
+<tr><td>그리기</td><td>XR 중에는 Wing의 <code>renderer.render</code>와 <code>composer.render</code> 호출을 가로채 XR 전용 카메라로 한 번만 그림(후처리 생략)</td><td>PC 화면에서는 원래대로</td></tr>
+<tr><td>사용자 위치</td><td>XR 카메라를 rig(사용자 몸) 그룹에 둠. Wing 시점이 바뀌어 멈추면 rig를 그 위치와 방향으로 옮김</td><td>Wing 카메라는 건드리지 않음</td></tr>
+<tr><td>피규어</td><td>모형을 줄이는 대신 rig를 키움(1/120이면 사용자 120배). 배경, 안개, 하늘, 넓은 지면을 숨기고 대지 주변 45m만 잘라 보임. r128 양안 절두체 오류를 컬링 직전에 보정</td><td>XR 종료 시 모두 복원</td></tr>
+<tr><td>공간 패널</td><td>Wing의 버튼, 라디오, 체크박스, 슬라이더, 선택 상자를 그룹별로 읽어 3D 패널로 그림. 누르면 원본 요소의 <code>click()</code>이나 <code>change</code> 이벤트 실행</td><td>Wing 이벤트 처리 그대로 사용</td></tr>
+<tr><td>최적화 프록시</td><td>XR 중에만 같은 재질 메시를 합친 대체 메시를 만들고 원본은 숨김. Wing이 장면을 다시 만들면 0.5초 안에 다시 합침</td><td>XR 종료 시 원본 표시 복원</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="tech">
+<h2>5. 기술 결정</h2>
+<p>스파이크로 확인한 결과를 바탕으로 아래 결정을 확정합니다. 바꾸려면 이 표에 이유를 적고 Jack의 승인을 받습니다.</p>
+<div class="tbl"><table>
+<thead><tr><th>항목</th><th>결정</th><th>검토한 대안과 기각 이유</th></tr></thead>
+<tbody>
+<tr><td>통합 방식</td><td><b>래퍼 + 실행 시 주입</b>. <code>xr/index.html</code>이 Wing HTML을 받아 앱 스크립트(<code>new THREE.WebGLRenderer</code>가 있는 인라인 스크립트) 직전에 XR 스크립트를 넣고 실행</td><td>Wing 파일 직접 수정: 원칙 위반이라 기각(선택적 한 줄 통합은 P9에서 Wing에게 제안). 파일 복사본: Wing 업데이트와 어긋나 기각</td></tr>
+<tr><td>3D 엔진</td><td><b>Wing의 three.js r128을 그대로 사용</b>. r128 내장 WebXRManager(세션, 손 25관절, 컨트롤러)로 구현</td><td>IWSDK 런타임(three 0.185, ECS): Wing 장면이 전역 r128 객체로 만들어져 공존할 수 없어 기각. IWSDK 생태계의 IWER 에뮬레이터와 UX 패턴만 사용</td></tr>
+<tr><td>렌더러</td><td>Wing 렌더러 재사용(생성 시 <code>alpha:true</code> 주입)</td><td>XR 전용 렌더러 별도 생성: GPU 메모리와 텍스처가 두 배라 기각. 문제가 생기면 다시 검토</td></tr>
+<tr><td>카메라</td><td>XR 전용 카메라(rig 자식). near 0.05m(VR), 0.02m(피규어)</td><td>Wing 카메라 재사용: Wing이 near와 fov를 수시로 바꾸고 매 프레임 덮어써서 기각</td></tr>
+<tr><td>피규어 축소</td><td>사용자 rig 확대 + 절두체 보정 + 디오라마 자르기(<code>clippingPlanes</code>)</td><td>장면 자체 축소: 그림자 카메라, 단면 평면, Wing 레이캐스트가 월드 미터 기준이라 기각</td></tr>
+<tr><td>XR 메뉴</td><td>Wing DOM 컨트롤 자동 미러 + 자주 쓰는 동작은 전용 버튼</td><td>직접 만든 메뉴만 사용: Wing이 기능을 추가할 때마다 수작업이 필요해 기각</td></tr>
+<tr><td>성능</td><td>XR 중 재질별 병합 프록시(검증: 6,724 → 662회), 다음으로 비슷한 재질 묶기, 그림자 해상도 낮추기, 프레임버퍼 배율과 고정 포비에이션</td><td>r128은 multiview를 지원하지 않습니다. three 업그레이드는 Wing의 결정 사항이라 범위 밖</td></tr>
+<tr><td>입력</td><td>퀘스트 컨트롤러(레이, 트리거, 그립, 스틱) + 핸드(핀치 = select, 그립 제스처). 비전 프로는 <code>transient-pointer</code>(시선과 핀치)</td><td>손바닥 핀치는 시스템 예약 동작이라 쓰지 않음</td></tr>
+<tr><td>배포</td><td>GitHub Pages 그대로, <code>xr/</code> 폴더 추가. 빌드 도구 없는 정적 JS(Wing의 업로드 방식과 같음)</td><td>Vite 빌드: 결과물 관리가 늘고 Wing 작업 방식과 맞지 않아 보류</td></tr>
+<tr><td>검증 도구</td><td>IWER 2.7.0(MIT, <code>xr/vendor</code>에 고정) 에뮬레이터 <code>?emu=1</code>, 퀘스트 3 실기기, 자동 스모크 테스트(P2)</td><td>유료 도구 없음(무료 원칙)</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="spike">
+<h2>6. 스파이크 검증 결과</h2>
+<p>2026-10-30, 맥북(Apple M5) 내장 브라우저와 IWER Quest 3 에뮬레이터에서 측정했습니다. 퀘스트 실기기 수치는 아직 없습니다.</p>
+<div class="tbl"><table>
+<thead><tr><th>검증 항목</th><th>결과</th><th>근거</th></tr></thead>
+<tbody>
+<tr><td>Wing 원본 무수정 로딩</td><td class="c"><span class="pill ok">확인</span></td><td>PC와 모바일(375×812) 화면이 원본과 같음. Wing 파일 변경 0건</td></tr>
+<tr><td>내부 객체 확보</td><td class="c"><span class="pill ok">확인</span></td><td>renderer, scene, camera, controls, 메인 루프, composer, Sky 확보 로그</td></tr>
+<tr><td>VR 진입과 양안 렌더</td><td class="c"><span class="pill ok">확인</span></td><td>양안 화면 캡처. Wing의 코너 투시 위치(−54.0, 22.5, 61.3)로 이동</td></tr>
+<tr><td>Wing 기능 실행 → XR 반영</td><td class="c"><span class="pill ok">확인</span></td><td>패널에서 내부 보기, 외장 벽돌, 렌더 모드, 석양 실행. 내부 진입 시 눈높이 1.7m 위치(−11.8, 1.7, −10.9)로 이동</td></tr>
+<tr><td>메뉴 자동 수집</td><td class="c"><span class="pill ok">확인</span></td><td>외부 9개 그룹(외부 디자인 64개 항목 포함), 내부 23개 항목. 층 칩, 색상 견본, 날짜와 시각 입력은 아직 빠짐(P3)</td></tr>
+<tr><td>렌더 모드 후처리 우회</td><td class="c"><span class="pill ok">확인</span></td><td>composer 대신 직접 렌더. 하늘과 톤매핑은 유지</td></tr>
+<tr><td>패스스루 피규어</td><td class="c"><span class="pill ok">확인</span></td><td>r128 양안 절두체 오류를 발견해 보정. 디오라마 자르기, 외장 변경 즉시 반영</td></tr>
+<tr><td>핸드 트래킹</td><td class="c"><span class="pill warn">부분</span></td><td>손 25관절 추적, 핀치로 selectstart 발생. selectend는 에뮬레이터에서 확인 못함</td></tr>
+<tr><td>그리기 호출</td><td class="c"><span class="pill warn">부분</span></td><td>병합 프록시로 VR 6,724 → 662회(병합 3,355개 메시 → 112개, 15ms). 권장 200회 미만은 아직 미달</td></tr>
+<tr><td>퀘스트 3 실기기</td><td class="c"><span class="pill todo">미확인</span></td><td>기기 미연결. P1 첫 과제</td></tr>
+<tr><td>비전 프로</td><td class="c"><span class="pill todo">미확인</span></td><td>P8</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="matrix">
+<h2>7. 기능 지원 범위</h2>
+<p>Wing의 모든 기능을 XR에서 쓸 수 있게 하되, Jack의 요청대로 XR에서는 "완성된 조합을 골라 보는 것"이 중심입니다. 건물 치수를 바꾸는 매스 조정은 XR 메뉴에서 기본으로 숨기고 설정에서 켤 수 있게 합니다.</p>
+<div class="tbl"><table>
+<thead><tr><th>Wing 기능</th><th>PC, 모바일</th><th>퀘스트 VR</th><th>퀘스트 피규어</th><th>비전 프로</th><th>XR 구현</th></tr></thead>
+<tbody>
+<tr><td>시점 프리셋 9종</td><td class="c">원본</td><td class="c">지원</td><td class="c">해당 없음</td><td class="c">지원</td><td>패널 → 원본 버튼, rig 이동(페이드 전환)</td></tr>
+<tr><td>내부 보기, 층 이동</td><td class="c">원본</td><td class="c">지원</td><td class="c">층 강조</td><td class="c">지원</td><td>층 칩 미러, 층별 바닥 높이로 rig 이동</td></tr>
+<tr><td>내부 표시 토글 8종</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>패널 미러. DOM 라벨은 3D 라벨로 대체(P3)</td></tr>
+<tr><td>층 단면, 종단면</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>패널 미러. 원본 클리핑 평면 유지</td></tr>
+<tr><td>걷기와 충돌</td><td class="c">원본</td><td class="c">지원</td><td class="c">해당 없음</td><td class="c">지원</td><td>스틱 입력을 원본 걷기 입력으로 넘겨 충돌, 램프, 층 전환 재사용(P4 검증) + 텔레포트</td></tr>
+<tr><td>현황, 신축, 비교</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>패널 미러. 겹쳐 보기 슬라이더는 단계 버튼으로</td></tr>
+<tr><td>스케치와 렌더</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>렌더는 후처리 없이 같은 조명과 하늘</td></tr>
+<tr><td>실사 사진</td><td class="c">원본</td><td class="c">사진 패널</td><td class="c">사진 패널</td><td class="c">사진 패널</td><td><code>window.PH</code> 카탈로그로 공간에 큰 사진 액자 표시(P3)</td></tr>
+<tr><td>빛과 시간, 계절, 날짜</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>패널 미러. 날짜와 시각은 단계 버튼</td></tr>
+<tr><td>주차, 1층 안, 외부 디자인, 창 크기</td><td class="c">원본</td><td class="c">지원</td><td class="c">지원</td><td class="c">지원</td><td>패널 미러. 색상 견본은 색 칩으로</td></tr>
+<tr><td>매스 조정 슬라이더</td><td class="c">원본</td><td class="c">기본 숨김</td><td class="c">기본 숨김</td><td class="c">기본 숨김</td><td>설정에서 켜면 단계 버튼으로 표시</td></tr>
+<tr><td>미니맵, 나침반</td><td class="c">원본</td><td class="c">손목 표시</td><td class="c">해당 없음</td><td class="c">손목 표시</td><td>원본 미니맵 캔버스를 텍스처로 복사(P3)</td></tr>
+<tr><td>화면 이미지 저장</td><td class="c">원본</td><td class="c">헤드셋 캡처</td><td class="c">헤드셋 캡처</td><td class="c">기기 캡처</td><td>XR에서는 기기 자체 캡처 기능 사용</td></tr>
+<tr><td>화면 모드(자동, 모바일, PC)</td><td class="c">원본</td><td class="c">해당 없음</td><td class="c">해당 없음</td><td class="c">해당 없음</td><td>XR 메뉴에서 제외</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="phases">
+<h2>8. 단계별 계획</h2>
+<p>각 단계는 하나의 결과물이고, 끝나면 커밋하고 이 문서의 상태를 고칩니다. 다음 단계는 앞 단계의 완료 조건을 모두 통과해야 시작합니다. 담당은 기본적으로 AI 에이전트이고, 착용 확인처럼 사람만 할 수 있는 일은 따로 적었습니다.</p>
+
+<div class="phase" id="p0"><h3>P0. 기술 스파이크 <span class="pill ok">완료</span></h3>
+<p class="goal">Wing 무수정 구조로 XR 핵심 기능이 가능한지 확인합니다.</p>
+<ul class="chk">
+<li data-done>래퍼와 주입 구조(<code>xr/index.html</code>, <code>xr/kh-xr.js</code>)</li>
+<li data-done>VR 진입, Wing 시점 따라가기, 컨트롤러 이동</li>
+<li data-done>패스스루 피규어(절두체 보정, 디오라마 자르기, 스틱과 두 손 크기 조절)</li>
+<li data-done>Wing 메뉴 공간 패널 미러와 클릭 실행</li>
+<li data-done>병합 프록시 성능 측정</li>
+</ul></div>
+
+<div class="phase" id="p1"><h3>P1. 실기기 기준선 <span class="pill acc">다음</span></h3>
+<p class="goal">퀘스트 3에서 스파이크를 그대로 돌려 실제 수치를 얻고, 개발과 미리보기 경로를 고정합니다.</p>
+<ul class="chk">
+<li>퀘스트 3 USB 연결, <code>adb reverse tcp:8790 tcp:8790</code>로 <code>http://localhost:8790/xr/</code> 열기(보안 컨텍스트 확보)</li>
+<li>VR과 피규어 진입 성공, 컨트롤러와 핸드 입력 동작 확인</li>
+<li>외부, 내부, 렌더 모드 각 30초 프레임 시간 기록(OVR Metrics 또는 <code>performance.now</code> 로그)</li>
+<li>Quest 브라우저에서 XR 중 window rAF 동작 확인(Wing 루프가 XR 프레임에서만 도는지)</li>
+<li>미리보기 배포 경로 확정(13장 결정 1)</li>
+</ul>
+<p class="small">완료 조건: 위 다섯 항목 결과를 14장에 숫자로 기록. 사람 확인: Jack 착용 5분, 멀미와 크기감 메모.</p></div>
+
+<div class="phase" id="p2"><h3>P2. XR 코어 안정화 <span class="pill todo">대기</span></h3>
+<p class="goal">Wing이 파일을 바꿔도 깨지지 않고, 실패하면 원본 화면은 그대로 남게 합니다.</p>
+<ul class="chk">
+<li>주입 위치를 찾지 못하면 원본을 그대로 띄우고 XR 버튼만 숨김(현재는 오류 문구)</li>
+<li>세션 진입과 종료 10회 반복 후 PC 화면 상태(카메라, 배경, 표시 상태) 완전 복원</li>
+<li>자동 스모크 테스트 <code>xr/tests/smoke.mjs</code>: 원본 최신본 로드, 후킹 5종 확보, 에뮬레이터 VR과 AR 진입, 패널 그룹 수, 콘솔 오류 0 확인</li>
+<li>Wing <code>main</code>이 바뀌면 스모크 테스트를 돌리는 절차를 12장에 기록(필요하면 GitHub Actions 무료 범위에서 자동화)</li>
+<li>오류 로그를 패널 하단에 표시하는 디버그 모드 <code>?debug=1</code></li>
+</ul></div>
+
+<div class="phase" id="p3"><h3>P3. 공간 UI <span class="pill todo">대기</span></h3>
+<p class="goal">Wing의 모든 메뉴를 XR에서 읽기 쉽고 누르기 쉽게 만듭니다.</p>
+<ul class="chk">
+<li>탭 구성 확정: 시점, 층, 외관, 내부, 빛과 시간, 표시, 사진, 설정. Wing 그룹 이름을 탭에 매핑하는 표를 코드에 두고, 매핑에 없는 새 그룹은 "기타" 탭에 자동 추가</li>
+<li>누락 컨트롤 수집: 층 칩 <code>#floorChips</code>, 색상 견본, 날짜와 시각 입력, 겹쳐 보기 단계</li>
+<li>글자 품질: 패널 캔버스 2배 해상도, 1m 거리에서 글자 높이 1.5cm 이상, 한글 글꼴 지정</li>
+<li>현재 선택 상태 강조(라디오와 토글), 실행 중 표시</li>
+<li>패널 위치: 왼손에 붙이기와 공간에 고정 전환, 손목 미니 메뉴(피규어 전용)</li>
+<li>3D 라벨: 층 이름과 면적 라벨을 XR에서 보이게(방법은 13장 결정 3)</li>
+<li>실사 사진 패널: <code>window.PH.man</code> 카탈로그로 현재 시안과 층의 사진을 큰 액자로 표시</li>
+</ul></div>
+
+<div class="phase" id="p4"><h3>P4. VR 이동과 편안함 <span class="pill todo">대기</span></h3>
+<p class="goal">실제 크기로 건물 안팎을 편하게 돌아다닙니다.</p>
+<ul class="chk">
+<li>텔레포트 포물선과 착지 표시, 바닥이 아닌 곳은 불가 표시</li>
+<li>스틱 걷기를 Wing 걷기 입력으로 넘겨 벽, 기둥, 램프 충돌과 층 전환을 재사용(키 이벤트 합성 방식 검증). 안 되면 자체 레이캐스트 충돌</li>
+<li>시점 프리셋과 층 이동은 짧은 페이드로 전환</li>
+<li>편안함 설정: 스냅 회전(기본 30°)과 부드러운 회전, 이동 중 시야 가장자리 어둡게</li>
+<li>바닥 높이 일치: 실제 바닥과 가상 바닥 차이 5cm 이내</li>
+</ul></div>
+
+<div class="phase" id="p5"><h3>P5. 패스스루 피규어 <span class="pill todo">대기</span></h3>
+<p class="goal">책상 위 모형을 자연스럽게 놓고 돌려 보고, 그 안으로 들어갑니다.</p>
+<ul class="chk">
+<li>평면 인식으로 책상이나 바닥 위에 배치. 평면이 없으면 손 앞 0.5m에 띄움</li>
+<li>두 손 그립으로 크기와 회전, 한 손 그립으로 이동. 크기 범위 1:20에서 1:1000, 배율 칩 표시</li>
+<li>범위 선택: 건물만, 건물과 블록(기본 45m), 미성아파트 포함</li>
+<li>모형 아래 받침 원판과 그림자</li>
+<li>앵커로 다음 접속 때 같은 자리에 복원</li>
+<li>"안으로 들어가기": 같은 세션에서 손으로 가리킨 지점으로 1:1 전환(주변을 불투명 환경으로 채움), "피규어로 돌아가기"</li>
+</ul></div>
+
+<div class="phase" id="p6"><h3>P6. 성능 <span class="pill todo">대기</span></h3>
+<p class="goal">퀘스트 3에서 모든 모드가 72fps를 유지합니다.</p>
+<ul class="chk">
+<li>비슷한 재질(같은 종류, 색, 맵, 투명도) 묶기로 그리기 호출 200회 미만 목표</li>
+<li>그림자 맵 해상도와 범위를 XR용으로 조정, 피규어에서는 받침 그림자만</li>
+<li>프레임버퍼 배율과 고정 포비에이션 조정(r128 지원 범위 확인)</li>
+<li>렌더 모드의 환경맵, 야간 조명 비용 측정과 상한 설정</li>
+<li>10분 연속 사용 메모리 측정, 원본 재생성 반복 시 누수 없음</li>
+</ul></div>
+
+<div class="phase" id="p7"><h3>P7. 지니 모델 통합 대응 <span class="pill todo">대기</span></h3>
+<p class="goal">지니 모델이 Wing 뷰어에 들어온 뒤에도 XR 품질과 성능을 유지합니다.</p>
+<ul class="chk">
+<li>모델 규격서 전달(10장): 미터 단위, 재질 수 제한, 층과 부위별 병합, KTX2 텍스처, 조명 베이크</li>
+<li>Wing 통합본으로 스모크 테스트와 성능 재측정</li>
+<li>모델 로딩 중 XR 진입 시 대기 표시</li>
+</ul></div>
+
+<div class="phase" id="p8"><h3>P8. 비전 프로 확장 <span class="pill todo">대기</span></h3>
+<p class="goal">같은 주소에서 비전 프로 몰입 VR을 지원합니다.</p>
+<ul class="chk">
+<li><code>immersive-vr</code> 진입, 시선과 핀치(<code>transient-pointer</code>)로 패널 조작</li>
+<li>피규어는 VR 안 가상 테이블 위에 표시(비전 프로 Safari는 패스스루 WebXR 미지원)</li>
+<li>(검토) Safari <code>&lt;model&gt;</code> 요소로 USDZ 조합을 실제 방에 꺼내 보기</li>
+</ul></div>
+
+<div class="phase" id="p9"><h3>P9. 출시 <span class="pill todo">대기</span></h3>
+<p class="goal">검토를 거쳐 Wing 저장소 <code>main</code>에 합칩니다.</p>
+<ul class="chk">
+<li>미리보기 주소 배포 → Jack 확인(데스크톱, 모바일, 퀘스트)</li>
+<li>Jack 승인 후 <code>feature/webxr</code> 푸시와 PR 생성, Wing 리뷰 요청</li>
+<li>Wing에게 선택 통합안 제안: 기존 주소에 스크립트 한 줄, 대시보드 3D 탭에 "VR로 보기" 링크</li>
+<li>merge 후 실제 Pages 주소에서 최종 확인</li>
+</ul></div>
+</section>
+
+<section id="quality">
+<h2>9. 품질 체크리스트</h2>
+<p>출시(P9) 전에 모든 항목을 통과해야 합니다. 측정값은 14장에 남깁니다.</p>
+<div class="tbl"><table>
+<thead><tr><th>번호</th><th>분류</th><th>기준</th><th>측정 방법</th></tr></thead>
+<tbody>
+<tr><td>Q1</td><td>무침습</td><td>Wing 파일 변경 0건, <code>xr/</code> 밖 변경 0건</td><td><code>git diff origin/main --stat</code></td></tr>
+<tr><td>Q2</td><td>무침습</td><td>PC와 모바일에서 래퍼 화면이 원본과 같음</td><td>같은 크기 스크린샷 비교</td></tr>
+<tr><td>Q3</td><td>기능</td><td>7장의 모든 항목을 XR에서 실행 가능, 결과가 원본과 같음</td><td>항목별 실행표</td></tr>
+<tr><td>Q4</td><td>기능</td><td>Wing에 새 버튼이 생기면 XR 메뉴에 자동 표시</td><td>스모크 테스트에서 가짜 버튼 주입 확인</td></tr>
+<tr><td>Q5</td><td>성능</td><td>퀘스트 3에서 외부, 내부, 렌더, 피규어 각 30초간 72fps 유지(프레임 13.8ms 이하 95% 이상)</td><td>OVR Metrics 또는 프레임 로그</td></tr>
+<tr><td>Q6</td><td>성능</td><td>그리기 호출 200회 미만(상한 400회), 삼각형 150만 미만</td><td><code>renderer.info</code></td></tr>
+<tr><td>Q7</td><td>성능</td><td>버튼을 누르고 XR 화면이 뜨기까지 3초 이내</td><td>시간 로그</td></tr>
+<tr><td>Q8</td><td>편안함</td><td>시점 전환 페이드, 스냅 회전 기본, 바닥 높이 오차 5cm 이내, 수평 유지</td><td>Jack 착용 확인</td></tr>
+<tr><td>Q9</td><td>시각</td><td>1:1 크기 오차 1% 이내(문 높이 2.1m 기준), 피규어 배율 칩과 실제 크기 일치</td><td>헤드셋 안 실측</td></tr>
+<tr><td>Q10</td><td>가독성</td><td>패널 글자 1m 거리 높이 1.5cm 이상, 대비 4.5:1 이상</td><td>착용 확인</td></tr>
+<tr><td>Q11</td><td>입력</td><td>컨트롤러와 핸드 모두 모든 기능 실행, 손바닥 핀치 미사용</td><td>입력별 실행표</td></tr>
+<tr><td>Q12</td><td>호환</td><td>맥과 윈도우의 Chrome, Edge, Safari, Firefox 최신판, iOS Safari, Android Chrome에서 원본과 같은 동작, XR 버튼은 지원 기기에서만</td><td>브라우저별 확인표</td></tr>
+<tr><td>Q13</td><td>안정성</td><td>진입과 종료 10회 반복 후 정상, 콘솔 오류 0, 10분 사용 중 메모리 급증 없음</td><td>스모크 테스트, 원격 디버깅</td></tr>
+<tr><td>Q14</td><td>복구</td><td>XR 계층이 실패해도 원본 3D는 정상 동작</td><td>주입 실패 강제 시험</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="team">
+<h2>10. 협업 약속</h2>
+<div class="grid3">
+<div class="card"><h4>Wing</h4>
+<p><b>필수 요청 없음.</b> 지금처럼 작업하시면 됩니다.</p>
+<p class="small">선택 요청(P9에 제안): 기존 주소 통합용 스크립트 한 줄, 대시보드 3D 탭의 "VR로 보기" 링크, 3D 라벨 위치 노출(<code>window.CH</code>에 추가), 큰 구조 변경 전 알림.</p></div>
+<div class="card"><h4>지니</h4>
+<p>모델은 Wing 뷰어로 들어가므로 XR용 별도 작업은 없습니다. 다만 퀘스트 성능을 위해 아래 규격을 지켜 주세요.</p>
+<p class="small">GLB, 미터 단위, Y축 위. 재질은 건물 전체 30종 이내. 같은 재질 메시는 층별로 합침. 텍스처는 KTX2(2048 이하). 조명은 베이크. 조합 요소 이름 규칙(<code>EXT_A</code>, <code>INT_cafe_A</code> 등).</p></div>
+<div class="card"><h4>Jack</h4>
+<p>퀘스트 착용 확인(P1, P4, P5, P9), 13장 결정, 커밋과 PR 승인.</p>
+<p class="small">AI 에이전트는 착용감, 멀미, 화질을 판단할 수 없습니다.</p></div>
+</div>
+</section>
+
+<section id="risk">
+<h2>11. 위험과 대응</h2>
+<div class="tbl"><table>
+<thead><tr><th>위험</th><th>가능성</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td>퀘스트에서 프레임 부족(그리기 호출 과다)</td><td class="c"><span class="pill bad">높음</span></td><td>P1에서 즉시 측정. 병합 강화, 범위 자르기, 그림자와 해상도 조정. 그래도 부족하면 Wing에게 three 업그레이드(multiview) 검토 요청</td></tr>
+<tr><td>Wing 구조 변경으로 주입 실패</td><td class="c"><span class="pill warn">중간</span></td><td>주입 위치를 "WebGLRenderer를 처음 만드는 인라인 스크립트"로 일반화해 둠. 스모크 테스트로 조기 발견, 실패 시 원본 그대로 표시</td></tr>
+<tr><td>Wing이 three.js 버전을 올림</td><td class="c"><span class="pill warn">중간</span></td><td>XR 계층은 기능 감지로 작성. 업그레이드되면 multiview 등 이득이 생기므로 P6에서 재평가</td></tr>
+<tr><td>퀘스트 브라우저가 XR 중 window rAF를 멈춤</td><td class="c"><span class="pill warn">중간</span></td><td>Wing 루프를 XR 프레임에서 실행하는 구조라 영향 없음(설계). 다른 rAF 사용처는 P1에서 확인</td></tr>
+<tr><td>GitHub Pages에서 브랜치 미리보기 불가</td><td class="c"><span class="pill acc">확정</span></td><td>13장 결정 1</td></tr>
+<tr><td>비전 프로 패스스루 WebXR 미지원</td><td class="c"><span class="pill acc">확정</span></td><td>VR 안 가상 테이블로 대체, <code>&lt;model&gt;</code> 요소 검토</td></tr>
+<tr><td>DOM 라벨이 XR에 안 보임</td><td class="c"><span class="pill warn">중간</span></td><td>P3에서 3D 라벨 대체. Wing 협조 시 정확도 상승</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="agent">
+<h2>12. 에이전트 작업 규칙</h2>
+<h3>경로</h3>
+<div class="tbl"><table>
+<tbody>
+<tr><th>저장소</th><td><code>wing-kim/all</code> (원격 <code>origin</code>)</td></tr>
+<tr><th>작업 폴더</th><td><code>/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower/.worktrees/webxr</code> (git worktree, 브랜치 <code>feature/webxr</code>, 기준 <code>origin/main</code>)</td></tr>
+<tr><th>쓰기 허용</th><td><code>xr/</code> 폴더만. <code>new/</code>, <code>newbuild/</code>, <code>test/</code>, <code>bluepica/</code>는 읽기만</td></tr>
+<tr><th>건드리지 않음</th><td>상위 체크아웃의 <code>codex/tower-360-validation</code> 브랜치와 그 파일(이전 실사3D 작업, 이번 범위 아님)</td></tr>
+<tr><th>핵심 파일</th><td><code>xr/index.html</code> 래퍼, <code>xr/kh-xr.js</code> XR 계층, <code>xr/kh-xr-emu.js</code> 에뮬레이터 설치, <code>xr/vendor/</code> 고정 라이브러리, <code>xr/docs/plan.html</code> 이 문서</td></tr>
+</tbody></table></div>
+<h3>실행과 시험</h3>
+<pre>cd "/Users/jaehwak/Documents/Kapehorn/etc/kapehorn tower/.worktrees/webxr"
+python3 -m http.server 8790 --bind 127.0.0.1
+# PC 확인            http://localhost:8790/xr/
+# 퀘스트 흉내(개발용) http://localhost:8790/xr/?emu=1        양안 보기: &amp;stereo=1
+# 최적화 끄기         http://localhost:8790/xr/?emu=1&amp;noopt=1
+# 콘솔 도구           KHXR.enter('vr' | 'ar'), KHXR.collect(), KHXR.press(el), KHXR.log, KHEMU(에뮬레이터 장치)
+# 퀘스트 실기기(USB)  adb는 Unity에 포함된 것을 사용
+"/Applications/Unity/Hub/Editor/6000.3.13f1/PlaybackEngines/AndroidPlayer/SDK/platform-tools/adb" reverse tcp:8790 tcp:8790
+# 그다음 퀘스트 브라우저에서 http://localhost:8790/xr/</pre>
+<h3>규칙</h3>
+<ol class="steps">
+<li>작업 전에 <code>git fetch origin</code>으로 Wing의 최신 <code>main</code>을 확인하고, 바뀌었으면 스모크 테스트부터 돌립니다.</li>
+<li>단계 하나를 끝낼 때마다 한국어 메시지로 커밋하고, 8장 상태와 14장 기록을 고칩니다.</li>
+<li>푸시, PR, merge는 미리보기를 Jack이 확인한 뒤에만 합니다. <code>main</code>에 직접 커밋하지 않습니다.</li>
+<li>유료 도구, 유료 에셋, 유료 호스팅을 쓰지 않습니다.</li>
+<li>확인하지 못한 내용은 "미확인"으로 적고 추측으로 채우지 않습니다.</li>
+<li>Codex와 같은 파일을 동시에 고치지 않습니다.</li>
+</ol>
+</section>
+
+<section id="open">
+<h2>13. 결정이 필요한 항목</h2>
+<div class="tbl"><table>
+<thead><tr><th>번호</th><th>질문</th><th>제안</th><th>필요 시점</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>merge 전 미리보기를 어디에 올릴까요?</td><td>Jack 계정의 검토용 공개 저장소 Pages(예전 검토 사이트 방식). 퀘스트에서 바로 열 수 있고 무료입니다.</td><td>P1</td></tr>
+<tr><td>2</td><td>매스 조정 슬라이더를 XR 메뉴에 둘까요?</td><td>기본 숨김, 설정에서 켜기</td><td>P3</td></tr>
+<tr><td>3</td><td>3D 라벨을 어떻게 만들까요?</td><td>먼저 XR 쪽에서 층 높이로 층 라벨만 자동 생성, 정밀 라벨은 Wing 협조 시</td><td>P3</td></tr>
+<tr><td>4</td><td>Wing에게 선택 통합안(같은 주소)을 언제 제안할까요?</td><td>P9 PR과 함께</td><td>P9</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="log">
+<h2>14. 진행 기록</h2>
+<div class="tbl"><table>
+<thead><tr><th>날짜</th><th>단계</th><th>내용</th><th>커밋</th></tr></thead>
+<tbody>
+<tr><td>2026-10-30</td><td>P0</td><td>Wing 작업물 전수 조사. 래퍼와 주입 구조, VR, 피규어, 패널 미러, 병합 프록시 구현. 에뮬레이터 검증(6장). r128 양안 절두체 컬링 오류 발견과 보정. 그리기 호출 6,724 → 662회</td><td><code>b521cee</code></td></tr>
+<tr><td>2026-10-30</td><td>문서</td><td>계획서 v1.0 작성</td><td>(이 커밋)</td></tr>
+</tbody></table></div>
+</section>
+</main>
+</div>
