@@ -74,7 +74,7 @@ try {
     await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support, { timeout: 30000 });
     const r = await p.evaluate(async () => {
       const m = () => Object.assign({}, KHXR.renderer.info.memory);
-      await KHXRLayer.enter('vr'); let s = KHXR.renderer.xr.getSession(); for (let k = 0; k < 10; k++) await new Promise(q => s.requestAnimationFrame(() => q())); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300));
+      let s; for (const m of ['vr', 'fig']) { await KHXRLayer.enter(m); s = KHXR.renderer.xr.getSession(); for (let k = 0; k < 10; k++) await new Promise(q => s.requestAnimationFrame(() => q())); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); }   // 준비: 두 모드를 한 번씩 그려 첫 업로드를 기준선에 포함
       const a = m();
       for (let i = 0; i < 10; i++) { await KHXRLayer.enter(i % 2 ? 'fig' : 'vr'); s = KHXR.renderer.xr.getSession(); for (let k = 0; k < 10; k++) await new Promise(q => s.requestAnimationFrame(() => q())); await KHXRLayer.exit(); await new Promise(r => setTimeout(r, 300)); }
       const b = m(); return { before: a, after: b, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null };

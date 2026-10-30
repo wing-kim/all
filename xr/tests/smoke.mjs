@@ -49,6 +49,20 @@ try {
   const up = await ev(() => ({ key: KHXR.LEVELS[KHXR.I.li].key, rigY: KHXRLayer.rig.position.y, floor: KHXR.floorTop(KHXR.LEVELS[KHXR.I.li]) }));
   ok('위층 이동과 바닥 높이 일치', up.key !== '1F' && Math.abs(up.rigY - up.floor) < 0.05, up);
   await shot('03-vr-int');
+  // 밖으로 나가기: 땅 위에서 건물 정면을 바라보고, 건물까지 시야가 트여 있어야 함
+  const out1 = await ev(async () => {
+    KHXRLayer.goOutside(); await new Promise(r => setTimeout(r, 900));
+    const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 5; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
+    const eye = KHXRLayer.xrCam.getWorldPosition(new THREE.Vector3()), box = new THREE.Box3().setFromObject(KHXR.bld), c = box.getCenter(new THREE.Vector3());
+    const look = new THREE.Vector3(); KHXRLayer.xrCam.getWorldDirection(look); look.y = 0; look.normalize();
+    const to = new THREE.Vector3(c.x - eye.x, 0, c.z - eye.z).normalize();
+    const near = box.clone().expandByScalar(1.5), r = new THREE.Raycaster(), objs = KHXRLayer.pickables();
+    const blocked = [3, 12, 24].filter(y => { const t = new THREE.Vector3(c.x, y, c.z), v = t.clone().sub(eye), L = v.length(); r.set(eye, v.normalize()); r.far = L; const h = r.intersectObjects(objs, true).find(h => KHXRLayer.visibleForPick(h.object)); return h && !near.containsPoint(h.point); }).length;
+    return { inside: KHXR.I.on, eye: eye.toArray().map(v => +v.toFixed(1)), facing: +look.dot(to).toFixed(2), blocked };
+  });
+  ok('밖으로: 건물 정면이 보이는 자리', !out1.inside && out1.eye[1] > 1 && out1.eye[1] < 2.5 && out1.facing > 0.9 && out1.blocked === 0, out1);
+  await ev(() => KHXRLayer.goInside()); await frames(40);
+  await ev(() => KHXRLayer.stepFloor(1)); await frames(40);
 
   // 걷기: 원본 충돌 판정으로 벽을 통과하지 않음
   const walk = await ev(async () => {
@@ -82,6 +96,24 @@ try {
   const menu = await ev(() => ({ tabs: KHXRLayer.ui.tabs(), cells: KHXRLayer.ui.cells().length }));
   ok('메뉴 열림과 탭', menu.cells > 10 && menu.tabs.length >= 7, menu);
   await shot('04-menu');
+  // 순간이동 뒤에도 실제 컨트롤러 레이가 메뉴에 닿아 눌리는지(실기기에서 레이가 안 닿던 문제의 재발 방지)
+  const rayPress = await ev(async () => {
+    const s = KHXR.renderer.xr.getSession(), f = () => new Promise(r => s.requestAnimationFrame(() => r()));
+    const panel = KHXR.scene.getObjectByName('khxr-menu'), cell = KHXRLayer.ui.cells().find(c => c.key === 'tab:2');
+    if (!panel || !cell) return { ok: false, why: 'no panel/cell' };
+    panel.updateMatrix();
+    const tgt = new THREE.Vector3((cell.x + cell.w / 2) / 1024 - 0.5, 0.75 * (0.5 - (cell.y + cell.h / 2) / 768), 0).applyMatrix4(panel.matrix);   // 리그 기준 좌표
+    const c = KHEMU.controllers.right, from = new THREE.Vector3(0.15, 1.3, -0.1);
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), tgt.clone().sub(from).normalize());
+    c.position.set(from.x, from.y, from.z); c.quaternion.set(q.x, q.y, q.z, q.w);
+    for (let i = 0; i < 3; i++) await f();
+    const hover = !!KHXR.renderer.xr.getController(1).userData.uiHit;
+    c.updateButtonValue('trigger', 1); for (let i = 0; i < 3; i++) await f();
+    c.updateButtonValue('trigger', 0); for (let i = 0; i < 3; i++) await f();
+    c.quaternion.set(0, 0, 0, 1);
+    return { ok: true, hover, now: KHXRLayer.ui.cells().find(x => x.key === 'tab:2').on() };
+  });
+  ok('순간이동 뒤 레이로 메뉴 누르기', rayPress.ok && rayPress.hover && rayPress.now, rayPress);
   // 외관 탭에서 시안 하나 고르기 → 원본 상태 변화
   const pick = await ev(async () => {
     KHXRLayer.ui.setTab(1); await new Promise(r => setTimeout(r, 50));

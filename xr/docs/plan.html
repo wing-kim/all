@@ -109,6 +109,8 @@ ol.steps li,ul.plain li{margin:4px 0}
 .chk li:first-child{border-top:0}
 .chk li::before{content:"";position:absolute;left:2px;top:9px;width:13px;height:13px;border:1.5px solid var(--muted);border-radius:3px}
 .chk li[data-done]::before{background:var(--ok);border-color:var(--ok)}
+.chk li[data-dev]::before{border-color:var(--warn,#c98a1a);border-style:dashed}
+.chk li[data-dev]::after{content:"실기기 확인 대기";margin-left:8px;font-size:12px;color:var(--warn,#c98a1a)}
 .chk li[data-done]::after{content:"";position:absolute;left:6px;top:11px;width:4px;height:7px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .small{font-size:13px;color:var(--muted)}
 @media (max-width:640px){.xpanel,.wrist{font-size:9px;width:40%}.callout{display:none}}
@@ -147,6 +149,7 @@ html{scroll-behavior:smooth}
   <a href="#preview">12-1. 미리보기 환경</a>
   <a href="#open">13. 결정이 필요한 항목</a>
   <a href="#review">13-1. 착수 전 검토</a>
+  <a href="#legacy-xr">13-2. 예전 실사 3D의 XR</a>
   <a href="#log">14. 진행 기록</a>
 </nav>
 
@@ -162,7 +165,7 @@ html{scroll-behavior:smooth}
 <section id="use">
 <h2>0. 이 문서 쓰는 법</h2>
 <p>이 문서는 케이프혼타워 WebXR 작업의 기준 문서입니다. 사람과 AI 에이전트 모두 작업을 시작하기 전에 이 문서를 처음부터 읽고, 작업을 마치면 8장의 상태 표시와 14장의 진행 기록을 고칩니다. 이 문서와 코드가 다르면 코드를 직접 확인하고, 차이를 진행 기록에 남긴 뒤 문서를 고칩니다.</p>
-<div class="note">상태 표시는 네 가지입니다. <span class="pill ok">완료</span> <span class="pill acc">진행 중</span> <span class="pill todo">대기</span> <span class="pill bad">막힘</span>. 체크리스트 항목은 끝나면 <code>&lt;li data-done&gt;</code>로 바꿉니다.</div>
+<div class="note">상태 표시는 네 가지입니다. <span class="pill ok">완료</span> <span class="pill acc">진행 중</span> <span class="pill todo">대기</span> <span class="pill bad">막힘</span>. 체크리스트 항목은 끝나면 <code>&lt;li data-done&gt;</code>로 바꾸고, 에뮬레이터로는 끝났지만 퀘스트 착용 확인이 남은 항목은 <code>&lt;li data-dev&gt;</code>(실기기 확인 대기)로 둡니다. 진행하며 바뀐 계획은 항목 안에 "계획 변경"으로 적었습니다.</div>
 </section>
 
 <section id="summary">
@@ -175,7 +178,7 @@ html{scroll-behavior:smooth}
 </div>
 <h3>현재 위치 (2026-10-30)</h3>
 <p><span class="pill ok">P1에서 P6, P8 완료</span> <span class="pill warn">P7 후순위</span> <span class="pill todo">P9 대기</span></p>
-<p>퀘스트에서 바로 써 볼 수 있는 미리보기: <a href="https://evyfjae.github.io/kapehorn-preview/feature-webxr/new/3d-model.html">evyfjae.github.io/kapehorn-preview/feature-webxr/new/3d-model.html</a>. 자동 시험은 기능 24/24, 호환 6/6 통과입니다. 실기기 측정이 필요한 항목은 9-2장 대기열에 있습니다. 지니 모델은 아직 들어오지 않아 P7을 미뤘고, 모델 규격서를 준비해 두었습니다. P9(main 병합)는 Jack의 실기기 확인 뒤 진행합니다.</p>
+<p>퀘스트에서 바로 써 볼 수 있는 미리보기: <a href="https://evyfjae.github.io/kapehorn-preview/feature-webxr/new/3d-model.html">evyfjae.github.io/kapehorn-preview/feature-webxr/new/3d-model.html</a>. 자동 시험은 기능 26/26, 호환 6/6 통과입니다. 10-30 첫 착용 확인에서 나온 메뉴 레이 문제와 밖으로 나가기 위치를 고쳤습니다(1030.p2). 실기기 측정이 필요한 항목은 9-2장 대기열에 있습니다. 지니 모델은 아직 들어오지 않아 P7을 미뤘고, 모델 규격서를 준비해 두었습니다. P9(main 병합)는 Jack의 실기기 확인 뒤 진행합니다.</p>
 </section>
 
 <section id="target">
@@ -469,67 +472,73 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <div class="phase" id="p1"><h3>P1. 통합 기반과 실기기 기준선 <span class="pill ok">완료</span></h3>
 <p class="goal">Wing 체험판과 같은 기능을 원본 한 파일에서 더 부드럽게 동작시키고, 실기기 수치를 얻습니다.</p>
 <ul class="chk">
-<li><code>new/3d-model.html</code>에 연결 코드 3곳(연결 통로, 루프 조건, 스크립트 태그) 추가(<code>[XR]</code> 표시)</li>
-<li><code>kh-xr.js</code>를 연결 통로 우선 구조로 개편, 통로가 없으면 후킹으로 대체. 전역 이름 충돌 정리(우리 내부 객체는 <code>window.KHXRLayer</code>)</li>
-<li>Wing 체험판 기능 이식: 트리거 순간이동(누르고 놓기), A/X와 B/Y 층 이동, 그립 밖으로, 스틱 걷기와 회전, 왼손 안내</li>
-<li>병합 프록시와 정적 그림자 적용</li>
-<li>몰입 모드를 패스스루 가능 세션 안에서 불투명 배경으로 표현해도 품질과 성능이 괜찮은지 실기기 확인(5장 세션 종류)</li>
-<li>미리보기 배포(<code>tools/publish.sh</code>, 12-1장)</li>
-<li>퀘스트 3 실측: Wing 체험판과 우리 버전을 같은 위치(외부 코너, 1F 내부)에서 30초씩 프레임 시간 비교. 측정은 원격 디버깅 프레임 로그 또는 OVR Metrics</li>
+<li data-done><code>new/3d-model.html</code>에 연결 코드 4곳 추가(<code>[XR]</code> 표시). <span class="small">계획 변경: 패스스루용 렌더러 <code>alpha</code>가 필요해 3곳에서 4곳으로. 10-30 연결 통로에 <code>bld</code>(우리 건물 그룹) 추가</span></li>
+<li data-done><code>kh-xr.js</code>를 연결 통로 우선 구조로 개편, 통로가 없으면 후킹으로 대체. 전역 이름은 <code>window.KHXRLayer</code></li>
+<li data-done>Wing 체험판 기능 이식: 트리거 순간이동, A/X와 B/Y 층 이동, 그립 밖으로, 스틱 걷기와 회전, 왼손 안내</li>
+<li data-done>병합 프록시와 정적 그림자 적용</li>
+<li data-dev>몰입 모드를 패스스루 가능 세션 안에서 불투명 배경으로 그려도 품질과 성능이 괜찮은지 실기기 확인</li>
+<li data-done>미리보기 배포(<code>tools/publish.sh</code>, 12-1장)</li>
+<li data-dev>퀘스트 3 실측: Wing 체험판과 같은 위치에서 프레임 시간 비교</li>
 </ul>
 <p class="small">완료 조건: 체험판의 모든 조작이 같은 주소에서 동작, 우리 버전의 프레임이 체험판보다 안정(수치 기록), 화면 모드 PC와 모바일 변화 없음. 사람 확인: Jack 착용으로 끊김 비교.</p></div>
 
 <div class="phase" id="p2"><h3>P2. 성능 <span class="pill ok">완료</span></h3>
 <p class="goal">퀘스트 3에서 모든 모드가 72fps를 유지합니다.</p>
 <ul class="chk">
-<li>비슷한 재질(같은 종류, 색, 맵, 투명도) 묶기로 그리기 호출 200회 미만 목표(상한 400회)</li>
-<li>그림자: 진입 시 한 번 계산(체험판 방식) 유지, 해상도와 범위를 XR용으로 조정</li>
-<li>프레임버퍼 배율과 고정 포비에이션 조정(r128 지원 범위 확인)</li>
-<li>렌더 모드(환경맵, 야간 조명)와 원경(미성 재건축 66층) 비용 측정, 필요 시 XR에서 거리 기준 숨김</li>
-<li>10분 연속 사용 메모리 측정, 장면 재생성 반복 시 누수 없음</li>
+<li data-done>재질 묶기로 그리기 호출 200회 미만: 외부 196, 내부 140, 피규어 184, 렌더 148</li>
+<li data-done>그림자: 진입과 장면 변경 때만 계산. <span class="small">계획 변경: 해상도와 범위는 Wing 설정 그대로 둠(그리기 호출 예산 안이라 실기기 측정 후 판단)</span></li>
+<li data-done>프레임버퍼 배율(설정 저장)과 고정 포비에이션 0.5 적용</li>
+<li data-done>렌더 모드 비용 측정(148회, 삼각형 17만). <span class="small">계획 변경: 원경 숨김은 예산 안이라 넣지 않음</span></li>
+<li data-done>메모리: 진입과 종료 10회 반복에서 지오메트리 +2, 텍스처 +1(일회성 첫 업로드 제외). <span class="small">계획 변경: 10분 연속 측정은 실기기 대기열로. Wing 원본의 시안 변경 누수는 별도 전달</span></li>
 </ul></div>
 
 <div class="phase" id="p3"><h3>P3. 메뉴와 핸드 UI, 웹 전환 <span class="pill ok">완료</span></h3>
 <p class="goal">7-1장 명세대로 VR 안에서 설정을 바꿔 가며 보고, 웹 화면과 자유롭게 오갑니다.</p>
 <ul class="chk">
-<li>XR 메뉴: 상단 모드 스위치(몰입, 피규어, 웹 화면으로), 탭 6개와 "기타", 사용자 앞 고정, 위치 옮기기</li>
-<li>빠른 막대: 컨트롤러 위, 핸드는 왼손바닥을 돌리면 손목 위에 표시. 버튼 4개</li>
-<li>입력별 배치: 핸드는 0.45m 직접 누르기, 컨트롤러는 1.0m 레이. 22mm와 12mm, 3° 기준. 가리킴과 눌림 표시, 클릭음, 진동</li>
-<li>조합 비교 넘기기(오른쪽 스틱 위아래, 핸드는 빠른 막대)</li>
-<li>웹 화면 전환: 종료 시 마지막 위치와 방향을 웹 카메라로 넘기고(내부면 같은 층), 설정 유지</li>
-<li>누락 컨트롤 수집(층 칩, 색상 견본, 날짜와 시각, 겹쳐 보기 단계), 매스 조정 기본 숨김</li>
-<li>3D 라벨(층 이름과 면적), 실사 사진 액자(<code>window.PH</code>)</li>
-<li>첫 진입 안내 카드(컨트롤러용, 핸드용)</li>
+<li data-done>XR 메뉴: 모드 스위치(몰입, 피규어, 웹 화면으로), 탭 7개(이동, 외관, 실내, 빛과 시간, 보기, 기타, 설정), 그립으로 위치 옮기기</li>
+<li data-done>빠른 막대: 왼쪽 컨트롤러 위, 핸드는 왼손바닥을 돌리면 손목 위</li>
+<li data-done>입력별 배치: 핸드 0.45m 3열 직접 누르기, 컨트롤러 1.0m 레이. 간격 12.3mm, 높이 28.1mm. 가리킴, 클릭음, 진동</li>
+<li data-done>컨트롤러 레이로 메뉴 누르기. <span class="small">10-30 실기기에서 레이가 메뉴에 닿지 않던 문제 수정(순간이동 계산이 광선 길이를 줄여 둔 채 남김). 재발 방지 시험 추가</span></li>
+<li data-done>조합 넘기기(오른쪽 스틱 위아래, 핸드는 빠른 막대)</li>
+<li data-done>웹 화면 전환: 종료 시 같은 층·위치와 설정 유지</li>
+<li data-done>누락 컨트롤 수집: 층 버튼, 색상 견본, 시간대·계절·시각, 겹쳐 보기. 매스 조정 기본 숨김</li>
+<li data-done>피규어 층 이름 라벨, 실사 사진 액자(<code>window.PH</code>). <span class="small">계획 변경: 면적 표기는 원본에 층별 면적 값이 일정하지 않아 보류</span></li>
+<li data-done>첫 진입 안내 카드(컨트롤러용, 핸드용)</li>
+<li data-dev>메뉴 글자 크기, 손 누르기 감각, 빠른 막대 착용 확인</li>
 </ul>
 <p class="small">완료 조건: Q3, Q11, Q16, Q17을 에뮬레이터에서 통과. 착용 확인은 실기기 대기열로.</p></div>
 
 <div class="phase" id="p4"><h3>P4. VR 이동과 편안함 <span class="pill ok">완료</span></h3>
 <p class="goal">실제 크기로 건물 안팎을 편하게 돌아다닙니다.</p>
 <ul class="chk">
-<li>스틱 걷기에 Wing 충돌 판정 재사용(연결 통로에 <code>walkable</code>, 램프 높이 추가): 벽과 기둥 통과 금지, 램프 오르내림, 층 자동 전환</li>
-<li>순간이동 포물선과 착지 표시, 불가 지점 표시</li>
-<li>시점과 층 이동은 짧은 페이드</li>
-<li>편안함 설정: 스냅 회전 30°(기본)와 부드러운 회전, 이동 중 시야 가장자리 어둡게</li>
-<li>바닥 높이 오차 5cm 이내</li>
+<li data-done>스틱 걷기에 Wing 충돌 판정(<code>walkable</code>) 재사용, 벽과 기둥 통과 금지</li>
+<li>램프 오르내림과 층 자동 전환. <span class="small">미구현(층 이동은 버튼과 A/B·X/Y로 대체)</span></li>
+<li data-done>순간이동 포물선과 착지 표시, 불가 지점 빨간색</li>
+<li data-done>건물 밖으로: 압구정로 정면 약 34m, 건물까지 시야가 트인 자리를 골라 정면을 봄. <span class="small">10-30 추가: 예전에는 남쪽 이웃 건물 뒤에 놓이던 문제 수정</span></li>
+<li data-done>시점과 층 이동은 짧은 페이드</li>
+<li data-done>편안함 설정: 30° 끊어 돌기(기본)와 부드럽게 돌기, 이동 중 시야 가장자리 어둡게</li>
+<li data-done>바닥 높이 오차 5cm 이내</li>
+<li data-dev>순간이동 조준감, 걷기 속도, 멀미 착용 확인</li>
 </ul></div>
 
 <div class="phase" id="p5"><h3>P5. 패스스루 피규어 <span class="pill ok">완료</span></h3>
 <p class="goal">책상 위 모형을 놓고 돌려 보고, 그 안으로 들어갑니다.</p>
 <ul class="chk">
-<li>평면 인식으로 책상이나 바닥에 배치, 평면이 없으면 손 앞 0.5m</li>
-<li>두 손 그립 크기와 회전, 한 손 그립 이동. 1:20에서 1:1000, 배율 표시</li>
-<li>범위 선택: 건물만, 건물과 블록(기본 45m), 미성아파트 포함</li>
-<li>받침 원판과 그림자, 앵커로 위치 기억</li>
-<li>"안으로 들어가기": 가리킨 지점으로 같은 세션에서 1:1 전환, "피규어로 돌아가기"</li>
+<li data-done>책상이나 바닥 평면 인식으로 배치, 없으면 눈앞 0.5m <span class="small">(평면 인식 자체는 실기기 확인 대기)</span></li>
+<li data-done>두 손 그립 크기와 회전, 한 손 그립 이동. 1:20에서 1:1000</li>
+<li data-done>범위 선택: 건물만, 건물과 블록(45m), 미성아파트 포함</li>
+<li data-done>받침 원판과 그림자</li>
+<li data-dev>앵커로 지난번 자리 기억(에뮬레이터는 앵커를 지원하지 않아 실기기 확인 대기)</li>
+<li data-done>모형의 한 점을 가리켜 그 층으로 들어가기, 피규어로 돌아가기</li>
 </ul></div>
 
 <div class="phase" id="p6"><h3>P6. 안정화와 호환 점검 <span class="pill ok">완료</span></h3>
 <p class="goal">Wing이 계속 업로드해도 XR이 깨지지 않고, 깨지면 바로 알아챕니다.</p>
 <ul class="chk">
-<li>자동 스모크 테스트 <code>xr/tests/smoke.mjs</code>: 최신 원본 로드, 연결 통로 존재, 에뮬레이터 VR과 AR 진입, 메뉴 그룹 수, 콘솔 오류 0</li>
-<li>연결 줄이 사라진 원본(Wing 업로드로 덮어쓴 경우)에서 후킹 대체 경로가 동작하는지 시험</li>
-<li>세션 진입과 종료 10회 반복 후 화면 상태 완전 복원</li>
-<li>디버그 모드 <code>?xrdebug=1</code>(메뉴 하단 로그)</li>
+<li data-done>자동 스모크 테스트 <code>xr/tests/smoke.mjs</code> 26항목, 호환 시험 <code>compat.mjs</code> 6항목</li>
+<li data-done>연결 줄이 사라진 원본에서 후킹 대체 경로 동작</li>
+<li data-done>세션 진입과 종료 10회 반복 후 화면 상태 복원</li>
+<li data-done>디버그 모드 <code>?xrdebug=1</code></li>
 </ul></div>
 
 <div class="phase" id="p7"><h3>P7. 지니 모델 대응 <span class="pill warn">후순위 (모델 미도착)</span></h3>
@@ -543,9 +552,10 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <div class="phase" id="p8"><h3>P8. 비전 프로 확장 <span class="pill ok">완료</span></h3>
 <p class="goal">같은 주소에서 비전 프로 몰입 VR을 지원합니다.</p>
 <ul class="chk">
-<li><code>immersive-vr</code> 진입, 시선과 핀치로 메뉴 조작</li>
-<li>피규어는 VR 안 가상 테이블 위에 표시(비전 프로 Safari는 패스스루 WebXR 미지원)</li>
-<li>(검토) Safari <code>&lt;model&gt;</code> 요소로 USDZ 조합을 실제 방에 꺼내 보기</li>
+<li data-done><code>immersive-vr</code> 진입(<code>?xrsession=vr</code>), 시선과 핀치로 메뉴 조작(에뮬레이터)</li>
+<li data-done>피규어는 VR 안 가상 방의 탁자 위에 표시</li>
+<li>Safari <code>&lt;model&gt;</code>로 USDZ를 실제 방에 꺼내 보기. <span class="small">계획 변경: USDZ 파일이 필요해 지니 모델 이후로 미룸</span></li>
+<li data-dev>비전 프로 실기기 확인</li>
 </ul></div>
 
 <div class="phase" id="p9"><h3>P9. 병합과 출시 <span class="pill todo">대기</span></h3>
@@ -617,11 +627,11 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <tbody>
 <tr><td>Q1 최소 접점</td><td class="c"><span class="pill ok">통과</span></td><td><code>new/3d-model.html</code> <code>[XR]</code> 4곳(렌더러 alpha, 연결 통로, 루프 조건, 스크립트 태그). <code>new/index.html</code> iframe 속성은 P9에서</td></tr>
 <tr><td>Q2 화면 모드 동일</td><td class="c"><span class="pill ok">통과</span></td><td>원본 대비 다른 화소 스케치 0%, 렌더 0.03%</td></tr>
-<tr><td>Q3, Q4 기능</td><td class="c"><span class="pill ok">통과</span></td><td>스모크 24항목. 메뉴 미러, 시안 변경, 넘기기, 층 이동, 피규어, 웹 복귀</td></tr>
+<tr><td>Q3, Q4 기능</td><td class="c"><span class="pill ok">통과</span></td><td>스모크 26항목(레이로 메뉴 누르기, 밖으로 나가기 시야 포함). 메뉴 미러, 시안 변경, 넘기기, 층 이동, 피규어, 웹 복귀</td></tr>
 <tr><td>Q5 프레임</td><td class="c"><span class="pill todo">실기기</span></td><td>9-2 대기열</td></tr>
 <tr><td>Q6 그리기 호출</td><td class="c"><span class="pill ok">통과</span></td><td>외부 196, 내부 140, 피규어 162, 렌더 146 (양안, 원래 약 6,700). 삼각형 17만</td></tr>
 <tr><td>Q11, Q17 입력과 메뉴 크기</td><td class="c"><span class="pill ok">통과</span></td><td>핸드 메뉴 0.45m, 3열, 간격 12.3mm, 높이 28.1mm</td></tr>
-<tr><td>Q13 안정성</td><td class="c"><span class="pill ok">통과</span></td><td>10회 진입과 종료 후 지오메트리 +44, 텍스처 +17, 콘솔 오류 0</td></tr>
+<tr><td>Q13 안정성</td><td class="c"><span class="pill ok">통과</span></td><td>10회 진입과 종료 후 지오메트리 +2, 텍스처 +1, 콘솔 오류 0(두 모드를 한 번씩 그린 뒤 기준. 첫 피규어 진입의 일회성 업로드 +56은 이후 늘지 않음)</td></tr>
 <tr><td>Q14 복구</td><td class="c"><span class="pill ok">통과</span></td><td>연결 통로 없음: 최소 기능 VR. XR 줄 전부 없음: 원본 정상</td></tr>
 <tr><td>Q16 전환</td><td class="c"><span class="pill ok">통과</span></td><td>몰입, 피규어, 웹 사이 전환. 웹 복귀 시 같은 층과 설정 유지</td></tr>
 <tr><td>Q8, Q9, Q10 편안함, 크기, 가독성</td><td class="c"><span class="pill todo">실기기</span></td><td>9-2 대기열</td></tr>
@@ -633,6 +643,9 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <h2>9-2. 실기기 확인 대기열</h2>
 <p>퀘스트 3을 USB로 연결하거나 Jack이 미리보기 주소로 착용 확인한 결과를 받아 처리합니다.</p>
 <ul class="chk">
+<li data-done>10-30 착용 확인 1차: 메뉴는 뜨지만 컨트롤러 레이가 닿지 않음 → 수정(1030.p2), 밖으로 나가면 건물이 안 보이는 자리 → 압구정로 정면으로 수정</li>
+<li>1030.p2 재확인: 메뉴 탭과 버튼을 레이로 눌러 외관·실내·빛과 시간 바꾸기, 밖으로 나가기 위치</li>
+<li>예전 실사 3D(WebGPU)를 VR로 옮길 수 있는지: 점검 페이지 <code>xr/probe.html</code>의 두 버튼 결과(13-2장)</li>
 <li>프레임: 외부, 내부, 렌더, 피규어 각 30초 72fps 유지, Wing 체험판 대비 끊김</li>
 <li>몰입 모드를 패스스루 가능 세션에서 불투명하게 그릴 때 화질과 경계(문제 시 <code>?xrsession=vr</code> 기본값 전환)</li>
 <li>패스스루 피규어 투명 배경, 받침 그림자, 크기감</li>
@@ -759,6 +772,16 @@ python3 -m http.server 8790 --bind 127.0.0.1
 </tbody></table></div>
 </section>
 
+<section id="legacy-xr">
+<h2>13-2. 예전 실사 3D(kapehorn-3d-preview)의 XR 지원 검토</h2>
+<p>예전 실사 3D(<code>codex/tower-360-validation</code>, 배포 <code>evyfjae/kapehorn-3d-preview</code>)는 three r186 <code>WebGPURenderer</code>로만 그립니다(<code>navigator.gpu.requestAdapter</code>를 직접 호출). three r186의 XR은 WebGPU 백엔드에서 세션 기능 <code>webgpu</code>와 <code>XRGPUBinding</code>을 요구하고, 없으면 WebGL 백엔드로만 XR이 됩니다.</p>
+<table><thead><tr><th>확인</th><th>결과</th></tr></thead><tbody>
+<tr><td>맥 Chrome 156(헤드리스)</td><td>WebGPU 있음, <code>XRGPUBinding</code> 없음</td></tr>
+<tr><td>퀘스트 브라우저</td><td><span class="pill todo">미확인</span> 점검 페이지 <code>xr/probe.html</code>로 확인 예정</td></tr>
+</tbody></table>
+<p>판단: 퀘스트가 <code>XRGPUBinding</code>을 지원하면 예전 렌더러를 바깥에서 붙잡아 XR로 여는 연결을 시도할 수 있습니다. 지원하지 않으면 예전 코드를 WebGL 백엔드로 바꿔야 하는데, 그 코드는 이전 브랜치라 수정하지 않습니다. 이 경우 실사 표현은 새 실사 세션(브랜치 <code>photoreal</code>)이 WebGL2로 그려지는 방식으로 다시 만들고, 그 결과는 이 XR 계층으로 그대로 보입니다. 예전 페이지 자체는 로딩이 길어 퀘스트에서는 더 불리합니다(전송량 약 48MB).</p>
+</section>
+
 <section id="log">
 <h2>14. 진행 기록</h2>
 <div class="tbl"><table>
@@ -776,6 +799,7 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>2026-10-30</td><td>P6</td><td>호환 점검 5/5: 화면 모드 원본과 동일(스케치 0%, 렌더 0.03% 차이), 연결 통로 없을 때 최소 기능 VR, XR 줄 전부 없을 때 원본 정상, 10회 진입·종료 후 증가 지오메트리 44·텍스처 17(XR 계층). 관찰: Wing 원본은 외관 시안 4회 변경만으로 지오메트리 576개 증가(XR 무관). 스모크 24/24</td><td><code>d6c9e50</code></td></tr>
 <tr><td>2026-10-30</td><td>P8</td><td>패스스루 없는 세션(비전 프로 WebXR 조건)에서 몰입과 가상 방 피규어 동작, 시선+핀치 선택 처리. 실제 비전 프로 확인과 model 요소(USDZ) 꺼내 보기는 USDZ 조합 파일이 생기면 진행. 호환 6/6</td><td><code>5b30ce4</code></td></tr>
 <tr><td>2026-10-30</td><td>P7</td><td>지니 모델 미도착(저장소에 GLB 없음, 뷰어에 불러오기 코드 없음)으로 후순위. 모델 납품 규격서 xr/docs/model-spec.md 작성. 계획서 v1.3(현재 결과, 실기기 대기열)</td><td>(이 커밋)</td></tr>
+<tr><td>2026-10-30</td><td>P4</td><td>1차 착용 확인 반영: 메뉴 레이 판정 수정, 밖으로 나가기 위치를 압구정로 정면으로, 체크리스트를 실제 상태로 최신화, XR 점검 페이지 추가</td><td><code>1030.p2</code></td></tr>
 </tbody></table></div>
 </section>
 </main>

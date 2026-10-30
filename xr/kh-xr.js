@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1030.p1';
+  const VER = '1030.p2';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -181,9 +181,29 @@
     if (curLevel()) placeUser(V(p.x, floorY(curLevel()), p.z), yawOf(p, t));
     else outsideFacing(t, p);
   }
-  function outsideFacing(T0, C) {   // 건물 중심 T0 에서 C 방향으로 32m 떨어진 땅에서 건물을 바라봄
+  function outsideFacing(T0, C) {   // C 방향을 먼저 시도하고, 건물이 가려지면 다른 방향의 땅에서 건물을 바라봄
     let dx = C.x - T0.x, dz = C.z - T0.z, d = Math.hypot(dx, dz); if (d < 1) { dx = -1; dz = 0; d = 1; }
-    const p = V(T0.x + dx / d * 32, 0, T0.z + dz / d * 32); placeUser(p, yawOf(p, T0));
+    const sp = outsideSpot([[dx / d, dz / d]]); placeUser(sp.p, yawOf(sp.p, sp.c));
+  }
+  // 밖으로 나갈 자리: 압구정로 정면 → 코너 → 6M도로 측면 → 나머지 방향 순으로, 땅 위이고 건물까지 시야가 트인 첫 자리
+  const FRONT_DIRS = [[-1, 0], [-0.72, 0.69], [0.31, 0.95], [-0.71, -0.71], [0, 1], [0.71, 0.71], [1, 0], [0.71, -0.71], [0, -1]];
+  function outsideSpot(prefer) {
+    const box = K.bld ? new T.Box3().setFromObject(K.bld) : null;
+    const ok = box && !box.isEmpty() && box.max.x - box.min.x < 200;
+    const c = ok ? box.getCenter(V()).setY(0) : (S.center || buildingCenter()).clone();
+    const half = ok ? Math.max(box.max.x - box.min.x, box.max.z - box.min.z) / 2 : 15, top = ok ? Math.max(box.max.y, 10) : 30;
+    const near = ok ? box.clone().expandByScalar(1.5) : null, objs = pickables(), r = new T.Raycaster();
+    const first = (o, dir, far) => { r.set(o, dir); r.far = far; return r.intersectObjects(objs, true).find(h => visibleForPick(h.object) && !(h.object.material && h.object.material.transparent && h.object.material.opacity < 0.2)); };
+    const groundAt = (x, z) => { const h = first(V(x, top + 60, z), V(0, -1, 0), top + 80); return h ? h.point.y : 0; };
+    const dirs = (prefer || []).concat(FRONT_DIRS);
+    for (const dist of [half + 34, half + 26, half + 18]) for (const [ux, uz] of dirs) {
+      const x = c.x + ux * dist, z = c.z + uz * dist, gy = groundAt(x, z);
+      if (Math.abs(gy) > 1.2 || (near && near.containsPoint(V(x, gy, z)))) continue;     // 다른 건물 지붕·우리 건물 안은 제외
+      const eye = V(x, gy + 1.6, z);
+      const clear = [3, top * 0.45, top * 0.8].every(y => { const t = V(c.x, y, c.z), v = t.clone().sub(eye), L = v.length(); const h = first(eye, v.normalize(), L); return !h || (near && near.containsPoint(h.point)); });
+      if (clear) return { p: V(x, gy, z), c };
+    }
+    const [ux, uz] = dirs[0]; return { p: V(c.x + ux * (half + 26), 0, c.z + uz * (half + 26)), c };
   }
   function sortedLevels() { return (K.LEVELS || []).map((L, i) => ({ i, y: floorY(L), L })).sort((a, b) => a.y - b.y); }
   function goLevel(li) {
@@ -207,10 +227,9 @@
   function goOutside() {
     if (!K.full) return;
     fade(() => {
-      const wasIn = K.I.on; const h = rigHeadWorld();
-      if (wasIn) K.exitInt();
-      const { t } = wingTarget();
-      outsideFacing(S.center || t, wasIn ? h : K.camera.position);
+      if (K.I.on) K.exitInt();
+      wingTarget();
+      const sp = outsideSpot(); placeUser(sp.p, yawOf(sp.p, sp.c));     // 늘 건물 정면이 잘 보이는 자리로
       afterChange();
     });
   }
@@ -370,6 +389,7 @@
     const m = new T.Matrix4().extractRotation(c.matrixWorld);
     X.ray.ray.origin.setFromMatrixPosition(c.matrixWorld);
     X.ray.ray.direction.set(0, 0, -1).applyMatrix4(m).normalize();
+    X.ray.near = 0; X.ray.far = Infinity;   // 포물선·피규어 판정이 줄여 둔 길이를 되돌림(안 하면 메뉴에 레이가 안 닿음)
     return X.ray;
   }
   function onSelectStart(c) { c.userData.pending = true; }
@@ -672,7 +692,7 @@
   };
   const CROPS = [[18, '건물만'], [45, '건물과 블록'], [250, '미성아파트 포함']];
   X.setMode = m => fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); });
-  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside;
+  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.pickables = pickables; X.visibleForPick = visibleForPick;
 
   /* ================= 11. 최적화 프록시 =================
      XR 동안만 같은 재질 메시를 합친 대체 메시를 쓰고 원본은 숨긴다. 원본이 장면을 바꾸면 다시 만든다. */

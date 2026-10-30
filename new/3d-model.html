@@ -7629,7 +7629,7 @@ buildContext();existBuilding();
   document.getElementById('t-cmpapt').addEventListener('change',e=>{CMP.apt=e.target.checked;applyCmp()});
   document.getElementById('t-cmpspin').addEventListener('change',e=>{CMP.spin=e.target.checked;controls.autoRotateSpeed=0.6;applyCmp()})}
 build();go('corner',true);
-window.KHXR={renderer,scene,camera,controls,enterInt,exitInt,placeLevel,setDoll,floorTop,resize,go,walkable,get LEVELS(){return LEVELS},get I(){return I},get anim(){return anim},set anim(v){anim=v},get R3D(){return R3D}};   // [XR] VR 보기(xr/kh-xr.js) 연결 통로
+window.KHXR={renderer,scene,camera,controls,enterInt,exitInt,placeLevel,setDoll,floorTop,resize,go,walkable,get LEVELS(){return LEVELS},get I(){return I},get anim(){return anim},set anim(v){anim=v},get R3D(){return R3D},get bld(){return bld}};   // [XR] VR 보기(xr/kh-xr.js) 연결 통로
 let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;   // [XR] VR 중에는 xr/kh-xr.js 가 그림
