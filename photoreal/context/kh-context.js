@@ -63,13 +63,13 @@
 
   /* ---------- 형상 ---------- */
   const hex = s => { const n = parseInt(s.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255].map(c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)); };   // sRGB → linear
-  function Buf() { return { p: [], n: [], uv: [], c: [], tris: 0 }; }
+  function Buf() { return { p: [], n: [], uv: [], c: [], c2: [], cur2: null, tris: 0 }; }   // c2: 띠·창틀 색(color2, 실사 3D 외벽이 씀)
   function tri(B, a, b, c, n, ua, ub, uc, col) {
     // 면 방향이 n 과 맞도록 꼭짓점 순서를 맞춘다
     const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
     const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
     if (cx * n[0] + cy * n[1] + cz * n[2] < 0) { [b, c] = [c, b]; [ub, uc] = [uc, ub]; }
-    B.p.push(...a, ...b, ...c); B.n.push(...n, ...n, ...n); B.uv.push(...ua, ...ub, ...uc); B.c.push(...col, ...col, ...col); B.tris++;
+    B.p.push(...a, ...b, ...c); B.n.push(...n, ...n, ...n); B.uv.push(...ua, ...ub, ...uc); B.c.push(...col, ...col, ...col); const c2 = B.cur2 || col; B.c2.push(...c2, ...c2, ...c2); B.tris++;
   }
   function walls(B, pts, y0, y1, fh, col, sgn) {
     let s = 0;
@@ -95,6 +95,7 @@
     g.setAttribute('normal', new T.Float32BufferAttribute(B.n, 3));
     g.setAttribute('uv', new T.Float32BufferAttribute(B.uv, 2));
     g.setAttribute('color', new T.Float32BufferAttribute(B.c, 3));
+    g.setAttribute('color2', new T.Float32BufferAttribute(B.c2, 3));
     g.computeBoundingSphere(); g.computeBoundingBox();
     const m = new T.Mesh(g, mat); m.name = 'ctx_' + name; m.matrixAutoUpdate = false; m.updateMatrix();
     return m;
@@ -115,6 +116,7 @@
       const cls = b.near ? (NEAR_CLS.includes(b.cls) ? b.cls : 'paint') : (FAR_OF[b.cls] || 'far_light');
       // 근경 상가(1층 유리): 첫 층은 shop 메시로
       const shop = b.near && b.shop_glass !== false && b.cls !== 'apt' && b.cls !== 'glass' && b.h > fh + 1 && (b.shop_glass || b.floors <= 8);
+      buf(cls).cur2 = b.color2 ? hex(b.color2) : col; buf('shop').cur2 = [1, 1, 1];
       if (shop) { walls(buf('shop'), pts, 0, fh, fh, [1, 1, 1], sgn); walls(buf(cls), pts, fh, b.h, fh, col, sgn); }
       else walls(buf(cls), pts, 0, b.h, fh, col, sgn);
       const rc = [col[0] * 0.55 + 0.12, col[1] * 0.55 + 0.12, col[2] * 0.55 + 0.12];

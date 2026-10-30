@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1030.f';
+  const VER = '1030.g';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -689,7 +689,8 @@
     const walk = px => 1365 - 0.3604 * (px - 230) + 305;
     // 예전 위치에서 압구정로 쪽 우리 건물 앞(x=120, y 0～1365) 네 그루는 뺐다
     // 압구정로 건너편 보도(x=-1240)도 우리 건물 정면(y -200～1400)을 가리는 세 그루는 뺐다
-    [[1550, walk(1550)], [120, -690], [120, -1000], [120, -1500], [-1240, -690], [1850, walk(1850)], [2200, walk(2200)], [2550, walk(2550)], [-1240, 1550], [-1240, -1000]].forEach((q, i) => {
+    // 6M도로 쪽도 출입구·램프 앞(x 1550, 1850)은 뺐다
+    [[120, -690], [120, -1000], [120, -1500], [-1240, -690], [2200, walk(2200)], [2550, walk(2550)], [-1240, 1550], [-1240, -1000]].forEach((q, i) => {
       const t = tree.clone(true), s = (9.2 + (i % 3) * 0.8) / h; t.scale.setScalar(s);
       const [x, z] = K.P(q[0], q[1]); t.position.set(x, 0.18, z); t.rotation.y = i * 2.399; g.add(t);
     });
@@ -769,7 +770,8 @@
       const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, `rgb(${150 * shade | 0},${168 * shade | 0},${182 * shade | 0})`); gr.addColorStop(0.55, `rgb(${92 * shade | 0},${106 * shade | 0},${118 * shade | 0})`); gr.addColorStop(1, `rgb(${52 * shade | 0},${60 * shade | 0},${68 * shade | 0})`);
       g.fillStyle = gr; g.fillRect(x, y, w, h);
       if (blind > 0.05) { g.fillStyle = `rgba(${200 + rnd() * 40 | 0},${190 + rnd() * 30 | 0},${170 + rnd() * 30 | 0},0.85)`; g.fillRect(x, y, w, h * blind); g.fillStyle = 'rgba(0,0,0,0.12)'; for (let yy = y; yy < y + h * blind; yy += 4) g.fillRect(x, yy, w, 1); }
-      g.fillStyle = frame; const t = opt.frame || 4; g.fillRect(x, y, w, t); g.fillRect(x, y + h - t, w, t); g.fillRect(x, y, t, h); g.fillRect(x + w - t, y, t, h);
+      g.fillStyle = frame; const t = opt.frame || 4;
+      r.fillStyle = 'rgb(255,200,0)'; r.fillRect(x, y, w, h);   // 창틀: 거칠기 맵 R=1 → 건물의 띠·창틀 색(color2) g.fillRect(x, y, w, t); g.fillRect(x, y + h - t, w, t); g.fillRect(x, y, t, h); g.fillRect(x + w - t, y, t, h);
       (opt.mull || []).forEach(f => g.fillRect(x + w * f - t / 2, y, t, h)); if (opt.transom) g.fillRect(x, y + h * opt.transom, w, t);
       r.fillStyle = 'rgb(0,26,0)'; r.fillRect(x + t, y + t, w - 2 * t, h - 2 * t);   // 유리: 거칠기 0.1, 비금속(반사색이 유리색에 물들지 않게)
       for (let yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (let xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) hm[yy * W + xx] = (xx < x + t || xx >= x + w - t || yy < y + t || yy >= y + h - t) ? 0.75 : 0.25;
@@ -816,7 +818,10 @@
     const m = new T.MeshStandardMaterial({ map: mk(c.col, true), roughnessMap: mk(c.rm), metalnessMap: mk(c.rm), normalMap: mk(c.nc), roughness: 1, metalness: 1, vertexColors: key !== 'shop' });
     m.normalScale.set(0.9, 0.9); m.envMapIntensity = 1.0; m.userData.lin = true; m.userData.prEnv = 1.0; EXTRA.add(m);
     // 건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵으로 벽 판별)
-    m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', '#ifdef USE_COLOR\n float prWall = step(0.24, texture2D(roughnessMap, vUv).g);\n diffuseColor.rgb *= mix(vec3(1.0), vColor, prWall);\n#endif'); };
+    m.onBeforeCompile = sh => {
+      sh.vertexShader = 'attribute vec3 color2;\nvarying vec3 vColor2;\n' + sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\nvColor2 = color2;');
+      sh.fragmentShader = 'varying vec3 vColor2;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#ifdef USE_COLOR\n vec4 prRM = texture2D(roughnessMap, vUv); float prWall = step(0.24, prRM.g);\n diffuseColor.rgb *= mix(vec3(1.0), mix(vColor, vColor2 * 1.6, step(0.5, prRM.r)), prWall);\n#endif');
+    };
     m.customProgramCacheKey = () => 'prctxwall';
     return (FW.mats[cls] = m);
   }
