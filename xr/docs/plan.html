@@ -135,11 +135,14 @@ html{scroll-behavior:smooth}
   <a href="#tech">5. 기술 결정</a>
   <a href="#spike">6. 스파이크 검증 결과</a>
   <a href="#matrix">7. 기능 지원 범위</a>
+  <a href="#ux">7-1. 조작과 메뉴 명세</a>
   <a href="#phases">8. 단계별 계획</a>
+  <a href="#run">8-1. 실행 방식</a>
   <a href="#quality">9. 품질 체크리스트</a>
   <a href="#team">10. 협업 약속</a>
   <a href="#risk">11. 위험과 대응</a>
   <a href="#agent">12. 에이전트 작업 규칙</a>
+  <a href="#preview">12-1. 미리보기 환경</a>
   <a href="#open">13. 결정이 필요한 항목</a>
   <a href="#review">13-1. 착수 전 검토</a>
   <a href="#log">14. 진행 기록</a>
@@ -150,7 +153,7 @@ html{scroll-behavior:smooth}
   <div class="eyebrow">Kapehorn Tower · WebXR</div>
   <h1>케이프혼타워 XR 계획서</h1>
   <div class="meta">
-    <span>작성 2026-10-30</span><span>기준 저장소 wing-kim/all</span><span>작업 브랜치 <code>feature/webxr</code></span><span>문서 위치 <code>xr/docs/plan.html</code></span><span>버전 v1.1 (2026-10-30 개정)</span>
+    <span>작성 2026-10-30</span><span>기준 저장소 wing-kim/all</span><span>작업 브랜치 <code>feature/webxr</code></span><span>문서 위치 <code>xr/docs/plan.html</code></span><span>버전 v1.2 (2026-10-30 최종)</span>
   </div>
 </header>
 
@@ -169,7 +172,7 @@ html{scroll-behavior:smooth}
   <div class="card"><h4>원칙 3. 같은 주소, 기기별 모드</h4><p>별도 VR 페이지 없이 <code>3d-model.html</code> 하나가 PC, 모바일, 퀘스트, 비전 프로를 모두 처리합니다. Wing의 VR 체험판 기능은 여기로 흡수합니다.</p></div>
 </div>
 <h3>현재 위치</h3>
-<p><span class="pill ok">P0 완료</span> 기술 스파이크를 마쳤습니다(에뮬레이터 검증, 6장). 같은 날 Wing이 Claude로 만든 VR 체험판(<code>new/3d-model-vr.html</code>)이 올라왔고, Jack이 퀘스트에서 써 본 결과 <b>기능은 잘 되지만 끊김이 느껴졌습니다</b>. 이 체험판을 출발점으로 삼아 기능을 흡수하고, 끊김(성능)을 가장 먼저 해결합니다. 다음은 <span class="pill acc">P1 통합 기반과 실기기 기준선</span>입니다.</p>
+<p><span class="pill ok">P0 완료</span> 기술 스파이크를 마쳤습니다(에뮬레이터 검증, 6장). 같은 날 Wing이 Claude로 만든 VR 체험판(<code>new/3d-model-vr.html</code>)이 올라왔고, Jack이 퀘스트에서 써 본 결과 <b>기능은 잘 되지만 끊김이 느껴졌습니다</b>. 이 체험판을 출발점으로 삼아 기능을 흡수하고, 끊김(성능)을 가장 먼저 해결합니다. 미리보기 환경(<code>evyfjae/kapehorn-preview</code>)을 만들어 두었습니다. 다음은 <span class="pill acc">P1 통합 기반과 실기기 기준선</span>이고, Jack이 전체 실행을 요청하면 8-1장 방식으로 P1부터 P8까지 멈추지 않고 진행합니다.</p>
 </section>
 
 <section id="target">
@@ -204,14 +207,15 @@ html{scroll-behavior:smooth}
   <div class="hmd"><div class="view">
     <img src="img/vr-interior-render.jpg" alt="퀘스트 VR 안에서 본 1층 내부">
     <div class="xpanel" aria-label="목표 공간 패널 목업">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>케이프혼타워</b><span style="opacity:.7">1F · 실제 크기</span></div>
-      <div class="tabs"><span>시점</span><span class="on">층</span><span>외관</span><span>내부</span><span>빛과 시간</span><span>표시</span><span>사진</span></div>
-      <div class="row">B1 주차</div><div class="row on">1F 카페 <span>현재</span></div><div class="row">2F</div><div class="row">3F 사무</div>
-      <div class="foot"><span>피규어로 보기</span><span>나가기</span></div>
+      <div class="foot" style="margin:0 0 8px"><span style="background:#2f7d6d">몰입</span><span>피규어</span><span>웹 화면으로</span></div>
+      <div class="tabs"><span>이동</span><span class="on">외관</span><span>실내</span><span>빛과 시간</span><span>보기</span><span>설정</span></div>
+      <div style="opacity:.7;margin:2px 0 4px">외관 시안 (스틱 위아래로 넘기기)</div>
+      <div class="row">스택 프레임</div><div class="row on">벽돌 피어 <span>선택</span></div><div class="row">세라믹 루버</div>
+      <div class="sw"><i style="background:#8a4b3a" class="on"></i><i style="background:#c9c3b6"></i><i style="background:#3b3a38"></i><i style="background:#9fb9c4"></i></div>
     </div>
     <span class="ring" style="left:56%;top:74%;width:9%;height:6%"></span>
-    <span class="callout" style="right:3%;top:6%"><b>왼손 메뉴</b> Wing 패널의 모든 그룹이 탭으로 나뉘어 나옵니다. 트리거나 핀치로 누릅니다.</span>
-    <span class="callout" style="right:3%;bottom:6%"><b>이동</b> 바닥을 가리켜 텔레포트, 왼쪽 스틱으로 걷기, 오른쪽 스틱으로 30도 회전</span>
+    <span class="callout" style="right:3%;top:6%"><b>XR 메뉴</b> 위쪽은 모드 전환과 웹 화면으로 돌아가기, 아래는 Wing 메뉴 전체를 탭으로. 핸드는 0.45m 앞에서 검지로, 컨트롤러는 1m 앞에서 레이로 누릅니다.</span>
+    <span class="callout" style="right:3%;bottom:6%"><b>이동</b> 트리거로 순간이동, A/X와 B/Y로 층 이동, 그립으로 밖으로. 핸드는 손목의 빠른 막대</span>
   </div></div>
   <figcaption><b>퀘스트 몰입 VR(1:1)</b> 배경은 실제 검증 화면(렌더 모드, 벽돌 외장)이고, 왼쪽 메뉴와 텔레포트 표시는 목표 디자인 목업입니다.</figcaption>
 </figure>
@@ -336,13 +340,14 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <tr><td>3D 엔진</td><td>Wing의 three.js r128 그대로. r128 내장 WebXR 사용</td><td>IWSDK 런타임(three 0.185): Wing 장면과 공존 불가. IWER 에뮬레이터만 사용</td></tr>
 <tr><td>렌더러</td><td>Wing 렌더러 재사용. 패스스루용 <code>alpha:true</code>는 연결 코드로 생성 옵션에 추가하거나, 지원 확인 후 결정(P1)</td><td>XR 전용 렌더러: 메모리 두 배</td></tr>
 <tr><td>카메라</td><td>XR 전용 카메라(rig 자식). Wing 카메라는 화면 모드 전용</td><td>Wing 체험판은 Wing 카메라를 rig에 붙임. 종료 후 복원 코드가 많아져 XR 전용 카메라로 정리</td></tr>
-<tr><td>조작</td><td>Wing 체험판 조작을 기본으로 채택(9장 Q11 표)</td><td>우리 스파이크 조작은 패널 중심이라 층 이동이 번거로움</td></tr>
+<tr><td>조작</td><td>Wing 체험판의 층 이동과 밖으로 나가기는 유지하고, 메뉴, 조합 비교, 웹 전환, 핸드 조작은 새로 정의(7-1장)</td><td>체험판은 VR 안에서 설정을 바꾸거나 웹으로 돌아가는 조작이 부족하고 핸드를 고려하지 않음(Jack 착용 평가)</td></tr>
+<tr><td>세션 종류</td><td>퀘스트에서는 항상 패스스루 가능 세션(<code>immersive-ar</code>)으로 시작하고, 1:1 몰입은 배경을 불투명하게 채워 표현. 몰입과 피규어를 세션을 끊지 않고 오감. 비전 프로는 <code>immersive-vr</code></td><td>모드마다 세션을 다시 열면 전환마다 화면이 끊김. P1 실기기에서 몰입 표현 품질 확인, 문제 있으면 몰입은 <code>immersive-vr</code>로 분리</td></tr>
 <tr><td>피규어</td><td>사용자 rig 확대 + 절두체 보정 + 디오라마 자르기</td><td>장면 축소: 그림자, 단면, 레이캐스트가 월드 미터 기준이라 기각</td></tr>
 <tr><td>XR 메뉴</td><td>Wing DOM 컨트롤 자동 미러 + 자주 쓰는 동작 전용 버튼</td><td>직접 만든 메뉴만: Wing 기능 추가 때마다 수작업</td></tr>
 <tr><td>성능</td><td>재질별 병합 프록시(검증 6,724 → 662회) + 비슷한 재질 묶기, 그림자 정적화, 해상도와 포비에이션 조정</td><td>three 업그레이드(multiview)는 Wing 코드 전체에 영향이 커서 마지막 수단</td></tr>
 <tr><td>입력</td><td>퀘스트 컨트롤러 + 핸드(<code>hand-tracking</code> 요청, 핀치 = select). 비전 프로 <code>transient-pointer</code></td><td>손바닥 핀치는 시스템 예약</td></tr>
 <tr><td>배포</td><td>GitHub Pages 그대로. 빌드 없는 정적 JS</td><td>Vite 빌드는 Wing 업로드 방식과 맞지 않음</td></tr>
-<tr><td>미리보기</td><td>새 저장소 <code>evyfjae/kapehorn-xr-preview</code>(비공개 저장소, Pages)에 3D 페이지와 <code>xr/</code>만 배포. 대시보드는 올리지 않음</td><td>이전 실사3D용 <code>kapehorn-3d-preview</code>는 이번 범위 밖이라 재사용하지 않음</td></tr>
+<tr><td>미리보기</td><td><b>구축 완료.</b> <code>evyfjae/kapehorn-preview</code>(비공개 저장소, Pages). 브랜치별 폴더로 3D 페이지와 <code>xr/</code>만 배포(12-1장)</td><td>이전 실사3D용 <code>kapehorn-3d-preview</code>는 이번 범위 밖이라 재사용하지 않음. 앞으로의 케이프혼 건물 작업도 이 저장소를 함께 씀</td></tr>
 <tr><td>검증 도구</td><td>IWER 2.7.0(MIT, <code>xr/vendor</code>), 퀘스트 3 실기기, 자동 스모크 테스트</td><td>유료 도구 없음</td></tr>
 </tbody></table></div>
 </section>
@@ -390,6 +395,61 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 </tbody></table></div>
 </section>
 
+<section id="ux">
+<h2>7-1. 조작과 메뉴 명세</h2>
+<p>Jack 착용 평가(Wing 체험판): 층 이동과 밖으로 나가기는 좋았지만, 건물 안팎에서 설정을 바꿔 가며 보는 UI, 원래 웹 화면으로 돌아가는 전환, 핸드 트래킹을 고려한 구성이 부족했습니다. 아래는 그 평가와 Meta 공식 손 조작 지침(Hands UI best practices, Touch, Ray casting, Indirect interaction, Adapting from controllers)을 바탕으로 새로 정한 기준입니다.</p>
+
+<h3>세 가지 모드와 전환</h3>
+<div class="tbl"><table>
+<thead><tr><th>지금</th><th>가는 곳</th><th>방법</th><th>유지되는 것</th></tr></thead>
+<tbody>
+<tr><td>웹 화면</td><td>몰입(1:1)</td><td>"VR로 들어가기" 버튼. 화면에서 보던 위치에서 시작(내부면 그 층 그 자리, 외부면 보던 방향 30m 밖)</td><td>모든 설정</td></tr>
+<tr><td>웹 화면</td><td>피규어</td><td>"내 공간에 놓기" 버튼. 화면에서 보던 각도 그대로 책상 위에 놓임</td><td>모든 설정</td></tr>
+<tr><td>몰입</td><td>피규어</td><td>메뉴 상단 모드 스위치 또는 "모형으로 보기". 세션을 끊지 않음</td><td>설정, 보던 방향</td></tr>
+<tr><td>피규어</td><td>몰입</td><td>모형의 한 지점을 가리키고 "여기로 들어가기"</td><td>설정</td></tr>
+<tr><td>몰입, 피규어</td><td>웹 화면</td><td>메뉴 상단 "웹 화면으로" (시스템 종료도 같은 처리)</td><td><b>마지막 위치와 방향을 웹 화면 카메라로 넘김</b>(내부면 같은 층 같은 자리), 모든 설정</td></tr>
+</tbody></table></div>
+
+<h3>메뉴 구성</h3>
+<div class="grid2">
+<div class="card"><h4>빠른 막대 (항상 쓸 수 있는 4개)</h4>
+<p>현재 층 표시, 위층, 아래층, 안으로 또는 밖으로, 메뉴 열기. 컨트롤러는 왼손 컨트롤러 위에, 핸드는 왼손바닥을 얼굴 쪽으로 돌리면 손목 위에 나타납니다. 손목 메뉴는 짧고 단순한 동작만 둡니다(지침: 복잡한 메뉴를 손목에 붙이지 않음).</p></div>
+<div class="card"><h4>XR 메뉴 (설정 전체)</h4>
+<p>호출하면 사용자 앞에 고정됩니다(머리를 따라다니지 않음). 상단에 모드 스위치(몰입, 피규어, 웹 화면으로)와 현재 위치, 아래에 탭: <b>이동</b>(시점 프리셋, 층), <b>외관</b>(시안, 마감, 형태, 색, 창), <b>실내</b>(1층 안, 내부 표시), <b>빛과 시간</b>(시간대, 계절, 날짜), <b>보기</b>(스케치, 렌더, 실사 사진, 표시 토글, 현황과 비교), <b>설정</b>(편안함, 매스 조정 표시, 도움말). 매핑에 없는 Wing의 새 메뉴는 "기타" 탭에 자동으로 붙습니다.</p></div>
+<div class="card"><h4>조합 비교 넘기기</h4>
+<p>외관 시안처럼 여러 개 중 하나를 고르는 항목은 카드 목록으로 보여 주고, 메뉴를 닫은 채로도 <b>이전과 다음</b>으로 넘기며 건물을 바로 비교합니다. 마지막으로 연 항목이 넘기기 대상이 됩니다.</p></div>
+<div class="card"><h4>크기와 거리 (Meta 지침 수치)</h4>
+<p>핸드 사용 중에는 메뉴를 0.45m 앞에 띄워 검지로 직접 누르고, 컨트롤러 사용 중에는 1.0m 앞에 띄워 레이로 누릅니다(0.5에서 0.8m는 피함). 누르는 영역 22×22mm 이상, 간격 12mm 이상, 레이에서는 시야각 3° 이상. 자주 쓰는 버튼은 패널 아래쪽 절반. 패널은 수평 유지, 위치 옮기기 가능.</p></div>
+</div>
+
+<h3>조작표</h3>
+<div class="tbl"><table>
+<thead><tr><th>하고 싶은 일</th><th>컨트롤러</th><th>핸드</th></tr></thead>
+<tbody>
+<tr><td>순간이동</td><td>트리거를 누른 채 바닥을 가리키고 놓기(Wing 체험판 방식)</td><td>손바닥을 아래로 하고 핀치를 유지한 채 바닥을 가리키고 놓기</td></tr>
+<tr><td>걷기</td><td>왼쪽 스틱(Wing 충돌 판정 적용)</td><td>순간이동 사용</td></tr>
+<tr><td>회전</td><td>오른쪽 스틱 좌우 30°</td><td>빠른 막대의 회전 버튼 또는 몸을 돌림</td></tr>
+<tr><td>위층, 아래층</td><td>A/X 위층, B/Y 아래층(체험판 유지)</td><td>빠른 막대 위층, 아래층</td></tr>
+<tr><td>건물 밖으로, 안으로</td><td>그립(몰입 모드)</td><td>빠른 막대 버튼</td></tr>
+<tr><td>메뉴 열고 닫기</td><td>왼쪽 스틱 누르기</td><td>왼손바닥을 얼굴 쪽으로 → 손목의 "메뉴"를 오른손 검지로 누르기</td></tr>
+<tr><td>메뉴 누르기</td><td>레이로 가리키고 트리거</td><td>가까우면 검지로 직접 누르기, 멀면 레이와 핀치</td></tr>
+<tr><td>조합 넘기기</td><td>오른쪽 스틱 위아래</td><td>빠른 막대에 이전, 다음 표시(조합 탭을 연 뒤)</td></tr>
+<tr><td>피규어 이동, 크기, 회전</td><td>한 손 그립 이동, 두 손 그립 벌리기와 돌리기</td><td>한 손 핀치 유지 이동, 두 손 핀치 벌리기와 돌리기</td></tr>
+<tr><td>피규어 안으로</td><td>모형 지점을 가리키고 트리거 → "여기로 들어가기"</td><td>모형 지점을 검지로 누르기 → "여기로 들어가기"</td></tr>
+<tr><td>웹 화면으로</td><td>메뉴 상단 버튼</td><td>메뉴 상단 버튼</td></tr>
+</tbody></table></div>
+
+<h3>피드백과 안전</h3>
+<ul class="plain">
+<li>모든 버튼에 가리킴(hover)과 눌림 상태 표시, 짧은 클릭음. 컨트롤러는 진동도 줍니다. 손에는 진동이 없으므로 소리와 화면 표시가 필수입니다.</li>
+<li><b>왼손 손바닥 핀치는 쓰지 않습니다.</b> 퀘스트 브라우저에서는 이 동작이 WebXR 세션을 종료합니다. Meta 네이티브 앱의 메뉴 제스처와 달리 웹에서는 시스템 예약입니다.</li>
+<li>처음 들어갈 때 입력 방식(컨트롤러 또는 핸드)에 맞는 3단계 안내 카드를 보여 주고, 설정에서 다시 볼 수 있습니다.</li>
+<li>손 추적이 끊기면 잡고 있던 모형을 그 자리에 두고, 메뉴 누르기는 취소합니다.</li>
+<li>손목 메뉴와 빠른 막대에는 4개 이하의 큰 버튼만 둡니다. 길게 누르기는 핵심 동작에 쓰지 않습니다.</li>
+</ul>
+<p class="small">수치 출처: Meta Horizon 디자인 문서(손 UI 모범 사례, 터치 모범 사례, 레이 모범 사례, 간접 상호작용 모범 사례, 컨트롤러에서 손으로 옮기기). WebXR에서 Meta 마이크로제스처(엄지 탭, 엄지 스와이프)를 쓸 수 있는지는 문서에 없어 쓰지 않습니다.</p>
+</section>
+
 <section id="phases">
 <h2>8. 단계별 계획</h2>
 <p>각 단계는 하나의 결과물이고, 끝나면 커밋하고 이 문서의 상태를 고칩니다. 다음 단계는 앞 단계의 완료 조건을 모두 통과해야 시작합니다. 사람만 할 수 있는 확인은 따로 적었습니다. v1.1에서 성능을 P2로 앞당겼습니다.</p>
@@ -410,7 +470,8 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li><code>kh-xr.js</code>를 연결 통로 우선 구조로 개편, 통로가 없으면 후킹으로 대체. 전역 이름 충돌 정리(우리 내부 객체는 <code>window.KHXRLayer</code>)</li>
 <li>Wing 체험판 기능 이식: 트리거 순간이동(누르고 놓기), A/X와 B/Y 층 이동, 그립 밖으로, 스틱 걷기와 회전, 왼손 안내</li>
 <li>병합 프록시와 정적 그림자 적용</li>
-<li>미리보기 저장소 생성과 배포(13장 결정 1)</li>
+<li>몰입 모드를 패스스루 가능 세션 안에서 불투명 배경으로 표현해도 품질과 성능이 괜찮은지 실기기 확인(5장 세션 종류)</li>
+<li>미리보기 배포(<code>tools/publish.sh</code>, 12-1장)</li>
 <li>퀘스트 3 실측: Wing 체험판과 우리 버전을 같은 위치(외부 코너, 1F 내부)에서 30초씩 프레임 시간 비교. 측정은 원격 디버깅 프레임 로그 또는 OVR Metrics</li>
 </ul>
 <p class="small">완료 조건: 체험판의 모든 조작이 같은 주소에서 동작, 우리 버전의 프레임이 체험판보다 안정(수치 기록), 화면 모드 PC와 모바일 변화 없음. 사람 확인: Jack 착용으로 끊김 비교.</p></div>
@@ -425,16 +486,19 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <li>10분 연속 사용 메모리 측정, 장면 재생성 반복 시 누수 없음</li>
 </ul></div>
 
-<div class="phase" id="p3"><h3>P3. 공간 메뉴 <span class="pill todo">대기</span></h3>
-<p class="goal">Wing의 모든 메뉴를 VR 안에서 읽기 쉽고 누르기 쉽게 만듭니다.</p>
+<div class="phase" id="p3"><h3>P3. 메뉴와 핸드 UI, 웹 전환 <span class="pill todo">대기</span></h3>
+<p class="goal">7-1장 명세대로 VR 안에서 설정을 바꿔 가며 보고, 웹 화면과 자유롭게 오갑니다.</p>
 <ul class="chk">
-<li>탭: 시점, 층, 외관, 내부, 빛과 시간, 표시, 사진, 설정. 매핑에 없는 새 Wing 그룹은 "기타" 탭에 자동 추가</li>
-<li>누락 컨트롤 수집: 층 칩, 색상 견본, 날짜와 시각 입력, 겹쳐 보기 단계</li>
-<li>열고 닫기: 왼손 스틱 누르기(컨트롤러), 왼손바닥을 위로(핸드). 글자 1m 거리 1.5cm 이상</li>
-<li>현재 선택 상태 강조, 매스 조정은 기본 숨김(설정에서 켜기)</li>
-<li>3D 라벨: 층 이름과 면적(연결 통로에 라벨 위치 추가)</li>
-<li>실사 사진 액자: <code>window.PH</code> 카탈로그로 현재 시안과 층의 사진 표시</li>
-</ul></div>
+<li>XR 메뉴: 상단 모드 스위치(몰입, 피규어, 웹 화면으로), 탭 6개와 "기타", 사용자 앞 고정, 위치 옮기기</li>
+<li>빠른 막대: 컨트롤러 위, 핸드는 왼손바닥을 돌리면 손목 위에 표시. 버튼 4개</li>
+<li>입력별 배치: 핸드는 0.45m 직접 누르기, 컨트롤러는 1.0m 레이. 22mm와 12mm, 3° 기준. 가리킴과 눌림 표시, 클릭음, 진동</li>
+<li>조합 비교 넘기기(오른쪽 스틱 위아래, 핸드는 빠른 막대)</li>
+<li>웹 화면 전환: 종료 시 마지막 위치와 방향을 웹 카메라로 넘기고(내부면 같은 층), 설정 유지</li>
+<li>누락 컨트롤 수집(층 칩, 색상 견본, 날짜와 시각, 겹쳐 보기 단계), 매스 조정 기본 숨김</li>
+<li>3D 라벨(층 이름과 면적), 실사 사진 액자(<code>window.PH</code>)</li>
+<li>첫 진입 안내 카드(컨트롤러용, 핸드용)</li>
+</ul>
+<p class="small">완료 조건: Q3, Q11, Q16, Q17을 에뮬레이터에서 통과. 착용 확인은 실기기 대기열로.</p></div>
 
 <div class="phase" id="p4"><h3>P4. VR 이동과 편안함 <span class="pill todo">대기</span></h3>
 <p class="goal">실제 크기로 건물 안팎을 편하게 돌아다닙니다.</p>
@@ -492,6 +556,30 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 </ul></div>
 </section>
 
+<section id="run">
+<h2>8-1. 실행 방식</h2>
+<p>Jack이 "전체 계획 실행"을 요청하면 에이전트는 P1부터 P8까지 <b>멈추지 않고 이어서</b> 진행하고, 단계가 끝날 때마다 보고만 합니다.</p>
+<div class="grid2">
+<div class="card"><h4>단계마다 하는 일</h4>
+<ol class="steps">
+<li>병합 절차 1번(12장)으로 Wing 최신 main 확인, 바뀌었으면 합침</li>
+<li>구현, 에뮬레이터 검증, 해당 품질 항목 측정</li>
+<li>커밋, <code>feature/webxr</code> 푸시(백업, PR 아님), 미리보기 배포</li>
+<li>이 문서의 8장 상태, 14장 기록, 실기기 대기열 갱신 후 공유본 다시 게시</li>
+<li>Jack에게 보고: 한 일, 미리보기 링크, 측정값, 실기기 확인이 필요한 항목. 그리고 바로 다음 단계 시작</li>
+</ol></div>
+<div class="card"><h4>멈추는 경우 (이때만 질문)</h4>
+<ul class="plain">
+<li>P9: PR과 merge 전 Jack의 미리보기 최종 확인</li>
+<li>계획을 크게 바꿔야 하는 기술적 막힘(대안 두 가지 이상 실패)</li>
+<li>비용이 생기는 일</li>
+<li>Wing이나 지니의 협조 없이는 더 진행할 수 없는 일</li>
+</ul>
+<h4 style="margin-top:12px">실기기 확인 대기열</h4>
+<p>퀘스트 착용이나 측정이 필요한 항목은 대기열에 쌓고 다음 단계로 넘어갑니다. 퀘스트가 USB로 연결되어 있으면 그때 측정하고, 아니면 Jack이 미리보기 주소로 확인한 결과를 받아 반영합니다.</p></div>
+</div>
+</section>
+
 <section id="quality">
 <h2>9. 품질 체크리스트</h2>
 <p>출시(P9) 전에 모든 항목을 통과해야 합니다. 측정값은 14장에 남깁니다.</p>
@@ -508,23 +596,15 @@ requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;
 <tr><td>Q8</td><td>편안함</td><td>전환 페이드, 스냅 회전 기본, 바닥 높이 오차 5cm 이내, 수평 유지</td><td>Jack 착용 확인</td></tr>
 <tr><td>Q9</td><td>시각</td><td>1:1 크기 오차 1% 이내(문 높이 기준), 피규어 배율 표시 일치</td><td>헤드셋 안 실측</td></tr>
 <tr><td>Q10</td><td>가독성</td><td>메뉴 글자 1m 거리 1.5cm 이상, 대비 4.5:1 이상</td><td>착용 확인</td></tr>
-<tr><td>Q11</td><td>입력</td><td>아래 조작표 전부 동작, 손바닥 핀치 미사용</td><td>입력별 실행표</td></tr>
+<tr><td>Q11</td><td>입력</td><td>7-1장 조작표가 컨트롤러와 핸드 모두에서 동작, 시스템 예약 제스처(손바닥 핀치) 미사용, 모든 선택에 화면과 소리 피드백</td><td>입력별 실행표</td></tr>
+<tr><td>Q16</td><td>전환</td><td>몰입, 피규어, 웹 화면 사이 전환이 메뉴 한 번으로 되고, 웹으로 돌아오면 같은 층과 같은 방향, 같은 설정이 유지됨</td><td>전환 시험표</td></tr>
+<tr><td>Q17</td><td>메뉴 크기</td><td>누를 수 있는 영역 22×22mm 이상(손 직접 터치) 또는 시야각 3° 이상(레이), 간격 12mm 이상</td><td>코드 값과 착용 확인</td></tr>
 <tr><td>Q12</td><td>호환</td><td>맥과 윈도우의 Chrome, Edge, Safari, Firefox, iOS Safari, Android Chrome에서 원본과 같음. XR 버튼은 지원 기기에서만</td><td>브라우저별 확인표</td></tr>
 <tr><td>Q13</td><td>안정성</td><td>진입과 종료 10회 후 정상, 콘솔 오류 0, 10분 사용 중 메모리 급증 없음</td><td>스모크 테스트, 원격 디버깅</td></tr>
 <tr><td>Q14</td><td>복구</td><td>XR 계층이 실패하거나 연결 줄이 없어도 원본 3D는 정상</td><td>강제 실패 시험</td></tr>
 <tr><td>Q15</td><td>병합</td><td>main 병합 후 연결 코드와 Wing 최신 변경이 모두 살아 있음</td><td>병합 후 diff와 스모크 테스트</td></tr>
 </tbody></table></div>
-<h3>조작표 (기본)</h3>
-<div class="tbl"><table>
-<thead><tr><th>동작</th><th>VR(1:1)</th><th>피규어</th><th>핸드</th></tr></thead>
-<tbody>
-<tr><td>트리거</td><td>누른 채 바닥 가리키고 놓으면 순간이동. 메뉴를 가리키면 누르기</td><td>메뉴 누르기, 모형 지점 가리켜 "안으로"</td><td>검지와 엄지 핀치</td></tr>
-<tr><td>A / X</td><td>위층</td><td>모형 위층 강조</td><td>메뉴 버튼</td></tr>
-<tr><td>B / Y</td><td>아래층</td><td>모형 아래층 강조</td><td>메뉴 버튼</td></tr>
-<tr><td>그립</td><td>건물 밖으로</td><td>한 손 이동, 두 손 크기와 회전</td><td>주먹 쥐기</td></tr>
-<tr><td>왼쪽 스틱</td><td>걷기, 누르면 메뉴 열고 닫기</td><td>누르면 메뉴</td><td>왼손바닥 위로 = 메뉴</td></tr>
-<tr><td>오른쪽 스틱</td><td>좌우 30° 회전</td><td>좌우 회전, 상하 크기</td><td>없음</td></tr>
-</tbody></table></div>
+<p class="small">조작 기준은 7-1장을 따릅니다.</p>
 </section>
 
 <section id="team">
@@ -596,12 +676,28 @@ python3 -m http.server 8790 --bind 127.0.0.1
 </ol>
 </section>
 
+<section id="preview">
+<h2>12-1. 미리보기 환경</h2>
+<p>Wing 저장소의 GitHub Pages는 <code>main</code>만 배포하므로, 브랜치 작업을 실제 페이지와 같은 형태로 보려고 미리보기 저장소를 만들었습니다. 이번 XR뿐 아니라 앞으로의 케이프혼 건물 작업에도 같은 방식으로 씁니다.</p>
+<div class="tbl"><table><tbody>
+<tr><th>저장소</th><td><code>evyfjae/kapehorn-preview</code> (비공개 저장소, GitHub Pages)</td></tr>
+<tr><th>로컬</th><td><code>/Users/jaehwak/Documents/Kapehorn/etc/kapehorn-preview</code></td></tr>
+<tr><th>목록</th><td><a href="https://evyfjae.github.io/kapehorn-preview/">evyfjae.github.io/kapehorn-preview</a></td></tr>
+<tr><th>이번 작업 주소</th><td><code>evyfjae.github.io/kapehorn-preview/feature-webxr/new/3d-model.html</code> (P1 이후). 스파이크는 <code>.../feature-webxr/xr/</code></td></tr>
+<tr><th>올라가는 것</th><td>3D 페이지(<code>new/3d-model.html</code>, <code>new/3d-model-vr.html</code>)와 <code>xr/</code>(문서 폴더 제외). 대시보드는 올리지 않음(<code>tools/include.txt</code>)</td></tr>
+<tr><th>검색</th><td><code>robots.txt</code>로 차단. 주소를 아는 사람은 열 수 있음</td></tr>
+</tbody></table></div>
+<pre>/Users/jaehwak/Documents/Kapehorn/etc/kapehorn-preview/tools/publish.sh "&lt;wing-kim/all 작업 폴더&gt;" [슬러그]
+# 브랜치 이름으로 폴더를 만들어 같은 경로 구조로 복사 → 커밋 → 푸시 (반영 약 1분)
+# 예: feature/webxr → feature-webxr/new/3d-model.html</pre>
+</section>
+
 <section id="open">
 <h2>13. 결정이 필요한 항목</h2>
 <div class="tbl"><table>
 <thead><tr><th>번호</th><th>질문</th><th>제안</th><th>필요 시점</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>merge 전 미리보기를 어디에 올릴까요?</td><td>새 저장소 <code>evyfjae/kapehorn-xr-preview</code>(비공개 저장소, Pages 공개 주소)에 3D 페이지와 <code>xr/</code>만 배포. 대시보드는 올리지 않음</td><td>P1</td></tr>
+<tr><td>1</td><td>merge 전 미리보기를 어디에 올릴까요?</td><td><span class="pill ok">결정</span> <code>evyfjae/kapehorn-preview</code> 구축 완료(12-1장)</td><td>완료</td></tr>
 <tr><td>2</td><td>매스 조정 슬라이더를 VR 메뉴에 둘까요?</td><td>기본 숨김, 설정에서 켜기</td><td>P3</td></tr>
 <tr><td>3</td><td>Wing에게 "업로드 전 최신본 받기"를 언제 요청할까요?</td><td>P1에서 연결 코드를 넣기 전에 Jack이 전달</td><td>P1</td></tr>
 <tr><td>4</td><td><code>3d-model-vr.html</code>을 어떻게 정리할까요?</td><td>P9에서 Wing 동의 후 <code>3d-model.html</code>로 넘어가는 안내 페이지로 교체</td><td>P9</td></tr>
@@ -618,8 +714,9 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tr><td>기술 가능성</td><td class="c"><span class="pill ok">통과</span></td><td>핵심 기능은 스파이크로, 연결 통로 방식은 Wing 체험판으로 이미 동작 확인</td></tr>
 <tr><td>가장 큰 위험</td><td class="c"><span class="pill warn">관리</span></td><td>퀘스트 성능. 첫 단계(P1)에 실측과 최적화를 넣어 일찍 드러나게 함</td></tr>
 <tr><td>Wing 작업과의 충돌</td><td class="c"><span class="pill ok">통과</span></td><td>접점 3곳, 병합 절차, 대체 경로, 스모크 테스트로 관리</td></tr>
-<tr><td>착수 조건</td><td class="c"><span class="pill warn">필요</span></td><td>P1 실측에 퀘스트 3 USB 연결, 13장 결정 1(미리보기)과 3(Wing 요청)</td></tr>
-<tr><td>결론</td><td class="c"><span class="pill ok">착수 가능</span></td><td>Jack 최종 승인 후 P1부터 시작. 실기기 측정 전까지의 작업(연결 코드, 구조 개편, 체험판 기능 이식, 최적화 적용)은 기기 없이 진행 가능</td></tr>
+<tr><td>조작과 UI</td><td class="c"><span class="pill ok">통과</span></td><td>Jack 착용 평가의 부족한 점(설정 바꾸기, 웹 전환, 핸드)을 7-1장 명세와 P3 완료 조건으로 연결. 수치는 Meta 공식 지침 근거</td></tr>
+<tr><td>착수 조건</td><td class="c"><span class="pill ok">충족</span></td><td>미리보기 환경 구축 완료. 실기기 항목은 대기열 방식이라 퀘스트 연결 없이도 시작 가능. Wing 요청(결정 3)은 P1 연결 코드 반영 전까지 Jack이 전달</td></tr>
+<tr><td>결론</td><td class="c"><span class="pill ok">착수 가능</span></td><td>Jack이 전체 실행을 요청하면 8-1장 방식으로 P1부터 P8까지 이어서 진행하고 단계마다 보고, P9에서 최종 확인을 받음</td></tr>
 </tbody></table></div>
 </section>
 
@@ -630,7 +727,8 @@ python3 -m http.server 8790 --bind 127.0.0.1
 <tbody>
 <tr><td>2026-10-30</td><td>P0</td><td>Wing 작업물 전수 조사. 래퍼와 주입 구조, VR, 피규어, 패널 미러, 병합 프록시 구현. 에뮬레이터 검증(6장). r128 양안 절두체 컬링 오류 발견과 보정. 그리기 호출 6,724 → 662회</td><td><code>9cf4d59</code></td></tr>
 <tr><td>2026-10-30</td><td>문서</td><td>계획서 v1.0 작성</td><td><code>c61ddb9</code></td></tr>
-<tr><td>2026-10-30</td><td>문서</td><td>v1.1: Wing 파일 수정 허용(Jack)에 따라 연결 통로 방식으로 구조 변경, Wing VR 체험판 분석과 흡수 계획, 성능 단계 앞당김, 병합 절차, 착수 전 검토. 브랜치를 최신 main(<code>ab4d257</code>) 위로 갱신</td><td>(이 커밋)</td></tr>
+<tr><td>2026-10-30</td><td>문서</td><td>v1.1: Wing 파일 수정 허용(Jack)에 따라 연결 통로 방식으로 구조 변경, Wing VR 체험판 분석과 흡수 계획, 성능 단계 앞당김, 병합 절차, 착수 전 검토. 브랜치를 최신 main(<code>ab4d257</code>) 위로 갱신</td><td><code>7d5d6a2</code></td></tr>
+<tr><td>2026-10-30</td><td>문서, 환경</td><td>v1.2: 조작과 메뉴 명세(7-1, Jack 착용 평가와 Meta 손 조작 지침 반영), 실행 방식(8-1), 미리보기 저장소 <code>evyfjae/kapehorn-preview</code> 구축과 첫 배포(12-1)</td><td>(이 커밋)</td></tr>
 </tbody></table></div>
 </section>
 </main>
