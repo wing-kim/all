@@ -200,6 +200,10 @@ def default_cls(kind, h, area, rnd, year=None):
         if rnd < acc: return k, PAL[k]
     return k, PAL[k]
 
+# 로드뷰 기록이 없는 건물의 띠·창틀 색과 창 비율(분류별 가정값)
+CLS2 = {'tile': ('#3f474e', 0.25), 'paint': ('#4a5157', 0.22), 'stone': ('#3f474e', 0.35), 'brick': ('#3e4246', 0.25),
+        'metal': ('#434a50', 0.3), 'glass': ('#d6dadc', 0.8), 'apt': ('#8fa3a5', 0.45)}
+
 def hash01(s):
     h = 2166136261
     for ch in s.encode(): h = ((h ^ ch) * 16777619) & 0xffffffff
@@ -275,10 +279,16 @@ def main():
     rv_by_id = {}
     for k, v in near_rv.items():
         if k.startswith('_'): continue
+        if k.startswith('vw:'):
+            f = next((f for f in feats if f['id'] == k), None)
+            if f: rv_by_id[f['id']] = v
+            else: print('로드뷰 기록 연결 실패', k)
+            continue
         if k.startswith('ll:'):
             la, lo = map(float, k[3:].split(',')); q = tuple(to_w(la, lo))
         else: q = osm_c[k]
         f = nearest(q, 20.0 if k.startswith('ll:') else 8.0)
+        if f and f['id'] in rv_by_id: print('로드뷰 기록 중복', k, f['id'])
         if f: rv_by_id[f['id']] = v
         else: print('로드뷰 기록 연결 실패', k)
     wing_ids = {}
@@ -343,8 +353,10 @@ def main():
         if len(how) <= 1: del b['verify_all']
         if api_floors and api_floors != floors: b['floors_api'] = api_floors
         if props.get('useapr_day'): b['approved'] = props['useapr_day']
+        b['color2'] = (rv or {}).get('color2') or CLS2[cls][0]
+        b['win_ratio'] = (rv or {}).get('win_ratio', CLS2[cls][1])
         if rv:
-            for k in ('shop_glass', 'windows', 'ref', 'note'):
+            for k in ('shop_glass', 'rooftop', 'confidence', 'windows', 'ref', 'note'):
                 if k in rv: b[k] = rv[k]
             if rv.get('verify'): b['verify_note'] = rv['verify']
         out.append(b)

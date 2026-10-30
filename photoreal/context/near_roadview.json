@@ -1,5 +1,5 @@
 {
- "_설명": "근경 건물 로드뷰 확인 기록(사람이 보고 적은 값). 키는 OSM way id. 카카오 로드뷰 2026.06 촬영분, 캡처는 ref/. cls 는 kh-context.js 재질 분류, color 는 대표 외벽색(sRGB 추정), floors 는 로드뷰로 센 지상층수(옥탑 제외).",
+ "_설명": "근경 건물 로드뷰 확인 기록(사람이 보고 적은 값). 키는 OSM way id, 브이월드 id(vw:...), 또는 ll:위도,경도(가장 가까운 건물). 카카오 로드뷰 2026.06～07 촬영분, 캡처는 ref/. cls 는 재질 분류, color 는 외벽 대표색, color2 는 띠·창틀·포인트 색(sRGB 추정), win_ratio 는 벽면 중 창 비율(0～1 대략), floors 가 없으면 건축물정보 층수를 쓴다. confidence 중간 = 로드뷰 위치와 건물 대응이 지도 추정이라 이웃 건물과 바뀌었을 수 있음",
  "775465796": {
   "name": "압구정로 114 (도미노피자 신사빌딩)",
   "floors": 4,
@@ -13,7 +13,10 @@
    "09_압구정로_116_114_동광",
    "16_압구정로_건너편_118_116_114_동광"
   ],
-  "note": "좁은 회청색 4층(1층 + 3개 층), 1층 파란 차양"
+  "note": "좁은 회청색 4층(1층 + 3개 층), 1층 파란 차양",
+  "color2": "#3a3f44",
+  "win_ratio": 0.3,
+  "rooftop": null
  },
  "775465797": {
   "name": "압구정로 116 (아인슈타인학원)",
@@ -28,7 +31,10 @@
    "08_압구정로_118_116",
    "16_압구정로_건너편_118_116_114_동광"
   ],
-  "note": "흰 소형 타일 5층(1층 상점 + 4개 층), 오른쪽 짙은 유리 계단 띠, 옥상 박스와 안테나. 건축물정보는 4층(15.8m)"
+  "note": "흰 소형 타일 5층(1층 상점 + 4개 층), 오른쪽 짙은 유리 계단 띠, 옥상 박스와 안테나. 건축물정보는 4층(15.8m)",
+  "color2": "#2f3a44",
+  "win_ratio": 0.35,
+  "rooftop": "옥상 박스와 안테나"
  },
  "775465798": {
   "name": "압구정로 118 (오피스)",
@@ -43,7 +49,10 @@
    "08_압구정로_118_116",
    "16_압구정로_건너편_118_116_114_동광"
   ],
-  "note": "베이지 석재와 가로 띠창 6층(1층 유리 + 5개 층). 건축물정보는 4층(12m)으로 실제와 다름"
+  "note": "베이지 석재와 가로 띠창 6층(1층 유리 + 5개 층). 건축물정보는 4층(12m)으로 실제와 다름",
+  "color2": "#39434b",
+  "win_ratio": 0.5,
+  "rooftop": "최상층 후퇴"
  },
  "775465792": {
   "name": "압구정로 110 (커스텀잇·세레스학원)",
@@ -57,7 +66,10 @@
    "01_6m도로_북서_커스텀잇_동광",
    "03_6m도로_110_커스텀잇"
   ],
-  "note": "회백색 모자이크 타일, 모서리 베이지 출입구 포털"
+  "note": "회백색 모자이크 타일, 모서리 베이지 출입구 포털",
+  "color2": "#1f2b45",
+  "win_ratio": 0.25,
+  "rooftop": null
  },
  "775465791": {
   "name": "압구정로 108 (덕산빌딩)",
@@ -71,7 +83,10 @@
    "10_압구정로_108_덕산빌딩",
    "11_압구정로_108_110"
   ],
-  "note": "흰 벽돌 타일 3층 상가 줄(로드뷰). 건축물정보는 4층"
+  "note": "흰 벽돌 타일 3층 상가 줄(로드뷰). 건축물정보는 4층",
+  "color2": "#3f7a5a",
+  "win_ratio": 0.25,
+  "rooftop": null
  },
  "775465789": {
   "name": "압구정로 104",
@@ -84,21 +99,29 @@
   "ref": [
    "13_압구정로_104"
   ],
-  "note": "밝은 회색 석재 패널과 유리, 저층부 유리 로비. 층수는 건축물정보(7층, 27.6m) 기준, 로드뷰는 상부가 잘려 셀 수 없었음"
+  "note": "밝은 회색 석재 패널과 유리, 저층부 유리 로비. 층수는 건축물정보(7층, 27.6m) 기준, 로드뷰는 상부가 잘려 셀 수 없었음",
+  "color2": "#3a4650",
+  "win_ratio": 0.45,
+  "rooftop": null
  },
  "775465790": {
   "name": "압구정로 106 (에스모드서울)",
   "floors": 5,
   "cls": "stone",
-  "color": "#9c9a96",
+  "color": "#c4c2bd",
   "shop_glass": true,
   "windows": "개별창",
   "floor_h": 3.7,
   "ref": [
-   "12_압구정로_106_104_방향"
+   "12_압구정로_106_104_방향",
+   "48_골목_컨템포_에스모드",
+   "51_골목_북서_주차장"
   ],
   "verify": "공개자료(지상 5층)+로드뷰 일부(가로수에 가림)",
-  "note": "Wing 은 회색 화강석 약 7층으로 그림. 층수는 공개자료 기준"
+  "note": "밝은 회색 석재 패널과 녹색 유리 띠, 세로 ESMOD SEOUL 간판. 층수는 건축물정보(지상 5층) 기준. Wing 은 약 7층",
+  "color2": "#4f7f6e",
+  "win_ratio": 0.35,
+  "rooftop": null
  },
  "840277573": {
   "name": "미성2차 22동",
@@ -111,7 +134,10 @@
   "ref": [
    "06_압구정로_대지앞_미성2차",
    "05_압구정로_대지앞_남서"
-  ]
+  ],
+  "color2": "#6fa3a0",
+  "win_ratio": 0.45,
+  "rooftop": null
  },
  "436407209": {
   "name": "미성2차 23동",
@@ -123,7 +149,10 @@
   "floor_h": 2.8,
   "ref": [
    "05_압구정로_대지앞_남서"
-  ]
+  ],
+  "color2": "#6fa3a0",
+  "win_ratio": 0.45,
+  "rooftop": null
  },
  "497993586": {
   "name": "신사중학교 본관",
@@ -136,7 +165,10 @@
   "ref": [
    "15_신사중학교"
   ],
-  "note": "짙은 갈회색 벽돌·석재, 정면 상부 학교명"
+  "note": "짙은 갈회색 벽돌·석재, 정면 상부 학교명",
+  "color2": "#2e3a40",
+  "win_ratio": 0.25,
+  "rooftop": null
  },
  "ll:37.52372,127.02236": {
   "name": "모모성형외과 (유리 건물)",
@@ -147,9 +179,13 @@
   "windows": "커튼월",
   "floor_h": 3.6,
   "ref": [
-   "14_압구정로10길_모모성형외과"
+   "14_압구정로10길_모모성형외과",
+   "35_압구정로_모모_투명치과"
   ],
-  "note": "청록 유리 커튼월, 상부 검은 간판띠"
+  "note": "청록 유리 커튼월, 상부 검은 간판띠",
+  "color2": "#1f2326",
+  "win_ratio": 0.85,
+  "rooftop": null
  },
  "896202363": {
   "name": "압구정로 93 (CU)",
@@ -160,8 +196,453 @@
   "floor_h": 3.3,
   "ref": [
    "17_논현로175길_북동_93CU",
-   "18_논현로175길_93CU_호프만"
+   "18_논현로175길_93CU_호프만",
+   "29_논현로175길_CU_7층"
   ],
-  "note": "밝은 베이지 석재 패널, 아치형 출입구. 층수는 건축물정보(7층) 기준, 로드뷰로 5개 층 이상 확인. Wing 은 약 3층"
+  "note": "밝은 베이지 석재 패널, 아치형 출입구, 녹색 기운 유리. 지상 7층(로드뷰 29번으로 확인). Wing 은 약 3층",
+  "floors": 7,
+  "color2": "#7e8b80",
+  "win_ratio": 0.3,
+  "rooftop": null
+ },
+ "vw:LT_C_BLDGINFO.14315229_0": {
+  "name": "압구정로 94 (스타벅스)",
+  "cls": "stone",
+  "color": "#5f5e5a",
+  "color2": "#3b3b39",
+  "shop_glass": true,
+  "windows": "개별창(작은 창)",
+  "win_ratio": 0.15,
+  "rooftop": "박공 지붕 두 개(경사)",
+  "ref": [
+   "20_압구정로10길_남동_스타벅스",
+   "21_압구정로10길_스타벅스_118",
+   "23_논현로175길_남서_스타벅스"
+  ],
+  "note": "짙은 회색 슬레이트 석재, 박공 두 개가 이어진 모양. 10길과 175길 모서리",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.15533401_0": {
+  "name": "10길 유리 건물",
+  "cls": "glass",
+  "color": "#4c565a",
+  "color2": "#e3e3df",
+  "shop_glass": true,
+  "windows": "커튼월",
+  "win_ratio": 0.85,
+  "rooftop": null,
+  "ref": [
+   "26_논현로175길_유리건물"
+  ],
+  "note": "짙은 유리 커튼월, 안쪽 블라인드, 흰 모서리 기둥",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14321178_0": {
+  "name": "10길·175길 흰 금속 건물",
+  "cls": "metal",
+  "color": "#e9e9e6",
+  "color2": "#5b6a70",
+  "shop_glass": true,
+  "windows": "개별창+유리면",
+  "win_ratio": 0.35,
+  "rooftop": null,
+  "ref": [
+   "24_논현로175길_북동",
+   "45_논현로175길_동쪽2"
+  ],
+  "note": "흰 세로 골판 금속 패널, 한쪽 면 유리",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14337787_0": {
+  "name": "GOALSTUDIO (DARLING YOU 자리)",
+  "cls": "stone",
+  "color": "#b2b2ae",
+  "color2": "#2a2a2a",
+  "shop_glass": true,
+  "windows": "띠창(루버)",
+  "win_ratio": 0.12,
+  "rooftop": null,
+  "ref": [
+   "25_논현로175길_GOALSTUDIO",
+   "44_논현로175길_동쪽_리브콘크리트"
+  ],
+  "note": "회색 가로 줄눈 프리캐스트 콘크리트, 1층 검은 프레임 상점 유리, 위쪽 루버 창 띠",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14328953_0": {
+  "name": "E+A빌딩 (압구정로10길 모서리)",
+  "cls": "tile",
+  "color": "#e4dfd5",
+  "color2": "#2f3235",
+  "shop_glass": true,
+  "windows": "띠창",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "22_압구정로10길_EA빌딩_흰건물",
+   "36_압구정로_투명치과_EA"
+  ],
+  "note": "흰 베이지 대형 타일·패널, 10길 쪽 둥근 모서리, 1층 짙은 상점 유리",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14318183_0": {
+  "name": "10길 흰 건물(옥상 유리 증축)",
+  "cls": "paint",
+  "color": "#ecebe7",
+  "color2": "#9ea4a8",
+  "shop_glass": false,
+  "windows": "개별창",
+  "win_ratio": 0.2,
+  "rooftop": "옥상 유리 증축",
+  "ref": [
+   "22_압구정로10길_EA빌딩_흰건물"
+  ],
+  "note": "흰 도장 벽, 옥상에 유리 띠창 증축",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14339887_0": {
+  "name": "5번지 (羊 식당)",
+  "cls": "stone",
+  "color": "#c9a77c",
+  "color2": "#6b5a48",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "19_6m도로_5번지_양식당",
+   "30_논현로175길_5번지_96"
+  ],
+  "note": "베이지 사암 패널, 짙은 창틀. Wing 은 약 2층",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14862297_0": {
+  "name": "96",
+  "cls": "glass",
+  "color": "#5d6e74",
+  "color2": "#c9cdcf",
+  "shop_glass": true,
+  "windows": "커튼월",
+  "win_ratio": 0.8,
+  "rooftop": null,
+  "ref": [
+   "17_논현로175길_북동_93CU",
+   "30_논현로175길_5번지_96"
+  ],
+  "note": "청회색 반사 유리 커튼월. Wing 은 약 3층",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14319433_0": {
+  "name": "보고(BOGO)빌딩 (HOFMANN)",
+  "cls": "tile",
+  "color": "#cfe3ea",
+  "color2": "#8fc7d6",
+  "shop_glass": true,
+  "windows": "개별창+유리",
+  "win_ratio": 0.35,
+  "rooftop": null,
+  "ref": [
+   "27_압구정로8길_CU_호프만",
+   "28_논현로175길_남서_110"
+  ],
+  "note": "1층 민트색 도장, 위층 파랑·흰 무늬 타일과 유리",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.13965622_0": {
+  "name": "8길 공사 중 건물",
+  "cls": "brick",
+  "color": "#8a5a45",
+  "color2": "#7f8a95",
+  "shop_glass": false,
+  "windows": "개별창",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "27_압구정로8길_CU_호프만",
+   "29_논현로175길_CU_7층"
+  ],
+  "note": "적갈색 벽돌, 2026년 7월 비계와 가림막(공사 중)",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14068515_0": {
+  "name": "송우빌딩",
+  "cls": "tile",
+  "color": "#d2cbbf",
+  "color2": "#4f6a6a",
+  "shop_glass": true,
+  "windows": "개별창+세로 유리띠",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "31_송우빌딩_103",
+   "34_송우빌딩_마마농마마_타래"
+  ],
+  "note": "베이지 회색 대형 정사각 타일, 녹색 유리 세로 띠, 간판 \"松雨빌딩\"",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14314303_0": {
+  "name": "103",
+  "cls": "paint",
+  "color": "#ecece8",
+  "color2": "#4a5560",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "49_골목_북동_발코니건물",
+   "31_송우빌딩_103"
+  ],
+  "note": "흰 도장 벽, 짙은 창",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14328631_0": {
+  "name": "Mama Non Mama",
+  "cls": "paint",
+  "color": "#f0ede6",
+  "color2": "#f1d63a",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.2,
+  "rooftop": "갈색 처마(경사 지붕 일부)",
+  "ref": [
+   "32_마마농마마_유리필로티",
+   "34_송우빌딩_마마농마마_타래"
+  ],
+  "note": "흰 도장 3층, 1층 노란 도장, 갈색 처마",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14269533_0": {
+  "name": "골목 유리·필로티 건물",
+  "cls": "glass",
+  "color": "#7d8e99",
+  "color2": "#efefea",
+  "shop_glass": false,
+  "windows": "커튼월",
+  "win_ratio": 0.7,
+  "rooftop": null,
+  "ref": [
+   "32_마마농마마_유리필로티",
+   "33_유리필로티_103"
+  ],
+  "note": "위층 반사 유리 커튼월, 흰 띠, 1층 필로티 주차",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14286830_0": {
+  "name": "타래하우스텔",
+  "cls": "metal",
+  "color": "#d4b03a",
+  "color2": "#4b4744",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.25,
+  "rooftop": null,
+  "ref": [
+   "34_송우빌딩_마마농마마_타래"
+  ],
+  "note": "위층 노란 골판 금속, 아래층 짙은 회색 벽돌",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14321940_0": {
+  "name": "발코니 타일 건물",
+  "cls": "tile",
+  "color": "#ddd7cb",
+  "color2": "#2e2e2e",
+  "shop_glass": true,
+  "windows": "개별창(프렌치 발코니)",
+  "win_ratio": 0.3,
+  "rooftop": null,
+  "ref": [
+   "49_골목_북동_발코니건물",
+   "50_골목_발코니건물"
+  ],
+  "note": "베이지 회색 타일, 검은 철제 난간 발코니, 1층 분홍 차양",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14329576_0": {
+  "name": "컨템포빌딩",
+  "cls": "glass",
+  "color": "#3f4a48",
+  "color2": "#6f9c84",
+  "shop_glass": true,
+  "windows": "띠창",
+  "win_ratio": 0.55,
+  "rooftop": null,
+  "ref": [
+   "48_골목_컨템포_에스모드"
+  ],
+  "note": "짙은 회색 곡면 금속과 녹색 유리 띠",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14333189_0": {
+  "name": "투명치과빌딩",
+  "cls": "stone",
+  "color": "#cbb9a0",
+  "color2": "#6fa3a6",
+  "shop_glass": true,
+  "windows": "개별창+유리면",
+  "win_ratio": 0.45,
+  "rooftop": null,
+  "ref": [
+   "35_압구정로_모모_투명치과",
+   "36_압구정로_투명치과_EA"
+  ],
+  "note": "베이지 석재와 청록 유리, 둥근 창, 1층 약국",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14330336_0": {
+  "name": "가로수길 입구 검은 건물",
+  "cls": "stone",
+  "color": "#2e2f31",
+  "color2": "#6b6e70",
+  "shop_glass": true,
+  "windows": "커튼월(대형 유리)",
+  "win_ratio": 0.4,
+  "rooftop": null,
+  "ref": [
+   "39_가로수길_검은건물_적벽돌",
+   "42_가로수길_파란유리_검은건물"
+  ],
+  "note": "짙은 숯색 석재와 대형 유리, 아치형 개구부, 2026년 7월 리모델링 가림막",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.17217068_0": {
+  "name": "가로수길 입구 적벽돌 건물",
+  "cls": "brick",
+  "color": "#9b4a3a",
+  "color2": "#2f3133",
+  "shop_glass": true,
+  "windows": "띠창",
+  "win_ratio": 0.35,
+  "rooftop": null,
+  "ref": [
+   "39_가로수길_검은건물_적벽돌",
+   "40_가로수길_입구_적벽돌_에이랜드"
+  ],
+  "note": "적벽돌, 짙은 창 띠, 1층 유리",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14102243_0": {
+  "name": "THE ALLEY (가로수길)",
+  "cls": "paint",
+  "color": "#ecebe6",
+  "color2": "#1d1d1d",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.15,
+  "rooftop": null,
+  "ref": [
+   "41_가로수길_THEALLEY",
+   "42_가로수길_파란유리_검은건물"
+  ],
+  "note": "흰 도장 2층, 1층 검은 띠와 검은 프레임 유리",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14172463_0": {
+  "name": "가로수길 파란 유리 건물",
+  "cls": "glass",
+  "color": "#3d6fae",
+  "color2": "#d9d9d6",
+  "shop_glass": true,
+  "windows": "커튼월",
+  "win_ratio": 0.6,
+  "rooftop": null,
+  "ref": [
+   "42_가로수길_파란유리_검은건물"
+  ],
+  "note": "파란 유리 커튼월과 흰 석재 틀",
+  "confidence": "높음"
+ },
+ "vw:LT_C_BLDGINFO.14323408_0": {
+  "name": "8길 벽돌 건물",
+  "cls": "brick",
+  "color": "#8c6a55",
+  "color2": "#2c3a33",
+  "shop_glass": true,
+  "windows": "띠창",
+  "win_ratio": 0.35,
+  "rooftop": null,
+  "ref": [
+   "46_압구정로8길_벽돌_흰건물"
+  ],
+  "note": "갈색 벽돌, 녹색 차양과 짙은 유리 띠",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14324988_0": {
+  "name": "8길 흰 건물",
+  "cls": "paint",
+  "color": "#eeeeea",
+  "color2": "#5f7f86",
+  "shop_glass": true,
+  "windows": "개별창+큰 유리",
+  "win_ratio": 0.3,
+  "rooftop": null,
+  "ref": [
+   "46_압구정로8길_벽돌_흰건물"
+  ],
+  "note": "흰 도장, 큰 유리창, 필로티 출입구",
+  "confidence": "중간"
+ },
+ "vw:LT_C_BLDGINFO.14318784_0": {
+  "name": "NUKIM 건물",
+  "cls": "paint",
+  "color": "#efefec",
+  "color2": "#f2c418",
+  "shop_glass": true,
+  "windows": "띠창",
+  "win_ratio": 0.3,
+  "rooftop": null,
+  "ref": [
+   "47_압구정로8길_NUKIM"
+  ],
+  "note": "흰 도장, 2층 가로 띠창, 1층 노란 간판",
+  "confidence": "중간"
+ },
+ "ll:37.52338,127.02275": {
+  "name": "KARYMARKET (가로수길 동쪽)",
+  "cls": "glass",
+  "color": "#8fa3a8",
+  "color2": "#f2f2f0",
+  "shop_glass": true,
+  "windows": "커튼월",
+  "win_ratio": 0.8,
+  "rooftop": null,
+  "ref": [
+   "52_가로수길_KARYMARKET",
+   "53_가로수길_KARYMARKET_에이랜드"
+  ],
+  "note": "유리 커튼월과 흰 패널 기둥",
+  "confidence": "높음"
+ },
+ "ll:37.52368,127.02266": {
+  "name": "에이랜드 (가로수길 동쪽)",
+  "cls": "glass",
+  "color": "#9fb1b8",
+  "color2": "#d65aa0",
+  "shop_glass": true,
+  "windows": "커튼월",
+  "win_ratio": 0.6,
+  "rooftop": null,
+  "ref": [
+   "40_가로수길_입구_적벽돌_에이랜드",
+   "53_가로수길_KARYMARKET_에이랜드"
+  ],
+  "note": "유리 커튼월에 다색 모자이크 그래픽",
+  "confidence": "높음"
+ },
+ "ll:37.52318,127.02282": {
+  "name": "가로수길 동쪽 회색 타일 건물",
+  "cls": "stone",
+  "color": "#9a9b98",
+  "color2": "#1e1f21",
+  "shop_glass": true,
+  "windows": "개별창",
+  "win_ratio": 0.4,
+  "rooftop": null,
+  "ref": [
+   "52_가로수길_KARYMARKET"
+  ],
+  "note": "회색 석재·타일, 1층 검은 철골 카페",
+  "confidence": "중간"
  }
 }
