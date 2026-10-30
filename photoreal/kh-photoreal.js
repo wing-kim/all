@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1030.g';
+  const VER = '1031.a';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -30,7 +30,11 @@
     T = window.THREE; K = window.KHPR; R = window.KHXR.renderer; scene = window.KHXR.scene;
     PR.K = K;
     ui();
-    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (PR.on) frame(); }; })(scene.onBeforeRender);
+    // Wing 은 한 프레임에 장면을 여러 번 그린다(화면 효과 단계마다). 내 매 프레임 처리는 화면 프레임마다 한 번만 한다.
+    // 창의 rAF 는 Wing 그리기 뒤에 돌아 다음 프레임 번호를 올린다. VR 중에는 창 rAF 가 멈추므로 그리기마다 처리한다(VR 은 프레임당 한 번 그림)
+    (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
+    let lastTick = -1;
+    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
     // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다
     setTimeout(prefetch, Q.get('pr') === '1' ? 0 : 2500);
     if (Q.get('pr') === '1') { await new Promise(r => setTimeout(r, 300)); preset(Q.get('pf') || 'glass'); enable(true).then(() => { const lv = Q.get('lv'); if (lv) goLevel(lv); }); }
@@ -314,12 +318,12 @@
       // 지하: Wing 이 노출을 크게 낮추므로(PR 켜짐 동안 frame() 에서 0.95로 고정) 그 기준으로 맞춘 값
       const Lp = { lm: LT.lm, box: LT.box, k: 1.0, amb: new T.Color(0.05, 0.05, 0.052) }, PE = parkEnv();
       const env = (m, e) => { m.envMap = PE; if (e != null) m.envMapIntensity = e; return m; };
-      if (orig === M.bfloor || orig === M.ramp) return env(texMat('office-concrete', 3, { tint: 0x8a8d91, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.16 }, under: lin(0x2c2f32) }), 1.0);
+      if (orig === M.bfloor || orig === M.ramp) return env(texMat('office-concrete', 3, { tint: 0x8a8d91, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.16 }, under: lin(0xb9bab7) }), 1.0);
       if (orig === BM2.pad) return env(texMat('office-concrete', 3, { tint: 0x96999e, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.22 } }), 0.9);
       if (orig === M.paint) return env(paint(0xf2f1ec, 0.4, 0.5, Lp));
       if (orig === M.paintY) return env(paint(0xe6b52e, 0.4, 0.5, Lp));
       if (orig === BM2.stop) return env(paint(0x5d6064, 0.6, 0.4, Lp));
-      if (orig === M.bceil) return env(texMat('concrete-wall', 2.7, { tint: 0x34373a, light: { amb: new T.Color(0.06, 0.06, 0.06) } }), 0.5);
+      if (orig === M.bceil) return env(texMat('concrete-wall', 2.7, { tint: 0xb9bab7, ns: 0.4, light: { amb: new T.Color(0.16, 0.16, 0.16), lm: LT.lm, box: LT.box, k: 0.5 } }), 0.4);
       if (orig === M.bwall || orig === M.rampwall) return env(texMat('wall-beige', 3, { tint: 0xd6cfc4, ns: 0.5, light: { amb: new T.Color(0.2, 0.185, 0.165) } }), 0.5);
       if (orig === BM2.stripe || orig === BM2.stripeK) return env(paint(0x1c1e20, 0.45, 0.6, { amb: new T.Color(0.08, 0.08, 0.08) }));
       if (orig === M.col) return env(texMat('plaster-white', 1.2, { tint: 0xf3f2ef, ns: 0.3, light: { amb: new T.Color(0.3, 0.3, 0.3), lm: LT.lm, box: LT.box, k: 0.35 } }), 0.4);
@@ -544,11 +548,95 @@
     if (R3D.sky) R3D.sky.visible = !useSky;
     if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
     if (DIST) DIST.visible = !K.I.on || !inBase;
-    if (CTX.now && CTX.detached.length) { const nw = K.state.era === 'new'; CTX.now.visible = !nw; CTX.next.visible = nw; }
+    if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw; CTX.next.visible = nw; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
     // 층 묶음은 원본이 재건할 때마다 새로 생기므로 층 이름으로 매번 찾는다
-    DR.groups.forEach(([g, key]) => { if (!key) return; const i = K.LEVELS.findIndex(l => l.key === key), lg = K.LG && K.LG[i]; g.visible = !!(lg && lg.visible && lg.parent); });
+    // 밖(건물 밖 보기)에서는 안쪽 묶음을 숨긴다. VR 은 퀘스트 예산 때문에 밖에서는 1층 창가만, 안에서는 지금 층만 보인다
+    const xr = R.xr.isPresenting, inside = K.I.on, Lv = K.I.on && K.Lv && K.Lv(), cur = Lv ? Lv.key : null;
+    DR.groups.forEach(([g, key]) => {
+      let v = true;
+      if (key) { const i = K.LEVELS.findIndex(l => l.key === key), lg = K.LG && K.LG[i]; v = !!(lg && lg.visible && lg.parent); }
+      if (g.userData.prDeepG && !inside) v = false;
+      if (xr && !inside && key !== '1F') v = false;
+      if (xr && inside && key && key !== cur) v = false;
+      g.visible = v;
+    });
+    perf();
+  }
+
+  /* ================= 5-2. 그리기 부담 줄이기 =================
+     측정(10/31, 맥 M5 외관): 프레임당 삼각형 1,950만 개(장면 333만의 6배), 초당 12프레임. 원인과 처리:
+     1) Wing 의 해 그림자는 장면을 그릴 때마다(한 프레임에 3번) 다시 계산된다 → 해·장면·보이는 층이 바뀔 때만 계산(그림자 카메라는 고정이라 시점과 무관)
+     2) 화면 효과 단계: RenderPass 가 그린 화면을 SSAO 단계가 자기 화면으로 덮어 쓴다 → SSAO 가 켜진 동안 RenderPass 는 건너뛴다(결과 동일)
+     3) 실내 가구(장면 삼각형의 82%)는 밖에서도 모두 그려지고 그림자도 드리운다 → 밖에서는 창가 띠(외벽에서 PR_DEEP m 이내)만 보이고 그림자는 끈다.
+        VR 에서는 퀘스트 예산에 맞춰 밖에서는 1층 카페 창가만, 안에서는 지금 서 있는 층만 보인다
+     5) SSAO(구석 어둡게)는 남은 비용의 40%(초당 30 → 50프레임). 화면을 돌리거나 걷는 동안에는 건너뛰고(장면 한 번만 그림),
+        멈추고 0.25초 뒤부터 다시 그린다. 멈춘 화면·저장 이미지는 그대로 SSAO 가 들어간다
+     4) Wing 의 유리 반사 지도(정육면체 6면)는 건물을 숨기고 그리는데 내 가구·가로수는 건물 밖 묶음이라 6번 더 그려졌다 → 반사 지도를 그릴 때는 숨긴다 */
+  const PR_DEEP = 4.0;
+  const PF_ = { shSig: '', shDirty: true, dvKey: '', rp: null, cube: null };
+  function dressVisKey() {
+    return (K.I.on ? 'in' : 'out') + '|' + (DR.group ? DR.group.uuid + DR.groups.length : '');
+  }
+  function applyDressVis() {
+    const inside = K.I.on;
+    if (!DR.group) return;
+    DR.group.traverse(o => { if (o.isMesh) o.castShadow = inside && !o.userData.prNoCast; });
+    PF_.shDirty = true;
+  }
+  function perf() {
+    // 3) 가구 표시: 상태가 바뀔 때만 훑는다
+    const dk = dressVisKey(); if (dk !== PF_.dvKey) { PF_.dvKey = dk; applyDressVis(); }
+    // 2) RenderPass 건너뛰기(한 번만 감싼다. 실사 3D 를 끄면 원래대로 그린다)
+    const C = K.R3D.composer, rp = C && C.passes && C.passes[0];
+    if (rp && !rp.prWrap && rp.constructor && rp.constructor.name === 'RenderPass' && K.R3D.ssao) {
+      const orig = rp.render, ss = K.R3D.ssao;
+      rp.render = function () { if (PR.on && ss.enabled && ss.output === 0) return; return orig.apply(this, arguments); };
+      rp.prWrap = true;
+    }
+    // 5) 움직이는 동안 SSAO 건너뛰기
+    const cm = window.KHXR.camera.matrixWorld.elements, lc = PF_.cam || (PF_.cam = new Float64Array(16));
+    // 관성(감쇠)으로 아주 느리게 남는 움직임은 멈춘 것으로 본다(회전 성분 5e-4, 위치 5mm 미만)
+    let mv = false; for (let i = 0; i < 16; i++) if (Math.abs(cm[i] - lc[i]) > (i >= 12 ? 5e-3 : 5e-4)) { mv = true; break; }
+    if (mv) for (let i = 0; i < 16; i++) lc[i] = cm[i];
+    if (mv) PF_.moved = now();
+    const ss = K.R3D.ssao;
+    if (ss && !ss.prWrap) {
+      const sr = ss.render;
+      ss.render = function (renderer, writeBuffer) {
+        if (PR.on && !PR.still && PF_.moved && now() - PF_.moved < 250 && this.output === 0) { renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer); renderer.clear(); renderer.render(this.scene, this.camera); return; }
+        return sr.apply(this, arguments);
+      };
+      ss.prWrap = true;
+    }
+    // 4) 반사 지도: 그릴 때 가구·가로수·워밍업 판을 숨긴다
+    const cc = K.R3D.cubeCam;
+    if (cc && !cc.prWrap) {
+      const up = cc.update;
+      cc.update = function () {
+        const hide = [DR.group, ENV.group, warmG].filter(g => g && g.visible), t0 = now();
+        if (PR.on) hide.forEach(g => { g.visible = false; });
+        const r = up.apply(this, arguments);
+        hide.forEach(g => { g.visible = true; });
+        PR.stat.cubeMs = Math.round(now() - t0); PF_.shDirty = true;
+        return r;
+      };
+      cc.prWrap = true;
+    }
+    // 1) 그림자: 해 위치·세기, 층 배치, 보이는 층, 가구·주변 건물·거리 소품 상태가 바뀔 때만 다시 계산
+    const sm = R.shadowMap;
+    if (sm.autoUpdate) { PF_.shAuto = true; sm.autoUpdate = false; PF_.shDirty = true; }
+    const sp = K.sun.position, f = v => Math.round(v * 10);
+    let lgv = ''; if (K.LG) for (let i = 0; i < K.LG.length; i++) lgv += K.LG[i] && K.LG[i].visible && K.LG[i].parent ? '1' : '0';
+    const sig = [f(sp.x), f(sp.y), f(sp.z), K.sun.castShadow ? 1 : 0, CUR.sig, lgv, K.bld.children.length, K.bld.visible ? 1 : 0, K.city.visible ? 1 : 0, K.ctx.visible ? 1 : 0, K.exist && K.exist.visible ? 1 : 0,
+      CTX.now ? (CTX.now.visible ? 1 : 0) + '' + (CTX.now.parent ? 1 : 0) : '-', CTX.next ? (CTX.next.visible ? 1 : 0) + '' + (CTX.next.parent ? 1 : 0) : '-', ENV.group ? 1 : 0, ENV.added.length, K.state.era].join(',');
+    if (sig !== PF_.shSig) { PF_.shSig = sig; PF_.shDirty = true; }
+    if (PF_.shDirty) { sm.needsUpdate = true; PF_.shDirty = false; }
+  }
+  function perfOff() {
+    if (PF_.shAuto) { R.shadowMap.autoUpdate = true; PF_.shAuto = false; }
+    R.shadowMap.needsUpdate = true; PF_.dvKey = ''; PF_.shSig = '';
   }
 
   /* ================= 5-1. 셰이더 미리 준비 =================
@@ -558,7 +646,7 @@
   let warmG = null, warmMs = [];
   function warm() {
     if (warmG) { scene.remove(warmG); warmG = null; }
-    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && DR.group) { PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); } return; }
+    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && DR.group) { PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); } return; }
     const props = R.properties, cam = window.KHXR.camera;
     warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
     const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3));
@@ -571,6 +659,15 @@
       warmG.add(me); n++;
     }
     if (n) { scene.add(warmG); warmMs.push(n); }
+  }
+  // Wing 의 유리 반사 지도를 실사 재질로 한 번 다시 그린다. 반사 지도용 셰이더 변형(그리는 대상이 정육면체 텍스처라 따로 만들어진다)을
+  // 워밍업 끝에 미리 만들어, 첫 조합 전환(첫 벽돌 전환 6.6초 멈춤의 원인)에서 만들지 않게 한다. 주변 건물이 반사에 들어가는 효과도 있다.
+  // Wing 은 '주변 도시' 체크 상자가 바뀔 때 반사 지도를 다시 그린다(값은 그대로 두고 알림만 보낸다)
+  function refreshRefl() {
+    if (!PR.on || !K.R3D.on) return;
+    const e = document.getElementById('t-city'); if (!e) return;
+    const t0 = now(); PR.silent = true; e.dispatchEvent(new Event('change')); PR.silent = false;
+    PR.stat.reflMs = Math.round(now() - t0); log('반사 지도 갱신', PR.stat.reflMs + 'ms');
   }
   /* ================= 6. 실내 꾸밈 =================
      예전 실사 3D(codex/tower-360-validation)의 카페·사무실(2F～6F)·주차장 배치 모듈을 그대로 불러 쓴다.
@@ -603,16 +700,57 @@
       for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
       if (window.swapInteriorModels) await window.swapInteriorModels(C, extra);
       placePlants(extra);
+      parkingServices(extra);
       litDress(extra);
+      tagDress(extra);
       if (DR.group) { scene.remove(DR.group); }
       DR.group = extra; DR.sig = sig; scene.add(extra);
-      DR.groups = extra.children.map(g => [g, levelKeyOf(g)]);
+      if (!DR.groups.length || DR.groups[0][0].parent !== extra) DR.groups = extra.children.map(g => [g, g.userData.fitoutFloor || levelKeyOf(g)]);
       PR.stat.dressMs = Math.round(now() - t0); PR.stat.dressObjects = (() => { let n = 0; extra.traverse(o => { if (o.isMesh) n++; }); return n; })();
       if (PR.t.dress == null && PR.t.enable0) PR.t.dress = Math.round(now() - PR.t.enable0);
       log('실내 꾸밈', PR.stat.dressMs + 'ms', PR.stat.dressObjects + '개');
     } catch (e) { log('실내 꾸밈 실패', e && e.message); console.warn(e); }
     DR.busy = false;
     if (DR.again) { DR.again = false; dress(); }
+  }
+  // 지하주차장 천장 설비: 스프링클러 주관(빨강)·가지관·헤드, 배수관(회색), 케이블 트레이. 실제 지하주차장을 지하주차장답게 보이게 하는 요소.
+  // 층마다 종류별 인스턴스 묶음 1개(그리기 호출 층당 5회 안팎), 그림자는 드리우지 않는다(해가 닿지 않음)
+  function parkingServices(extra) {
+    const levels = K.LEVELS.filter(L => L.kind === 'base' && (window.PARKING_FLOORS || []).includes(L.key));
+    if (!levels.length) return;
+    const PE = parkEnv(), amb = new T.Color(0.2, 0.2, 0.2);
+    const mk = (c, r, met = 0) => { const m = std({ color: lin(c), roughness: r, metalness: met }); m.envMap = PE; m.envMapIntensity = 0.6; return patch(m, { light: { amb } }); };
+    const MS = PF_.svc || (PF_.svc = { red: mk(0xa3241c, 0.45), gray: mk(0x8a8d90, 0.6), tray: mk(0x9ea3a6, 0.42, 0.8), head: mk(0xd8c9a0, 0.35, 0.7) });
+    const cyl = PF_.cyl || (PF_.cyl = new T.CylinderGeometry(0.5, 0.5, 1, 10, 1, true).rotateZ(Math.PI / 2)), boxG = PF_.boxG || (PF_.boxG = new T.BoxGeometry(1, 1, 1));
+    const headG = PF_.headG || (PF_.headG = new T.CylinderGeometry(0.035, 0.05, 0.09, 8));
+    const edgeDist = (x, z, P) => { let d = 1e9; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [ax, az] = P[j], [bx, bz] = P[i], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)); d = Math.min(d, Math.hypot(ax + dx * t - x, az + dz * t - z)); } return d; };
+    levels.forEach(L => {
+      const P = L.poly.map(q => K.P(q[0], q[1])), inside = (x, z, m) => inPolyW([x, z], P) && edgeDist(x, z, P) > m;
+      const bd = polyBounds(L), wx = bd[2] - bd[0], wz = bd[3] - bd[1], alongX = wx >= wz;
+      // (u: 긴 축, v: 짧은 축) → 월드
+      const W = (u, v) => alongX ? [u, v] : [v, u];
+      const [u0, u1, v0, v1] = alongX ? [bd[0], bd[2], bd[1], bd[3]] : [bd[1], bd[3], bd[0], bd[2]];
+      const yC = K.ceilOf(L), lists = { red: [], gray: [], tray: [], branch: [], head: [] };
+      // 한 줄을 다각형 안쪽 구간들로 자른다(0.5m 간격)
+      const runs = (fixed, a0, a1, alongU, margin) => { const out = []; let st = null; for (let a = a0; a <= a1 + 1e-6; a += 0.5) { const [x, z] = alongU ? W(a, fixed) : W(fixed, a); const ok = inside(x, z, margin); if (ok && st === null) st = a; if ((!ok || a + 0.5 > a1) && st !== null) { const e = ok ? a : a - 0.5; if (e - st > 1.5) out.push([st, e]); st = null; } } return out; };
+      const mains = []; for (let v = v0 + 5; v < v1 - 2; v += 8.5) mains.push(v);
+      mains.forEach((v, i) => runs(v, u0, u1, true, 0.8).forEach(([a, b]) => { lists.red.push([a, b, v, yC - 0.32, 0.16, true]); if (i % 2 === 0) lists.gray.push([a, b, v + 0.45, yC - 0.42, 0.12, true]); }));
+      const tv = (v0 + v1) / 2 + 1.6; runs(tv, u0, u1, true, 1.2).forEach(([a, b]) => lists.tray.push([a, b, tv, yC - 0.2]));
+      for (let u = u0 + 1.6; u < u1 - 1; u += 3.2) runs(u, v0, v1, false, 0.8).forEach(([a, b]) => { lists.branch.push([a, b, u, yC - 0.22, 0.05, false]); for (let v = a + 1.0; v < b; v += 3.2) lists.head.push(W(u, v).concat(yC - 0.3)); });
+      const g = new T.Group(); g.name = L.key + ' parking services'; g.userData.fitoutFloor = L.key;
+      const M4 = new T.Matrix4(), q = new T.Quaternion(), yAx = new T.Vector3(0, 1, 0), pos = new T.Vector3(), sc = new T.Vector3();
+      const inst = (geo, mat, rows, fill) => { if (!rows.length) return; const im = new T.InstancedMesh(geo, mat, rows.length); rows.forEach((r, k) => { fill(r); M4.compose(pos, q, sc); im.setMatrixAt(k, M4); }); im.frustumCulled = false; im.castShadow = false; im.receiveShadow = true; Object.assign(im.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(im); };
+      // 관: 원기둥(길이 방향 X)을 긴 축이면 그대로, 짧은 축이면 90° 돌린다
+      const pipe = ([a, b, fixed, y, d, alongU]) => { const m = (a + b) / 2, [x, z] = alongU ? W(m, fixed) : W(fixed, m); pos.set(x, y, z); const dirX = alongU === alongX; q.setFromAxisAngle(yAx, dirX ? 0 : Math.PI / 2); sc.set(b - a, d, d); };
+      inst(cyl, MS.red, lists.red, pipe); inst(cyl, MS.gray, lists.gray, pipe); inst(cyl, MS.red, lists.branch, pipe);
+      inst(boxG, MS.tray, lists.tray, ([a, b, fixed, y]) => { const m = (a + b) / 2, [x, z] = W(m, fixed); pos.set(x, y, z); q.setFromAxisAngle(yAx, alongX ? 0 : Math.PI / 2); sc.set(b - a, 0.08, 0.4); });
+      inst(headG, MS.head, lists.head, ([x, z, y]) => { pos.set(x, y, z); q.identity(); sc.set(1, 1, 1); });
+      // 천장판: 실내 보기에서는 위층(=천장 슬래브)이 숨겨져 천장 자리에 배경(검정)이 보였다. 밝은 회색 도장 콘크리트 천장을 층마다 깐다
+      const sh = new T.Shape(P.map(([x, z]) => new T.Vector2(x, z))), cg = new T.ShapeGeometry(sh); cg.rotateX(Math.PI / 2);
+      const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
+      const ce = new T.Mesh(cg, cm); ce.position.y = yC - 0.02; ce.castShadow = false; ce.receiveShadow = false; Object.assign(ce.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(ce);
+      extra.add(g);
+    });
   }
   function levelKeyOf(g) {
     if (g.userData.fitoutFloor) return g.userData.fitoutFloor;
@@ -627,7 +765,7 @@
     root.updateMatrixWorld(true);
     const wp = new T.Vector3();
     root.traverse(o => {
-      if (!o.isMesh || !o.material || Array.isArray(o.material)) return;
+      if (!o.isMesh || !o.material || Array.isArray(o.material) || o.userData.prLit) return;
       o.getWorldPosition(wp);
       const L = K.LEVELS.find(l => wp.y >= K.floorTop(l) - 0.5 && wp.y < K.floorTop(l) + Math.max(l.h, 3) + 2) || null;
       const zone = !L ? 'x' : L.kind === 'base' ? 'b' : L.kind === 'ground' ? 'g' : 'u';
@@ -637,6 +775,8 @@
       if (!m) {
         const amb = zone === 'g' ? AMB.g() : zone === 'u' ? AMB.u() : zone === 'b' ? new T.Color(0.32, 0.32, 0.33) : null;
         m = amb ? patch(m0.clone(), { light: { amb } }) : m0;
+        // 지하: 주차장 반사 환경을 붙이고, 차 도장(금속성·매끈한 면)은 반사를 살린다
+        if (zone === 'b' && m !== m0) { m.envMap = parkEnv(); const paintLike = (m.metalness > 0.25 || m.roughness < 0.45) && !m.transparent; m.envMapIntensity = paintLike ? 1.3 : 0.5; if (paintLike) m.roughness = Math.min(m.roughness, 0.3); }
         keepEnv(m); m.userData.prMade = true; DR.mats.set(key, m); if (m !== m0) WARM.push(m);
       }
       o.material = m;
@@ -700,8 +840,35 @@
     if (!ENV.plant) return;
     const anchors = (extra.userData.interiorPlantAnchors || []).slice(0, 14);
     const plant = normModel(ENV.plant.clone(true), 1, false), b = new T.Box3().setFromObject(plant), h = b.max.y - b.min.y;
-    anchors.forEach((a, i) => { const p = plant.clone(true), s = (a.height || 1.4) / h; p.scale.setScalar(s); p.position.set(a.x, a.y, a.z); p.rotation.y = i * 1.7; extra.add(p); });
+    anchors.forEach((a, i) => { const p = plant.clone(true), s = (a.height || 1.4) / h; p.scale.setScalar(s); p.position.set(a.x, a.y, a.z); p.rotation.y = i * 1.7; p.userData.prPlant = true; extra.add(p); });
     litDress(extra);
+    if (extra === DR.group) { tagDress(extra); PF_.dvKey = ''; }
+  }
+  // 가구마다 층(prLv)과 '외벽에서 먼 안쪽'(prDeep: 가장 가까운 외벽선까지 PR_DEEP m 넘음)을 적어 둔다. 밖에서 볼 때 안쪽 가구는 그리지 않는다
+  function tagDress(root) {
+    root.updateMatrixWorld(true);
+    const polys = new Map(), box = new T.Box3(), c = new T.Vector3();
+    const polyOf = L => { if (!polys.has(L)) polys.set(L, L.poly.map(q => K.P(q[0], q[1]))); return polys.get(L); };
+    const edgeDist = (x, z, P) => { let d = 1e9; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [ax, az] = P[j], [bx, bz] = P[i], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)), ex = ax + dx * t - x, ez = az + dz * t - z; d = Math.min(d, Math.hypot(ex, ez)); } return d; };
+    let deep = 0, n = 0; const list = [];
+    root.traverse(o => {
+      if (!o.isMesh || o.userData.prTagged) return;
+      if (o.userData.prLv === undefined) {
+        box.setFromObject(o); if (box.isEmpty()) return; box.getCenter(c);
+        const L = K.LEVELS.find(l => c.y >= K.floorTop(l) - 0.5 && c.y < K.floorTop(l) + Math.max(l.h, 3) + 0.5) || null;
+        o.userData.prLv = L ? L.key : '';
+        o.userData.prDeep = !!(L && L.poly && L.poly.length > 2 && edgeDist(c.x, c.z, polyOf(L)) > PR_DEEP);
+      }
+      list.push(o);
+    });
+    // 층마다 '창가'·'안쪽' 두 묶음으로 옮겨 담는다(월드 위치 유지). 표시는 묶음 단위로 바꾼다:
+    // XR 계층의 메시 합치기는 보이는 메시를 합치고 원본을 숨기므로, 메시마다 표시를 바꾸면 서로 덮어쓴다. 묶음을 숨기면 합치기도 따라온다
+    const cont = (k, d) => { const nm = 'pr-lv-' + (k || '-') + (d ? '-deep' : '-band'); let g = root.getObjectByName(nm); if (!g) { g = new T.Group(); g.name = nm; g.userData.fitoutFloor = k || null; g.userData.prDeepG = d; root.add(g); } return g; };
+    list.forEach(o => { o.userData.prTagged = true; n++; if (o.userData.prDeep) deep++; cont(o.userData.prLv, o.userData.prDeep).attach(o); });
+    // 비게 된 원래 묶음은 지운다
+    root.children.slice().forEach(g => { if (!/^pr-lv-/.test(g.name)) { let any = false; g.traverse(o => { if (o.isMesh) any = true; }); if (!any) root.remove(g); } });
+    DR.groups = root.children.map(g => [g, g.userData.fitoutFloor || null]);
+    PR.stat.dressDeep = deep + '/' + n;
   }
   function envOff() {
     ENV.added.forEach(c => c.parent && c.parent.remove(c)); ENV.added = [];
@@ -740,7 +907,8 @@
   /* 주변 건물 외벽: 재질 분류마다 실제 재료 사진(벽) + 그 분류의 창 형태를 4칸 × 2층 캔버스에 그린다.
      건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵 G 로 벽·유리 판별). 거칠기(G)·금속성(B), 노멀(창이 들어가 있음)도 함께 만든다.
      UV 는 kh-context 규칙(u = 벽 길이 / 3.2m, v = 높이 / 층고)이라 반복은 (1/4, 1/2). */
-  const FW = { imgs: null, mats: {} };
+  const FW = { imgs: null, mats: {}, maps: {} };
+  PR.FW = FW;
   function loadImg(src) { return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; }); }
   async function facadeImgs() {
     if (FW.imgs) return FW.imgs;
@@ -813,9 +981,19 @@
     if (cls === 'roof') return null;
     if (FW.mats[cls]) return FW.mats[cls];
     if (!['tile', 'paint', 'stone', 'glass', 'brick', 'metal', 'apt', 'shop'].includes(key)) return null;
-    const c = FW.cv && FW.cv[key] || (FW.cv = FW.cv || {}, FW.cv[key] = facadeCanvas(key));
-    const mk = (cv, srgb) => { const t = new T.CanvasTexture(cv); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(0.25, 0.5); t.anisotropy = isMobile ? 4 : 8; if (srgb) t.encoding = T.sRGBEncoding; return t; };
-    const m = new T.MeshStandardMaterial({ map: mk(c.col, true), roughnessMap: mk(c.rm), metalnessMap: mk(c.rm), normalMap: mk(c.nc), roughness: 1, metalness: 1, vertexColors: key !== 'shop' });
+    // 무늬 3장(색·거칠기/금속성·노멀)은 photoreal/context/facade/ 에 미리 만들어 둔 이미지를 쓴다(화소마다 계산하던 2.7초 멈춤 제거).
+    // ?ctxgen=1 이면 예전처럼 캔버스로 그린다(photoreal/tests/facade-gen.mjs 가 이 캔버스를 파일로 저장)
+    const fit = t => { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(0.25, 0.5); t.anisotropy = isMobile ? 4 : 8; return t; };
+    let maps;
+    if (Q.get('ctxgen') === '1') {
+      const c = FW.cv && FW.cv[key] || (FW.cv = FW.cv || {}, FW.cv[key] = facadeCanvas(key));
+      maps = { col: fit(new T.CanvasTexture(c.col)), rm: fit(new T.CanvasTexture(c.rm)), nc: fit(new T.CanvasTexture(c.nc)) };
+    } else {
+      const L = FW.loader || (FW.loader = new T.TextureLoader()), f = n => fit(L.load(BASE + 'context/facade/' + key + '-' + n + '?v=' + VER));
+      maps = FW.maps[key] || (FW.maps[key] = { col: f('col.webp'), rm: f('rm.png'), nc: f('nc.png') });
+    }
+    maps.col.encoding = T.sRGBEncoding;
+    const m = new T.MeshStandardMaterial({ map: maps.col, roughnessMap: maps.rm, metalnessMap: maps.rm, normalMap: maps.nc, roughness: 1, metalness: 1, vertexColors: key !== 'shop' });
     m.normalScale.set(0.9, 0.9); m.envMapIntensity = 1.0; m.userData.lin = true; m.userData.prEnv = 1.0; EXTRA.add(m);
     // 건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵으로 벽 판별)
     m.onBeforeCompile = sh => {
@@ -831,27 +1009,43 @@
       const url = BASE + 'context/buildings.json?v=' + VER;
       const area = [[[-9400, -480], [-1430, -480], [-1430, 10400], [-9400, 10400]], [[-10700, -5100], [-5600, -5100], [-5600, -480], [-10700, -480]]].map(q => q.map(p => K.P(p[0], p[1])));
       const redev = b => { const o = b.outline, c = [o.reduce((s, q) => s + q[0], 0) / o.length, o.reduce((s, q) => s + q[1], 0) / o.length]; return area.some(a => inPolyW(c, a)) && b.cls === 'apt'; };
-      await facadeImgs();
-      CTX.now = await window.KHContext.load(url, { near: true, far: true, material: ctxFacadeMat });
-      CTX.next = await window.KHContext.load(url, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) });
-      // 창 패턴 캔버스 재질에 실사 보강(창 반사·벽 질감·창 깊이). 건물 색은 꼭짓점 색
-      const up = new Map();
-      [CTX.now, CTX.next].forEach(g => { g.name = 'pr-context'; g.traverse(o => {
-        if (!o.isMesh) return; o.castShadow = o.receiveShadow = true; const m0 = o.material;
-        if (m0 && !m0.userData.prMadeCtx && !Object.values(FW.mats).includes(m0) && m0.map && m0.map.image && m0.map.image.getContext) { let m = up.get(m0); if (!m) { m = facadeMat(m0, 1.25); m.vertexColors = true; m.color.set(0xffffff); m.userData.lin = true; keepEnv(m); up.set(m0, m); } o.material = m; }
-      }); });
-      PR.stat.context = CTX.now.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', CTX.now.userData.stats.buildings + '동');
+      if (Q.get('ctxgen') === '1') await facadeImgs();
+      const r = await fetch(url); if (!r.ok) throw new Error('buildings.json ' + r.status);
+      CTX.data = await r.json(); CTX.redev = redev;
+      const t1 = now();
+      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) }));
+      PR.stat.ctxBuildMs = Math.round(now() - t1);
+      PR.stat.context = CTX.next.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', '합치기 ' + PR.stat.ctxBuildMs + 'ms', CTX.next.userData.stats.buildings + '동');
       if (PR.on) ctxOn();
     }).catch(e => log('주변 건물 실패', e && e.message)));
   }
+  // 현황(동광빌딩 시절) 보기: 재개발 구역 아파트까지 넣은 한 벌. 처음 '현황'을 고를 때 만든다
+  function ctxNow() {
+    if (CTX.now || !CTX.data) return;
+    CTX.now = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat }));
+    if (CTX.detached.length) scene.add(CTX.now);
+  }
+  const CTXUP = new Map();
+  function ctxPrep(g0) {
+    {
+      // 창 패턴 캔버스 재질에 실사 보강(창 반사·벽 질감·창 깊이). 건물 색은 꼭짓점 색
+      const up = CTXUP;
+      [g0].forEach(g => { g.name = 'pr-context'; g.traverse(o => {
+        if (!o.isMesh) return; o.castShadow = o.receiveShadow = true; const m0 = o.material;
+        if (m0 && !m0.userData.prMadeCtx && !Object.values(FW.mats).includes(m0) && m0.map && m0.map.image && m0.map.image.getContext) { let m = up.get(m0); if (!m) { m = facadeMat(m0, 1.25); m.vertexColors = true; m.color.set(0xffffff); m.userData.lin = true; keepEnv(m); up.set(m0, m); } o.material = m; }
+      }); });
+    }
+    return g0;
+  }
   function ctxOn() {
-    if (!CTX.now || CTX.detached.length) return;
+    if (!CTX.next || CTX.detached.length) return;
     [K.city, K.ctx].forEach(root => {
       const list = []; root.traverse(o => { if (o.isMesh && Array.isArray(o.material)) list.push(o); });
       list.forEach(o => { const b = new T.Box3().setFromObject(o); if (b.max.y - b.min.y > 100) return; const p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
     });
-    scene.add(CTX.now); scene.add(CTX.next);
+    if (CTX.now) scene.add(CTX.now); scene.add(CTX.next);
     if (DIST) DIST.parent && DIST.parent.remove(DIST);
+    if (PR.t.warm != null) setTimeout(refreshRefl, 50);   // 주변 건물이 유리 반사에 들어가게(워밍업 전이면 워밍업 끝에 함께)
   }
   function ctxOff() {
     CTX.detached.forEach(([p, o]) => p.add(o)); CTX.detached = [];
@@ -875,12 +1069,14 @@
       requestAnimationFrame(() => requestAnimationFrame(() => { PR.t.firstFrame = Math.round(now() - PR.t.enable0); statLine(); }));
       panel(true);
       if (!CTX.now) distantCity();
-      loadEnv(); envAssets(); loadBake(); ctxLoad().then(() => PR.on && ctxOn());
+      loadEnv(); envAssets(); loadBake();
+      // 주변 건물(3,888동 합치기)은 첫 화면이 나온 뒤에 시작한다. 그 전에는 Wing 의 주변 블록이 보인다
+      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { if (PR.on) ctxLoad().then(() => PR.on && ctxOn()); }, 120)));
     } else {
       PR.on = false;
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
-      envOff(); ctxOff();
+      envOff(); ctxOff(); perfOff();
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
@@ -907,7 +1103,7 @@
       if (e.target.value === 'pr3d') enable(true); else if (PR.on) enable(false);
     }));
     // 조합 변경 감지: Wing 설정 패널의 입력이 바뀐 순간부터 다음 화면까지 잰다
-    document.addEventListener('change', e => { if (!PR.on) return; const n = e.target && e.target.name; if (n && n !== 'vmode' && e.target.closest && e.target.closest('aside,.panel,#panel')) { pendingSwitch = { t: now(), what: n }; } }, true);
+    document.addEventListener('change', e => { PF_.shDirty = true; if (!PR.on || PR.silent) return; const n = e.target && e.target.name; if (n && n !== 'vmode' && e.target.closest && e.target.closest('aside,.panel,#panel')) { pendingSwitch = { t: now(), what: n }; } }, true);
   }
   const PF = { glass: ['combo', 'sty-glass'], brick: ['combo', 'sty-brick'], stack: ['preset', 'dsg-stack'], colonnade: ['preset', 'dsg-colonnade'] };
   const PFN = { glass: '올 글라스', brick: '벽돌 피어', stack: '스택 프레임', colonnade: '자이언트 오더 기둥' };

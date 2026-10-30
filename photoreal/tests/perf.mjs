@@ -1,5 +1,5 @@
 // 실사 3D 프레임 측정: node perf.mjs [pc|mobile]  (BASE=주소, 기본 http://localhost:8791)
-// 카메라를 천천히 돌리면서 4초 동안 프레임 간격(중앙값·95%)과 한 프레임의 그리기 호출·삼각형을 잰다.
+// 카메라를 천천히 돌리면서(이름 끝 _still 은 멈춘 화면) 4초 동안 프레임 간격(중앙값·95%)과 한 프레임의 그리기 호출·삼각형을 잰다.
 // 맥의 GPU 로 재므로 휴대폰·퀘스트의 실제 속도는 아니다(비교용 상대값과 부하 수치로 본다).
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
@@ -21,10 +21,10 @@ res.pixelRatio = await ev(() => KHXR.renderer.getPixelRatio());
 const pick = id => ev(id => { const e = document.getElementById(id); if (!e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id);
 await pick('sch-alt4'); await pick('g1-skin'); await pick('t-upstraight');
 // 측정 한 번: 자동 회전 4초, 프레임 간격과 한 프레임 부하
-const measure = async name => {
+const measure = async (name, still) => {
   await new Promise(r => setTimeout(r, 1500));
-  const r = await ev(async () => {
-    const C = KHXR.controls; C.autoRotate = true; C.autoRotateSpeed = 2;
+  const r = await ev(async still => {
+    const C = KHXR.controls; C.autoRotate = !still; C.autoRotateSpeed = 2;
     const raf = () => new Promise(r => requestAnimationFrame(r));
     await raf(); const ds = []; let t = performance.now(); const end = t + 4000;
     while (performance.now() < end) { await raf(); const n = performance.now(); ds.push(n - t); t = n; }
@@ -33,13 +33,14 @@ const measure = async name => {
     C.autoRotate = false;
     ds.sort((a, b) => a - b); const q = k => +ds[Math.min(ds.length - 1, Math.floor(ds.length * k))].toFixed(1);
     return { frames: ds.length, fps: +(1000 / q(0.5)).toFixed(1), medMs: q(0.5), p95Ms: q(0.95), maxMs: q(1), longOver50: ds.filter(d => d > 50).length, ...one, programs: inf.programs.length, textures: inf.memory.textures, geos: inf.memory.geometries };
-  });
+  }, !!still);
   res[name] = r; console.log(name, JSON.stringify(r));
 };
 await pick('vm-render'); await measure('wing_render');
 await pick('vm-pr');
 await p.waitForFunction(() => KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null && KHPRLayer.t.warm != null && KHPRLayer.t.bake != null, { timeout: 90000 });
 await measure('pr_ext_glass');
+await measure('pr_ext_glass_still', true);
 for (const pf of ['brick', 'stack', 'colonnade']) { await ev(pf => document.querySelector(`[data-pf="${pf}"]`).click(), pf); await measure('pr_ext_' + pf); }
 for (const t of ['sunset', 'night']) { await pick('tod-' + t).catch(() => {}); await measure('pr_ext_' + t); }
 await pick('tod-pm').catch(() => {});
