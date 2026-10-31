@@ -10,6 +10,9 @@
 | `kh-context.js` | `buildings.json`을 읽어 재질 분류별로 병합한 `THREE.Group`을 돌려주는 모듈(r128 전역 `THREE` 사용) |
 | `near_roadview.json` | 로드뷰로 확인한 근경 건물 기록(사람이 작성하는 입력 파일) |
 | `build_context.py` | `buildings.json` 생성 스크립트 |
+| `add_use.py` | `buildings.json` 에 건축물 주용도 코드 `use` 를 더함(브이월드 usability 앞 두 자리, 없으면 OSM building 태그, 학교 건물 80m 안의 미상 건물은 교육시설). `build_context.py` 다음에 실행 |
+| `build_ground.py` | 주변 땅 `ground.json` 생성(OSM 도로·면·나무, 한강 남쪽 기슭). 원본은 `.cache/ground_osm.json`, `.cache/water_osm.json` |
+| `ground.json` | 대지 1km 안 도로 `[폭, 종류, 선]`, 면 `[종류, 외곽선]`(green·pitch·track·play·parking·complex·dirt·water), 나무 `[x, z, 높이, 모양]` |
 | `fetch_vworld.py` | 브이월드 건물 자료(LT_C_BLDGINFO)와 대지 주변 연속지적도(LP_PA_CBND_BUBUN) 받기(인증키 필요, 원본은 `.cache/`에만 저장) |
 | `ref/` | 로드뷰 확인 캡처(카카오 로드뷰 2026년 6～7월 촬영분, 640px 저용량 JPG) |
 | `.cache/` | 원본 자료 보관 위치(커밋하지 않음) |
@@ -66,6 +69,7 @@ console.log(grp.userData.stats);   // { buildings, triangles, drawCalls, meshes 
 - `ref/render_*.jpg`는 이 모듈의 기본 재질로 그린 확인용 화면입니다(`render_16번과_같은_시점`은 로드뷰 16번과 같은 위치·방향).
 - 건물 색은 꼭짓점 색(`color` 속성, 선형값)에 들어 있고 재질 색은 흰색입니다. XR 병합이 원본 재질을 그대로 묶는 방식에 맞췄습니다.
 - UV는 u = 벽을 따라간 거리 / 3.2m, v = 높이 / 그 건물의 층고입니다. 창 텍스처 한 칸이 기둥 한 칸·한 층이 되므로 실사 재질을 넘길 때도 이 규칙에 맞춘 반복 텍스처를 쓰면 됩니다.
+- 상세 형상: `detail: 반경(m)` 을 주면 그 안의 건물에 난간벽·옥탑·아파트 발코니와 측벽·맞벽(창 없는 벽)·상가 간판·동 번호를 만들어 `trim`(단색 벽, u·v 는 m/4), `trim_far`(`detailNear` 바깥), `sign`(간판 아틀라스: 위쪽 4×8 가로, 아래쪽 16칸 세로), `dong`(동 번호 아틀라스 16×16) 메시로 더합니다. 지붕 UV 는 평면 좌표/8 입니다. `extra: [건물]` 로 자료 밖 건물을 더할 수 있고(거르지 않음), `material(cls, {labels})` 의 `labels` 는 동 번호 칸 순서입니다.
 - 옵션: `material(cls)`로 재질을 직접 넘길 수 있습니다(없으면 64px 절차적 창 텍스처 재질). `exclude: [id]`, `filter(b)`, `maxDist`, `near`, `far`, `shadows`.
 - Wing의 `buildContext()`가 만든 근사 주변 건물과 겹치므로, 연동할 때 Wing의 주변 건물 그룹은 숨겨야 합니다(연동은 실사 3D 세션 몫).
 

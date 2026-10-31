@@ -5,8 +5,12 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import path from 'node:path';
-const out = path.resolve(process.argv[2] || 'bake-src');
-const pf = process.argv[3] || 'glass';
+// 옵션(위치 인자 뒤): --sch mech|self|alt3|alt4  --g1 slant|straight|corner|skin  --levels B3,B2,B1 (내보낼 층, 생략하면 전부)
+// 조합 옵션을 주면 해당 라디오(sch-*, g1-*)와 t-upstraight 를 고른 뒤 내보낸다. 생략하면 화면 기본 상태 그대로.
+const pos = [], opt = {};
+for (let i = 2; i < process.argv.length; i++) { const a = process.argv[i]; if (a.startsWith('--')) opt[a.slice(2)] = process.argv[++i]; else pos.push(a); }
+const out = path.resolve(pos[0] || 'bake-src');
+const pf = pos[1] || 'glass';
 const BASE = process.env.BASE || 'http://localhost:8791';
 fs.mkdirSync(out, { recursive: true });
 const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', protocolTimeout: 600000 });
@@ -15,8 +19,17 @@ p.on('pageerror', e => console.error('page', String(e).slice(0, 200)));
 await p.goto(BASE + '/new/3d-model.html?pr=1&pf=' + pf, { waitUntil: 'load' });
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.on && KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null, { timeout: 120000 });
 await new Promise(r => setTimeout(r, 1500));
+const pick = async id => { await p.evaluate(id => { const e = document.getElementById(id); if (!e) throw new Error('라디오 없음 ' + id); if (!e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id); await new Promise(r => setTimeout(r, 2500)); };
+if (opt.sch || opt.g1) {
+  if (opt.sch) await pick('sch-' + opt.sch);
+  if (opt.g1) await pick('g1-' + opt.g1);
+  await pick('t-upstraight');
+  await p.waitForFunction(() => KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null, { timeout: 120000 });
+  await new Promise(r => setTimeout(r, 3000));
+}
+const only = opt.levels ? opt.levels.split(',') : null;
 await p.addScriptTag({ url: BASE + '/photoreal/vendor/GLTFExporter.js' });
-const res = await p.evaluate(async () => {
+const res = await p.evaluate(async only => {
   const T = THREE, K = KHPR, out = new T.Scene(), cache = new Map(), lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
   const visible = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
   function conv(m) {
@@ -47,16 +60,17 @@ const res = await p.evaluate(async () => {
   add(K.bld); add(KHXR.scene.getObjectByName('pr-dress')); add(K.site); add(K.city, true); add(K.ctx, true);
   const glb = await new Promise(res => new T.GLTFExporter().parse(out, r => res(r), { binary: true }));
   // 층 정보
-  const levels = K.LEVELS.map(L => { let a = 1e9, bz = 1e9, c = -1e9, d = -1e9; L.poly.forEach(q => { const [x, z] = K.P(q[0], q[1]); a = Math.min(a, x); bz = Math.min(bz, z); c = Math.max(c, x); d = Math.max(d, z); }); return { key: L.key, kind: L.kind, floor: K.floorTop(L), ceil: K.ceilOf(L), box: [a, bz, c, d] }; });
+  const levels = K.LEVELS.filter(L => !only || only.includes(L.key)).map(L => { let a = 1e9, bz = 1e9, c = -1e9, d = -1e9; L.poly.forEach(q => { const [x, z] = K.P(q[0], q[1]); a = Math.min(a, x); bz = Math.min(bz, z); c = Math.max(c, x); d = Math.max(d, z); }); return { key: L.key, kind: L.kind, floor: K.floorTop(L), ceil: K.ceilOf(L), box: [a, bz, c, d] }; });
   // 시간대별 태양(Wing applyTime 으로 정한 방향·세기·색)
   const R3D = K.R3D, keep = R3D.time, sun = {};
   for (const t of ['am', 'pm', 'sunset', 'night']) { R3D.time = t; K.applyTime(); const d = K.sun.position.clone().normalize(); sun[t] = { dir: d.toArray(), intensity: K.sun.intensity, color: K.sun.color.toArray(), season: R3D.season, night: t === 'night' }; }
   R3D.time = keep; K.applyTime();
   const bytes = new Uint8Array(glb); let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  if (only) { const miss = only.filter(k => !levels.some(l => l.key === k)); if (miss.length) throw new Error('없는 층 ' + miss); }
   return { glb: btoa(s), levels, sun, state: K.state, meshes: out.children.length, mats: cache.size };
-});
+}, only);
 fs.writeFileSync(path.join(out, 'scene.glb'), Buffer.from(res.glb, 'base64'));
 delete res.glb;
 fs.writeFileSync(path.join(out, 'bake-input.json'), JSON.stringify(res, null, 1));
-console.log('meshes', res.meshes, 'mats', res.mats, 'size', fs.statSync(path.join(out, 'scene.glb')).size);
+console.log('levels', res.levels.map(l => l.key).join(','), 'sch', res.state.scheme, 'g1', res.state.g1, 'meshes', res.meshes, 'mats', res.mats, 'size', fs.statSync(path.join(out, 'scene.glb')).size);
 await b.close();

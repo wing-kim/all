@@ -14,7 +14,7 @@ def files(sub):
     return out
 first = ['vendor/RGBELoader.js', 'vendor/GLTFLoader.js', 'vendor/DRACOLoader.js', 'vendor/draco/draco_wasm_wrapper.js', 'vendor/draco/draco_decoder.wasm',
          'codex/cafe.js', 'codex/office.js', 'codex/interior-models.js', 'bake/manifest.json', 'bake/bake-pm.png', 'tex/daylight-sky_1k.hdr']
-rest = ['context/kh-context.js', 'context/buildings.json'] + [f for f in files('context/facade') + files('tex') + files('assets') + files('bake') if f not in first and not f.endswith('environment.js')]
+rest = ['context/kh-context.js', 'context/buildings.json', 'context/ground.json'] + [f for f in files('context/facade') + files('tex') + files('assets') + files('bake') if f not in first and not f.endswith('environment.js')]
 rest.sort(key=lambda f: (f.startswith('bake/'), f.endswith('.hdr'), f.endswith('.glb') or f.endswith('.gltf') or f.endswith('.bin'), f))
 lst = [f for f in first if (root / f).exists()] + rest
 size = sum((root / f).stat().st_size for f in lst)

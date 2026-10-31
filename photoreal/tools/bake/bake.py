@@ -1,6 +1,7 @@
 """빛 굽기 2단계: export.mjs 가 만든 scene.glb 를 Blender Cycles 로 굽는다.
 
-blender -b --factory-startup -P bake.py -- <입력폴더> <출력폴더> [--samples 96] [--res 256] [--slots am,pm,sunset,night]
+blender -b --factory-startup -P bake.py -- <입력폴더> <출력폴더> [--samples 96] [--res 256] [--slots am,pm,sunset,night] [--levels B3,B2,B1] [--cols 6]
+--levels: bake-input.json 의 층 중 지정한 층만 굽고 그 층 수에 맞는 작은 아틀라스로 저장(변형 굽기). 생략하면 전부.
 
 층마다 바닥판 바로 위(위를 봄)와 천장 바로 아래(아래를 봄)에 보이지 않는 판을 두고 그 판이 받는 빛(조도)을 굽는다.
 - 낮(am·pm·sunset): 하늘빛 직접광 + 해·하늘의 반사광(간접). 해의 직사광은 실행 화면의 그림자 맵이 그리므로 뺀다.
@@ -15,7 +16,7 @@ import numpy as np
 
 argv = sys.argv[sys.argv.index('--') + 1:]
 src, dst = Path(argv[0]), Path(argv[1])
-opt = {'samples': 96, 'res': 256, 'slots': 'am,pm,sunset,night'}
+opt = {'samples': 96, 'res': 256, 'slots': 'am,pm,sunset,night', 'levels': ''}
 for i, a in enumerate(argv):
     if a.startswith('--'): opt[a[2:]] = argv[i + 1]
 SAMPLES, RES, SLOTS = int(opt['samples']), int(opt['res']), opt['slots'].split(',')
@@ -89,7 +90,8 @@ def set_slot(slot, direct_pass):
     sun_obj.hide_render = (direct_pass or night)
 
 # 굽기 판
-levels = [L for L in info['levels'] if L['kind'] != 'roof']
+levels = [L for L in info['levels'] if L['kind'] != 'roof' and (not opt['levels'] or L['key'] in opt['levels'].split(','))]
+assert levels, '굽을 층 없음'
 planes = []
 for L in levels:
     x0, z0, x1, z1 = L['box']
@@ -123,7 +125,7 @@ def bake(filt):
 base_keys = {L['key'] for L in levels if L['kind'] == 'base'}
 cache_base = None
 manifest = {'res': RES, 'cols': 0, 'rows': 0, 'levels': [], 'slots': {}, 'samples': SAMPLES, 'state': info.get('state')}
-cols = 6; rows = math.ceil(len(levels) * 2 / cols)
+cols = min(int(opt.get('cols', 6)), len(levels) * 2); rows = math.ceil(len(levels) * 2 / cols)
 manifest['cols'], manifest['rows'] = cols, rows
 for i, L in enumerate(levels):
     manifest['levels'].append({'key': L['key'], 'kind': L['kind'], 'floor': L['floor'], 'ceil': L['ceil'], 'box': L['box'], 'tile': [2 * i, 2 * i + 1]})
@@ -138,12 +140,12 @@ for slot in SLOTS:
         set_slot(slot, True); B = bake({'DIRECT'})          # 하늘·조명의 직접광(해 직사광 제외)
         E = {k: A[k] + B[k] for k in A}
     # 지하는 시간대와 무관: 야간 조명 기준 한 번만(낮 슬롯에서도 같은 값)
-    if night or cache_base is None:
+    if base_keys and (night or cache_base is None):
         if not night:
             set_slot('night', True); N = bake({'DIRECT', 'INDIRECT'}); cache_base = {k: v for k, v in N.items() if k.split('_')[0] in base_keys}
         else:
             cache_base = {k: v for k, v in E.items() if k.split('_')[0] in base_keys}
-    for k, v in cache_base.items(): E[k] = v
+    for k, v in (cache_base or {}).items(): E[k] = v
     atlas = np.zeros((rows * RES, cols * RES, 3), np.float32)
     for i, L in enumerate(levels):
         for j, face in enumerate(('floor', 'ceil')):
