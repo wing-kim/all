@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>실사 3D 전후 비교</title>
+<style>body{font:14px/1.5 system-ui,sans-serif;margin:16px;background:#f4f5f4;color:#1b1f1e}h2{margin:28px 0 4px}p{margin:0 0 8px;color:#56605d}figure{margin:10px 0 18px}figcaption{font-size:13px;color:#3d4643;margin-bottom:4px}.ab{display:grid;grid-template-columns:1fr 1fr;gap:6px}.ab img{width:100%;border-radius:4px;display:block}@media(max-width:700px){.ab{grid-template-columns:1fr}}</style>
+<h1>실사 3D 전후 비교 (feature/xr-photoreal)</h1><p>헤드리스 Chrome(맥 M5) 같은 시점 캡처. 숫자는 화면 전체 기준(0～255). 눈으로 본 판단은 계획 문서 docs/goal-gap-plan.md 7장에 [관찰]로 적었다.</p>
+<h2>배치 D 낮(오후): 외관·정면·1층·5층·B1·B3</h2><p>왼쪽 배치 C(79b3eab), 오른쪽 배치 D</p>
+<figure><figcaption>out · 평균 화소 차 6.36 · 평균 밝기 113.8 → 109.5</figcaption><div class="ab"><img src="d-day/out-a.jpg" loading="lazy"><img src="d-day/out-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>front · 평균 화소 차 6.28 · 평균 밝기 94.2 → 90.1</figcaption><div class="ab"><img src="d-day/front-a.jpg" loading="lazy"><img src="d-day/front-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>1F · 평균 화소 차 2 · 평균 밝기 89.7 → 89</figcaption><div class="ab"><img src="d-day/1F-a.jpg" loading="lazy"><img src="d-day/1F-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>5F · 평균 화소 차 5.41 · 평균 밝기 62.6 → 66.6</figcaption><div class="ab"><img src="d-day/5F-a.jpg" loading="lazy"><img src="d-day/5F-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>B1 · 평균 화소 차 5.99 · 평균 밝기 100.2 → 101.5</figcaption><div class="ab"><img src="d-day/B1-a.jpg" loading="lazy"><img src="d-day/B1-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>B3 · 평균 화소 차 5.32 · 평균 밝기 102.2 → 103.7</figcaption><div class="ab"><img src="d-day/B3-a.jpg" loading="lazy"><img src="d-day/B3-b.jpg" loading="lazy"></div></figure>
+<h2>배치 D 석양: 외관·정면</h2><p>왼쪽 배치 C 석양, 오른쪽 배치 D 석양</p>
+<figure><figcaption>out · 평균 화소 차 40.06 · 평균 밝기 131.4 → 91.5</figcaption><div class="ab"><img src="d-sunset/out-a.jpg" loading="lazy"><img src="d-sunset/out-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>front · 평균 화소 차 44.87 · 평균 밝기 133.8 → 89.1</figcaption><div class="ab"><img src="d-sunset/front-a.jpg" loading="lazy"><img src="d-sunset/front-b.jpg" loading="lazy"></div></figure>
+<h2>배치 D 야간: 외관·정면</h2><p>왼쪽 배치 C 야간, 오른쪽 배치 D 야간</p>
+<figure><figcaption>out · 평균 화소 차 35.51 · 평균 밝기 91.4 → 59.2</figcaption><div class="ab"><img src="d-night/out-a.jpg" loading="lazy"><img src="d-night/out-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>front · 평균 화소 차 34.9 · 평균 밝기 105.7 → 71.7</figcaption><div class="ab"><img src="d-night/front-a.jpg" loading="lazy"><img src="d-night/front-b.jpg" loading="lazy"></div></figure>
+<h2>배치 D 오후 대 석양(같은 시점)</h2><p>왼쪽 오후, 오른쪽 석양</p>
+<figure><figcaption>out · 평균 화소 차 59.24 · 평균 밝기 109.4 → 91.6</figcaption><div class="ab"><img src="d-pm-vs-sunset/out-a.jpg" loading="lazy"><img src="d-pm-vs-sunset/out-b.jpg" loading="lazy"></div></figure>
+<h2>배치 C 텍스처 압축: 원본 대 KTX2</h2><p>왼쪽 원본(?prktx=0), 오른쪽 KTX2</p>
+<figure><figcaption>out · 평균 화소 차 2.01 · 평균 밝기 106 → 107.1</figcaption><div class="ab"><img src="c-ktx2/out-a.jpg" loading="lazy"><img src="c-ktx2/out-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>front · 평균 화소 차 1.81 · 평균 밝기 82.5 → 83.5</figcaption><div class="ab"><img src="c-ktx2/front-a.jpg" loading="lazy"><img src="c-ktx2/front-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>1F · 평균 화소 차 1.16 · 평균 밝기 84.7 → 84.8</figcaption><div class="ab"><img src="c-ktx2/1F-a.jpg" loading="lazy"><img src="c-ktx2/1F-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>5F · 평균 화소 차 1.23 · 평균 밝기 61.1 → 61.2</figcaption><div class="ab"><img src="c-ktx2/5F-a.jpg" loading="lazy"><img src="c-ktx2/5F-b.jpg" loading="lazy"></div></figure>
+<figure><figcaption>B1 · 평균 화소 차 0.76 · 평균 밝기 95.6 → 95.8</figcaption><div class="ab"><img src="c-ktx2/B1-a.jpg" loading="lazy"><img src="c-ktx2/B1-b.jpg" loading="lazy"></div></figure>

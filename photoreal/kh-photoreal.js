@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1101.c';
+  const VER = '1101.d';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -147,7 +147,7 @@
     const sd = await skyLoad(key); if (!sd) { skyCur.busy = false; return; }
     // 구 안쪽에 사진을 입혀 돌린 장면 → 큐브 카메라(배경) → PMREM(환경광)
     const sc = new T.Scene(), geo = new T.SphereGeometry(100, 64, 32), mat = new T.MeshBasicMaterial({ map: sd.tex, side: T.BackSide, depthWrite: false });
-    mat.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]);   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
+    mat.color.setScalar({ day: 1, sunset: 0.75, night: 0.12 }[key]);   // 석양은 노출을 낮추므로(T12) 하늘은 덜 낮춘다   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
     const sph = new T.Mesh(geo, mat); sph.rotation.y = (Math.PI - 2 * Math.PI * sd.sunU) - azW; sc.add(sph);
     const size = isMobile ? 512 : 1024;
     if (!skyCur.rt) { skyCur.rt = new T.WebGLCubeRenderTarget(size, { type: T.HalfFloatType, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter }); skyCur.cam = new T.CubeCamera(1, 1000, skyCur.rt); }
@@ -217,7 +217,7 @@
         Object.assign(U, { prBake: BAKE.u.tex, prBakeK: BAKE.u.k, prBakeOn: BAKE.u.on, prLv: BAKE.u.lv, prLvBox: BAKE.u.box, prLvN: BAKE.u.n, prAtlas: BAKE.u.atlas });
         let dec = 'uniform vec3 prAmb;uniform float prK;uniform sampler2D prBake;uniform float prBakeK;uniform float prBakeOn;uniform vec4 prLv[16];uniform vec4 prLvBox[16];uniform int prLvN;uniform vec2 prAtlas;\n';
         let add = 'float prFill=1.0-0.85*prBakeOn;irradiance+=prAmb*PI*prFill;';
-        if (o.light.lm) { U.prLM = { value: o.light.lm }; U.prBox = { value: o.light.box }; dec += 'uniform sampler2D prLM;uniform vec4 prBox;\n'; add += 'irradiance+=texture2D(prLM,(vPrW.xz-prBox.xy)*prBox.zw).rgb*prK*PI*prFill*(normalize(vPrN).y<-0.5?0.12:1.0);'; }
+        if (o.light.lm) { U.prLM = { value: o.light.lm }; U.prBox = { value: o.light.box }; dec += 'uniform sampler2D prLM;uniform vec4 prBox;\n'; add += '{vec3 prL=texture2D(prLM,(vPrW.xz-prBox.xy)*prBox.zw).rgb;prL=prL/(1.0+prL*0.6);irradiance+=prL*prK*1.3*PI*prFill*(normalize(vPrN).y<-0.5?0.12:1.0);}'; }   // 최댓값 압축(T11: 조명 아래 하얗게 타는 얼룩)
         if (o.light.cove) { U.prCove = { value: o.light.cove }; dec += 'uniform vec4 prCove;\n'; add += 'irradiance+=vec3(1.0,0.82,0.62)*prCove.z*PI*smoothstep(prCove.x,prCove.y,vPrW.y);'; }
         // 구운 조도: 표면 높이로 층을 찾고(층 바닥～천장), 바닥 타일(위를 받는 빛)과 천장 타일(아래를 받는 빛)을 법선으로 섞는다
         add += `if(prBakeOn>0.5){vec4 lv=vec4(0.0);vec4 bx=vec4(0.0);bool hit=false;
@@ -225,7 +225,9 @@
   if(hit){vec2 uv=clamp(vec2((vPrW.x-bx.x)*bx.z,1.0-(vPrW.z-bx.y)*bx.w),0.004,0.996);
     vec2 tf=vec2(mod(lv.z,prAtlas.x),floor(lv.z/prAtlas.x)),tc=vec2(mod(lv.w,prAtlas.x),floor(lv.w/prAtlas.x));
     vec3 ef=pow(texture2D(prBake,(tf+uv)/prAtlas).rgb,vec3(2.2)),ec=pow(texture2D(prBake,(tc+uv)/prAtlas).rgb,vec3(2.2));
-    irradiance+=mix(ec,ef,clamp(normalize(vPrN).y*0.5+0.5,0.0,1.0))*prBakeK;iblIrradiance*=0.25;}}`;
+    float prNy=normalize(vPrN).y,prHf=clamp((vPrW.y-lv.x)/max(lv.y-lv.x,0.5),0.0,1.0);
+    float prWf=abs(prNy)>0.5?clamp(prNy*0.5+0.5,0.0,1.0):mix(0.78,0.22,prHf);   // 벽·기둥: 아래는 바닥 쪽 빛, 위는 천장 쪽 빛(T10)
+    irradiance+=mix(ec,ef,prWf)*prBakeK;iblIrradiance*=0.25;}}`;
         fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\n' + dec);
         fs = fs.replace('#include <lights_fragment_maps>', '#include <lights_fragment_maps>\n' + add);
       }
@@ -233,6 +235,10 @@
         // 프레넬 투명도: 정면에서는 안이 비치고 비스듬히 보면 하늘이 비친다. 반사광은 투명도로 깎지 않는다
         U.prA = { value: new T.Vector2(o.glass.a0, o.glass.a1) };
         fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\nuniform vec2 prA;\n');
+        // 판유리 왜곡(T13): 판(가로 1.5m·세로 층 높이)마다 법선을 아주 조금 돌려 반사가 판마다 조금씩 다르게
+        fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  {vec3 prPc=floor(vPrW/vec3(1.5,3.6,1.5));float prPh=fract(sin(dot(prPc,vec3(12.9898,78.233,37.719)))*43758.5453),prPh2=fract(prPh*7.13);
+   normal=normalize(normal+(vec3(prPh,0.0,prPh2)-vec3(0.5,0.0,0.5))*0.035);}`);
         fs = fs.replace('#include <output_fragment>', `
   {float prF=pow(1.0-abs(dot(normalize(vViewPosition),normal)),4.0);float prAl=clamp(mix(prA.x,prA.y,prF)*opacity/0.88,0.03,1.0);
   vec3 prSp=reflectedLight.directSpecular+reflectedLight.indirectSpecular;vec3 prDf=outgoingLight-prSp;
@@ -249,7 +255,7 @@
   /* ================= 2-1. 구운 빛 (Blender Cycles, 시간대 4개) =================
      photoreal/bake/manifest.json 과 시간대별 아틀라스(bake-am|pm|sunset|night.png). 만드는 법은 photoreal/tools/bake/.
      Wing 의 시간대(오전·오후·석양·야간)를 따르고, 날짜·시각을 직접 고르면 해 높이로 가장 가까운 시간대를 쓴다. */
-  const BAKE = { man: null, tex: {}, slot: null, sig: '', gain: { am: 1, pm: 1, sunset: 1, night: 1 },
+  const BAKE = { man: null, tex: {}, slot: null, sig: '', gain: { am: 1, pm: 1, sunset: 1.15, night: 2.6 },   // 야간 실내 빛을 키워 밖에서 우리 건물이 보이게(T8)
     u: { tex: { value: null }, k: { value: 0 }, on: { value: 0 }, lv: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, box: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, 0, 1, 1)) }, n: { value: 0 }, atlas: { value: new THREE.Vector2(1, 1) } } };
   let bakeP = null;
   function loadBake() {
@@ -279,7 +285,7 @@
     const load = f => img1(BASE + 'bake/' + f.replace(/\.png$/, '.webp') + '?v=' + VER).then(i => i || img1(BASE + 'bake/' + f + '?v=' + VER));
     Promise.all([load(info.file), ...vars.map(k => man.variants[k].slots[slot] ? load(man.variants[k].slots[slot].file) : null)]).then(([img, ...vi]) => {
       if (!img) return;
-      if (!vars.length) t.image = img;
+      if (!vars.length) t.image = blurCeil(img, man);
       else {
         const W = img.width, H = img.height, res = man.res, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'); g.drawImage(img, 0, 0);
         let S = info.scale; vars.forEach(k => { const q = man.variants[k].slots[slot]; if (q) S = Math.max(S, q.scale); });
@@ -299,11 +305,21 @@
             t.userData.boxes[L.key] = L.box;
           });
         });
-        g.putImageData(d, 0, 0); t.image = c; t.userData.scale = S;
+        g.putImageData(d, 0, 0); t.image = blurCeil(c, man); t.userData.scale = S;
       }
       t.needsUpdate = true; t.userData.ready = true; if (PR.t.bake == null && PR.t.enable0) PR.t.bake = Math.round(now() - PR.t.enable0);
     });
     return t;
+  }
+  /* 천장 칸 흐리기(T10): Cycles 굽기의 천장 칸(아래를 보는 면이 받는 빛)은 표본 노이즈가 1m 안팎의 얼룩으로 보였다(1층 카페 천장).
+     불러올 때 천장 칸만 반경 3화소(약 0.6m) 흐리게 한다. 바닥 칸(창빛 무늬)은 그대로. 캔버스 filter 를 못 쓰는 브라우저는 그대로 둔다 */
+  function blurCeil(src, man) {
+    const W = src.width, H = src.height, res = man.res, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+    g.drawImage(src, 0, 0); if (!('filter' in g)) return src;
+    const pad = 6;
+    man.levels.forEach(L => { const i = L.tile[1], cx = (i % man.cols) * res, cy = H - (Math.floor(i / man.cols) + 1) * res;
+      g.save(); g.beginPath(); g.rect(cx, cy, res, res); g.clip(); g.filter = 'blur(3px)'; g.drawImage(src, cx - pad, cy - pad, res + 2 * pad, res + 2 * pad, cx - pad, cy - pad, res + 2 * pad, res + 2 * pad); g.restore(); });
+    return c;
   }
   // 매 프레임: 시간대·층 배치가 바뀌었을 때만 uniform 을 바꾼다
   function bakeUpdate() {
@@ -414,7 +430,7 @@
       if (orig === M.col) return env(texMat('plaster-white', 1.2, { tint: 0xf3f2ef, ns: 0.3, light: { amb: new T.Color(0.3, 0.3, 0.3), lm: LT.lm, box: LT.box, k: 0.35 } }), 0.4);
       if (orig === M.corewall || orig === M.core || orig === M.wellwall) return env(texMat('plaster-white', 1.2, { tint: 0xe3ddd2, ns: 0.3, light: { amb: new T.Color(0.25, 0.24, 0.23) } }), 0.4);
       // LED 줄 조명: 화면에서 빛나 보이게 밝기를 1 이상으로(블룸·톤매핑 기준)
-      if (orig === BM2.light) { const m = new T.MeshBasicMaterial({ color: new T.Color(1, 0.98, 0.94).multiplyScalar(4) }); m.userData.lin = true; return m; }
+      if (orig === BM2.light) { const m = new T.MeshBasicMaterial({ color: new T.Color(1, 0.98, 0.94).multiplyScalar(2.2) }); m.userData.lin = true; return m; }   // 4 → 2.2: 블룸이 천장에 하얀 얼룩을 만들었다(T11)
       // 장애인 주차 구역: 파란 바닥 도장(조명 받음)과 선명한 국제 장애인 표지(KS 표지 형태 근사), 경형 표시
       if (orig === K.DISM) return env(paint(0x2b63c6, 0.42, 0.5, Lp));
       if (orig.map && K.DIST && orig.map === K.DIST) return markMat('isa', Lp);
@@ -426,7 +442,8 @@
       const amb = AMB.g(), Lg = gLight();
       const lt = Lg ? { amb, lm: Lg.lm, box: Lg.box, k: 1.1 } : { amb };
       if (orig === M.stone) return texMat('interior-stone', 1.5, { tint: 0xf1e6d6, light: lt, env: 0.6 });
-      if (orig === M.slab) return texMat('plaster-white', 1.2, { tint: 0xf4f1ec, ns: 0.2, light: { amb: amb.clone().multiplyScalar(1.5) } });
+      // 바닥판 밑면(아래층 천장)은 칠한 천장처럼 단색(T10: 회반죽 사진의 큰 얼룩이 천장에서 더럽게 보였다)
+      if (orig === M.slab) return texMat('plaster-white', 1.2, { tint: 0xf4f1ec, ns: 0.2, light: { amb: amb.clone().multiplyScalar(1.5) }, under: lin(0xeeebe5) });
       if (orig === M.col) return texMat('plaster-white', 1.2, { tint: 0xf1ede6, ns: 0.3, light: { amb } });
       if (orig === M.corewall || orig === M.core) return texMat('furniture-veneer', 1.8, { tint: 0xe7c9a6, light: { amb } });
       if (orig === M.roomfloor) return texMat('interior-stone', 1.5, { tint: 0xe9ddca, light: lt });
@@ -435,7 +452,7 @@
     if (zone === 'u') {
       const amb = AMB.u();
       if (orig === M.floorUp) return texMat('office-concrete', 3, { tint: 0xc9c3b8, noRough: true, p: { roughness: 0.5 }, light: { amb }, env: 0.5 });
-      if (orig === M.slab) return texMat('plaster-white', 1.2, { tint: 0xefede8, ns: 0.2, light: { amb: amb.clone().multiplyScalar(1.6) } });
+      if (orig === M.slab) return texMat('plaster-white', 1.2, { tint: 0xefede8, ns: 0.2, light: { amb: amb.clone().multiplyScalar(1.6) }, under: lin(0xebe8e2) });
       if (orig === M.col) return texMat('plaster-white', 1.2, { tint: 0xeeebe5, ns: 0.3, light: { amb } });
       if (orig === M.corewall || orig === M.core) return texMat('plaster-white', 1.2, { tint: 0xe3ddd2, ns: 0.3, light: { amb } });
       return null;
@@ -596,6 +613,7 @@
     let n = swapIn(K.bld, zoneOf);
     // 주변(도로·지면·주변 건물·차량)은 처음 한 번 + 지면은 매번(원본이 다시 만든다)
     n += swapIn(K.site); n += swapIn(K.city, null, true); n += swapIn(K.ctx, null, true); n += swapIn(K.exist, null, true); n += swapIn(K.R3D.props);
+    scaleFigures();
     staticDone = true;
     PR.stat.swap = n; PR.stat.applyMs = Math.round(now() - t0); PR.stat.mats = CACHE.size;
     log('적용', reason, n + '개', PR.stat.applyMs + 'ms');
@@ -624,6 +642,7 @@
     EXTRA.forEach(m => { if (m.envMapIntensity !== m.userData.prEnv) m.envMapIntensity = m.userData.prEnv; });
     bakeUpdate();
     const R3D = K.R3D, night = R3D.time === 'night', inBase = K.I.on && K.Lv() && K.Lv().kind === 'base';
+    todApply(!K.I.on);
     const cube = R3D.cube && R3D.cube.texture;
     if (cube) CACHE.forEach(e => { if (e && e.glass && e.m.envMap !== cube) { e.m.envMap = cube; e.m.needsUpdate = true; } });
     if (inBase) { if (R.toneMappingExposure !== 0.95) R.toneMappingExposure = 0.95; if (K.amb.intensity !== 0.04) K.amb.intensity = 0.04; }
@@ -678,6 +697,25 @@
   }
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
+
+  /* ================= 5-1-1. 시간대별 조명 보정(T12·T8) =================
+     Wing applyTime 은 석양 노출(0.95)을 오후(0.78)보다 높게 두어 석양이 오후와 거의 같은 밝기로 보였다. 실사 3D 를 켠 동안 건물 밖에서만
+     Wing 이 정한 값에 시간대 계수를 곱한다(노출·해 색·반구광). Wing 이 값을 다시 정하면(조합·시간 변경) 그 값을 새 기준으로 삼는다.
+     야간은 전체 노출을 조금 낮추고(이웃 창이 하얗게 타지 않게) 우리 건물 실내 굽기 빛을 키워(BAKE.gain.night) 주인공이 보이게 한다 */
+  const TODF = { sunset: { exp: 0.45, sun: 0xff6a2c, hemi: 0.7, hemiC: 0xc99a7c }, night: { exp: 0.82 } };
+  const TODS = { base: null, set: null };
+  function todApply(on) {
+    const s = K.sun, h = K.hemi; if (!s || !h) return;
+    const cur = { exp: R.toneMappingExposure, sun: s.color.getHex(), hemi: h.intensity, hemiC: h.color.getHex() };
+    const S = TODS.set; if (!S || Object.keys(cur).some(k => S[k] !== cur[k])) TODS.base = cur;
+    const B = TODS.base, slot = bakeSlot(), f = on ? TODF[slot === 'night' ? 'night' : slot === 'sunset' ? 'sunset' : ''] : null;
+    const w = f ? { exp: B.exp * (f.exp || 1), sun: f.sun != null ? f.sun : B.sun, hemi: B.hemi * (f.hemi || 1), hemiC: f.hemiC != null ? f.hemiC : B.hemiC } : B;
+    if (R.toneMappingExposure !== w.exp) R.toneMappingExposure = w.exp;
+    if (s.color.getHex() !== w.sun) s.color.setHex(w.sun);
+    if (h.intensity !== w.hemi) h.intensity = w.hemi;
+    if (h.color.getHex() !== w.hemiC) h.color.setHex(w.hemiC);
+    TODS.set = { exp: R.toneMappingExposure, sun: s.color.getHex(), hemi: h.intensity, hemiC: h.color.getHex() };
+  }
 
   /* ================= 5-2. 그리기 부담 줄이기 =================
      측정(10/31, 맥 M5 외관): 프레임당 삼각형 1,950만 개(장면 333만의 6배), 초당 12프레임. 원인과 처리:
@@ -923,8 +961,53 @@
       const sh = new T.Shape(P.map(([x, z]) => new T.Vector2(x, z))), cg = new T.ShapeGeometry(sh); cg.rotateX(Math.PI / 2);
       const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
       const ce = new T.Mesh(cg, cm); ce.position.y = yC - 0.02; ce.castShadow = false; ce.receiveShadow = false; Object.assign(ce.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(ce);
+      const ar = aisleArrows(L, P, inside, alongX, W, [u0, u1, v0, v1]); if (ar) g.add(ar);
       extra.add(g);
     });
+  }
+  /* 주행 화살표(T11): Wing 주차 구획 바닥(BM2.pad)이 없는 곳 중 긴 축을 따라 12m 넘게 이어지는 통로 가운데에 양방향 화살표(9m 간격, 차로 중심 ±1.3m).
+     층마다 인스턴스 한 묶음(그리기 호출 1회). 실제 동선 자료가 없어 통로 모양으로 추정한 배치다 */
+  let ARROW = null;
+  function arrowMat() {
+    if (ARROW) return ARROW;
+    const c = document.createElement('canvas'); c.width = 128; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(64, 8); g.lineTo(118, 92); g.lineTo(84, 92); g.lineTo(84, 248); g.lineTo(44, 248); g.lineTo(44, 92); g.lineTo(10, 92); g.closePath(); g.fill();
+    const t = new T.CanvasTexture(c); t.anisotropy = 8;
+    const m = std({ map: t, transparent: true, alphaTest: 0.3, roughness: 0.6, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: lin(0xe6bd38) });   // 밝은 회색 바닥에서 보이게 노란 도장
+    m.envMap = parkEnv(); m.envMapIntensity = 0.4; m.userData.prMade = true; keepEnv(m);
+    return (ARROW = patch(m, { light: { amb: new T.Color(0.32, 0.32, 0.33) } }));
+  }
+  function aisleArrows(L, P, inside, alongX, W, [u0, u1, v0, v1]) {
+    const lg = CUR.levelGroup(L); if (!lg) return null;
+    const pads = []; lg.updateMatrixWorld(true); const bb = new T.Box3();
+    lg.traverse(o => { if (o.isMesh && (o.userData.prOrig || o.material) === K.BM2.pad) { bb.setFromObject(o); pads.push(bb.clone().expandByScalar(0.25)); } });
+    const inPad = (x, z) => pads.some(b => x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z);
+    const free = (x, z) => inside(x, z, 1.0) && !inPad(x, z);
+    // 두 축 모두 훑는다. 통로 = 폭 4.8m 이상 비어 있고, 한쪽이나 양쪽 3.6m 옆에 주차 구획이 이어지는 12m 넘는 줄(구획 없는 빈 마당은 빼기)
+    const pts = [];
+    [true, false].forEach(along => {
+      const X = (a, c) => along ? W(a, c) : W(c, a), [a0, a1, c0, c1] = along ? [u0, u1, v0, v1] : [v0, v1, u0, u1];
+      const rows = [];
+      for (let c = c0 + 2; c < c1 - 2; c += 0.5) {
+        let st = null, fl = 0, n = 0;
+        for (let a = a0; a <= a1 + 0.01; a += 1) {
+          const at = d => { const [x, z] = X(a, c + d); return [x, z]; }, f = free(...at(0)) && free(...at(-2.4)) && free(...at(2.4));
+          if (f) { if (st === null) { st = a; fl = 0; n = 0; } n++; if (inPad(...at(3.6)) || inPad(...at(-3.6))) fl++; }
+          if ((!f || a + 1 > a1) && st !== null) { if (a - st >= 12 && fl >= n * 0.5) rows.push([c, st, a]); st = null; }
+        }
+      }
+      const pick = []; rows.forEach(r => { const q = pick.find(p => Math.abs(p.c0 - r[0]) < 4 && Math.min(p[2], r[2]) - Math.max(p[1], r[1]) > 6); if (q) { q.n++; q.cs += r[0]; } else pick.push(Object.assign(r.slice(), { c0: r[0], n: 1, cs: r[0] })); });
+      pick.forEach(r => { const c = r.cs / r.n, rot = (along === alongX ? 0 : -Math.PI / 2);
+        for (let a = r[1] + 3; a < r[2] - 3; a += 9) [[1.3, 0], [-1.3, Math.PI]].forEach(([dc, flip]) => { const [x, z] = X(a, c + dc); if (free(x, z)) pts.push([x, z, rot + flip]); }); });
+    });
+    if (!pts.length) return null;
+    const geo = new T.PlaneGeometry(1.3, 3.8); geo.rotateX(-Math.PI / 2); geo.rotateY(-Math.PI / 2);   // 화살표가 +u(긴 축) 방향
+    const im = new T.InstancedMesh(geo, arrowMat(), pts.length), o3 = new T.Object3D(), y = K.floorTop(L) + 0.012;
+    pts.forEach(([x, z, r], i) => { o3.position.set(x, y, z); o3.rotation.set(0, r, 0); o3.updateMatrix(); im.setMatrixAt(i, o3.matrix); });
+    im.receiveShadow = true; im.castShadow = false; im.frustumCulled = false; im.name = L.key + ' aisle arrows';
+    Object.assign(im.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true });
+    PR.stat.arrows = (PR.stat.arrows || 0) + pts.length;
+    return im;
   }
   function levelKeyOf(g) {
     if (g.userData.fitoutFloor) return g.userData.fitoutFloor;
@@ -956,6 +1039,14 @@
       o.material = m;
     });
   }
+  // Wing 의 사람 모형(색 원기둥 몸 + 구 머리)은 실사 화면에서 색 기둥(장난감)처럼 보인다. 건축 투시도처럼 무채색 축척 인물로(T13)
+  let FIGM = null;
+  function scaleFigures() {
+    FIGM = FIGM || (() => { const m = std({ color: lin(0x9c988f), roughness: 0.85, metalness: 0 }); m.envMapIntensity = 0.4; m.userData.prMade = true; keepEnv(m); return m; })();
+    K.R3D.props.children.forEach(g => { if (!g.isGroup || g.children.length !== 2) return; const [b, h] = g.children, pb = b.geometry && b.geometry.parameters, ph = h.geometry && h.geometry.parameters;
+      if (!pb || !ph || pb.radiusTop !== 0.2 || ph.radius !== 0.13) return;
+      [b, h].forEach(o => { if (!o.userData.prOrig) o.userData.prOrig = o.material; o.material = FIGM; CUR.swapped.push(o); }); });
+  }
   /* ================= 6-2. 거리 소품: 차량·가로수·실내 화분 =================
      Wing 의 단순 형상 차(도로·주차장 모두)를 실제 차 모델(CC BY, 5종)로 바꾸고, 예전 실사 3D 의 가로수를 둔다.
      가로수는 우리 건물 앞 압구정로 보도(1층을 가리던 자리)에는 두지 않는다. */
@@ -967,6 +1058,7 @@
     return ENV.p || (ENV.p = vendor().then(() => Promise.all([...CARS.map(c => loadGLB('assets/cars/car-' + c.f + '.glb')), loadGLB('assets/street-tree.glb')]))
       .then(r => {
         ENV.cars = r.slice(0, CARS.length).map((sc, i) => sc && normModel(sc, CARS[i].len, true)).filter(Boolean);
+        ENV.cars.forEach(c => { c.userData.prBody = carBody(c); });
         ENV.tree = r[CARS.length];
         if (!ENV.tree || ENV.cars.length < CARS.length) { ENV.p = null; fail('거리 소품', envAssets); }
         PR.t.env2 = Math.round(now() - PR.t.enable0); log('거리 소품', PR.t.env2 + 'ms');
@@ -991,6 +1083,23 @@
     outer.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; o.userData.prSkip = true; } });
     return outer;
   }
+  /* 차량 색(T11): 모델마다 차체 도장 재질(유리·어두운 부품을 뺀 가장 넓은 면)을 찾아, 차마다 흰·검·은·회·남색 중 하나로 바꾼다.
+     색별 재질은 모델당 최대 5개(데스크톱 합치기 묶음이 조금 늘고, VR 은 꼭짓점 색 평탄화라 그리기 호출 변화 없음) */
+  const CAR_PAL = [[0xf0f0ee, 3], [0x1a1b1d, 2], [0xa9adb1, 2], [0x5d6166, 2], [0x22324f, 1]];
+  function carBody(root) {
+    const area = new Map();
+    root.traverse(o => { if (!o.isMesh || Array.isArray(o.material)) return; const m = o.material; if (m.transparent || !m.color) return; const l = m.color.r + m.color.g + m.color.b; if (l < 0.6) return;
+      const n = o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count; area.set(m, (area.get(m) || 0) + n); });
+    let best = null, bn = 0; area.forEach((n, m) => { if (n > bn) { bn = n; best = m; } });
+    return best && !best.map && best.isMeshStandardMaterial ? best : null;   // 텍스처로 칠한 차체(무늬·조명 없는 재질)는 그대로 둔다
+  }
+  function carPaint(model, body, k) {
+    if (!body) return null;
+    let w = 0; CAR_PAL.forEach(p => { w += p[1]; }); let x = k % w, pick = CAR_PAL[0][0]; for (const [c, n] of CAR_PAL) { if (x < n) { pick = c; break; } x -= n; }
+    const M = model.userData.prPaint || (model.userData.prPaint = new Map());
+    if (!M.has(pick)) { const m = body.clone(); m.color.set(pick).convertSRGBToLinear(); m.map = null; m.userData = Object.assign({}, body.userData); M.set(pick, m); }
+    return M.get(pick);
+  }
   function placeCars() {
     if (!ENV.cars || !ENV.cars.length) return;
     const olds = [];
@@ -998,6 +1107,7 @@
     olds.forEach((o, i) => {
       const k = Math.abs(Math.round(o.position.x * 7 + o.position.z * 3)) % ENV.cars.length;
       const c = ENV.cars[k].clone(true); c.userData.prCar = true;
+      { const body = ENV.cars[k].userData.prBody, pm = carPaint(ENV.cars[k], body, Math.abs(Math.round(o.position.x * 3 + o.position.z * 11))); if (pm) c.traverse(q => { if (q.isMesh && q.material === body) q.material = pm; }); }
       c.position.copy(o.position); c.rotation.copy(o.rotation);
       o.parent.add(c); o.userData.prRep = true; o.visible = false; ENV.hidden.push(o); ENV.added.push(c);
       litDress(c);
@@ -1235,12 +1345,23 @@
     maps.col.encoding = T.sRGBEncoding;
     const m = new T.MeshStandardMaterial({ map: maps.col, roughnessMap: maps.rm, metalnessMap: maps.rm, normalMap: maps.nc, roughness: 1, metalness: 1, vertexColors: key !== 'shop' });
     m.normalScale.set(0.9, 0.9); m.envMapIntensity = 1.0; m.userData.lin = true; m.userData.prEnv = 1.0; EXTRA.add(m);
-    // 건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵으로 벽 판별)
+    // 건물색(꼭짓점 색)은 벽에만 곱한다(거칠기 맵으로 벽 판별). 같은 재질 안에서 셰이더로 다양화(T9, VR 그리기 호출 변화 없음):
+    // 땅 가까이 어둡게, 창 아래 빗물 자국(건물마다 세기 다름), 창마다 실내 깊이·커튼·반사 밝기 차이. 야간 창 불빛은 색온도 3종·밝기 0.4～1.0(T8)
     m.onBeforeCompile = sh => {
-      sh.vertexShader = 'attribute vec3 color2;\nvarying vec3 vColor2;\n' + sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\nvColor2 = color2;');
+      sh.vertexShader = 'attribute vec3 color2;\nvarying vec3 vColor2;\nvarying vec3 vPrCW;\n' + sh.vertexShader.replace('#include <color_vertex>', '#include <color_vertex>\nvColor2 = color2;')
+        .replace('#include <project_vertex>', '#include <project_vertex>\nvPrCW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
       sh.uniforms.prNight = NIGHT;
-      sh.fragmentShader = 'varying vec3 vColor2;\nuniform float prNight;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#ifdef USE_COLOR\n vec4 prRM = texture2D(roughnessMap, vUv); float prWall = step(0.24, prRM.g);\n diffuseColor.rgb *= mix(vec3(1.0), mix(vColor, vColor2 * 1.6, step(0.5, prRM.r)), prWall);\n#endif')
-        // 야간 창 불빛: 창(유리) 칸마다 켜짐·꺼짐과 색 온도를 건물색·칸 위치로 정한다(약 45% 켜짐)
+      sh.fragmentShader = 'varying vec3 vColor2;\nvarying vec3 vPrCW;\nuniform float prNight;\nfloat prHs(float x){return fract(sin(x)*43758.5453);}\n' + sh.fragmentShader.replace('#include <color_fragment>', `#ifdef USE_COLOR
+ vec4 prRM = texture2D(roughnessMap, vUv); float prWall = step(0.24, prRM.g);
+ diffuseColor.rgb *= mix(vec3(1.0), mix(vColor, vColor2 * 1.6, step(0.5, prRM.r)), prWall);
+ float prSd = dot(vColor, vec3(91.7, 37.3, 13.1));
+ float prFv = fract(vUv.y * 2.0), prStK = 0.35 + 0.65 * prHs(prSd * 1.7);
+ float prSt = step(0.8, prHs(floor(vUv.x * 96.0) * 12.9898 + prSd)) * (1.0 - smoothstep(0.0, 0.34, 0.34 - prFv)) * step(prFv, 0.34);
+ diffuseColor.rgb *= mix(1.0, (1.0 - 0.16 * prSt * prStK) * mix(0.7, 1.0, smoothstep(0.15, 1.8, vPrCW.y)), prWall);
+ vec2 prCl = floor(vUv * vec2(4.0, 2.0) * 0.999 + 0.0005); float prWh = prHs(dot(prCl, vec2(12.9898, 78.233)) + prSd), prWh2 = fract(prWh * 9.13);
+ vec3 prGl = prWh < 0.22 ? diffuseColor.rgb * 0.55 : prWh < 0.4 ? mix(diffuseColor.rgb, vec3(0.62, 0.56, 0.47), 0.5) : prWh < 0.55 ? diffuseColor.rgb * 1.25 : diffuseColor.rgb * (0.85 + 0.3 * prWh2);
+ diffuseColor.rgb = mix(prGl, diffuseColor.rgb, prWall);
+#endif`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
   if (prNight > 0.0) { vec4 prR2 = texture2D(roughnessMap, vUv); vec2 prC = floor(vUv * vec2(4.0, 2.0) * 0.999 + 0.0005);
     #ifdef USE_COLOR
@@ -1248,10 +1369,11 @@
     #else
     float prSeed = 3.1;
     #endif
-    float prH = fract(sin(dot(prC, vec2(12.9898, 78.233)) + prSeed) * 43758.5453), prH2 = fract(prH * 7.31);
-    totalEmissiveRadiance += (1.0 - step(0.24, prR2.g)) * step(0.55, prH) * mix(vec3(1.0, 0.72, 0.42), vec3(0.85, 0.92, 1.0), step(0.7, prH2)) * (0.6 + prH2) * prNight * 1.3; }`);
+    float prH = fract(sin(dot(prC, vec2(12.9898, 78.233)) + prSeed) * 43758.5453), prH2 = fract(prH * 7.31), prH3 = fract(prH * 13.7);
+    vec3 prK = prH2 < 0.45 ? vec3(1.0, 0.66, 0.36) : prH2 < 0.8 ? vec3(1.0, 0.84, 0.66) : vec3(0.82, 0.9, 1.0);
+    totalEmissiveRadiance += (1.0 - step(0.24, prR2.g)) * step(0.58, prH) * prK * (0.4 + 0.6 * prH3) * prNight * 1.05; }`);
     };
-    m.customProgramCacheKey = () => 'prctxwall';
+    m.customProgramCacheKey = () => 'prctxwall2';
     return (FW.mats[cls] = m);
   }
   function inPolyW(p, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, zi] = poly[i], [xj, zj] = poly[j]; if ((zi > p[1]) !== (zj > p[1]) && p[0] < (xj - xi) * (p[1] - zi) / (zj - zi) + xi) c = !c; } return c; }
@@ -1524,7 +1646,7 @@
       if (!arr.length) return null;
       const im = new T.InstancedMesh(tg, tm, arr.length); im.name = name;
       arr.forEach((t, i) => { const h = t[2], sx = t[3] ? 0.6 : 1; o3.position.set(t[0], 0, t[1]); o3.rotation.set(0, (t[0] * 13.7 + t[1] * 7.3) % 6.283, 0); o3.scale.set(h * sx, h, h * sx); o3.updateMatrix(); im.setMatrixAt(i, o3.matrix);
-        const v = ((t[0] * 3.1 + t[1] * 1.7) % 1 + 1) % 1; col.setRGB(0.85 + v * 0.25, 0.9 + v * 0.15, t[3] ? 0.7 : 0.8 + v * 0.15); im.setColorAt(i, col); });
+        const v = ((t[0] * 3.1 + t[1] * 1.7) % 1 + 1) % 1; col.setRGB(0.66 + v * 0.18, 0.68 + v * 0.12, t[3] ? 0.56 : 0.62 + v * 0.12); im.setColorAt(i, col); });   // 밝은 연두 카드처럼 보이지 않게 어둡고 채도 낮게(T13)
       im.castShadow = shadow; im.receiveShadow = false; im.customDepthMaterial = dm; im.userData.prSkip = true; im.frustumCulled = false;
       return im;
     };
@@ -1707,7 +1829,7 @@
       PR.on = false;
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
-      optOff(); envOff(); ctxOff(); perfOff();
+      todApply(false); TODS.set = null; optOff(); envOff(); ctxOff(); perfOff();
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }

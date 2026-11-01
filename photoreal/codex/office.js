@@ -23,7 +23,7 @@ const OFFICE_STYLES={
   plantModels:['palm','plantA','plantB'],pot:'#cbc5bb'},
  // 4F: 짙은 차콜 노출 천장, 회색 트위드 카펫, 월넛 상판·검은 프레임 책상(남색 칸막이·검은 서랍장), 월넛 수납장.
  '4F':{floor:{tex:'office-carpet',maps:['color','normal'],version:1,repeat:1.2,roughness:.97,normalScale:.6,name:'Office grey tweed carpet'},
-  ceiling:'#4a4846',duct:'#5a5652',housing:'#2b2b2c',desk:'walnut',felt:'navy',monitorEvery:1,
+  ceiling:'#6e6b67',duct:'#7c7772',housing:'#2b2b2c',desk:'walnut',felt:'navy',monitorEvery:1,
   clusters:[[-10.2,-10.9],[-6.2,-10.9],[-10.2,-5.9],[-6.2,-5.9],[-10.2,-.6],[-6.2,-.6]],
   lounge:{kind:'none',at:[]},bar:false,meeting:false,
   shelves:[[-12.75,4.4,Math.PI/2,2.4,'credenza'],[-4.3,-8.0,-Math.PI/2,2.4,'credenza'],[-4.3,-1.0,-Math.PI/2,2.0,'credenza'],[-1.3,-10.0,-Math.PI/2,2.4,'credenza'],[-9.0,8.4,0,2.4,'credenza']],
@@ -31,7 +31,7 @@ const OFFICE_STYLES={
   plantModels:['pottedtree','plantA','plantB'],pot:'#3a3a3b'},
  // 5F: 짙은 노출 천장, 월넛 헤링본 마루, 코냑 가죽 라운지 둘, 월넛 회의 테이블, 월넛 책상·플랜터 수납장, 화분 나무.
  '5F':{floor:{tex:'office-parquet',maps:['color','normal'],version:1,repeat:3.4,roughness:.38,normalScale:.5,name:'Office walnut herringbone parquet'},
-  ceiling:'#474542',duct:'#57534f',housing:'#2b2b2c',desk:'walnut',felt:false,monitorEvery:2,
+  ceiling:'#6b6863',duct:'#79746e',housing:'#2b2b2c',desk:'walnut',felt:false,monitorEvery:2,
   clusters:[[-10.2,-10.9],[-6.2,-10.9]],
   lounge:{kind:'leather',count:2,at:[[-9.0,4.9],[-9.2,-1.2],[-8.8,5.4],[-6.0,-1.0]]},bar:false,
   meeting:{x:-8.2,z:-5.6,len:4.2,rug:true},

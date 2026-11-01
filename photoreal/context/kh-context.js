@@ -264,7 +264,9 @@
     list.forEach((b, bi) => {
       const pts = b.outline;
       let A = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; A += p[0] * q[1] - q[0] * p[1]; }
-      const sgn = A > 0 ? 1 : -1, col = hex(b.color), fh = b.floor_h || 3.5;
+      // 같은 계열 색(밝은 미장 5종이 79%)이 줄지어 같은 밝기로 보이지 않게 건물마다 명도(선형 0.5～1.06배)·색온도(±6%)를 조금씩 다르게(그리기 호출·자료 변화 없음)
+      const col = (c => { const k = 0.5 + hsh(b.id, 21) * 0.56, w = (hsh(b.id, 22) - 0.5) * 0.12; return [c[0] * k * (1 + w), c[1] * k, c[2] * k * (1 - w)]; })(hex(b.color));
+      const sgn = A > 0 ? 1 : -1, fh = b.floor_h || 3.5;
       const det = DET && b.dist <= DET && Math.abs(A) / 2 > 25, near = b.dist <= DN;
       const cls = (b.near || det) ? (NEAR_CLS.includes(b.cls) ? b.cls : 'paint') : (FAR_OF[b.cls] || 'far_light');
       // 근경 상가(1층 유리): 첫 층은 shop 메시로
