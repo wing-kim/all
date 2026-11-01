@@ -162,6 +162,40 @@
     18,
     19
    ]
+  },
+  {
+   "key": "7F",
+   "kind": "upper",
+   "floor": 26.415,
+   "ceil": 30.22,
+   "box": [
+    -13.197115384615385,
+    -13.461538461538462,
+    8.4375,
+    9.103038461538462
+   ],
+   "tile": [
+    20,
+    21
+   ],
+   "from": "out-lv-f8"
+  },
+  {
+   "key": "8F",
+   "kind": "upper",
+   "floor": 30.615000000000002,
+   "ceil": 34.42,
+   "box": [
+    -13.197115384615385,
+    -13.461538461538462,
+    8.4375,
+    9.103038461538462
+   ],
+   "tile": [
+    22,
+    23
+   ],
+   "from": "out-lv-f8"
   }
  ],
  "slots": {
@@ -778,6 +812,456 @@
     "ht": 4.2,
     "frame": true,
     "g1": "skin",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:alt3-corner": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      8.080750000000002
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-alt3-corner/bake-am.png",
+     "scale": 7.517078399658203,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-alt3-corner/bake-pm.png",
+     "scale": 6.669915676116943,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-alt3-corner/bake-sunset.png",
+     "scale": 1.4504727125167847,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-alt3-corner/bake-night.png",
+     "scale": 0.08152784407138824,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "alt3",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "corner",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:alt3-slant": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      10.697115384615385
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-alt3-slant/bake-am.png",
+     "scale": 7.4416184425354,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-alt3-slant/bake-pm.png",
+     "scale": 6.644721508026123,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-alt3-slant/bake-sunset.png",
+     "scale": 1.4209647178649902,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-alt3-slant/bake-night.png",
+     "scale": 0.08866796642541885,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "alt3",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "slant",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:alt3-straight": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      7.211538461538462
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-alt3-straight/bake-am.png",
+     "scale": 7.538992881774902,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-alt3-straight/bake-pm.png",
+     "scale": 6.65324068069458,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-alt3-straight/bake-sunset.png",
+     "scale": 1.5159951448440552,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-alt3-straight/bake-night.png",
+     "scale": 0.08194319158792496,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "alt3",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "straight",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:mech-corner": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      8.080750000000002
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-mech-corner/bake-am.png",
+     "scale": 7.637328147888184,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-mech-corner/bake-pm.png",
+     "scale": 6.684397220611572,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-mech-corner/bake-sunset.png",
+     "scale": 1.4983803033828735,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-mech-corner/bake-night.png",
+     "scale": 0.06385409832000732,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "mech",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "corner",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:mech-slant": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      10.697115384615385
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-mech-slant/bake-am.png",
+     "scale": 7.523749351501465,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-mech-slant/bake-pm.png",
+     "scale": 6.658078670501709,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-mech-slant/bake-sunset.png",
+     "scale": 1.4540469646453857,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-mech-slant/bake-night.png",
+     "scale": 0.06167159602046013,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "mech",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "slant",
+    "upSt": true,
+    "skin": false,
+    "use7": false,
+    "nost": false,
+    "style": "glass",
+    "form": "none",
+    "win": "base",
+    "design": "none",
+    "cgl": "none",
+    "finC": null,
+    "dsgC": null,
+    "formC": null,
+    "a4park": false,
+    "mode": "combo",
+    "cfin": "glass",
+    "cform": "none",
+    "pdesign": "stack",
+    "dl": [],
+    "skinD": null,
+    "formD": null,
+    "skinOn": false
+   }
+  },
+  "x:mech-straight": {
+   "res": 160,
+   "cols": 2,
+   "rows": 1,
+   "levels": [
+    {
+     "key": "1F",
+     "kind": "ground",
+     "floor": 0.07,
+     "ceil": 5.0200000000000005,
+     "box": [
+      -13.197115384615385,
+      -13.461538461538462,
+      8.4375,
+      7.211538461538462
+     ],
+     "tile": [
+      0,
+      1
+     ]
+    }
+   ],
+   "slots": {
+    "am": {
+     "file": "var/x-mech-straight/bake-am.png",
+     "scale": 7.6476664543151855,
+     "gamma": 2.2
+    },
+    "pm": {
+     "file": "var/x-mech-straight/bake-pm.png",
+     "scale": 6.660158634185791,
+     "gamma": 2.2
+    },
+    "sunset": {
+     "file": "var/x-mech-straight/bake-sunset.png",
+     "scale": 1.531534194946289,
+     "gamma": 2.2
+    },
+    "night": {
+     "file": "var/x-mech-straight/bake-night.png",
+     "scale": 0.06379153579473495,
+     "gamma": 2.2
+    }
+   },
+   "state": {
+    "era": "new",
+    "scheme": "mech",
+    "floors": 6,
+    "h1": 5.4,
+    "ht": 4.2,
+    "frame": true,
+    "g1": "straight",
     "upSt": true,
     "skin": false,
     "use7": false,

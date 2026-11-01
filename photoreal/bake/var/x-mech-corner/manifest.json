@@ -1,0 +1,81 @@
+{
+ "res": 160,
+ "cols": 2,
+ "rows": 1,
+ "levels": [
+  {
+   "key": "1F",
+   "kind": "ground",
+   "floor": 0.07,
+   "ceil": 5.0200000000000005,
+   "box": [
+    -13.197115384615385,
+    -13.461538461538462,
+    8.4375,
+    8.080750000000002
+   ],
+   "tile": [
+    0,
+    1
+   ]
+  }
+ ],
+ "slots": {
+  "am": {
+   "file": "bake-am.png",
+   "scale": 7.637328147888184,
+   "gamma": 2.2,
+   "seconds": 22.0
+  },
+  "pm": {
+   "file": "bake-pm.png",
+   "scale": 6.684397220611572,
+   "gamma": 2.2,
+   "seconds": 21.2
+  },
+  "sunset": {
+   "file": "bake-sunset.png",
+   "scale": 1.4983803033828735,
+   "gamma": 2.2,
+   "seconds": 19.2
+  },
+  "night": {
+   "file": "bake-night.png",
+   "scale": 0.06385409832000732,
+   "gamma": 2.2,
+   "seconds": 15.6
+  }
+ },
+ "samples": 96,
+ "state": {
+  "era": "new",
+  "scheme": "mech",
+  "floors": 6,
+  "h1": 5.4,
+  "ht": 4.2,
+  "frame": true,
+  "g1": "corner",
+  "upSt": true,
+  "skin": false,
+  "use7": false,
+  "nost": false,
+  "style": "glass",
+  "form": "none",
+  "win": "base",
+  "design": "none",
+  "cgl": "none",
+  "finC": null,
+  "dsgC": null,
+  "formC": null,
+  "a4park": false,
+  "mode": "combo",
+  "cfin": "glass",
+  "cform": "none",
+  "pdesign": "stack",
+  "dl": [],
+  "skinD": null,
+  "formD": null,
+  "skinOn": false
+ },
+ "seconds": 90.3
+}
