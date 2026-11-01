@@ -86,7 +86,8 @@ window.dressTowerOffice=async function(C,root,key='2F'){
  const loader=new T.TextureLoader();
  // 바닥 마감(CC0 Poly Haven 텍스처를 시안 사진 톤으로 재보정, assets/README). 코어·개구부는 비운다.
  try{
-  const F=S.floor,maps=await Promise.all(F.maps.map(n=>loader.loadAsync('../photoreal/assets/'+F.tex+'_'+n+'.webp?v='+F.version)));
+  const ld=C.loadTex||(u=>loader.loadAsync(u));   // 실사 계층이 주면 압축 텍스처(KTX2) 우선
+  const F=S.floor,maps=await Promise.all(F.maps.map(n=>ld('../photoreal/assets/'+F.tex+'_'+n+'.webp?v='+F.version)));
   maps[0].encoding=T.sRGBEncoding;for(const t of maps){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1/F.repeat,1/F.repeat);t.anisotropy=8}
   const finish=new T.MeshStandardMaterial({map:maps[0],normalMap:maps[1],roughnessMap:maps[2]||null,roughness:F.roughness,name:F.name});finish.normalScale.set(F.normalScale,F.normalScale);
   const shape=new T.Shape();L.poly.map(world).forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();
@@ -240,7 +241,7 @@ window.dressTowerParking=async function(C,root,key){
  const inside=(x,z)=>C.inPoly(px(x,z),L.poly)&&!rects.some(([a,b,c,d])=>x>a-.3&&x<c+.3&&z>b-.3&&z<d+.3);
  // 바닥: 3F 콘크리트 텍스처를 회색 에폭시 톤·낮은 거칠기로(주차 구획선이 덮이지 않게 원본 바닥 바로 위 2 mm).
  try{
-  const loader=new T.TextureLoader(),[color,normal]=await Promise.all(['color','normal'].map(n=>loader.loadAsync('../photoreal/assets/office-concrete_'+n+'.webp?v=2')));
+  const loader=new T.TextureLoader(),ld=C.loadTex||(u=>loader.loadAsync(u)),[color,normal]=await Promise.all(['color','normal'].map(n=>ld('../photoreal/assets/office-concrete_'+n+'.webp?v=2')));
   color.encoding=T.sRGBEncoding;for(const t of [color,normal]){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1/3,1/3);t.anisotropy=8}
   const epoxy=new T.MeshStandardMaterial({map:color,normalMap:normal,roughness:.16,name:'Parking grey epoxy floor'});epoxy.color.setRGB(.55,.57,.6);epoxy.normalScale.set(.15,.15);
   const shape=new T.Shape();poly.forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();

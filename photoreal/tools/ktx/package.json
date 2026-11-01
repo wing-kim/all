@@ -1,0 +1,13 @@
+{
+  "name": "kh-photoreal-ktx",
+  "private": true,
+  "type": "module",
+  "description": "실사 3D 텍스처·모델을 KTX2(Basis Universal)로 바꾸는 도구. 인코더는 basisu(Homebrew basis_universal, Apache-2.0)",
+  "dependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "draco3dgltf": "1.5.7",
+    "sharp": "0.34.5"
+  }
+}

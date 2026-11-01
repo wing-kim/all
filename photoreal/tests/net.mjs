@@ -16,7 +16,7 @@ cdp.on('Network.requestWillBeSent', e => U.set(e.requestId, e.request.url));
 cdp.on('Network.loadingFinished', e => { bytes += e.encodedDataLength; reqs++; const u = (U.get(e.requestId) || '').replace(/^https?:\/\/[^/]+/, '').replace(/\?.*/, ''); const k = u.split('/').slice(0, 4).join('/'); grp[k] = (grp[k] || 0) + e.encodedDataLength; });
 const errs = []; p.on('pageerror', e => errs.push(String(e)));
 const t0 = Date.now();
-await p.goto(BASE + '/new/3d-model.html?pr=1' + QS, { waitUntil: 'load', timeout: 300000 });
+await p.goto(BASE + '/new/3d-model.html?pr=1&prsw=0' + QS, { waitUntil: 'load', timeout: 300000 });
 const tLoad = Date.now() - t0;
 const KEYS = ['firstFrame', 'env', 'bake', 'dress', 'env2', 'context', 'ground', 'warm', 'assets', 'plants'];
 await p.waitForFunction(k => window.KHPRLayer && KHPRLayer.t && k.every(x => KHPRLayer.t[x] != null), { timeout: 300000, polling: 200 }, KEYS).catch(() => {});

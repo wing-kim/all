@@ -7,7 +7,7 @@ window.swapInteriorModels=async function(C,root,{floor=null}={}){
  const floorOf=o=>{for(let p=o;p;p=p.parent)if(p.userData.fitoutFloor)return p.userData.fitoutFloor;return null};
  const slots=[];root.traverse(o=>{if(o.userData.modelSwap&&!o.userData.modelSwapDone&&(!floor||floorOf(o)===floor))slots.push(o)});
  if(!slots.length)return {audit:null,holders:[]};
- if(!window.__interiorModelLoader){const loader=new T.GLTFLoader();if(T.DRACOLoader)loader.setDRACOLoader(new T.DRACOLoader().setDecoderPath('../photoreal/assets/draco/'));window.__interiorModelLoader={loader,cache:new Map()}}
+ if(!window.__interiorModelLoader){const loader=new T.GLTFLoader();if(T.DRACOLoader)loader.setDRACOLoader(new T.DRACOLoader().setDecoderPath('../photoreal/vendor/draco/'));window.__interiorModelLoader={loader,cache:new Map()}}
  const {loader,cache}=window.__interiorModelLoader;
  const fetchModel=url=>{if(!cache.has(url)){const p=loader.loadAsync(url).then(gltf=>{const scene=gltf.scene;scene.updateMatrixWorld(true);const box=new T.Box3().setFromObject(scene);return {scene,box,size:box.getSize(new T.Vector3()),center:box.getCenter(new T.Vector3())}});p.catch(()=>{});cache.set(url,p)}return cache.get(url)};
  const urls=[...new Set(slots.map(o=>o.userData.modelSwap.url))],sources=new Map();

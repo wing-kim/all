@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1101.b';
+  const VER = '1101.c';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -46,7 +46,7 @@
   /* ================= 1. 자산 ================= */
   // 자산 저장소(서비스 워커, T7): 두 번째 방문부터 실사 3D 자산을 네트워크 없이 읽는다. 파일 해시(prefetch.json)가 바뀐 것만 새로 받는다. ?prsw=0 이면 끈다
   function swReg() {
-    if (Q.get('prsw') !== '1' || !('serviceWorker' in navigator) || !window.isSecureContext) return;   // 배치 C(T7)에서 기본 켬으로 바꾼다
+    if (Q.get('prsw') === '0' || !('serviceWorker' in navigator) || !window.isSecureContext) return;
     navigator.serviceWorker.register(new URL('../new/kh-pr-sw.js', BASE).href, { scope: new URL('../new/', BASE).href })
       .then(r => { PR.sw = r.active ? 'active' : 'installing'; }).catch(e => log('자산 저장소 등록 실패', e && e.message));
   }
@@ -62,7 +62,42 @@
 
   let vendorP = null;
   function vendor() {
-    return vendorP || (vendorP = Promise.all(['RGBELoader.js', 'GLTFLoader.js', 'DRACOLoader.js'].map(f => loadScript(BASE + 'vendor/' + f))));
+    return vendorP || (vendorP = Promise.all(['RGBELoader.js', 'GLTFLoader.js', 'DRACOLoader.js'].map(f => loadScript(BASE + 'vendor/' + f))).then(ktxInit));
+  }
+  /* 압축 텍스처(KTX2, Basis Universal, T2): photoreal/tools/ktx/convert.mjs 가 만든 .ktx2·.k.glb 를 먼저 읽는다.
+     화면에서 GPU 압축 형식(BC7·ASTC·ETC2)으로 바뀌어 텍스처 메모리가 1/4 이하가 된다. 변환기를 못 읽거나 ?prktx=0 이면 원본(webp·png·glb) */
+  let KTX = null, ktxP = null;
+  function ktxInit() {
+    // KTX2Loader 묶음은 실행될 때 THREE.BasisTextureLoader 를 읽으므로 차례로 불러온다
+    return ktxP || (ktxP = Q.get('prktx') === '0' ? Promise.resolve(null) : loadScript(BASE + 'vendor/BasisTextureLoader.js').then(() => loadScript(BASE + 'vendor/KTX2Loader.js')).then(() => {
+      KTX = new T.KTX2Loader(); KTX.setTranscoderPath(BASE + 'vendor/basis/'); KTX.detectSupport(R); PR.ktx = true; return KTX;
+    }).catch(e => { log('압축 텍스처 변환기 없음', e && e.message); KTX = null; return null; }));
+  }
+  // 압축 텍스처를 이미 재질에 붙어 있는 자리표시 텍스처(t)에 끼워 넣는다(재질을 다시 찾지 않아도 된다). 원본과 같은 방향이 되도록 변환 때 위아래를 미리 뒤집었다
+  function adopt(t, c) {
+    Object.assign(t, { image: c.image, mipmaps: c.mipmaps, format: c.format, type: c.type, isCompressedTexture: true, generateMipmaps: false, flipY: false, premultiplyAlpha: false,
+      minFilter: c.mipmaps.length > 1 ? T.LinearMipmapLinearFilter : T.LinearFilter, magFilter: T.LinearFilter });
+    t.needsUpdate = true; c.dispose && c.dispose(); return t;
+  }
+  // url(.webp·.png)의 .ktx2 를 t 에 넣는다. 실패하면 원본 이미지를 넣는다
+  function ktxInto(t, url) {
+    return ktxInit().then(L => new Promise(res => {
+      const img = () => { const i = new Image(); i.decoding = 'async'; i.onload = () => { t.image = i; t.needsUpdate = true; res(true); }; i.onerror = () => res(false); i.src = url; };
+      if (!L) return img();
+      L.load(url.replace(/\.(webp|png)(\?|$)/, '.ktx2$2'), c => { adopt(t, c); res(true); }, undefined, () => { log('압축 텍스처 실패, 원본 사용', url); img(); });
+    }));
+  }
+  // 실내 꾸밈 모듈(codex/office.js)용: TextureLoader.loadAsync 대신 쓰는 함수
+  // 같은 주소는 한 번만 받는다(지하 각 층이 같은 바닥 텍스처를 부른다. 반복·감기 설정도 층마다 같다)
+  const LTX = new Map();
+  function loadTex(url) {
+    if (!LTX.has(url)) { const t = new T.Texture(solid('#9a9690')); t.wrapS = t.wrapT = T.RepeatWrapping; LTX.set(url, ktxInto(t, url).then(ok => ok ? t : Promise.reject(new Error('텍스처 없음 ' + url)))); }
+    return LTX.get(url);
+  }
+  // 모델: .k.glb(텍스처 KTX2) 먼저, 실패하면 원본 .glb
+  function glbLoad(loader, url) {
+    const k = KTX && /\.glb(\?|$)/.test(url) ? url.replace(/\.glb(\?|$)/, '.k.glb$1') : null;
+    return k ? loader.loadAsync(k).catch(e => { log('압축 모델 실패, 원본 사용', url); return loader.loadAsync(url); }) : loader.loadAsync(url);
   }
   const TX = new Map(), pend = { n: 0, done: 0 };
   const isMobile = matchMedia('(pointer:coarse)').matches;
@@ -77,10 +112,7 @@
     if (kind === 'color') t.encoding = T.sRGBEncoding;
     t.needsUpdate = true; TX.set(key, t);
     pend.n++;
-    const img = new Image(); img.decoding = 'async';
-    img.onload = () => { t.image = img; t.needsUpdate = true; pend.done++; progress(); };
-    img.onerror = () => { pend.done++; log('텍스처 실패', key); progress(); };
-    img.src = BASE + 'tex/' + key + '.webp';
+    ktxInto(t, BASE + 'tex/' + key + '.webp').then(ok => { if (!ok) log('텍스처 실패', key); pend.done++; progress(); });
     return t;
   }
   const WHITE = (() => { let t = null; return () => t || (t = Object.assign(new T.CanvasTexture(solid('#ffffff')), { wrapS: T.RepeatWrapping, wrapT: T.RepeatWrapping })); })();
@@ -242,7 +274,9 @@
     if (BAKE.tex[key]) return BAKE.tex[key];
     const man = BAKE.man, info = man.slots[slot]; if (!info) return null;
     const t = BAKE.tex[key] = new T.Texture(); t.encoding = T.LinearEncoding; t.generateMipmaps = false; t.minFilter = T.LinearFilter; t.magFilter = T.LinearFilter; t.userData = { ready: false, scale: info.scale, boxes: {} };
-    const load = f => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = BASE + 'bake/' + f + '?v=' + VER; });
+    // 손실 webp 사본(tools/ktx/bake-webp.py, png 의 약 1/8)을 먼저, 없으면 png
+    const img1 = u => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = u; });
+    const load = f => img1(BASE + 'bake/' + f.replace(/\.png$/, '.webp') + '?v=' + VER).then(i => i || img1(BASE + 'bake/' + f + '?v=' + VER));
     Promise.all([load(info.file), ...vars.map(k => man.variants[k].slots[slot] ? load(man.variants[k].slots[slot].file) : null)]).then(([img, ...vi]) => {
       if (!img) return;
       if (!vars.length) t.image = img;
@@ -727,7 +761,8 @@
   function avgColor(m) {
     if (FLAT.avg.has(m)) return FLAT.avg.get(m);
     const c = m.color ? m.color.clone() : new T.Color(0.7, 0.7, 0.7), img = m.map && m.map.image;
-    if (img && (img.width || img.videoWidth)) { try { const cv = document.createElement('canvas'); cv.width = cv.height = 4; const g = cv.getContext('2d'); g.drawImage(img, 0, 0, 4, 4); const d = g.getImageData(0, 0, 4, 4).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < 64; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const t = new T.Color(r / 16 / 255, gg / 16 / 255, b / 16 / 255).convertSRGBToLinear(); c.multiply(t); } catch (e) {} }
+    if (m.map && m.userData.prAvg) c.multiply(new T.Color().fromArray(m.userData.prAvg).convertSRGBToLinear());   // 압축 텍스처(.k.glb): 변환 때 적은 평균색
+    else if (img && (img.width || img.videoWidth) && !m.map.isCompressedTexture) { try { const cv = document.createElement('canvas'); cv.width = cv.height = 4; const g = cv.getContext('2d'); g.drawImage(img, 0, 0, 4, 4); const d = g.getImageData(0, 0, 4, 4).data; let r = 0, gg = 0, b = 0; for (let i = 0; i < 64; i += 4) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; } const t = new T.Color(r / 16 / 255, gg / 16 / 255, b / 16 / 255).convertSRGBToLinear(); c.multiply(t); } catch (e) {} }
     if (m.transparent && m.opacity < 0.7) c.setRGB(0.03, 0.04, 0.05);   // 유리는 어두운 면으로
     FLAT.avg.set(m, c); return c;
   }
@@ -809,7 +844,11 @@
   const DR = { group: null, sig: '', busy: false, again: false, ready: null, timber: null, groups: [], mats: new Map() };
   function codexScripts() {
     return DR.ready || (DR.ready = vendor().then(() => Promise.all(['codex/cafe.js', 'codex/office.js', 'codex/interior-models.js'].map(f => loadScript(BASE + f + '?v=' + VER))))
-      .then(() => { window.PARKING_FLOORS = ['B1', 'B2', 'B3']; }));
+      .then(() => {
+        window.PARKING_FLOORS = ['B1', 'B2', 'B3'];
+        // 실내 모델 로더(codex/interior-models.js 가 이 객체가 있으면 그대로 쓴다): 압축 모델 우선, draco 해독기는 vendor/draco 하나만
+        if (!window.__interiorModelLoader) { const l = gltf(); window.__interiorModelLoader = { loader: { loadAsync: url => glbLoad(l, url) }, cache: new Map() }; }
+      }));
   }
   function dressSig() { return K.LEVELS.map(l => l.key + ':' + l.kind + ':' + l.y.toFixed(2) + ':' + l.h.toFixed(2) + ':' + JSON.stringify(l.poly)).join('|'); }
   async function timber() {
@@ -829,7 +868,7 @@
       await codexScripts();
       const extra = new T.Group(); extra.name = 'pr-dress'; extra.userData.interiorPlantAnchors = [];
       // 모듈이 기대하는 연결 객체(예전 TOWER_LAB_CONTEXT 의 일부). M.stone 은 빈 객체로 넘겨 원본 1층 바닥을 건드리지 않게 한다.
-      const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, scene, M: { stone: {} }, city: K.city, site: K.site };
+      const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, scene, M: { stone: {} }, city: K.city, site: K.site, loadTex };
       await window.dressTowerCafe(C, extra, await timber());
       for (const key of window.OFFICE_FLOORS || []) await window.dressTowerOffice(C, extra, key);
       for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
@@ -922,8 +961,8 @@
      가로수는 우리 건물 앞 압구정로 보도(1층을 가리던 자리)에는 두지 않는다. */
   const CARS = [{ f: 'bmwe90', len: 4.53 }, { f: 'renegade', len: 4.24 }, { f: 'kiri10', len: 4.7 }, { f: 'modelS', len: 4.97 }, { f: 'ace11', len: 4.0 }];
   const ENV = { p: null, cars: null, tree: null, plant: null, group: null, hidden: [], added: [] };
-  function gltf() { if (!gltf.l) { const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/'); gltf.l = new T.GLTFLoader(); gltf.l.setDRACOLoader(dl); } return gltf.l; }
-  const loadGLB = f => new Promise(res => gltf().load(BASE + f, g => res(g.scene), undefined, () => { log('모델 실패', f); res(null); }));
+  function gltf() { if (!gltf.l) { const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/'); gltf.l = new T.GLTFLoader(); gltf.l.setDRACOLoader(dl); if (KTX) gltf.l.setKTX2Loader(KTX); } return gltf.l; }
+  const loadGLB = f => glbLoad(gltf(), BASE + f).then(g => g.scene, () => { log('모델 실패', f); return null; });
   function envAssets() {
     return ENV.p || (ENV.p = vendor().then(() => Promise.all([...CARS.map(c => loadGLB('assets/cars/car-' + c.f + '.glb')), loadGLB('assets/street-tree.glb')]))
       .then(r => {
@@ -1190,7 +1229,7 @@
       const c = FW.cv && FW.cv[key] || (FW.cv = FW.cv || {}, FW.cv[key] = facadeCanvas(key));
       maps = { col: fit(new T.CanvasTexture(c.col)), rm: fit(new T.CanvasTexture(c.rm)), nc: fit(new T.CanvasTexture(c.nc)) };
     } else {
-      const L = FW.loader || (FW.loader = new T.TextureLoader()), f = n => fit(L.load(BASE + 'context/facade/' + key + '-' + n + '?v=' + VER));
+      const f = n => { const t = fit(new T.Texture(solid(n.startsWith('rm') ? '#00dc00' : n.startsWith('nc') ? '#8080ff' : '#c8c8c8'))); ktxInto(t, BASE + 'context/facade/' + key + '-' + n + '?v=' + VER); return t; };
       maps = FW.maps[key] || (FW.maps[key] = { col: f('col.webp'), rm: f('rm.png'), nc: f('nc.png') });
     }
     maps.col.encoding = T.sRGBEncoding;

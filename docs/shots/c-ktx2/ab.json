@@ -1,0 +1,40 @@
+{
+ "A": "http://127.0.0.1:8793 &prktx=0",
+ "B": "http://127.0.0.1:8793 ",
+ "pf": "brick",
+ "tod": "",
+ "at": "2026-11-01T13:10:27.832Z",
+ "views": {
+  "out": {
+   "meanDiff": 2.01,
+   "bigPct": 0.08,
+   "lumA": 106,
+   "lumB": 107.1
+  },
+  "front": {
+   "meanDiff": 1.81,
+   "bigPct": 0.01,
+   "lumA": 82.5,
+   "lumB": 83.5
+  },
+  "1F": {
+   "meanDiff": 1.16,
+   "bigPct": 0.42,
+   "lumA": 84.7,
+   "lumB": 84.8
+  },
+  "5F": {
+   "meanDiff": 1.23,
+   "bigPct": 0.43,
+   "lumA": 61.1,
+   "lumB": 61.2
+  },
+  "B1": {
+   "meanDiff": 0.76,
+   "bigPct": 0.01,
+   "lumA": 95.6,
+   "lumB": 95.8
+  }
+ },
+ "errors": []
+}
