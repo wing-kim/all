@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1101.d';
+  const VER = '1101.e';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -30,6 +30,7 @@
     T = window.THREE; K = window.KHPR; R = window.KHXR.renderer; scene = window.KHXR.scene;
     PR.K = K;
     ui();
+    if (QS.manual && QLV[QS.manual]) qSet(QS.manual, '선택');   // 패널 변수(PNL)가 준비된 뒤에
     R.domElement.addEventListener('webglcontextrestored', restore);
     swReg();
     // Wing 은 한 프레임에 장면을 여러 번 그린다(화면 효과 단계마다). 내 매 프레임 처리는 화면 프레임마다 한 번만 한다.
@@ -652,13 +653,17 @@
     const useSky = skyBG && !inBase && skyCur.key === wantSky;   // 새 시간대 하늘을 받기 전에는 Wing 하늘을 보인다
     if (R3D.sky) R3D.sky.visible = !useSky;
     if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
-    if (DIST) DIST.visible = !K.I.on || !inBase;
+    if (DIST) DIST.visible = (!K.I.on || !inBase) && !QS.cur.hideFar;
     // 지하층 안에서는 바깥이 보이지 않으므로 주변 건물·땅을 그리지 않는다(VR 그리기 호출 예산)
     if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw && !inBase; CTX.next.visible = nw && !inBase; }
     if (GND.g) { const nw = K.state.era === 'new', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
-      if (GND.poles) { GND.poles.visible = !(xr && K.I.on); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
-      if (GND.xrOn !== xr) { GND.xrOn = xr; GND.far.forEach(m => { m.visible = !xr; }); GND.kind.forEach(m => { m.visible = !xr; }); GND.xr.forEach(m => { m.visible = xr; }); }
-      if (PF_.xrCtx !== xr) { PF_.xrCtx = xr; [CTX.now, CTX.next].forEach(g => g && g.children.forEach(m => { if (m.userData.cls === 'trim_far' || m.userData.cls === 'dong') m.visible = !xr; })); } }
+      const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
+      if (GND.poles) { GND.poles.visible = !(xr && K.I.on) && !qFar && !(xr && XRQ.level >= 2); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
+      const gk = xr + '|' + QS.key + '|' + XRQ.level; if (GND.xrOn !== gk) { GND.xrOn = gk; GND.far.forEach(m => { m.visible = !xr && !qFar; }); GND.kind.forEach(m => { m.visible = !xr; }); GND.xr.forEach(m => { m.visible = xr; }); GND.near && (GND.near.visible = !(xr && XRQ.level >= 2)); }
+      const ck = xr + '|' + QS.key + '|' + XRQ.level; if (PF_.xrCtx !== ck) { PF_.xrCtx = ck; [CTX.now, CTX.next].forEach(g => g && g.children.forEach(m => { const c = m.userData.cls;
+        if (c === 'trim_far' || c === 'dong') m.visible = !xr && !qDet;
+        if (/^far_/.test(c)) m.visible = !(xr && XRQ.level >= 3);   // VR 품질 3단계: 원경 건물 숨김(T5)
+      })); } }
     NIGHT.value = night ? 1 : 0;
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
@@ -676,6 +681,39 @@
     });
     perf();
     optTick();
+    qTick();
+  }
+  /* ================= 5-4. 화면 품질 단계(T4) =================
+     높음(Wing 그대로) · 보통(합성 화소 배율 1, SSAO 끔, 400m 밖 주변 건물 상세 숨김) · 낮음(배율 0.75, 그림자 1024, 먼 나무·주차 차량·전신주·원경 숨김).
+     휴대폰·퀘스트 2D 브라우저는 준비가 끝나고 2초 뒤부터 10초 동안 프레임 간격 중앙값으로 한 번 고른다(Jack 허용, 2026-11-01). 패널에서 직접 고를 수 있고 고른 값은 기억한다.
+     문턱값은 실기기 측정 전 추정값이라 QCFG 에 모았다. ?prq=high|medium|low 로 강제 */
+  const QCFG = { auto: isMobile || /OculusBrowser|Quest/i.test(navigator.userAgent), skipMs: 2000, sampleMs: 10000, lowMs: 40, medMs: 24 };
+  const QLV = {
+    high: { name: '높음', pr: null, noAO: false, shadow: null, hideFarDetail: false, hideFar: false },
+    medium: { name: '보통', pr: 1.0, noAO: true, shadow: null, hideFarDetail: true, hideFar: false },
+    low: { name: '낮음', pr: 0.75, noAO: true, shadow: 1024, hideFarDetail: true, hideFar: true },
+  };
+  const qStore = { get() { try { return localStorage.getItem('khpr.quality'); } catch (e) { return null; } }, set(v) { try { if (v) localStorage.setItem('khpr.quality', v); else localStorage.removeItem('khpr.quality'); } catch (e) {} } };
+  const QS = PR.q = { key: 'high', cur: QLV.high, name: QLV.high.name, auto: null, manual: Q.get('prq') || qStore.get(), applied: '', sample: null };
+  function qSet(key, why) { if (!QLV[key]) return; QS.key = key; QS.cur = QLV[key]; QS.name = QS.cur.name; QS.why = why; panelSync(); statLine(); }
+  function qTick() {
+    // 자동 선택: 준비 완료 후 한 번
+    if (!QS.manual && QCFG.auto && QS.auto == null && PR.t.warm != null && !R.xr.isPresenting) {
+      const t = now(), S = QS.sample || (QS.sample = { t0: t + QCFG.skipMs, ds: [], last: 0 });
+      if (t >= S.t0) { if (S.last) S.ds.push(t - S.last); S.last = t;
+        if (t - S.t0 >= QCFG.sampleMs && S.ds.length > 20) { const a = S.ds.slice().sort((x, y) => x - y), med = a[a.length >> 1]; QS.auto = med; qSet(med > QCFG.lowMs ? 'low' : med > QCFG.medMs ? 'medium' : 'high', '자동 ' + med.toFixed(0) + 'ms'); log('품질 자동 선택', QS.key, med.toFixed(1) + 'ms'); } }
+    }
+    const L = QS.cur, C = K.R3D.composer, sig = QS.key + '|' + (C ? 1 : 0) + '|' + (K.R3D.hq ? 1 : 0) + '|' + (CTX.next ? CTX.next.children.length : 0) + '|' + (GND.g ? 1 : 0);
+    if (sig === QS.applied || R.xr.isPresenting) return; QS.applied = sig;
+    // Wing 렌더 모드는 '고화질'(HQ: 화소 배율 최대 기기×1.6, 그림자 4096)이 기본으로 켜져 있다. 보통·낮음에서는 끄고, 높음으로 돌아오면 원래대로
+    { const hq = document.getElementById('t-hq'); if (hq) {
+      if (L.pr != null && hq.checked) { QS.hqWas = true; hq.checked = false; PR.silent = true; hq.dispatchEvent(new Event('change', { bubbles: true })); PR.silent = false; }
+      else if (L.pr == null && QS.hqWas && !hq.checked) { QS.hqWas = false; hq.checked = true; PR.silent = true; hq.dispatchEvent(new Event('change', { bubbles: true })); PR.silent = false; } } }
+    // 합성 화소 배율(고화질 저장·HQ 모드 중에는 Wing 에 맡긴다)
+    if (C && !K.R3D.hq) { const want = L.pr == null ? Math.min(devicePixelRatio, 1.25) : L.pr; if (Math.abs((C._pixelRatio || 1) - want) > 1e-3) { C.setPixelRatio(want); } }
+    const sh = K.sun.shadow, ws = L.shadow || 2048; if (!K.R3D.hq && sh.mapSize.x !== ws) { sh.mapSize.set(ws, ws); if (sh.map) { sh.map.dispose(); sh.map = null; } PF_.shDirty = true; }
+    PF_.xrCtx = null; GND.xrOn = null;   // 다음 프레임에 표시 전환(주변 건물 상세·먼 나무·전신주)을 다시 계산
+    log('품질', QS.key);
   }
   /* ================= 5-3. 화면 메시 합치기(T1) =================
      XR 계층의 합치기(KHXRLayer.opt)를 VR 밖 화면에서도 쓴다: 같은 재질 메시를 한 덩어리로 그려 그리기 호출을 줄인다(외관 약 6,900 → 1,000 미만 목표).
@@ -697,6 +735,10 @@
   }
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
+  /* VR 품질 단계(T5): XR 계층(kh-xr.js XQ)이 프레임 간격을 보고 정한 단계를 받는다. 0·1 은 XR 계층(포비에이션)만,
+     2 = 가까운 나무 카드·전신주 숨김, 3 = 원경 주변 건물까지 숨김. 그림자 형식(PCF Soft)은 셰이더를 모두 다시 만들어야 해 바꾸지 않는다 */
+  const XRQ = { level: 0 };
+  PR.xrQuality = lv => { if (XRQ.level === lv) return; XRQ.level = lv; log('VR 품질 단계', lv); };
 
   /* ================= 5-1-1. 시간대별 조명 보정(T12·T8) =================
      Wing applyTime 은 석양 노출(0.95)을 오후(0.78)보다 높게 두어 석양이 오후와 거의 같은 밝기로 보였다. 실사 3D 를 켠 동안 건물 밖에서만
@@ -758,7 +800,7 @@
     if (ss && !ss.prWrap) {
       const sr = ss.render;
       ss.render = function (renderer, writeBuffer) {
-        if (PR.on && !PR.still && PF_.moved && now() - PF_.moved < 250 && this.output === 0) { renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer); renderer.clear(); renderer.render(this.scene, this.camera); return; }
+        if (PR.on && !PR.still && ((PF_.moved && now() - PF_.moved < 250) || QS.cur.noAO) && this.output === 0) { renderer.setRenderTarget(this.renderToScreen ? null : writeBuffer); renderer.clear(); renderer.render(this.scene, this.camera); return; }
         return sr.apply(this, arguments);
       };
       ss.prWrap = true;
@@ -1650,7 +1692,7 @@
       im.castShadow = shadow; im.receiveShadow = false; im.customDepthMaterial = dm; im.userData.prSkip = true; im.frustumCulled = false;
       return im;
     };
-    const tn = inst(lists.near, 'pr-trees-near', true), tf = inst(lists.far, 'pr-trees-far', false), tw = inst(lists.now, 'pr-trees-now', false);
+    const tn = inst(lists.near, 'pr-trees-near', true), tf = inst(lists.far, 'pr-trees-far', false), tw = inst(lists.now, 'pr-trees-now', false); GND.near = tn;
     if (tn) root.add(tn); if (tf) root.add(tf); if (tw) nowG.add(tw);
     // 4) 주차 차량: 지상 주차장(줄마다 2.6m 간격, 65% 채움)과 단지 통로 옆(5.5m 간격, 절반)
     const cars = { near: [], far: [], now: [] }; let sd = 3; const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
@@ -1886,11 +1928,14 @@
       PNL.innerHTML = `<b>실사 3D · 우선 조합</b> <span style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
+<div class="r" id="pr-q"><span style="align-self:center;color:var(--muted)">품질</span><button data-q="">자동</button><button data-q="high">높음</button><button data-q="medium">보통</button><button data-q="low">낮음</button></div>
 <small id="pr-stat" aria-live="polite">준비 중</small><small id="pr-fail" hidden style="color:var(--fg)"><span></span><button type="button" id="pr-retry">다시 시도</button></small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
       document.getElementById('viewer').appendChild(PNL);
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
       PNL.querySelector('#pr-retry').addEventListener('click', retryAll);
+      PNL.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.q; QS.manual = k || null; qStore.set(k || null);
+        if (k) qSet(k, '선택'); else { QS.auto = null; QS.sample = null; qSet('high', '자동'); } }));
     }
     PNL.hidden = false; panelSync(); statLine();
   }
@@ -1900,6 +1945,7 @@
     PNL.querySelectorAll('[data-pf]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pf === cur));
     const lv = K.I.on ? (K.Lv() || {}).key : 'out';
     PNL.querySelectorAll('[data-lv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lv === lv));
+    PNL.querySelectorAll('[data-q]').forEach(b => { b.setAttribute('aria-pressed', QS.manual ? b.dataset.q === QS.manual : b.dataset.q === ''); if (b.dataset.q === '') b.textContent = QS.manual ? '자동' : '자동(' + QS.name + ')'; });
   }
   function statLine() {
     const el = document.getElementById('pr-stat'); if (!el) return;
@@ -1926,7 +1972,7 @@
       if (R && !R.xr.isPresenting) { R.info.autoReset = false; calls = R.info.render.calls; R.info.reset(); }
       if (n - t < 500 || ds.length < 10 || !R) return; t = n; if (!el.parentNode && document.body) document.body.appendChild(el);
       const a = ds.slice().sort((x, y) => x - y), q = k => a[Math.min(a.length - 1, Math.floor(a.length * k))], med = q(0.5), p95 = q(0.95);
-      el.textContent = `${(1000 / med).toFixed(0)}fps 중앙 ${med.toFixed(1)}ms 95% ${p95.toFixed(1)}ms\n그리기 ${calls}회 · 화소배율 ${R.getPixelRatio().toFixed(2)}${PR.on ? ' · 실사 3D' : ''}${PR.q ? ' · 품질 ' + PR.q.name : ''}`;
+      el.textContent = `${(1000 / med).toFixed(0)}fps 중앙 ${med.toFixed(1)}ms 95% ${p95.toFixed(1)}ms\n그리기 ${calls}회 · 화소배율 ${(K && K.R3D.composer && K.R3D.on ? K.R3D.composer._pixelRatio || 1 : R.getPixelRatio()).toFixed(2)}${PR.on ? ' · 실사 3D' : ''}${PR.q ? ' · 품질 ' + PR.q.name : ''}`;
       PR.fps = { med: +med.toFixed(1), p95: +p95.toFixed(1) };
     })(0);
   }

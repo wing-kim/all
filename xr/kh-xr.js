@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1101.b';
+  const VER = '1101.e';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -134,6 +134,8 @@
       await R.xr.setSession(session);
       S.session = session; S.sessionMode = sm; S.ar = sm === 'immersive-ar';
       try { const L = session.renderState.baseLayer; if (L && 'fixedFoveation' in L) L.fixedFoveation = store.get('foveation', 0.5); } catch (e) {}
+      // 목표 프레임(T5): 퀘스트는 72·90·120Hz 를 고를 수 있다. 품질 기준인 72Hz 로 명시
+      try { const fr = session.supportedFrameRates; if (session.updateTargetFrameRate && (!fr || Array.from(fr).includes(XQC.fps))) session.updateTargetFrameRate(XQC.fps).catch(() => {}); } catch (e) {}
       onStart(mode);
       session.addEventListener('end', onEnd);
       session.addEventListener('inputsourceschange', () => UI.detectInput());
@@ -151,6 +153,7 @@
     else { setMode('vr'); placeFromDesktop(); }
     OnTop.apply(0, true);
     if (S.opt) Opt.build(); else Opt.clear();   // 화면 합치기(실사 3D)가 켜져 있었으면 걷는다
+    XQ.reset();
     R.setAnimationLoop(frame);
     UI.onSessionStart();
   }
@@ -160,6 +163,7 @@
     transferToDesktop(leaving);
     setVisualsFor(null);
     Opt.clear();
+    if (window.KHPRLayer && KHPRLayer.xrQuality) KHPRLayer.xrQuality(0);
     UI.onSessionEnd();
     scene.remove(rig);
     R.shadowMap.autoUpdate = S.saved.shAuto; R.shadowMap.needsUpdate = true;
@@ -603,6 +607,7 @@
   function frame(time) {
     const dt = Math.min(0.1, (time - (last || time)) / 1000); last = time;
     if (Fps.on) Fps.tick(time, R.info.render.calls);
+    XQ.tick(time);
     R.info.autoReset = false; R.info.reset();   // 한 프레임에 여러 번 그리므로(가상 방·UI 패스) 프레임 단위로 합산
     S.moving = Math.max(0, S.moving - dt * 4);
     pollGamepads(dt, time);
@@ -646,6 +651,30 @@
     if (!S.session) { fn(); return; }
     S.fade = { t: 0, dur, fn, done: false };
   }
+  /* VR 품질 단계(T5): 기본은 화면과 같은 품질(Jack 결정 10-30, 11-01). 프레임 간격을 감시해 목표(72Hz, 13.9ms)를 못 맞추는 상태가
+     2초 이어지면 한 단계 낮추고, 여유가 15초 이어지면 한 단계 올린다. 0 그대로, 1 포비에이션 최대, 2 가까운 나무 카드·전신주 숨김(실사 계층),
+     3 원경 주변 건물 숨김(실사 계층). 문턱값은 실기기 측정 전 추정값이라 XQC 에 모았다(측정 뒤 조정).
+     에뮬레이터(?xremu=1)는 프레임 간격이 실제가 아니므로 자동으로 바꾸지 않는다. ?xrq=0～3 은 단계 고정 */
+  const XQC = { fps: 72, downMs: 15.5, upMs: 11.0, downHold: 2000, upHold: 15000, max: 3, win: 72 };
+  const XQ = X.xrq = {
+    level: 0, ds: [], last: 0, bad: 0, good: 0, fixed: Q.get('xrq') != null && Q.get('xrq') !== '' ? Math.max(0, Math.min(3, +Q.get('xrq') || 0)) : null,
+    auto: !Q.get('xremu'),
+    reset() { this.ds = []; this.last = 0; this.bad = this.good = 0; this.set(this.fixed != null ? this.fixed : 0); },
+    set(lv) {
+      this.level = lv;
+      try { const L = S.session && S.session.renderState.baseLayer; if (L && 'fixedFoveation' in L) L.fixedFoveation = lv >= 1 ? 1.0 : store.get('foveation', 0.5); } catch (e) {}
+      if (window.KHPRLayer && KHPRLayer.xrQuality) KHPRLayer.xrQuality(lv);
+      log('VR 품질 단계', lv);
+    },
+    tick(time) {
+      if (this.last) { this.ds.push(time - this.last); if (this.ds.length > XQC.win) this.ds.shift(); } const dt = this.last ? time - this.last : 0; this.last = time;
+      if (this.fixed != null || !this.auto || this.ds.length < XQC.win / 2) return;
+      const a = this.ds.slice().sort((x, y) => x - y), p90 = a[Math.floor(a.length * 0.9)];
+      if (p90 > XQC.downMs) { this.bad += dt; this.good = 0; } else if (p90 < XQC.upMs) { this.good += dt; this.bad = 0; } else { this.bad = this.good = 0; }
+      if (this.bad > XQC.downHold && this.level < XQC.max) { this.set(this.level + 1); this.bad = 0; this.ds = []; }
+      else if (this.good > XQC.upHold && this.level > 0) { this.set(this.level - 1); this.good = 0; this.ds = []; }
+    }
+  };
   /* 간이 프레임 표시(?prfps=1): 실기기 착용 확인용. 시야 아래쪽에 작은 판으로 프레임 간격 중앙값·95%와 그리기 호출을 보인다 */
   const Fps = X.fps = {
     on: Q.get('prfps') === '1', ds: [], last: 0, t: 0, mesh: null, cv: null, tex: null,
@@ -661,7 +690,7 @@
       const g = this.cv.getContext('2d'); g.clearRect(0, 0, 512, 96); g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(0, 0, 512, 96);
       g.fillStyle = p95 <= 14.5 ? '#7dffa8' : p95 <= 20 ? '#ffd166' : '#ff7a6b'; g.font = '600 34px ' + FONT; g.textBaseline = 'middle';
       g.fillText(`${(1000 / med).toFixed(0)}fps  중앙 ${med.toFixed(1)}ms  95% ${p95.toFixed(1)}ms`, 14, 32);
-      g.fillStyle = '#ffffff'; g.font = '500 26px ' + FONT; g.fillText(`그리기 ${calls}회  ${S.mode || ''}${window.KHPRLayer && KHPRLayer.on ? ' · 실사 3D' : ''}`, 14, 72);
+      g.fillStyle = '#ffffff'; g.font = '500 26px ' + FONT; g.fillText(`그리기 ${calls}회  ${S.mode || ''}${window.KHPRLayer && KHPRLayer.on ? ' · 실사 3D' : ''}  품질 단계 ${XQ.level}${XQ.fixed != null ? '(고정)' : ''}`, 14, 72);
       this.tex.needsUpdate = true; X.fpsStat = { med: +med.toFixed(1), p95: +p95.toFixed(1), calls };
     }
   };
@@ -922,13 +951,19 @@
     },
     // 묶음 열쇠: 텍스처가 없는 단색 재질은 색을 꼭짓점 색으로 구워 같은 성질(거칠기·금속성 등)끼리 한 번에 그린다
     texKey(a) { return ['map', 'emissiveMap', 'envMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'aoMap', 'lightMap'].map(k => a[k] ? a[k].uuid : '').join(','); },
+    // 텍스처 없는 단색 묶음(VC)의 거칠기·금속성 단계: 실사 3D 를 켠 VR 외관 그리기 호출이 200 상한에 붙어 있어(T14) 0.25 → 0.5(거칠기), 2단계(금속성)로 넓혔다.
+    // 단색 면은 반사 차이가 작아 눈에 덜 띈다. 값은 상수로 둔다(실기기에서 차이가 보이면 0.25 로 되돌림)
+    VCQ: { rough: 0.5, metal: 1 },
     keyOf(pt) {
       const q4 = v => (Math.round((v || 0) * 4) / 4).toFixed(2);   // 거칠기·금속성은 0.25 단위로 묶음
       const a = pt.m, o = pt.o, hx = c => (c && c.getHexString ? c.getHexString() : '');
       const bake = !a.map && !a.vertexColors && !!a.color && !a.isLineDashedMaterial;
+      const qv = (v, st) => (Math.round((v || 0) / st) * st).toFixed(2), qr = bake ? v => qv(v, this.VCQ.rough) : q4, qm = bake ? v => qv(v, this.VCQ.metal) : q4;
+      // 단색 묶음은 텍스처 좌표(uv)를 쓰지 않으므로 uv 유무로 나누지 않는다(합칠 때 없는 쪽은 0 으로 채움)
+      const attrs = Object.keys(o.geometry.attributes).filter(k => !(bake && k === 'uv')).sort().join(',');
       return [pt.kind, a.type, bake ? 'VC' : a.uuid, hx(a.emissive), +(a.emissiveIntensity || 0).toFixed(2), this.texKey(a), a.transparent, +(a.opacity == null ? 1 : a.opacity).toFixed(2), a.side,
-        q4(a.roughness), q4(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
-        Object.keys(o.geometry.attributes).sort().join(','), o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
+        qr(a.roughness), qm(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
+        attrs, o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
     },
     // 인스턴스 메시(가구 등)는 인스턴스마다 펼쳐 같은 재질끼리 합친다. 너무 크거나 인스턴스 색·여러 재질이면 그대로 둔다
     instOk(o) { return !o.instanceColor && !Array.isArray(o.material) && o.material && o.material.visible !== false && o.count * o.geometry.attributes.position.count <= 400000; },
@@ -979,7 +1014,7 @@
         // 반투명을 한 덩어리로 합치면 three 의 물체 단위 정렬(뒤→앞)이 깨진다. 깊이를 쓰면 먼저 그린 가까운 면이
         // 뒤의 반투명(벽 표시·유리 너머 요소)을 지워 버리므로, 합친 반투명은 깊이를 쓰지 않게(XR 동안만, 끝나면 원복)
         if (mat.transparent && mat.depthWrite && !bake) { this.dw = this.dw || new Set(); this.dw.add(mat); mat.depthWrite = false; }
-        if (bake) { mat = mat.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true; if (mat.transparent) mat.depthWrite = false; mat.needsUpdate = true; this.mats.push(mat); }
+        if (bake) { const f = k.split('|'); mat = mat.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true; if ('roughness' in mat) { mat.roughness = +f[9]; mat.metalness = +f[10]; } if (mat.transparent) mat.depthWrite = false; mat.needsUpdate = true; this.mats.push(mat); }
         const geo = this.merge(list, bake, cache);
         const obj = list[0].kind === 'L' ? new T.LineSegments(geo, mat) : new T.Mesh(geo, mat);
         obj.castShadow = list[0].o.castShadow; obj.receiveShadow = list[0].o.receiveShadow; obj.renderOrder = list[0].o.renderOrder;

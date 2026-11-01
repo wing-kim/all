@@ -12,7 +12,7 @@ const p = await b.newPage();
 if (dev === 'mobile') await p.emulate({ viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
 else await p.setViewport({ width: 1600, height: 900 });
 const errs = []; p.on('pageerror', e => errs.push(String(e)));
-await p.goto(BASE + '/new/3d-model.html', { waitUntil: 'load', timeout: 120000 });
+await p.goto(BASE + '/new/3d-model.html' + (process.env.QS ? '?' + process.env.QS : ''), { waitUntil: 'load', timeout: 120000 });   // QS=prq=low 등
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-pr'), { timeout: 60000 });
 const ev = (f, ...a) => p.evaluate(f, ...a);
 const res = { dev, base: BASE, at: new Date().toISOString() };
