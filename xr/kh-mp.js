@@ -13,6 +13,10 @@
   const Q = new URLSearchParams(location.search);
   const T = window.THREE, K = X.K, S = X.state, scene = K.scene;
   const MAX = Math.max(2, +(Q.get('mpmax') || 6));     // 한 방 최대 인원(시험용으로만 바꿈)
+  // 연결 시간 초과(T15): 받은 방 링크로 들어왔는데(누군가 있을 방) 이 시간 안에 아무와도 연결되지 않으면 안내와 다시 시도.
+  // TURN 중계는 쓰지 않는다(Jack 결정 2026-11-01). 회사망·일부 통신사망(대칭 NAT)은 직접 연결이 막힐 수 있다
+  const WAIT_MS = Math.max(1000, +(Q.get('mpwait') || 20000));
+  const INVITED = !!Q.get('room');
   const APP = 'kapehorn-tower-xr-v1';
   const FONT = '"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
   const COLORS = ['#e8833a', '#4fa3e0', '#6cc070', '#d55fb0', '#e0c341', '#8f7ae6'];
@@ -57,6 +61,7 @@
       M.A.ping.onMessage = (d, { peerId }) => Ping.show(d.p, (M.peers.get(peerId) || {}).color || '#fff', (M.peers.get(peerId) || {}).name || '');
       M.A.st.onMessage = (d, { peerId }) => { const p = M.peers.get(peerId); if (p) { Object.assign(p, d); Avatar.tag(p); Panel.render(); X.ui && X.ui.dirty(); } };
       room.onPeerJoin = id => {
+        if (M.stuck) { M.stuck = false; Panel.note(''); }
         Peers.add(id);
         M.A.hi.send(hello(), { target: id });
         Design.lastSent = '';     // 방장이면 새로 온 사람에게 지금 디자인을 곧바로 보냄
@@ -64,7 +69,8 @@
       };
       room.onPeerLeave = id => Peers.remove(id);
       room.onPeerStream = (stream, id) => Voice.attach(id, stream);
-      M.host = M.me.id; M.hostT = 0; M.joined = true; M.joining = false;
+      M.host = M.me.id; M.hostT = 0; M.joined = true; M.joining = false; M.stuck = false;
+      clearTimeout(M.waitT); M.waitT = setTimeout(() => { if (M.joined && !M.peers.size && INVITED) { M.stuck = true; log('연결 시간 초과'); Panel.render(); } }, WAIT_MS);
       X.hooks.push(tick); requestAnimationFrame(screenLoop);
       addEventListener('pagehide', leave);
       Design.watchLocal();
@@ -84,7 +90,8 @@
     Laser.clear(); Ping.clear();
     const i = X.hooks.indexOf(tick); if (i >= 0) X.hooks.splice(i, 1);
     if (M.ctx) M.ctx.close().catch(() => {});
-    Object.assign(M, { joined: false, room: null, mic: null, ctx: null, host: null, laser: false, pointing: false });
+    clearTimeout(M.waitT);
+    Object.assign(M, { joined: false, room: null, mic: null, ctx: null, host: null, laser: false, pointing: false, stuck: false });
     removeEventListener('pagehide', leave);
     Panel.render(); X.ui && X.ui.dirty(); log('방 나감');
   }
@@ -552,7 +559,8 @@
         h += '<div>방 <b>' + esc(M.roomId) + '</b> · ' + (M.peers.size + 1) + '명</div>'
           + '<div class="row"><button class="b p" data-a="copy">방 링크 복사</button></div>'
           + '<ul>' + me + ppl + '</ul>'
-          + (M.peers.size ? '' : '<div class="note2" style="color:#777;font-size:12px">링크를 받은 사람이 들어오면 여기에 보입니다.</div>')
+          + (M.stuck ? '<div class="warn" role="alert" style="margin:6px 0;padding:8px 10px;border-radius:8px;background:#fff4e5;color:#7a4a00;font-size:13px">' + Math.round(WAIT_MS / 1000) + '초 동안 다른 참가자와 연결되지 않았습니다. 같은 방에 다른 사람이 있다면 이 네트워크(회사망·일부 통신사망)에서 직접 연결이 막혔을 수 있습니다. 휴대폰 데이터나 다른 Wi-Fi로 바꾼 뒤 다시 시도해 주세요.<div class="row" style="margin-bottom:0"><button class="b p" data-a="retry">다시 시도</button></div></div>'
+            : M.peers.size ? '' : '<div class="note2" style="color:#777;font-size:12px">링크를 받은 사람이 들어오면 여기에 보입니다.</div>')
           + '<div class="row"><button class="b" data-a="gather">모두 내 곁으로</button><button class="b' + (M.pointing ? ' on' : '') + '" data-a="point">' + (M.pointing ? '장면을 눌러 표시' : '지점 가리키기') + '</button></div>'
           + '<div class="row"><button class="b' + (M.host === M.me.id ? ' on' : '') + '" data-a="take">' + (M.host === M.me.id ? '내 디자인을 보여 주는 중' : '내 디자인 보여 주기') + '</button></div>'
           + '<label><input type="checkbox" data-a="follow"' + (M.following ? ' checked' : '') + (M.host === M.me.id ? ' disabled' : '') + '> 방장 디자인 따라가기</label>'
@@ -566,6 +574,7 @@
     act(a, id) {
       if (a === 'close') return this.close();
       if (a === 'join') return join();
+      if (a === 'retry') { leave(); Panel.note('다시 연결하는 중…'); return join(); }
       if (a === 'copy') { const u = location.href; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => this.note('링크를 복사했습니다'), () => { prompt('이 링크를 보내 주세요', u); }); return; }
       if (a === 'to') return Gather.to(id);
       if (a === 'gather') return Gather.all();

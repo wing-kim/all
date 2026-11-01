@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1101.e';
+  const VER = '1101.f';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -1892,7 +1892,9 @@
     st.textContent = `.pr-panel{position:absolute;left:12px;bottom:12px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:12px/1.4 var(--font);color:var(--fg);max-width:min(420px,calc(100% - 24px));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .pr-panel b{font-weight:600}.pr-panel .r{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.pr-panel button{font:500 12px var(--font);padding:4px 8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:4px;cursor:pointer}
 .pr-panel button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--panel)}.pr-panel small{color:var(--muted);display:block;margin-top:5px}
-@media (max-width:760px){.pr-panel{left:8px;bottom:8px;padding:6px 8px}.pr-panel button{padding:4px 6px;font-size:11.5px}}`;
+@media (max-width:760px){.pr-panel{left:8px;bottom:8px;padding:6px 8px}.pr-panel button{padding:4px 6px;font-size:11.5px}}
+.pr-panel .pr-fold{display:none;float:right;margin-left:6px}
+@media (max-width:760px){.pr-panel .pr-fold{display:inline-block}.pr-panel.fold .r,.pr-panel.fold small:not(#pr-stat),.pr-panel.fold .pr-sub{display:none}.pr-panel.fold{max-width:calc(100% - 96px)}.pr-panel.fold #pr-stat{margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}`;
     document.head.appendChild(st);
     document.querySelectorAll('input[name=vmode]').forEach(r => r.addEventListener('change', e => {
       if (e.target.value === 'pr3d') enable(true); else if (PR.on) enable(false);
@@ -1925,7 +1927,7 @@
     if (!on) { if (PNL) PNL.hidden = true; return; }
     if (!PNL) {
       PNL = document.createElement('div'); PNL.className = 'pr-panel'; PNL.id = 'pr-panel';
-      PNL.innerHTML = `<b>실사 3D · 우선 조합</b> <span style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
+      PNL.innerHTML = `<button type="button" class="pr-fold" aria-expanded="false">펼치기 ▴</button><b>실사 3D · 우선 조합</b> <span class="pr-sub" style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
 <div class="r" id="pr-q"><span style="align-self:center;color:var(--muted)">품질</span><button data-q="">자동</button><button data-q="high">높음</button><button data-q="medium">보통</button><button data-q="low">낮음</button></div>
@@ -1934,6 +1936,15 @@
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
       PNL.querySelector('#pr-retry').addEventListener('click', retryAll);
+      // 휴대폰(폭 760px 이하): 처음에는 접어서 제목과 상태 한 줄만(화면 아래 16%를 가리던 것). 눌러 펼친다(T16)
+      const fb = PNL.querySelector('.pr-fold'), fold = on => { PNL.classList.toggle('fold', on); fb.textContent = on ? '펼치기 ▴' : '접기 ▾'; fb.setAttribute('aria-expanded', !on); };
+      fold(matchMedia('(max-width:760px)').matches); fb.addEventListener('click', () => fold(!PNL.classList.contains('fold')));
+      // 나침반(Wing, 오른쪽 아래)과 겹치면 나침반을 패널 위로 올린다(XR 버튼 줄을 올리는 것과 같은 방식)
+      const lift = () => { const c = document.getElementById('compass'), v = document.getElementById('viewer'); if (!c || !v) return;
+        let b = ''; if (!PNL.hidden && PNL.offsetParent !== null) { const p = PNL.getBoundingClientRect(), vr = v.getBoundingClientRect();
+          c.style.bottom = ''; const r0 = c.getBoundingClientRect(); if (p.right > r0.left && p.top < r0.bottom) b = Math.round(vr.bottom - p.top + 8) + 'px'; }
+        if (c.style.bottom !== b) c.style.bottom = b; };
+      setInterval(lift, 700); addEventListener('resize', lift); fb.addEventListener('click', () => setTimeout(lift, 30));
       PNL.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.q; QS.manual = k || null; qStore.set(k || null);
         if (k) qSet(k, '선택'); else { QS.auto = null; QS.sample = null; qSet('high', '자동'); } }));
     }
