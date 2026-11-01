@@ -1,6 +1,6 @@
 // 자체 점검(qa)의 화질·예산·UI 측정: node qmetrics.mjs  (BASE=주소, QS=추가 옵션, ONLY=flicker,still,base,ui,mem)
 // 결과: out/qmetrics.json. qa.mjs 가 부른다(단독 실행 가능).
-// - flicker: 카메라(와 보는 곳)를 MOVE(기본 2mm)씩 6번 옆으로 옮긴 연속 프레임의 화소 밝기 변화(실제 화면 경로, 후처리 포함). '수평면(바닥) 화소'만, 가장자리 2화소를 깎고 거리 구간(가까움 <8m, 중간 8～25m, 멂 >25m)별로 잰다.
+// - flicker: 카메라(와 보는 곳)를 MOVE(기본 2mm)씩 6번 옆으로 옮긴 연속 프레임의 화소 밝기 변화(실제 화면 경로, 후처리 포함). '수평면(바닥) 화소'만(1.5m 안 제외), 가장자리·거리 단차 4화소를 깎고(가까운 물체가 실제로 움직여 바닥을 가리고 드러내는 것 제외) 거리 구간(가까움 <8m, 중간 8～25m, 멂 >25m)별로 잰다.
 //   구성: 화면(1280×720, 배율 1), 휴대폰(390×844, 배율 3), 퀘스트 한 눈(916×960, 배율 2, 시야 97°, AO 끔), 낮은 시점(눈높이 0.5m)
 // - alias: 같은 화면을 1배와 4배 초표본으로 그려 바닥 화소 밝기 차의 고주파 성분(움직임과 무관한 앨리어싱 에너지, 8단계 넘는 화소 비율)을 거리 구간별로 잰다
 // - still: 포화 화소 비율, 천장 검은 구멍 비율, 야간 우리 건물 대 이웃 휘도 비, 석양 대 오후 휘도, 잎 휘도 변동(앞뒤 차), 이웃 건물 명도 편차(p90/p10)
@@ -30,7 +30,8 @@ async function open(dev, extra = '') {
   else await p.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   await p.goto(BASE + '/new/3d-model.html?pr=1&prsw=0' + (dev === 'eye' ? '&prq=medium' : '') + QS + extra, { waitUntil: 'load', timeout: 180000 });
   await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.t.warm != null && KHPRLayer.t.plants != null && KHPRLayer.t.ground != null, { timeout: 240000 });
-  await p.addStyleTag({ content: 'body *{visibility:hidden!important} canvas{visibility:visible!important}' });
+  // 3D 캔버스만 보이게(미니맵 등 다른 캔버스도 숨긴다)
+  await p.addStyleTag({ content: 'body *{visibility:hidden!important}' }); await p.evaluate(() => KHXR.renderer.domElement.style.setProperty('visibility', 'visible', 'important'));
   await wait(1500);
   if (dev === 'eye') await p.evaluate(() => { KHXR.camera.fov = 97; KHXR.camera.updateProjectionMatrix(); });
   return { p, errs, dev };
@@ -96,8 +97,9 @@ const IMGLIB = `window.__qaImg = async (urls) => { const ld = u => new Promise(r
 
 /* ---------- flicker ---------- */
 async function flicker(P, tag, views) {
-  await P.p.evaluate(IMGLIB);
+  await P.p.evaluate(IMGLIB); if (process.env.SAVE) await P.p.evaluate(() => { window.__qaSave = true; });
   for (const [v, low] of views) {
+    if (process.env.FL && !(tag + ':' + v).includes(process.env.FL)) continue;
     await go(P, v, low);
     const cover = await maskPass(P);
     const S = [];
@@ -110,7 +112,7 @@ async function flicker(P, tag, views) {
     await P.p.evaluate(() => { const c = KHXR.camera; c.position.copy(c.userData.p0); KHXR.controls.target.copy(c.userData.t0); delete c.userData.p0; delete c.userData.t0; });
     const r = await P.p.evaluate(async S => {
       const { w, h, D, mk } = await window.__qaImg(S); const band = { near: [0, 0, 0], mid: [0, 0, 0], far: [0, 0, 0] };
-      const fl = (x, y) => { if (x < 2 || y < 2 || x >= w - 2 || y >= h - 2) return false; const m0 = mk(x, y); if (m0.up !== 1 || m0.grp === 4) return false; for (let a = -2; a <= 2; a += 2) for (let c = -2; c <= 2; c += 2) { const q = mk(x + c, y + a); if (q.up !== 1 || Math.abs(q.dist - m0.dist) > 1.2) return false; } return true; };
+      const fl = (x, y) => { if (x < 4 || y < 4 || x >= w - 4 || y >= h - 4) return false; const m0 = mk(x, y); if (m0.up !== 1 || m0.grp === 4 || m0.dist < 1.5) return false; /* 1.5m 안은 카메라 이동이 실제 움직임으로 보인다 */ for (let a = -4; a <= 4; a += 2) for (let c = -4; c <= 4; c += 2) { const q = mk(x + c, y + a); if (q.up !== 1 || Math.abs(q.dist - m0.dist) > 0.04 * m0.dist + 0.1) return false; } return true; }; /* 이웃 화소의 거리가 매끄럽게 이어지는 면만(책상 윗면과 그 뒤 바닥의 경계 같은 단차 제외) */
       for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) { if (!fl(x, y)) continue; const m = mk(x, y);
         const b = m.dist < 8 ? 'near' : m.dist < 25 ? 'mid' : 'far', i = (y * w + x) * 4; let a = 0;
         for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3;
@@ -118,9 +120,13 @@ async function flicker(P, tag, views) {
       // 화면 전체(나무 제외): 형상 가장자리(차선·줄눈·창틀)의 자글거림을 포함한 값
       let as = 0, an = 0, ah = 0; for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const m = mk(x, y); if (m.grp === 4) continue; const i = (y * w + x) * 4; let a = 0;
         for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1; as += a; an++; if (a > 12) ah++; }
+      if (window.__qaSave) { const cv2 = document.createElement('canvas'); cv2.width = w; cv2.height = h; const g2 = cv2.getContext('2d'), id = g2.createImageData(w, h);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; let a = 0; for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1;
+          const f = fl(x, y); id.data[i] = Math.min(255, a * 12); id.data[i + 1] = f ? 90 : D[0][i + 1] * 0.25; id.data[i + 2] = f ? 0 : D[0][i + 2] * 0.25; id.data[i + 3] = 255; } g2.putImageData(id, 0, 0); window.__qaHeat = cv2.toDataURL(); }
       const o = { all: { flick: +(as / an).toFixed(2), hiPct: +(ah / an * 100).toFixed(2) } }; for (const [k, [s, n, hi]] of Object.entries(band)) o[k] = n > 200 ? { flick: +(s / n).toFixed(2), hiPct: +(hi / n * 100).toFixed(2), px: n } : null; return o;
     }, S);
     const key = tag + ':' + v + (low ? '-low' : '');
+    if (process.env.SAVE) { const png = await P.p.evaluate(() => window.__qaHeat); if (png) fs.writeFileSync(OUT + 'flick-' + key.replace(/:/g, '-') + '.png', Buffer.from(png.split(',')[1], 'base64')); }
     res.flicker[key] = { ...r, cover };
     console.log('flicker', key, JSON.stringify(r));
   }

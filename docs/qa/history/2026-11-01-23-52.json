@@ -1,0 +1,73 @@
+{
+ "at": "2026-11-01T23:52:59.879Z",
+ "base": "http://127.0.0.1:57129",
+ "quick": false,
+ "only": [
+  "shots"
+ ],
+ "items": [
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:out.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:street.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:1F.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:5F.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:B1.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:B3.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호",
+   "key": "shots:out-night.jpg"
+  }
+ ]
+}

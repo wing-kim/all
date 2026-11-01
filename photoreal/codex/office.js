@@ -30,7 +30,7 @@ const OFFICE_STYLES={
   plants:[[-12.5,-12.8,1.5],[-12.4,-3.9,1.3],[-4.25,-12.8,1.5],[-4.3,2.0,1.6],[-12.3,6.6,1.5],[-6.2,8.6,1.4],[-0.3,1.6,1.5],[-2.6,-6.6,1.3]],
   plantModels:['pottedtree','plantA','plantB'],pot:'#3a3a3b'},
  // 5F: 짙은 노출 천장, 월넛 헤링본 마루, 코냑 가죽 라운지 둘, 월넛 회의 테이블, 월넛 책상·플랜터 수납장, 화분 나무.
- '5F':{floor:{tex:'office-parquet',maps:['color','normal'],version:1,repeat:3.4,roughness:.38,normalScale:.5,name:'Office walnut herringbone parquet'},
+ '5F':{floor:{tex:'office-parquet',maps:['color','normal'],version:1,repeat:3.4,roughness:.45,normalScale:.3,name:'Office walnut herringbone parquet'},
   ceiling:'#6b6863',duct:'#79746e',housing:'#2b2b2c',desk:'walnut',felt:false,monitorEvery:2,
   clusters:[[-10.2,-10.9],[-6.2,-10.9]],
   lounge:{kind:'leather',count:2,at:[[-9.0,4.9],[-9.2,-1.2],[-8.8,5.4],[-6.0,-1.0]]},bar:false,

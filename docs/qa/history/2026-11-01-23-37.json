@@ -1,0 +1,310 @@
+{
+ "at": "2026-11-01T23:37:41.208Z",
+ "base": "http://127.0.0.1:54051",
+ "quick": false,
+ "only": [
+  "quality"
+ ],
+ "items": [
+  {
+   "group": "quality",
+   "name": "바닥 깜빡임(강하게 바뀐 화소 %, 최악)",
+   "value": 1.29,
+   "limit": "≤ 1%",
+   "pass": false,
+   "note": "eye:5F near · 구성: 화면·휴대폰(배율 3)·퀘스트 한 눈(916×960×2, 시야 97°)·낮은 시점",
+   "key": "quality:바닥 깜빡임(강하게 바뀐 화소 %, 최악)",
+   "prev": 1.27
+  },
+  {
+   "group": "quality",
+   "name": "화면 전체 깜빡임(최악)",
+   "value": 1.9,
+   "limit": "≤ 2%",
+   "pass": true,
+   "note": "eye:5F",
+   "key": "quality:화면 전체 깜빡임(최악)",
+   "prev": 1.87
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:street",
+   "value": "0.04 / 0.02 / 0 · 전체 0.58",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:street",
+   "prev": "0.04 / 0.02 / 0 · 전체 0.58"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:1F",
+   "value": "0.06 / 0.03 / 0.05 · 전체 0.77",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:1F",
+   "prev": "0.06 / 0.03 / 0.05 · 전체 0.77"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:B1",
+   "value": "0 / 0 / - · 전체 0.14",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:B1",
+   "prev": "0 / 0 / - · 전체 0.14"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:5F",
+   "value": "0.65 / 0 / - · 전체 1.57",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:5F",
+   "prev": "0.64 / 0 / - · 전체 1.55"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:1F-low",
+   "value": "0.04 / 0.32 / - · 전체 0.76",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:1F-low",
+   "prev": "0.04 / 0.32 / - · 전체 0.76"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:B1-low",
+   "value": "0 / 0.01 / - · 전체 0.12",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:B1-low",
+   "prev": "0 / 0.01 / - · 전체 0.12"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:street",
+   "value": "0.52 / 0 / 0.01 · 전체 1.76",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:street",
+   "prev": "0.52 / 0 / 0.02 · 전체 1.78"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:1F",
+   "value": "0.37 / 0.22 / 0.06 · 전체 1.17",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:1F",
+   "prev": "0.37 / 0.22 / 0.06 · 전체 1.17"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:B1",
+   "value": "0 / 0 / - · 전체 0.15",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:B1",
+   "prev": "0 / 0 / - · 전체 0.15"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:street",
+   "value": "0.25 / 0.01 / 0.01 · 전체 0.31",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:street",
+   "prev": "0.25 / 0.01 / 0.01 · 전체 0.31"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:1F",
+   "value": "0.15 / 0.21 / 0.07 · 전체 0.81",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:1F",
+   "prev": "0.15 / 0.21 / 0.07 · 전체 0.81"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:B1",
+   "value": "0 / 0 / - · 전체 0.18",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:B1",
+   "prev": "0 / 0 / - · 전체 0.18"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:5F",
+   "value": "1.29 / 0.04 / - · 전체 1.9",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:5F",
+   "prev": "1.27 / 0.03 / - · 전체 1.87"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:street",
+   "value": "2.83 / 3.57 / 6.02",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:street",
+   "prev": "2.83 / 3.57 / 6.02"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:out",
+   "value": "- / - / 3.96",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:out",
+   "prev": "- / - / 3.96"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:1F",
+   "value": "0.12 / 0.43 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:1F",
+   "prev": "0.12 / 0.43 / -"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:B1",
+   "value": "0.47 / 1.56 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:B1",
+   "prev": "0.47 / 1.56 / -"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:5F",
+   "value": "0.26 / 0.45 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:5F",
+   "prev": "0.26 / 0.33 / -"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:1F-low",
+   "value": "0.01 / 0 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:1F-low",
+   "prev": "0.01 / 0 / -"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:B1-low",
+   "value": "0.28 / 2.01 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:B1-low",
+   "prev": "0.28 / 2.01 / -"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:5F-low",
+   "value": "0.58 / 0 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:5F-low",
+   "prev": "0.56 / 0 / -"
+  },
+  {
+   "group": "quality",
+   "name": "포화 화소(최대)",
+   "value": "0.15%",
+   "limit": "≤ 1%",
+   "pass": true,
+   "note": "",
+   "key": "quality:포화 화소(최대)",
+   "prev": "0.15%"
+  },
+  {
+   "group": "quality",
+   "name": "실내 천장 검은 구멍(최대)",
+   "value": "2.49%",
+   "limit": "≤ 5%",
+   "pass": true,
+   "note": "천장(아래를 보는 면) 중 휘도 14 미만",
+   "key": "quality:실내 천장 검은 구멍(최대)",
+   "prev": "2.49%"
+  },
+  {
+   "group": "quality",
+   "name": "석양 처마 밑 검은 면",
+   "value": "10.73%",
+   "limit": "",
+   "pass": null,
+   "note": "정보: 바깥에서 본 아래 보는 면",
+   "key": "quality:석양 처마 밑 검은 면",
+   "prev": "10.7%"
+  },
+  {
+   "group": "quality",
+   "name": "야간 우리 건물 / 이웃 휘도",
+   "value": 1.24,
+   "limit": "≥ 1",
+   "pass": true,
+   "note": "",
+   "key": "quality:야간 우리 건물 / 이웃 휘도",
+   "prev": 1.24
+  },
+  {
+   "group": "quality",
+   "name": "석양 대 오후 화면 휘도",
+   "value": "-23.6%",
+   "limit": "≤ -20%",
+   "pass": true,
+   "note": "건물+지면 -73%",
+   "key": "quality:석양 대 오후 화면 휘도",
+   "prev": "-23.6%"
+  },
+  {
+   "group": "quality",
+   "name": "주변 건물 명도 편차(조감 p90/p10)",
+   "value": 3.01,
+   "limit": "≥ 2",
+   "pass": true,
+   "note": "",
+   "key": "quality:주변 건물 명도 편차(조감 p90/p10)",
+   "prev": 3.01
+  },
+  {
+   "group": "quality",
+   "name": "잎 휘도 변동계수(앞뒤 색 차)",
+   "value": 0.345,
+   "limit": "≤ 0.4",
+   "pass": true,
+   "note": "수정 전(?praa=0) 0.45",
+   "key": "quality:잎 휘도 변동계수(앞뒤 색 차)",
+   "prev": 0.345
+  }
+ ]
+}
