@@ -5,7 +5,7 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import path from 'node:path';
-// 옵션(위치 인자 뒤): --sch mech|self|alt3|alt4  --g1 slant|straight|corner|skin  --levels B3,B2,B1 (내보낼 층, 생략하면 전부)
+// 옵션(위치 인자 뒤): --sch mech|self|alt3|alt4  --g1 slant|straight|corner|skin  --floors 4～8  --levels B3,B2,B1 (내보낼 층, 생략하면 전부)
 // 조합 옵션을 주면 해당 라디오(sch-*, g1-*)와 t-upstraight 를 고른 뒤 내보낸다. 생략하면 화면 기본 상태 그대로.
 const pos = [], opt = {};
 for (let i = 2; i < process.argv.length; i++) { const a = process.argv[i]; if (a.startsWith('--')) opt[a.slice(2)] = process.argv[++i]; else pos.push(a); }
@@ -20,7 +20,9 @@ await p.goto(BASE + '/new/3d-model.html?pr=1&pf=' + pf, { waitUntil: 'load' });
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.on && KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null, { timeout: 120000 });
 await new Promise(r => setTimeout(r, 1500));
 const pick = async id => { await p.evaluate(id => { const e = document.getElementById(id); if (!e) throw new Error('라디오 없음 ' + id); if (!e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id); await new Promise(r => setTimeout(r, 2500)); };
-if (opt.sch || opt.g1) {
+if (opt.sch || opt.g1 || opt.floors) {
+  // --floors N: 층수(c-floors, 4～8). 7F·8F 굽기(1102)는 --floors 8 --levels 7F,8F
+  if (opt.floors) await p.evaluate(v => { const e = document.getElementById('c-floors'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); }, opt.floors);
   if (opt.sch) await pick('sch-' + opt.sch);
   if (opt.g1) await pick('g1-' + opt.g1);
   await pick('t-upstraight');
@@ -31,7 +33,9 @@ const only = opt.levels ? opt.levels.split(',') : null;
 await p.addScriptTag({ url: BASE + '/photoreal/vendor/GLTFExporter.js' });
 const res = await p.evaluate(async only => {
   const T = THREE, K = KHPR, out = new T.Scene(), cache = new Map(), lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-  const visible = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
+  // 화면 합치기(T1)로 숨긴 원본 메시는 합친 묶음으로 그려지므로 보이는 것으로 본다(이걸 빼면 건물 대부분이 빠진 장면을 굽는다)
+  const hs = window.KHXRLayer && KHXRLayer.opt && KHXRLayer.opt.hiddenSet;
+  const visible = o => { for (let q = o; q; q = q.parent) if (!q.visible && !(hs && hs.has(q))) return false; return true; };
   function conv(m) {
     if (cache.has(m)) return cache.get(m);
     let kind = 'S', color = m.color ? m.color.clone() : new T.Color(1, 1, 1);

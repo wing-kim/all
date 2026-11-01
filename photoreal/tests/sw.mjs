@@ -28,7 +28,7 @@ async function visit(slow) {
   await p.waitForFunction(k => window.KHPRLayer && KHPRLayer.t && k.every(x => KHPRLayer.t[x] != null), { timeout: 240000, polling: 200 }, KEYS).catch(() => errs.push('timeout'));
   const r = await p.evaluate(k => ({ all: Math.max(...k.map(x => KHPRLayer.t[x] || 0)), t: KHPRLayer.t, ctl: !!navigator.serviceWorker.controller }), KEYS);
   await new Promise(r => setTimeout(r, 1500)); await p.close();
-  const v = { slow, allReadyMs: r.all, netMB: +(net / 1e6).toFixed(2), fromSW: sw, serverAssetGets: n0 == null ? null : logN() - n0, controlled: r.ctl, errors: errs.slice(0, 3) };
+  const v = { slow, allReadyMs: r.all, netMB: +(net / 1e6).toFixed(2), fromSW: sw, serverAssetGets: n0 == null ? null : logN() - n0, controlled: r.ctl, t: r.t, errors: errs.slice(0, 3) };
   res.visits.push(v); console.log(JSON.stringify(v)); return v;
 }
 await visit(false); const v2 = await visit(true); const v3 = await visit(true);

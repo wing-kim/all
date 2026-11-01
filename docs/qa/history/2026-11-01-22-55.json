@@ -1,0 +1,188 @@
+{
+ "at": "2026-11-01T22:55:30.206Z",
+ "base": "http://127.0.0.1:63221",
+ "quick": true,
+ "only": [
+  "reg",
+  "ui"
+ ],
+ "items": [
+  {
+   "group": "reg",
+   "name": "smoke",
+   "value": "26/26",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:smoke",
+   "unstable": false,
+   "sec": 28,
+   "tries": 1,
+   "prev": "26/26"
+  },
+  {
+   "group": "reg",
+   "name": "compat",
+   "value": "6/6",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:compat",
+   "unstable": false,
+   "sec": 62,
+   "tries": 1,
+   "prev": "6/6"
+  },
+  {
+   "group": "reg",
+   "name": "ux",
+   "value": "17/17",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ux",
+   "unstable": false,
+   "sec": 58,
+   "tries": 1,
+   "prev": "17/17"
+  },
+  {
+   "group": "reg",
+   "name": "ux pr=1",
+   "value": "17/17",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ux pr=1",
+   "unstable": true,
+   "sec": 87,
+   "tries": 1,
+   "prev": "17/17"
+  },
+  {
+   "group": "reg",
+   "name": "mobile",
+   "value": "8/8",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:mobile",
+   "unstable": false,
+   "sec": 17,
+   "tries": 1,
+   "prev": "8/8"
+  },
+  {
+   "group": "reg",
+   "name": "perfui",
+   "value": "6/6",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:perfui",
+   "unstable": false,
+   "sec": 47,
+   "tries": 1,
+   "prev": "6/6"
+  },
+  {
+   "group": "reg",
+   "name": "opt",
+   "value": "4/4",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:opt",
+   "unstable": false,
+   "sec": 46,
+   "tries": 1,
+   "prev": "4/4"
+  },
+  {
+   "group": "reg",
+   "name": "ctxloss",
+   "value": "3/3",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ctxloss",
+   "unstable": false,
+   "sec": 48,
+   "tries": 1,
+   "prev": "3/3"
+  },
+  {
+   "group": "reg",
+   "name": "quality",
+   "value": "8/8",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:quality",
+   "unstable": false,
+   "sec": 50,
+   "tries": 1,
+   "prev": "8/8"
+  },
+  {
+   "group": "ui",
+   "name": "pc 겹침",
+   "value": "없음",
+   "limit": "",
+   "pass": true,
+   "note": "",
+   "key": "ui:pc 겹침",
+   "prev": "없음"
+  },
+  {
+   "group": "ui",
+   "name": "pc 숨김 규칙(멀티플레이·성능 정보)",
+   "value": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐",
+   "limit": "모두 숨김",
+   "pass": true,
+   "note": "",
+   "key": "ui:pc 숨김 규칙(멀티플레이·성능 정보)",
+   "prev": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐"
+  },
+  {
+   "group": "ui",
+   "name": "pc 콘솔 오류",
+   "value": "0건",
+   "limit": "0",
+   "pass": true,
+   "note": "알려진 4xx(로컬 전용): 404 /kapehorn-media/catalog.js?v=1793573691242",
+   "key": "ui:pc 콘솔 오류",
+   "prev": "0건"
+  },
+  {
+   "group": "ui",
+   "name": "phone 겹침",
+   "value": "없음",
+   "limit": "",
+   "pass": true,
+   "note": "",
+   "key": "ui:phone 겹침",
+   "prev": "없음"
+  },
+  {
+   "group": "ui",
+   "name": "phone 숨김 규칙(멀티플레이·성능 정보)",
+   "value": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐",
+   "limit": "모두 숨김",
+   "pass": true,
+   "note": "",
+   "key": "ui:phone 숨김 규칙(멀티플레이·성능 정보)",
+   "prev": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐"
+  },
+  {
+   "group": "ui",
+   "name": "phone 콘솔 오류",
+   "value": "0건",
+   "limit": "0",
+   "pass": true,
+   "note": "알려진 4xx(로컬 전용): 404 /kapehorn-media/catalog.js?v=1793573698513",
+   "key": "ui:phone 콘솔 오류",
+   "prev": "0건"
+  }
+ ]
+}

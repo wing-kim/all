@@ -13,18 +13,19 @@ def files(sub):
             out.append(str(p.relative_to(root)))
     return out
 first = ['vendor/RGBELoader.js', 'vendor/GLTFLoader.js', 'vendor/DRACOLoader.js', 'vendor/draco/draco_wasm_wrapper.js', 'vendor/draco/draco_decoder.wasm',
-         'codex/cafe.js', 'codex/office.js', 'codex/interior-models.js', 'bake/manifest.json', 'bake/bake-pm.webp', 'tex/daylight-sky_1k.hdr']
+         'codex/cafe.js', 'codex/office.js', 'codex/interior-models.js', 'bake/manifest.json', 'bake/bake-pm.webp', 'tex/daylight-sky_1k.rgbe.webp']
 rest = ['context/kh-context.js', 'context/buildings.json', 'context/ground.json'] + [f for f in files('context/facade') + files('tex') + files('assets') + files('bake') if f not in first and not f.endswith('environment.js')]
 # 압축본(KTX2 텍스처 .ktx2, 압축 모델 .k.glb)이 있으면 원본 대신 압축본을 받는다(실사 계층이 압축본을 먼저 읽는다)
 def packed(f):
     p = root / f
-    if f.endswith(('.webp', '.png')) and p.with_suffix('.ktx2').exists(): return None
+    if f.endswith(('.webp', '.png')) and not f.endswith('.rgbe.webp') and p.with_suffix('.ktx2').exists(): return None
     if f.startswith('bake/') and f.endswith('.png') and p.with_suffix('.webp').exists(): return None
     if f.endswith('.glb') and not f.endswith('.k.glb') and p.with_name(p.stem + '.k.glb').exists(): return None
+    if f.endswith('.hdr') and p.with_name(p.stem + '.rgbe.webp').exists(): return None   # 하늘: 무손실 RGBE WebP 묶음을 받는다
     return f
 rest = [f for f in rest if packed(f)]
 first += ['vendor/BasisTextureLoader.js', 'vendor/KTX2Loader.js', 'vendor/basis/basis_transcoder.js', 'vendor/basis/basis_transcoder.wasm']
-rest.sort(key=lambda f: (f.startswith('bake/'), f.endswith('.hdr'), f.endswith('.glb') or f.endswith('.gltf') or f.endswith('.bin'), f))
+rest.sort(key=lambda f: (f.startswith('bake/'), f.endswith(('.hdr', '.rgbe.webp')), f.endswith('.glb') or f.endswith('.gltf') or f.endswith('.bin'), f))
 lst = [f for f in first if (root / f).exists()] + rest
 size = sum((root / f).stat().st_size for f in lst)
 # 서비스 워커(new/kh-pr-sw.js)용 파일별 해시: 미리받기 목록 + 실사 3D 가 쓰는 나머지 자산(json·하늘 등). 실사 3D 코드(kh-photoreal.js)는 넣지 않는다(배포 즉시 새 코드)

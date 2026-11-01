@@ -22,11 +22,11 @@ for (const v of (process.env.VIEWS||'1F,B1,5F,street').split(',')) {
   await new Promise(r=>setTimeout(r,800));
   const shots = [];
   for (let k=0;k<6;k++) {
-    await p.evaluate((k, mv) => { const c=KHXR.camera; if (!c.userData.p0) c.userData.p0=c.position.clone(); const r=new THREE.Vector3(1,0,0).applyQuaternion(c.quaternion); c.position.copy(c.userData.p0).addScaledVector(r,k*mv); c.updateMatrixWorld(); }, k, +(process.env.MOVE ?? 0.01));
+    await p.evaluate((k, mv) => { const c=KHXR.camera, t=KHXR.controls.target; if (!c.userData.p0) { c.userData.p0=c.position.clone(); c.userData.t0=t.clone(); } const r=new THREE.Vector3(1,0,0).applyQuaternion(c.quaternion); c.position.copy(c.userData.p0).addScaledVector(r,k*mv); t.copy(c.userData.t0).addScaledVector(r,k*mv); c.updateMatrixWorld(); }, k, +(process.env.MOVE ?? 0.01));
     await p.evaluate(() => new Promise(r => { let n=0; const f=()=>(++n>4?r():requestAnimationFrame(f)); f(); }));
     shots.push('data:image/png;base64,' + await p.screenshot({ encoding:'base64', clip:{x:+(process.env.CX||0),y:+(process.env.CY||430),width:+(process.env.CW||930),height:+(process.env.CH||290)} }));
   }
-  await p.evaluate(() => { const c=KHXR.camera; if (c.userData.p0) { c.position.copy(c.userData.p0); delete c.userData.p0; } });
+  await p.evaluate(() => { const c=KHXR.camera; if (c.userData.p0) { c.position.copy(c.userData.p0); KHXR.controls.target.copy(c.userData.t0); delete c.userData.p0; delete c.userData.t0; } });
   if (process.env.SAVE) await p.screenshot({ path: SP+'sh-'+v+(process.env.TAG||'')+'.png' });
   res[v] = await p.evaluate(async S => { const ld=u=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=u;}); const I=await Promise.all(S.map(ld)); const w=I[0].width,h=I[0].height,cv=document.createElement('canvas');cv.width=w;cv.height=h;const g=cv.getContext('2d');
     const D=I.map(i=>{g.drawImage(i,0,0);return g.getImageData(0,0,w,h).data;}); let s=0,n=0,hi=0;const HM=g.createImageData(w,h);

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.a';
+  const VER = '1102.b';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -141,15 +141,29 @@
   // 배경 큐브와 환경광(PMREM)을 만든다. 시간대나 날짜·시각으로 해 방위가 바뀌면(5° 이상) 다시 만든다(약 30～60ms).
   const SKY = { day: 'daylight-sky_1k.hdr', sunset: 'sunset-sky_1k.hdr', night: 'night-sky_1k.hdr' }, SKYD = {};
   let skyCur = { key: '', az: 999, busy: false };
+  const SKYU = { tex: { value: null }, k: { value: 0 } };   // 유리 하늘 반사용(배경 하늘 큐브)
   const half = h => { const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023; return e === 0 ? s * 6.1035e-5 * (f / 1024) : e === 31 ? 0 : s * Math.pow(2, e - 15) * (1 + f / 1024); };
+  // 하늘 사진은 RGBE(.hdr 과 같은 값)를 알파 없는 무손실 WebP 한 장(왼쪽 절반 RGB, 오른쪽 절반 지수)으로 묶은 파일(.rgbe.webp)을 먼저 받는다.
+  // .hdr 3장 3.9MB → 1.2MB(같은 값, 무손실). 알파를 쓰지 않는 까닭은 브라우저가 알파 이미지를 미리 곱해 값이 깎이기 때문. 실패하면 .hdr
+  function rgbeWebp(url) {
+    return new Promise(res => { const i = new Image(); i.onload = () => {
+      const W2 = i.width, w = W2 >> 1, h = i.height, c = document.createElement('canvas'); c.width = W2; c.height = h; const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(i, 0, 0);
+      const d = g.getImageData(0, 0, W2, h).data, out = new Uint16Array(w * h * 4), H = T.DataUtils.toHalfFloat;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const p = (y * W2 + x) * 4, e = d[(y * W2 + x + w) * 4], o = (y * w + x) * 4, sc = Math.pow(2, e - 128) / 255;
+        out[o] = H(Math.min(d[p] * sc, 65504)); out[o + 1] = H(Math.min(d[p + 1] * sc, 65504)); out[o + 2] = H(Math.min(d[p + 2] * sc, 65504)); out[o + 3] = 15360; }   // 15360 = 1.0
+      const t = new T.DataTexture(out, w, h, T.RGBAFormat, T.HalfFloatType); t.flipY = true; t.encoding = T.LinearEncoding; t.needsUpdate = true; res(t); };
+      i.onerror = () => res(null); i.src = url; });
+  }
   function skyLoad(key) {
     if (SKYD[key]) return SKYD[key];
-    return (SKYD[key] = vendor().then(() => new Promise(res => new T.RGBELoader().setDataType(T.HalfFloatType).load(BASE + 'tex/' + SKY[key], h => {
-      // 사진 속 해의 가로 위치(u): 위쪽 절반에서 가장 밝은 열
+    const done = (h, res) => {
       const { width: w, height: hh, data } = h.image; let best = -1, bu = 0.5;
       for (let y = 0; y < hh / 2; y += 2) for (let x = 0; x < w; x += 2) { const i = (y * w + x) * 4, v = half(data[i]) + half(data[i + 1]) + half(data[i + 2]); if (v > best) { best = v; bu = x / w; } }
       h.magFilter = h.minFilter = T.LinearFilter; h.generateMipmaps = false;
       res({ tex: h, sunU: bu });
+    };
+    return (SKYD[key] = vendor().then(() => rgbeWebp(BASE + 'tex/' + SKY[key].replace(/\.hdr$/, '.rgbe.webp'))).then(t => t ? new Promise(res => done(t, res)) : new Promise(res => new T.RGBELoader().setDataType(T.HalfFloatType).load(BASE + 'tex/' + SKY[key], h => {
+      done(h, res);   // 사진 속 해의 가로 위치(u): 위쪽 절반에서 가장 밝은 열
     }, undefined, () => { log('하늘 실패', key); delete SKYD[key]; fail('하늘', () => skyLoad(key)); res(null); }))));
   }
   function loadEnv() { return skyLoad('day'); }
@@ -161,12 +175,12 @@
     const sd = await skyLoad(key); if (!sd) { skyCur.busy = false; return; }
     // 구 안쪽에 사진을 입혀 돌린 장면 → 큐브 카메라(배경) → PMREM(환경광)
     const sc = new T.Scene(), geo = new T.SphereGeometry(100, 64, 32), mat = new T.MeshBasicMaterial({ map: sd.tex, side: T.BackSide, depthWrite: false });
-    mat.color.setScalar({ day: 1, sunset: 0.75, night: 0.12 }[key]);   // 석양은 노출을 낮추므로(T12) 하늘은 덜 낮춘다   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
+    mat.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]);   // 석양은 노출을 낮추므로(T12) 하늘은 덜 낮춘다(0.75 → 0.6: 화면 전체가 오후보다 20% 넘게 어둡게, 1102)   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
     const sph = new T.Mesh(geo, mat); sph.rotation.y = (Math.PI - 2 * Math.PI * sd.sunU) - azW; sc.add(sph);
     const size = isMobile ? 512 : 1024;
     if (!skyCur.rt) { skyCur.rt = new T.WebGLCubeRenderTarget(size, { type: T.HalfFloatType, generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter }); skyCur.cam = new T.CubeCamera(1, 1000, skyCur.rt); }
     const keepTM = R.toneMapping, keepEnc = R.outputEncoding; R.toneMapping = T.NoToneMapping; R.outputEncoding = T.LinearEncoding;
-    skyCur.cam.update(R, sc);
+    skyCur.cam.update(R, sc); SKYU.tex.value = skyCur.rt.texture; SKYU.k.value = 1;
     const pm = new T.PMREMGenerator(R), env = pm.fromScene(sc, 0).texture; pm.dispose();
     R.toneMapping = keepTM; R.outputEncoding = keepEnc;
     geo.dispose(); mat.dispose();
@@ -259,6 +273,13 @@
         fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   {vec3 prPc=floor(vPrW/vec3(1.5,3.6,1.5));float prPh=fract(sin(dot(prPc,vec3(12.9898,78.233,37.719)))*43758.5453),prPh2=fract(prPh*7.13);
    normal=normalize(normal+(vec3(prPh,0.0,prPh2)-vec3(0.5,0.0,0.5))*0.035);}`);
+        // 하늘 반사 섞기: Wing 큐브맵(건물 중심 한 점에서 찍은 주변)만으로는 반사가 한 가지 푸른 톤이라, 위를 향한 반사에 하늘 사진 큐브(배경과 같은 것)를 40%까지 섞는다
+        U.prSky = SKYU.tex; U.prSkyK = SKYU.k;
+        fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\nuniform samplerCube prSky;uniform float prSkyK;\n');
+        fs = fs.replace('#include <aomap_fragment>', `#include <aomap_fragment>
+  if(prSkyK>0.0){vec3 prRv=inverseTransformDirection(reflect(-normalize(vViewPosition),normal),viewMatrix);float prUp=smoothstep(-0.05,0.35,prRv.y)*0.4*prSkyK;
+    vec3 prSc=textureCube(prSky,vec3(-prRv.x,prRv.y,prRv.z)).rgb*envMapIntensity;float prFs=0.04+0.96*pow(1.0-abs(dot(normalize(vViewPosition),normal)),5.0);
+    reflectedLight.indirectSpecular=mix(reflectedLight.indirectSpecular,prSc*prFs,prUp);}`);
         fs = fs.replace('#include <output_fragment>', `
   {float prF=pow(1.0-abs(dot(normalize(vViewPosition),normal)),4.0);float prAl=clamp(mix(prA.x,prA.y,prF)*opacity/0.88,0.03,1.0);
   vec3 prSp=reflectedLight.directSpecular+reflectedLight.indirectSpecular;vec3 prDf=outgoingLight-prSp;
@@ -292,7 +313,8 @@
   function bakeVars() {
     const m = BAKE.man, v = m.variants || {}, st = K.state, base = m.state || {}, out = [];
     if (st.scheme && st.scheme !== base.scheme && v['sch:' + st.scheme]) out.push('sch:' + st.scheme);
-    if (st.g1 && st.g1 !== base.g1 && v['g1:' + st.g1] && st.scheme !== 'self') out.push('g1:' + st.g1);   // 자주식1은 1층 안이 고정
+    // 1층 안: 주차도 기본이 아니면 그 조합을 직접 구운 1층(x:주차-1층, 1102)을, 없으면 기본 주차로 구운 1층 변형을 덮는다. 자주식1은 1층 안이 고정
+    if (st.g1 && st.g1 !== base.g1 && st.scheme !== 'self') { const x = 'x:' + st.scheme + '-' + st.g1; if (st.scheme !== base.scheme && v[x]) out.push(x); else if (v['g1:' + st.g1]) out.push('g1:' + st.g1); }
     return out;
   }
   function bakeTex(slot, vars) {
@@ -513,6 +535,24 @@
     const m = std({ map: markTex(kind), transparent: true, alphaTest: 0.02, roughness: 0.5, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     m.envMap = parkEnv(); return patch(m, { light: Lp });
   }
+  // 외장 시안 재질 자동 처방: 전용 처방이 없는 외장 재질(마감 15·형태 17·시안 20의 부재)을 재질 속성으로 나눠 실사 텍스처 세트를 입힌다.
+  // 색은 원본(Wing 이 고른 색)을 그대로 따른다(매 프레임 동기화, NEUTRAL 세트는 평균 0.51 보정). 금속·유리·발광·텍스처 있는 재질은 질감 대신 반사만 맞춘다
+  function facadeRecipe(orig) {
+    if (orig.map || orig.vertexColors || orig.emissiveMap || (orig.emissiveIntensity > 0.05 && orig.emissive && orig.emissive.getHex())) return null;
+    if (orig.transparent && orig.opacity < 0.8) { const m = glassMat(0.18, 0.85); m.color.copy(orig.color); m.opacity = Math.max(orig.opacity, 0.35); return { m, k: 1, sync: ['color'], kind: 'glass' }; }
+    if (orig.metalness >= 0.5) { const m = std({ color: orig.color.clone(), metalness: 1, roughness: Math.max(0.22, Math.min(0.5, orig.roughness)) }); m.envMapIntensity = 1; return { m, k: 1, kind: 'metal' }; }
+    const c = orig.color.clone(); if (!orig.userData.lin) c.convertSRGBToLinear();
+    const s = c.clone().convertLinearToSRGB(), hsl = {}; s.getHSL(hsl); const hex = s.getHex(), h = hsl.h * 360;
+    let name, w, ns = 0.6;
+    if (hsl.s > 0.22 && h >= 18 && h <= 48 && hsl.l > 0.15 && hsl.l < 0.62) { name = 'furniture-veneer'; w = 1.2; ns = 0.5; }       // 나무색(우드 루버·목재 시안)
+    else if (hsl.s > 0.3 && (h < 18 || h > 340) && hsl.l < 0.6) { name = 'concrete-wall'; w = 1.4; ns = 0.5; }                         // 테라코타·붉은 세라믹
+    else if (hsl.s < 0.14 && hsl.l > 0.72) { name = 'plaster-white'; w = 1.2; ns = 0.35; }                                              // 흰 패널·도장
+    else if (hsl.s < 0.16 && hsl.l > 0.36) { name = 'facade-granite'; w = 1.8; ns = 0.5; }                                              // 회색 석재·콘크리트
+    else if (hsl.s < 0.16) { name = 'concrete-wall'; w = 2.2; ns = 0.4; }                                                                // 짙은 회색
+    else { const m = std({ color: c, metalness: 0, roughness: Math.max(0.35, orig.roughness) }); m.envMapIntensity = 0.6; return { m, k: 1, kind: 'paint' }; }   // 색 도장(파랑·초록 등)
+    const m = texMat(name, w, { tint: hex, ns, env: 0.5 });
+    return { m, k: NEUTRAL.has(name) ? 1 / 0.51 : 1, kind: name };
+  }
   const GEN = Q.get('prgen') !== '0';   // ?prgen=0: 기본 변환을 끈다(전후 비교용)
   function genericMat(orig, zk) {
     const m = std({ color: orig.color.clone(), map: orig.map || null, normalMap: orig.normalMap || null, roughness: orig.roughness, metalness: orig.metalness, roughnessMap: orig.roughnessMap || null,
@@ -536,11 +576,13 @@
       if (!m) { const r = recipes().get(orig); if (r) { m = r.make(); sync = r.sync || null; } }
       if (!m && ctxFacade && orig.isMeshStandardMaterial && orig.map && orig.map.image && orig.map.image.getContext) m = facadeMat(orig);
       // 전용 처방이 없는 우리 건물·현황 건물 재질(계단·코어·칸막이·설비 등. 주변 건물은 제외): 색·질감·투명도는 원본대로 두고 실사 조명(층별 굽기·실내 조도)과 반사만 맞춘다
+      let k = 1;
+      if (!m && GEN && zk === 'x' && !ctxFacade && orig.isMeshStandardMaterial) { const r = facadeRecipe(orig); if (r) { m = r.m; k = r.k; sync = r.sync || ['color']; m.userData.prGen = true; m.userData.prGenOrig = orig; m.userData.prRecipe = r.kind; } }
       if (!m && GEN && (!ctxFacade || ctxFacade === 'exist') && orig.isMeshStandardMaterial) { m = genericMat(orig, zk); sync = ['color', 'opacity', 'emissive']; }
       // lin: Wing 의 linearize() 가 색을 한 번 더 바꾸지 않게. prEnv: Wing 이 덮어쓴 반사 세기를 매 프레임 되돌린다
       if (m) { m.userData.prMade = true; m.userData.lin = true; m.userData.prEnv = m.envMapIntensity; m.name = 'pr:' + (orig.name || orig.uuid.slice(0, 6)); }
       if (!m) { (orig.userData.prNone = orig.userData.prNone || {})[zone[0]] = true; return orig; }
-      e = { m, orig, sync, glass: !!(m.userData.pr && m.userData.pr.glass) };
+      e = { m, orig, sync, k, glass: !!(m.userData.pr && m.userData.pr.glass) };
       CACHE.set(key, e); WARM.push(m);
     }
     return e ? e.m : orig;
@@ -678,8 +720,43 @@
   }
   // 매 프레임(장면을 그리기 직전): 원본 재건 감지, 원본 쪽 색·투명도 변화 반영, 환경맵 유지, 내 묶음 표시 상태 맞추기
   let pendingSwitch = null;
+  // 화면 앤티에일리어싱: Wing 은 늘 후처리 합성기로 그리는데 합성기 버퍼에는 MSAA 가 없어(캔버스의 antialias 는 쓰이지 않는다) 가는 형상(차선·줄눈·창틀)이
+  // 화소 단위로 끊겨 움직일 때 자글거렸다. 장면을 받는 버퍼(합성기 두 장, SSAO 의 장면 버퍼)를 4배 MSAA 로 바꾼다(WebGL2). VR 은 합성기를 쓰지 않는다
+  function msaaSync() {
+    const R3 = K.R3D, C = R3.composer; if (!AA || !C || !R.capabilities.isWebGL2 || !T.WebGLMultisampleRenderTarget) return;
+    // 화소 배율 1.3 이상(화면 '높음': 1.6배로 그려 줄임)은 이미 초표본이라 MSAA 를 더하면 fps 만 약 30% 떨어진다. 보통·낮음과 배율 1 기기에만
+    const ms = (C._pixelRatio || R.getPixelRatio()) < 1.3;
+    const swap = (obj, key) => { const rt = obj && obj[key]; if (!rt || !!rt.isWebGLMultisampleRenderTarget === ms) return false;
+      const o = { minFilter: rt.texture.minFilter, magFilter: rt.texture.magFilter, format: rt.texture.format, type: rt.texture.type, depthBuffer: rt.depthBuffer, stencilBuffer: rt.stencilBuffer };
+      const m = ms ? new T.WebGLMultisampleRenderTarget(rt.width, rt.height, o) : new T.WebGLRenderTarget(rt.width, rt.height, o);
+      if (ms) m.samples = 4; m.texture.encoding = rt.texture.encoding; m.texture.generateMipmaps = false; rt.dispose(); obj[key] = m; return true; };
+    if (swap(C, 'renderTarget1') | swap(C, 'renderTarget2')) { C.writeBuffer = C.renderTarget1; C.readBuffer = C.renderTarget2; PR.stat.msaa = ms ? 4 : 0; }
+    swap(R3.ssao, 'beautyRenderTarget');
+  }
+  // 가로등 바닥 빛 웅덩이(야간): Wing 가로등(R3D.lamps, 점광원) 아래 땅에 따뜻한 둥근 빛을 더한다. 인스턴스 한 묶음(그리기 호출 1회), 야간·실사 켠 동안만
+  const POOL = { m: null, n: -1 };
+  function lampPools() {
+    const L = (K.R3D.lamps || []); if (POOL.n === L.length) return; POOL.n = L.length;
+    if (POOL.m) { scene.remove(POOL.m); POOL.m.geometry.dispose(); POOL.m = null; }
+    if (!L.length) return;
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,0.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    const m = new T.MeshBasicMaterial({ map: new T.CanvasTexture(c), color: new T.Color(1.0, 0.7, 0.4).multiplyScalar(0.5), transparent: true, depthWrite: false, blending: T.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -4 });
+    m.userData.prMade = m.userData.lin = true;
+    const geo = new T.PlaneGeometry(13, 13); geo.rotateX(-Math.PI / 2);
+    const im = new T.InstancedMesh(geo, m, L.length), o3 = new T.Object3D(), wp = new T.Vector3();
+    L.forEach((l, i) => { l.getWorldPosition(wp); o3.position.set(wp.x, Math.max(0.05, wp.y - 7.5 + 0.2), wp.z); o3.updateMatrix(); im.setMatrixAt(i, o3.matrix); });
+    im.name = 'pr-lamp-pools'; im.frustumCulled = false; im.userData.prSkip = true; im.userData.khxr = false; im.renderOrder = 2; im.visible = false;
+    scene.add(im); POOL.m = im;
+  }
+  const PLH = { on: false, g: null, list: [] };
   function frame() {
-    genXR(R.xr.isPresenting);
+    genXR(R.xr.isPresenting); msaaSync();
+    // VR 로 건물 밖에 있으면 실내 화분(잎 삼각형이 많다, 한 눈 약 3.4만)을 숨긴다: 유리 너머로 거의 안 보이고 VR 삼각형 예산(100만)을 넘겼다
+    { const hp = R.xr.isPresenting && !K.I.on; if (DR.group && PLH.g !== DR.group) { PLH.g = DR.group; PLH.list = []; PLH.on = null; DR.group.traverse(o => { const m = o.material; if (o.isMesh && m && !Array.isArray(m) && (o.userData.prPlant || /plant|leaves|foliage|pflanzen/i.test(m.name || ''))) PLH.list.push(o); }); }
+      if (hp) PLH.list.forEach(o => { o.visible = false; });   // 합치기 재구성(clear)이 표시를 되돌리므로 매 프레임
+      if (hp !== PLH.on) { PLH.on = hp; PLH.list.forEach(o => { o.visible = !hp; o.userData.khxr = hp; });   // khxr: 합치기 대상에서 뺀다
+        const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } }
     if (!FURN.open && K.I.on) { FURN.go(); envAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
     // 현황 건물(동광빌딩)은 '현황'·'비교'를 처음 고를 때 Wing 이 만든다: 층 배치가 그대로여도 새로 생긴 메시를 바꾼다
     if (K.exist) { const es = K.exist.children.length + '|' + (K.exist.visible ? 1 : 0); if (es !== CUR.exist) { CUR.exist = es; if (staticDone) swapIn(K.exist, null, 'exist'); } }
@@ -689,10 +766,10 @@
       if (!e) return; const { m, orig, sync } = e;
       if (m.envMapIntensity !== m.userData.prEnv) m.envMapIntensity = m.userData.prEnv;
       if (sync) {
-        if (sync.includes('color')) m.color.copy(orig.color).multiplyScalar(e.glass ? 0.35 : 1);
+        if (sync.includes('color')) m.color.copy(orig.color).multiplyScalar(e.glass ? 0.35 : (e.k || 1));
         if (sync.includes('opacity')) m.opacity = orig.opacity;
         // 야간 창 불빛: 실내는 굽기(야간 조명)로 밝아 유리 너머로 보이므로, 유리 자체 발광은 약하게만 따른다
-        if (sync.includes('emissive')) { m.emissive.copy(orig.emissive); m.emissiveIntensity = orig.emissiveIntensity * (e.glass ? 0.15 : 1); }
+        if (sync.includes('emissive')) { m.emissive.copy(orig.emissive); m.emissiveIntensity = orig.emissiveIntensity * (e.glass ? 0.35 : 1); }   // 0.15 → 0.35(1102: 하늘 방향 수정 뒤 야간 유리 반사가 줄어 우리 건물이 이웃보다 어두워졌다)
       }
       if (orig.emissiveMap !== undefined && m.userData.prFacEm !== orig.emissiveMap && !m.userData.pr) {
         // 야간 창 불빛(원본 cityLights)이 바뀐 경우만 따라간다
@@ -725,6 +802,8 @@
         if (/^far_/.test(c)) m.visible = !(xr && XRQ.level >= 3);   // VR 품질 3단계: 원경 건물 숨김(T5)
       })); } }
     NIGHT.value = night ? 1 : 0;
+    lampPools(); if (POOL.m) POOL.m.visible = night && !inBase;
+    nearTreeModels(); nearTreeSync(R.xr.isPresenting); if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
@@ -958,8 +1037,12 @@
     const props = R.properties, cam = window.KHXR.camera;
     warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
     const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3));
+    // 한 프레임에 준비할 수: 직전 프레임이 빨랐으면 두 배로(최대 32), 느렸으면 절반으로(최소 2). 다시 방문하면 브라우저가 셰이더를 기억해(프로그램 캐시)
+    // 빨리 끝나므로 4개씩 고정보다 2～3초 빨리 준비된다(1102: 재방문 기준 3초)
+    const tn = now(), dt = warm.t ? tn - warm.t : 16; warm.t = tn;
+    warm.n = Math.max(2, Math.min(32, dt < 24 ? (warm.n || 4) * 2 : dt > 50 ? (warm.n || 4) / 2 : warm.n || 4));
     let n = 0;
-    while (WARM.length && n < 4) {
+    while (WARM.length && n < warm.n) {
       const m = WARM.shift(); const pp = props.get(m);
       if (pp && pp.program) continue;
       const me = new T.Mesh(geo, m); me.frustumCulled = false; me.renderOrder = -1;
@@ -990,6 +1073,18 @@
         if (!window.__interiorModelLoader) { const l = gltf(); window.__interiorModelLoader = { loader: { loadAsync: url => glbLoad(l, url) }, cache: new Map() }; }
       }));
   }
+  // 가구 색 다양화: 1층 카페 의자(가죽)는 자리마다 세 가지(코냑·올리브·오트밀) 중 하나, 사무실 의자 천은 층마다 다른 색.
+  // 재질 사본은 층·색마다 하나라 화면 그리기 호출은 몇 회만 는다. VR 은 가구를 단색 꼭짓점 색으로 바꾸므로(xrFlat) 색 차이가 그대로 남고 호출은 늘지 않는다
+  const FURN_PAL = { cafe: [null, 0x4d4a2a, 0x9c8a6c], cloth: { '2F': 0x8d9296, '3F': 0x5d7389, '4F': 0x4b4e53, '5F': 0x6e7858, '6F': 0x8a5c4a, '7F': 0x6c6280, '8F': 0x7b8a8c } };
+  function furnVariety(root) {
+    const V = new Map(), variant = (m, hex) => { const k = m.uuid + hex; let c = V.get(k); if (!c) { c = m.clone(); c.color.setHex(hex).convertSRGBToLinear(); if (c.map) c.color.multiplyScalar(1.15); c.name = m.name + ' ' + hex.toString(16); V.set(k, c); } return c; };
+    root.traverse(o => { if (!o.isMesh || Array.isArray(o.material)) return; const m = o.material; let fl = null, grp = null;
+      for (let q = o; q; q = q.parent) { if (q.userData.fitoutFloor) { fl = q.userData.fitoutFloor; break; } if (!grp && q.parent && q.parent.userData && (q.parent.userData.fitoutFloor || q.parent.name === 'pr-dress')) grp = q; }
+      if (/Cognac leather/i.test(m.name) && fl === '1F') { const g = grp || o, h = Math.abs(Math.round(g.position.x * 7.1 + g.position.z * 3.7)) % 3; if (FURN_PAL.cafe[h]) o.material = variant(m, FURN_PAL.cafe[h]); }
+      else if (/OfficeChairCloth|Dusty blue upholstery/i.test(m.name) && FURN_PAL.cloth[fl]) o.material = variant(m, FURN_PAL.cloth[fl]);
+    });
+    PR.stat.furnVariants = V.size;
+  }
   function dressSig() { return K.LEVELS.map(l => l.key + ':' + l.kind + ':' + l.y.toFixed(2) + ':' + l.h.toFixed(2) + ':' + JSON.stringify(l.poly)).join('|'); }
   async function timber() {
     if (DR.timber) return DR.timber;
@@ -1010,9 +1105,16 @@
       // 모듈이 기대하는 연결 객체(예전 TOWER_LAB_CONTEXT 의 일부). M.stone 은 빈 객체로 넘겨 원본 1층 바닥을 건드리지 않게 한다.
       const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, scene, M: { stone: {} }, city: K.city, site: K.site, loadTex };
       await window.dressTowerCafe(C, extra, await timber());
-      for (const key of window.OFFICE_FLOORS || []) await window.dressTowerOffice(C, extra, key);
+      // 사무실 층: 실제 층 목록에서(층수 7·8, PH1 → 7층 사용이면 7F·8F 도 꾸민다). 시안이 없는 층은 3F·4F·5F 시안을 돌려 쓴다.
+      // 7층 사용(6·7층 분리)이면 6F 는 복층이 아니므로 복층 천장 계산을 끈 사본을 쓴다
+      const OS = typeof OFFICE_STYLES !== 'undefined' ? OFFICE_STYLES : null, OC = window.OFFICE_CATALOG || {};
+      const ups = K.LEVELS.filter(l => l.kind === 'upper' && /^\d+F$/.test(l.key)).map(l => l.key);
+      if (OS) { OS.__6F = OS.__6F || OS['6F']; OS['6F'] = K.state.use7 ? Object.assign({}, OS.__6F, { dup: false }) : OS.__6F;
+        ups.forEach((k, i) => { if (!OS[k] || OS[k].__alias) { const src = ['3F', '4F', '5F'][i % 3]; OS[k] = Object.assign({}, OS[src], { dup: false, __alias: src }); OC[k] = OC[k] || OC[src]; } }); }
+      for (const key of (OS ? ups : window.OFFICE_FLOORS || [])) await window.dressTowerOffice(C, extra, key);
       for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
       if (window.swapInteriorModels) await window.swapInteriorModels(C, extra);
+      furnVariety(extra);
       placePlants(extra);
       parkingServices(extra);
       litDress(extra);
@@ -1064,8 +1166,56 @@
       const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
       const ce = new T.Mesh(cg, cm); ce.position.y = yC - 0.02; ce.castShadow = false; ce.receiveShadow = false; Object.assign(ce.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(ce);
       const ar = aisleArrows(L, P, inside, alongX, W, [u0, u1, v0, v1]); if (ar) g.add(ar);
+      const sm = stallMarks(L, inside); if (sm) g.add(sm);
       extra.add(g);
     });
+  }
+  /* 주차 번호·정지선: Wing 주차 구획 바닥(BM2.pad)마다 입구 앞 통로 바닥에 두 자리 번호, 벽 쪽 끝에서 0.9m 안에 흰 정지선.
+     통로 쪽 = 구획 긴 축의 끝에서 1.2m 바깥이 비어 있는(층 다각형 안, 다른 구획 아님) 쪽. 층마다 한 메시(번호 아틀라스 한 장, 그리기 호출 1회) */
+  let STALL = null;
+  function stallMat() {
+    if (STALL) return STALL;
+    const c = document.createElement('canvas'); c.width = 1024; c.height = 1024; const g = c.getContext('2d');
+    // 8×8 칸: 0～62 = '01'～'63', 63 = 흰 칸(정지선)
+    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 86px "IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif';
+    for (let i = 0; i < 63; i++) g.fillText(String(i + 1).padStart(2, '0'), (i % 8) * 128 + 64, Math.floor(i / 8) * 128 + 68);
+    g.fillRect(7 * 128 + 4, 7 * 128 + 4, 120, 120);
+    const t = new T.CanvasTexture(c); t.anisotropy = ANISO(); t.encoding = T.sRGBEncoding;
+    const m = std({ map: t, transparent: true, alphaTest: 0.35, roughness: 0.55, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, color: lin(0xe6bd38), side: T.DoubleSide });   // 주행 화살표와 같은 노란 도장(밝은 바닥에서 흰색은 잘 안 보였다)
+    m.envMap = parkEnv(); m.envMapIntensity = 0.4; m.userData.prMade = true; keepEnv(m);
+    return (STALL = patch(m, { light: { amb: new T.Color(0.32, 0.32, 0.33) } }));
+  }
+  function stallMarks(L, inside) {
+    const lg = CUR.levelGroup(L); if (!lg) return null;
+    const pads = []; lg.updateMatrixWorld(true); const bb = new T.Box3();
+    lg.traverse(o => { if (o.isMesh && (o.userData.prOrig || o.material) === K.BM2.pad) { bb.setFromObject(o); if (!bb.isEmpty()) pads.push(bb.clone()); } });
+    if (!pads.length) return null;
+    const inPad = (x, z) => pads.some(b => x > b.min.x - 0.1 && x < b.max.x + 0.1 && z > b.min.z - 0.1 && z < b.max.z + 0.1);
+    const Pp = [], U = [], ix = [], y = Math.max(K.floorTop(L), ...pads.map(b => b.max.y)) + 0.008;   // 구획 도장판 윗면 위
+    // 중심(cx, cz), 글자 위쪽 방향(ax, az), 반폭·반길이, 아틀라스 칸
+    const quad = (cx, cz, ax, az, hw, hl, cell) => {
+      const bx = -az, bz = ax, n = Pp.length / 3, u0 = (cell % 8) / 8, v0 = 1 - (Math.floor(cell / 8) + 1) / 8, s = 1 / 8;
+      [[-hw, -hl], [hw, -hl], [hw, hl], [-hw, hl]].forEach(([w, l]) => Pp.push(cx + bx * w + ax * l, y, cz + bz * w + az * l));
+      U.push(u0, v0, u0 + s, v0, u0 + s, v0 + s, u0, v0 + s); ix.push(n, n + 1, n + 2, n, n + 2, n + 3); };
+    pads.sort((a, b) => (a.min.z - b.min.z) || (a.min.x - b.min.x));
+    let k = 0;
+    pads.forEach(b => {
+      const dx = b.max.x - b.min.x, dz = b.max.z - b.min.z; if (Math.min(dx, dz) < 1.8 || Math.max(dx, dz) < 3.5) return;   // 구획 모양이 아닌 판
+      const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, alongX = dx > dz, hl = (alongX ? dx : dz) / 2, hw = (alongX ? dz : dx) / 2;
+      const ux = alongX ? 1 : 0, uz = alongX ? 0 : 1;
+      const free = e => { const x = cx + ux * e * (hl + 1.2), z = cz + uz * e * (hl + 1.2); return inside(x, z, 0.2) && !inPad(x, z); };
+      const e = free(1) ? 1 : free(-1) ? -1 : 0; if (!e) return;
+      // 글자 위쪽 = 통로에서 구획 안쪽(-e 방향): 통로에 서서 읽힌다
+      quad(cx + ux * e * (hl + 0.5), cz + uz * e * (hl + 0.5), -ux * e, -uz * e, 0.42, 0.42, k % 63); k++;   // 구획 입구 바로 앞 통로 바닥(주차한 차에 가리지 않게)
+      quad(cx - ux * e * (hl - 0.9), cz - uz * e * (hl - 0.9), -ux * e, -uz * e, hw * 0.8, 0.06, 63);
+    });
+    if (!k) return null;
+    const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(Pp, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(U, 2));
+    geo.setAttribute('normal', new T.Float32BufferAttribute(new Array(Pp.length).fill(0).map((_, i) => (i % 3 === 1 ? 1 : 0)), 3)); geo.setIndex(ix);
+    const m = new T.Mesh(geo, stallMat()); m.name = L.key + ' stall marks'; m.receiveShadow = true; m.castShadow = false; m.frustumCulled = false;
+    Object.assign(m.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true });
+    PR.stat.stalls = (PR.stat.stalls || 0) + k;
+    return m;
   }
   /* 주행 화살표(T11): Wing 주차 구획 바닥(BM2.pad)이 없는 곳 중 긴 축을 따라 12m 넘게 이어지는 통로 가운데에 양방향 화살표(9m 간격, 차로 중심 ±1.3m).
      층마다 인스턴스 한 묶음(그리기 호출 1회). 실제 동선 자료가 없어 통로 모양으로 추정한 배치다 */
@@ -1214,6 +1364,27 @@
       o.parent.add(c); o.userData.prRep = true; o.visible = false; ENV.hidden.push(o); ENV.added.push(c);
       litDress(c);
     });
+  }
+  /* 가까운 가로수 실제 모델: 우리 건물 100m 안의 그림 카드 나무(약 25그루)를 가로수 모델(잎·줄기 2개 메시)의 인스턴스로 바꾼다(그리기 호출 2회).
+     VR 은 삼각형 예산(100만) 때문에 카드 그대로 쓴다(모델을 숨기고 카드를 되살린다) */
+  const NT = { m: null, idx: [], mats: [], xr: null };
+  function nearTreeModels() {
+    if (NT.m || !ENV.tree || !GND.near) return;
+    const near = GND.near, m4 = new T.Matrix4(), p = new T.Vector3(), q = new T.Quaternion(), sc = new T.Vector3();
+    for (let i = 0; i < near.count; i++) { near.getMatrixAt(i, m4); p.setFromMatrixPosition(m4); if (Math.hypot(p.x, p.z) < 100) { NT.idx.push(i); NT.mats.push(m4.clone()); } }
+    if (!NT.idx.length) { NT.m = []; return; }
+    const tree = normModel(ENV.tree.clone(true), 1, false); tree.updateMatrixWorld(true); const h = new T.Box3().setFromObject(tree).getSize(new T.Vector3()).y;
+    const g = new T.Group(); g.name = 'pr-near-trees'; NT.m = [];
+    tree.traverse(o => { if (!o.isMesh) return; const mat = o.material.clone(); mat.side = T.DoubleSide; if (/leaves/i.test(mat.name)) { mat.alphaTest = 0.45; mat.transparent = false; leafLit(mat); } mat.userData.lin = true;
+      const im = new T.InstancedMesh(o.geometry, mat, NT.mats.length);
+      NT.mats.forEach((cm, k) => { cm.decompose(p, q, sc); m4.compose(p, q, new T.Vector3(1, 1, 1).multiplyScalar(sc.y / h)).multiply(o.matrixWorld); im.setMatrixAt(k, m4); });
+      im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false; im.userData.prSkip = true; g.add(im); NT.m.push(im); });
+    scene.add(g); NT.g = g; NT.xr = null; PR.stat.nearTrees = NT.idx.length;
+  }
+  // 화면: 모델 보이고 카드 0 크기 / VR: 모델 숨기고 카드 되살림
+  function nearTreeSync(xr) {
+    if (!NT.g || NT.xr === xr || !GND.near) return; NT.xr = xr; NT.g.visible = !xr && PR.on;
+    const z = new T.Matrix4().makeScale(0, 0, 0); NT.idx.forEach((i, k) => GND.near.setMatrixAt(i, xr ? NT.mats[k] : z)); GND.near.instanceMatrix.needsUpdate = true;
   }
   function placeTrees() {
     if (!ENV.tree || ENV.group) return;
@@ -1883,6 +2054,8 @@
   const FAST_MBPS = 30;   // 이보다 빠르면 단계를 기다리지 않고 한꺼번에 받는다(순서대로 받으면 단계마다 지연이 쌓여 오히려 늦다)
   async function loadSeq() {
     const run = ++STG.run, alive = () => PR.on && STG.run === run, step = i => { STG.cur = i; statLine(); };
+    // 다시 방문(서비스 워커가 자산을 저장소에서 준다): 회선을 기다릴 까닭이 없으므로 가구 조립(CPU 가 가장 오래 걸리는 단계)을 바로 시작한다
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) FURN.go();
     step(0); for (let i = 0; i < 80 && pend.done < pend.n; i++) await sleep(100);   // 최대 8초
     if (!alive()) return;
     const mbps = netMbps(); PR.stat.mbps = Math.round(mbps); STG.fast = mbps >= FAST_MBPS;
@@ -1935,6 +2108,7 @@
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
+      if (POOL.m) POOL.m.visible = false; if (NT.g) NT.g.visible = false;
       CUR.levels = null;
       document.querySelector('.app').classList.remove('pr3d');
       panel(false);
@@ -2058,6 +2232,9 @@
   }
 
   /* ================= 9. 진단 ================= */
+  // 자체 점검(qa)용 묶음: 화면 영역을 우리 건물·주변 건물·땅·나무로 나눠 휘도를 잰다
+  PR.groups = () => ({ ours: [K.bld, K.exist, DR.group].filter(Boolean), ctx: [CTX.now, CTX.next, K.ctx, K.city, DIST].filter(Boolean),
+    ground: [GND.g, K.site].filter(Boolean), trees: [ENV.group, ...(GND.g ? GND.g.children.filter(o => /^pr-trees/.test(o.name)) : [])].filter(Boolean) });
   // 한 프레임 전체(후처리 패스 포함)의 그리기 호출·삼각형
   PR.frameInfo = () => new Promise(res => { const inf = R.info; inf.autoReset = false; inf.reset(); requestAnimationFrame(() => requestAnimationFrame(() => { const r = { calls: inf.render.calls, tris: inf.render.triangles, programs: inf.programs.length }; inf.autoReset = true; res(r); })); });
   PR.diag = () => {

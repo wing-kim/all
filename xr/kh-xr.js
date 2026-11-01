@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.a';
+  const VER = '1102.b';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -406,6 +406,25 @@
   // 모형 자르기 평면. 렌더러 전체 자르기(renderer.clippingPlanes)는 r128 에서 두 눈 사이 가운데 카메라 기준으로 한 번만
   // 변환돼 피규어(사용자 확대)에서 왼눈·오른눈의 잘린 선이 어긋난다. 그래서 재질마다 달아 눈마다 변환되게 한다.
   let figPlanes = null; const clipped = new Set(); let clipT = 0;
+  /* 피규어 범위 밖 그리지 않기: 자르기 평면은 범위 밖을 화소에서 지울 뿐 그리기 호출은 그대로 든다(가상 방 피규어 216회).
+     범위(정사각형 ±crop) 밖에 통째로 있는 메시를 그 프레임에만 숨긴다. 후보는 범위·중심·합치기 묶음이 바뀌거나 2초마다 다시 고른다 */
+  const FigCull = {
+    list: [], sig: '', t: 0,
+    pick(time) {
+      const c = S.center, r = S.fig.crop, sig = c.x.toFixed(1) + ',' + c.z.toFixed(1) + ',' + r + ',' + (Opt.group ? Opt.group.uuid : '') + ',' + scene.children.length;
+      if (sig === this.sig && time - this.t < 2000) return; this.sig = sig; this.t = time;
+      const m = 2, x0 = c.x - r - m, x1 = c.x + r + m, z0 = c.z - r - m, z1 = c.z + r + m, bb = new T.Box3(), out = [];
+      scene.traverse(o => {
+        if (o === rig || !(o.isMesh || o.isLine) || o.isInstancedMesh || !o.geometry) return;
+        for (let q = o; q; q = q.parent) if (q === rig || q.userData.khxrUI) return;
+        if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); bb.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
+        if (bb.isEmpty() || bb.max.x < x0 || bb.min.x > x1 || bb.max.z < z0 || bb.min.z > z1) out.push(o);
+      });
+      this.list = out;
+    },
+    hide(time) { this.pick(time); const hid = []; for (const o of this.list) if (o.visible) { o.visible = false; hid.push(o); } return hid; },
+  };
+  X.figCull = FigCull;
   function cropPlanes() {
     if (!figPlanes) figPlanes = [new T.Plane(V(1, 0, 0), 0), new T.Plane(V(-1, 0, 0), 0), new T.Plane(V(0, 0, 1), 0), new T.Plane(V(0, 0, -1), 0)];
     const c = S.center, r = S.fig.crop;
@@ -636,11 +655,13 @@
     rig.updateMatrixWorld(true);
     const split = S.mode === 'fig';     // 피규어: 모형만 자르고, 손·메뉴·레이(rig 안)는 잘리지 않게 따로 그림
     if (split) rig.visible = false;
+    const fcHid = split ? FigCull.hide(time) : null;
     if (Room.g && Room.g.visible) {
       Room.update(); const cpR = R.clippingPlanes; R.clippingPlanes = [];
       R.render(Room.scene, xrCam);
       R.clippingPlanes = cpR; const ac = R.autoClear; R.autoClear = false; R.render(scene, xrCam); R.autoClear = ac;
     } else R.render(scene, xrCam);
+    if (fcHid) fcHid.forEach(o => { o.visible = true; });
     if (cp0) R.clippingPlanes = cp0;
     if (split) {
       rig.visible = true; uiScene.add(rig);

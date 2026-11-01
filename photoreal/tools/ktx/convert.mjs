@@ -1,6 +1,6 @@
 // 실사 3D 텍스처·모델을 KTX2(Basis Universal)로 바꾼다(T2): cd photoreal/tools/ktx && npm install && node convert.mjs [tex|assets|facade|glb ...]
 // - 인코더: basisu(Homebrew basis_universal 2.50, Apache-2.0). 이 폴더의 node 패키지: glTF-Transform(MIT), sharp(Apache-2.0), draco3dgltf(Apache-2.0)
-// - 색(sRGB): ETC1S, 거칠기·금속성 등 데이터: ETC1S 선형, 노멀: UASTC(+RDO, zstd). 화면에서 GPU 압축 형식(BC7·ASTC·ETC2)으로 바뀌어 메모리가 1/4 이하
+// - 색(sRGB): ETC1S, 거칠기·금속성 등 데이터: ETC1S 선형, 노멀: 지형·벽·바닥(tex·assets)은 ETC1S, 주변 건물 창 무늬는 UASTC(+RDO, zstd). 화면에서 GPU 압축 형식(BC7·ASTC·ETC2)으로 바뀌어 메모리가 1/4 이하
 // - 원본(webp·png·glb)은 그대로 두고 옆에 .ktx2 / .k.glb 를 만든다(실사 계층은 KTX2 를 먼저 읽고, 실패하면 원본)
 // - webp·png 원본은 three 가 위아래를 뒤집어(flipY) 올리지만 압축 텍스처는 뒤집지 못하므로 미리 뒤집어 저장한다. glTF 안 텍스처는 원래 뒤집지 않는다
 import { execFileSync } from 'node:child_process';
@@ -25,11 +25,12 @@ const KIND = {
   color: { args: ['-q', '192'], cap: 1024 },
   data: { args: ['-linear', '-q', '160'], cap: 512 },
   normal: { args: ['-uastc', '-normal_map', '-uastc_rdo_l', '2.0', '-ktx2_zstandard_level', '19'], cap: 512 },
+  enormal: { args: ['-normal_map', '-q', '192'], cap: 512 },   // 지형·벽·바닥 노멀(tex·assets): ETC1S 로 1/5 크기(0.3MB → 0.06MB). 첫 방문 전송량을 줄인다(1102)
   exact: { args: ['-uastc', '-linear', '-ktx2_zstandard_level', '19'], cap: 1024 },   // 셰이더가 문턱값으로 읽는 맵(주변 건물 벽·창 구분): 손실 적게
   // 모델(가구·차·나무) 안 텍스처: 작게 보이므로 전송량을 원본 수준으로 맞춘다(노멀도 ETC1S, 512 상한)
   gcolor: { args: ['-q', '128'], cap: 512 },
-  gdata: { args: ['-linear', '-q', '128'], cap: 512 },
-  gnormal: { args: ['-normal_map', '-q', '160'], cap: 512 },
+  gdata: { args: ['-linear', '-q', '128'], cap: 256 },      // 1102: 512 → 256(작게 보이는 가구·차·나무, 첫 방문 전송량)
+  gnormal: { args: ['-normal_map', '-q', '160'], cap: 256 },
 };
 async function encode(input, out, kind, { flip = false, cap } = {}) {
   const K = KIND[kind], png = path.join(TMP, path.basename(out) + '.png');
@@ -42,10 +43,10 @@ async function encode(input, out, kind, { flip = false, cap } = {}) {
   execFileSync('basisu', ['-ktx2', '-mipmap', ...K.args, png, '-output_file', out], { stdio: 'pipe' });
   return { w, h, bytes: fs.statSync(out).size };
 }
-const kindOf = f => /_normal\.|-nc\./.test(f) ? 'normal' : /-rm\./.test(f) ? 'exact' : /_rough\./.test(f) ? 'data' : 'color';
-async function folder(dir, re, cap) {
+const kindOf = (f, nk = 'normal') => /_normal\./.test(f) ? nk : /-nc\./.test(f) ? 'normal' : /-rm\./.test(f) ? 'exact' : /_rough\./.test(f) ? 'data' : 'color';
+async function folder(dir, re, cap, nk = 'enormal') {
   for (const f of fs.readdirSync(path.join(ROOT, dir)).filter(f => re.test(f)).sort()) {
-    const src = path.join(ROOT, dir, f), out = src.replace(/\.(webp|png)$/, '.ktx2'), k = kindOf(f);
+    const src = path.join(ROOT, dir, f), out = src.replace(/\.(webp|png)$/, '.ktx2'), k = kindOf(f, nk);
     const r = await encode(src, out, k, { flip: true, cap });
     log.push([path.join(dir, f), k, fs.statSync(src).size, r.bytes, r.w + 'x' + r.h]);
   }
@@ -72,6 +73,8 @@ async function glbs() {
   }
 }
 if (want.has('tex')) await folder('tex', /_(color|normal|rough)\.webp$/);
+if (want.has('texn')) await folder('tex', /_normal\.webp$/);
+if (want.has('assetsn')) await folder('assets', /_normal\.webp$/);
 if (want.has('assets')) await folder('assets', /_(color|normal|rough)\.webp$/);
 if (want.has('facade')) await folder('context/facade', /-(col|rm|nc)\.(webp|png)$/, 1024);   // 창 무늬 노멀은 원래 크기(창틀 경계가 무뎌지지 않게)
 if (want.has('glb')) await glbs();
