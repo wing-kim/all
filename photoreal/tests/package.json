@@ -1,0 +1,7 @@
+{
+  "name": "kh-photoreal-tests",
+  "private": true,
+  "type": "module",
+  "description": "케이프혼타워 실사 3D 시험(헤드리스 Chrome): 로딩·조합 전환 시간 측정과 화면 캡처",
+  "dependencies": { "puppeteer-core": "23.11.1" }
+}
