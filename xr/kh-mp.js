@@ -47,11 +47,12 @@
         catch (e) { M.mic = null; Panel.note('마이크를 쓸 수 없어 듣기만 합니다 (' + e.name + ')'); }
       } else M.micOn = false;
       const room = M.room = Tr.joinRoom({ appId: APP, relayConfig: { redundancy: 4, warnOnRelayFailure: false } }, 'khtower-' + M.roomId);
-      ['hi', 'pose', 'dsg', 'ctl', 'go', 'ping', 'st'].forEach(n => { M.A[n] = room.makeAction(n); });   // 이름은 12바이트 이하
+      ['hi', 'pose', 'dsg', 'ctl', 'go', 'ping', 'st', 'full'].forEach(n => { M.A[n] = room.makeAction(n); });   // 이름은 12바이트 이하
       M.A.hi.onMessage = (d, { peerId }) => Peers.hello(peerId, d);
+      M.A.full.onMessage = () => { if (M.joined) { leave(); Panel.note('방이 가득 찼습니다 (최대 ' + MAX + '명)'); } };
       M.A.pose.onMessage = (d, { peerId }) => { M.stats.recv++; const p = M.peers.get(peerId); if (p) { p.pose = d; p.t = performance.now(); } };
       M.A.dsg.onMessage = (d, { peerId }) => Design.recv(peerId, d);
-      M.A.ctl.onMessage = (d, { peerId }) => Design.setHost(d.h, peerId);
+      M.A.ctl.onMessage = (d, { peerId }) => Design.setHost(d.h, peerId, +d.t || Date.now());
       M.A.go.onMessage = (d, { peerId }) => Gather.recv(peerId, d);
       M.A.ping.onMessage = (d, { peerId }) => Ping.show(d.p, (M.peers.get(peerId) || {}).color || '#fff', (M.peers.get(peerId) || {}).name || '');
       M.A.st.onMessage = (d, { peerId }) => { const p = M.peers.get(peerId); if (p) { Object.assign(p, d); Avatar.tag(p); Panel.render(); X.ui && X.ui.dirty(); } };
@@ -63,7 +64,7 @@
       };
       room.onPeerLeave = id => Peers.remove(id);
       room.onPeerStream = (stream, id) => Voice.attach(id, stream);
-      M.host = M.me.id; M.joined = true; M.joining = false;
+      M.host = M.me.id; M.hostT = 0; M.joined = true; M.joining = false;
       X.hooks.push(tick); requestAnimationFrame(screenLoop);
       addEventListener('pagehide', leave);
       Design.watchLocal();
@@ -73,7 +74,7 @@
       M.joining = false; Panel.render(); Panel.note('연결하지 못했습니다: ' + (e.message || e)); log('참가 실패', e.message || e);
     }
   }
-  function hello() { return { name: M.name, since: M.me.since, mic: !!(M.mic && M.micOn), host: M.host, dev: device() }; }
+  function hello() { return { name: M.name, since: M.me.since, mic: !!(M.mic && M.micOn), host: M.host, hostT: M.hostT, dev: device() }; }
   function device() { return S.session ? (S.mode === 'fig' ? 'fig' : 'vr') : (matchMedia('(pointer:coarse)').matches ? 'mobile' : 'pc'); }
   function leave() {
     if (!M.joined) return;
@@ -104,8 +105,11 @@
       // 늦게 들어온 사람이 정원을 넘기면 스스로 나간다
       const older = [...M.peers.values()].filter(q => q.since < M.me.since).length;
       if (older >= MAX) { leave(); Panel.note('방이 가득 찼습니다 (최대 ' + MAX + '명)'); return; }
+      // 늦게 온 사람이 일부와만 연결돼 스스로 알아채지 못할 때를 대비해, 먼저 있던 사람이 정원 밖 사람에게 알려 준다
+      const all = [{ id: M.me.id, since: M.me.since }].concat([...M.peers.values()].filter(q => q.since !== Infinity)).sort((a, b) => a.since - b.since || (a.id < b.id ? -1 : 1));
+      if (all.slice(MAX).some(q => q.id === p.id)) { M.A.full.send(1, { target: p.id }); return; }
       // 방장: 상대가 알려 준 방장이 나보다 먼저 들어온 사람이면 따른다
-      if (first) Design.electFrom(d.host);
+      if (first) Design.electFrom(d.host, +d.hostT || 0);
       if (first) toast(p.name + ' 님이 들어왔습니다');
       Panel.render(); X.ui && X.ui.dirty();
     },
@@ -113,7 +117,7 @@
       const p = M.peers.get(id); if (!p) return;
       Avatar.drop(p); Voice.drop(p); M.peers.delete(id);
       if (!quiet) toast(p.name + ' 님이 나갔습니다');
-      if (M.host === id) Design.electOldest();
+      if (M.host === id) { M.hostT = 0; Design.electOldest(); }
       Peers.recolor(); Panel.render(); X.ui && X.ui.dirty();
     },
     list() { return [...M.peers.values()].sort((a, b) => a.since - b.since); },
@@ -384,6 +388,7 @@
     },
     recv(from, d) {
       if (from !== M.host) return;
+      this.last = d;
       if (!M.following) { this.pending = d; return; }
       if (JSON.stringify(this.snap()) !== JSON.stringify(d)) { this.apply(d); log('디자인 맞춤', from); }
     },
@@ -395,21 +400,26 @@
         if (this.applying || !M.joined || M.host === M.me.id || !M.following) return;
         const t = e.target; if (!t || !(t.matches('input') || t.closest('[id^=sw-]') || t.id === 'sun-apply')) return;
         if (t.matches('input') && (SKIP_R.has(t.name) || SKIP_C.has(t.id))) return;
-        M.following = false; toast('내 화면만 바꿉니다 (방장 디자인 따라가기 꺼짐)'); Panel.render(); X.ui && X.ui.dirty();
+        if (window.KHPRLayer && KHPRLayer.silent) return;   // 실사 3D 계층이 값은 그대로 두고 보내는 알림(반사 지도 갱신)
+        // 값이 실제로 바뀐 경우만 직접 바꾼 것으로 본다(다른 계층이 보내는 알림 무시)
+        setTimeout(() => {
+          if (!M.following || M.host === M.me.id || (this.last && JSON.stringify(this.snap()) === JSON.stringify(this.last))) return;
+          M.following = false; toast('내 화면만 바꿉니다 (방장 디자인 따라가기 꺼짐)'); Panel.render(); X.ui && X.ui.dirty();
+        }, 0);
       };
       P.addEventListener('change', off, true); P.addEventListener('click', e => { if (e.target.closest && e.target.closest('[id^=sw-],#sun-apply')) off(e); }, true);
     },
-    setHost(h, from) {
-      if (!h) return; M.host = h; M.following = true; this.lastSent = '';
+    setHost(h, from, t) {
+      if (!h || t < M.hostT) return; M.host = h; M.hostT = t; M.following = true; this.lastSent = '';
       const p = M.peers.get(h); toast((h === M.me.id ? '내가' : (p ? p.name + ' 님이' : '다른 사람이')) + ' 디자인을 보여 줍니다');
       M.peers.forEach(q => Avatar.tag(q)); Panel.render(); X.ui && X.ui.dirty();
     },
-    take() { M.host = M.me.id; M.A.ctl.send({ h: M.me.id }); this.lastSent = ''; M.peers.forEach(q => Avatar.tag(q)); toast('이제 내 디자인을 모두에게 보여 줍니다'); Panel.render(); X.ui && X.ui.dirty(); },
-    electFrom(h) {   // 먼저 있던 사람이 알려 준 방장을 따른다(나보다 먼저 들어온 사람일 때만)
-      const p = h && M.peers.get(h);
-      if (h === M.me.id) return;
-      if (p && p.since <= M.me.since) { M.host = h; M.peers.forEach(q => Avatar.tag(q)); }
-      else this.electOldest();
+    take() { M.host = M.me.id; M.hostT = Date.now(); M.A.ctl.send({ h: M.me.id, t: M.hostT }); this.lastSent = ''; M.peers.forEach(q => Avatar.tag(q)); toast('이제 내 디자인을 모두에게 보여 줍니다'); Panel.render(); X.ui && X.ui.dirty(); },
+    // 방장 정하기: '보여 주기'로 넘겨받은 방장(hostT = 넘겨받은 시각)은 더 나중에 넘겨받은 쪽이 이기고,
+    // 넘겨받은 적이 없으면(hostT 0) 아는 사람 중 가장 먼저 들어온 사람. 인사가 어떤 순서로 와도 모두 같은 결과가 된다
+    electFrom(h, t) {
+      if (t > M.hostT && h && (h === M.me.id || M.peers.has(h))) { M.host = h; M.hostT = t; M.peers.forEach(q => Avatar.tag(q)); return; }
+      if (M.hostT === 0) this.electOldest();
     },
     electOldest() {
       const all = [{ id: M.me.id, since: M.me.since }].concat([...M.peers.values()].filter(p => p.since !== Infinity));
@@ -507,7 +517,7 @@
     open() {
       if (!this.el) {
         const st = document.createElement('style');
-        st.textContent = '#khmp{position:fixed;left:14px;bottom:100px;z-index:10000;width:min(320px,calc(100vw - 28px));max-height:calc(100vh - 140px);overflow:auto;background:#fff;color:#1d2321;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);font:14px ' + FONT + ';padding:14px 14px 12px}'
+        st.textContent = '#khmp{position:fixed;left:14px;bottom:calc(var(--khxr-bb, 44px) + 56px);z-index:10000;width:min(320px,calc(100vw - 28px));max-height:calc(100vh - var(--khxr-bb, 44px) - 96px);overflow:auto;background:#fff;color:#1d2321;border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.22);font:14px ' + FONT + ';padding:14px 14px 12px}'
           + '#khmp h3{margin:0 0 8px;font-size:15px;color:#1f5c55;display:flex;justify-content:space-between;align-items:center}#khmp h3 button{border:0;background:none;font-size:18px;cursor:pointer;color:#666}'
           + '#khmp .row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}#khmp button.b{flex:1 1 auto;padding:9px 10px;border-radius:8px;border:1px solid #1f5c55;background:#fff;color:#1f5c55;font:600 13px ' + FONT + ';cursor:pointer}#khmp button.b.p{background:#1f5c55;color:#fff}#khmp button.b.on{background:#e6f2ef}'
           + '#khmp input[type=text]{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #ccd;border-radius:8px;font:14px ' + FONT + '}#khmp label{display:flex;gap:6px;align-items:center;margin:6px 0}'

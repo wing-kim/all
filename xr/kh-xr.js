@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1031.m1';
+  const VER = '1101.i1';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -110,6 +110,13 @@
     }
     if (!bar.children.length) return;
     document.body.appendChild(bar);
+    // 실사 3D 패널(왼쪽 아래)이 떠 있으면 버튼 줄을 그 위로 올린다. 멀티플레이 카드도 --khxr-bb 로 따라 올라간다
+    const lift = () => {
+      const p = document.querySelector('.pr-panel'); let bb = 44;
+      if (p && p.offsetParent !== null) { const r = p.getBoundingClientRect(); if (r.height && r.left < 400) bb = Math.max(44, Math.round(innerHeight - r.top + 8)); }
+      if (bar.style.bottom !== bb + 'px') { bar.style.bottom = bb + 'px'; document.documentElement.style.setProperty('--khxr-bb', bb + 'px'); }
+    };
+    lift(); setInterval(lift, 700); addEventListener('resize', lift);
     log('XR 버튼 표시', JSON.stringify(X.support));
   }
 

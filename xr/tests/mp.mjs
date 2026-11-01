@@ -19,6 +19,7 @@ const errors = [];
 async function open(tag, query) {
   const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args });
   const p = await b.newPage(); await p.setViewport({ width: 1100, height: 720 });
+  await p.evaluateOnNewDocument(() => performance.setResourceTimingBufferSize(20000));   // 실사 3D 자산이 많아 기본 250개 기록이 넘친다
   p.on('pageerror', e => errors.push(tag + ' pageerror: ' + e.message));
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|WebSocket|relay/i.test(m.text())) errors.push(tag + ' ' + m.text()); });
   await p.goto(BASE + '/' + PAGE + (query ? sep + query : ''), { waitUntil: 'load', timeout: 120000 });
@@ -71,7 +72,7 @@ try {
   /* 5. 음성: 서로의 음성 흐름과 말소리 크기 */
   const voice = await waitFor(B, () => [...KHMP.peers.values()].every(p => p.audio && p.audio.stream.getAudioTracks().length), 20000);
   await sleep(1500);
-  const lv = await B.ev(() => [...KHMP.peers.values()].map(p => +KHMP._t.Voice.level(p.id).toFixed(3)));
+  const lv = await B.ev(async () => { const mx = {}; for (let i = 0; i < 8; i++) { KHMP.peers.forEach(p => { mx[p.id] = Math.max(mx[p.id] || 0, KHMP._t.Voice.level(p.id)); }); await new Promise(r => setTimeout(r, 250)); } return Object.values(mx).map(v => +v.toFixed(3)); });   // 가짜 마이크는 끊겼다 울리는 삐 소리라 2초 중 가장 큰 값
   ok('B 가 A·C 음성을 받음(가짜 마이크 소리 크기 > 0)', voice && lv.every(v => v > 0.01), lv);
   const vol = await B.ev(() => [...KHMP.peers.values()].map(p => +p.audio.el.volume.toFixed(2)));
   ok('거리 음량: 멀어도 45% 아래로 줄지 않음', vol.every(v => v >= 0.45 && v <= 1), vol);
@@ -85,7 +86,7 @@ try {
   ok('마감재 색상도 맞춰짐', syncSw, pickSw);
 
   /* 7. C 가 직접 바꾸면 따라가기가 꺼지고, 이후 방장 변경은 C 에 적용되지 않음 */
-  const cPick = await C.ev(() => { const r = [...document.querySelectorAll('#panel input[name=win]')].find(i => !i.checked); r.click(); return { v: r.value, following: KHMP.following }; });
+  const cPick = await C.ev(() => { const r = [...document.querySelectorAll('#panel input[name=win]')].find(i => !i.checked); r.click(); return new Promise(ok => setTimeout(() => ok({ v: r.value, following: KHMP.following }), 300)); });   // 직접 바꿨는지는 값 비교 뒤(다음 차례)에 정한다
   ok('C 가 직접 바꾸면 따라가기 꺼짐', cPick.following === false, cPick);
   const aWin = await A.ev(v => { const r = [...document.querySelectorAll('#panel input[name=win]')].find(i => !i.checked && i.value !== v); r.click(); return r.value; }, cPick.v);
   const bGot = await waitFor(B, v => (document.querySelector('#panel input[name=win]:checked') || {}).value === v, 8000, aWin);
@@ -139,8 +140,8 @@ try {
   /* 13. 정원: 최대 3명으로 맞춘 D 가 들어오면 스스로 나감 */
   const D = await open('D', 'room=' + room + '&mpmax=3'); W.push(D);
   await joinVia(D, '디');
-  const full = await waitFor(D, () => !KHMP.joined && /가득/.test(KHMP.panel.msg), 40000);
-  ok('정원을 넘긴 늦은 참가자는 스스로 나감', full, await D.ev(() => KHMP.panel.msg));
+  const full = await waitFor(D, () => !KHMP.joined && /가득/.test(KHMP.panel.msg), 90000);   // 실사 3D 를 켠 무거운 화면 넷이면 인사가 늦게 모인다
+  ok('정원을 넘긴 늦은 참가자는 스스로 나감', full, await D.ev(() => ({ msg: KHMP.panel.msg, joined: KHMP.joined, me: KHMP.me && KHMP.me.since, peers: [...KHMP.peers.values()].map(p => [p.name, p.since]) })));
   const back = await waitFor(A, () => KHMP.peers.size === 2, 20000);
   ok('A 참가자 수는 다시 2명(B·C)', back, await A.ev(() => KHMP.peers.size));
 
