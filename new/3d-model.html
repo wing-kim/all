@@ -7598,7 +7598,7 @@ function buildOutline(){dispose(outlineG);if(state.era!=='cmp')return;const arr=
   barsFrom(outlineG,arr,0.14)}
 // ③ 비교 (2026.10.09): 현황과 신축을 함께 그리고 슬라이더로 서로의 투명도를 바꿔 겹쳐 봄 (윤곽선은 선택)
 const CMP={v:50,ol:false,apt:true,spin:false,mats:new Map()};
-function ghostMat(m,op){let c=CMP.mats.get(m);if(!c){const ud=m.userData;m.userData={};c=m.clone();m.userData=ud;c.transparent=true;c.depthWrite=false;c.needsUpdate=true;CMP.mats.set(m,c)}   // opacity changes need no shader rebuild
+function ghostMat(m,op){let c=CMP.mats.get(m);if(!c){const ud=m.userData;m.userData={};c=m.clone();m.userData=ud;c.transparent=true;c.depthWrite=false;c.needsUpdate=true;CMP.mats.set(m,c);if(ud.prMade){c.userData.prMade=true;c.onBeforeCompile=m.onBeforeCompile;c.customProgramCacheKey=m.customProgramCacheKey}}   // [PR] 실사 재질의 반투명 사본도 셰이더 보강(굽기·월드 좌표 텍스처)을 유지   // opacity changes need no shader rebuild
   if(m.color&&c.color)c.color.copy(m.color);if(c.map!==m.map){c.map=m.map;c.needsUpdate=true}c.userData.lin=m.userData.lin;c.opacity=(m.transparent?m.opacity:1)*op;return c}
 function ghostGroup(grp,op){grp.traverse(o=>{if(!o.material)return;if(o.userData.mat0===undefined)o.userData.mat0=o.material;const orig=o.userData.mat0;
   if(op>=0.999){if(o.material!==orig)o.material=orig;return}o.material=Array.isArray(orig)?orig.map(m=>ghostMat(m,op)):ghostMat(orig,op)})}

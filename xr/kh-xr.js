@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1101.f';
+  const VER = '1102.a';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -102,7 +102,11 @@
     const bar = document.createElement('div'); bar.id = 'khxr-bar';
     const mk = (t, m, cls) => { const b = document.createElement('button'); b.type = 'button'; if (cls) b.className = cls; b.innerHTML = t; b.onclick = () => enter(m).catch(e => { log('진입 실패', e.message); alert('XR을 시작하지 못했습니다: ' + e.message); }); bar.appendChild(b); };
     if (vr || ar) { mk('VR로 들어가기 <small>' + VER + '</small>', 'vr'); mk(ar ? '내 공간에 놓기' : '모형으로 보기', 'fig', 'alt'); }
-    if (K.full) {   // 멀티플레이: 누를 때만 모듈·통신 라이브러리를 받는다(평소 로딩·성능 영향 없음)
+    // 멀티플레이: 몰입 VR·AR 이 되는 기기(퀘스트 브라우저는 2D 창에서도 immersive-vr 지원으로 보인다)에서만 보인다.
+    // 일반 PC·휴대폰 브라우저는 숨긴다. ?mp=1 이면 강제로 보이고(자동 시험·개발 확인), ?mp=0 이면 숨긴다
+    const mpShow = Q.get('mp') === '1' || (Q.get('mp') !== '0' && (vr || ar));
+    X.support.mp = mpShow;
+    if (K.full && mpShow) {   // 누를 때만 모듈·통신 라이브러리를 받는다(평소 로딩·성능 영향 없음)
       const b = document.createElement('button'); b.type = 'button'; b.className = 'alt'; b.id = 'khxr-mp';
       b.innerHTML = Q.get('room') ? '멀티플레이 참가 <small>방 ' + Q.get('room').slice(0, 8) + '</small>' : '멀티플레이';
       b.onclick = async () => { try { if (!window.KHMP) await loadScript(BASE + 'kh-mp.js?v=' + VER); window.KHMP.open(); } catch (e) { alert('멀티플레이를 불러오지 못했습니다: ' + (e.message || e)); } };
@@ -675,9 +679,12 @@
       else if (this.good > XQC.upHold && this.level > 0) { this.set(this.level - 1); this.good = 0; this.ds = []; }
     }
   };
-  /* 간이 프레임 표시(?prfps=1): 실기기 착용 확인용. 시야 아래쪽에 작은 판으로 프레임 간격 중앙값·95%와 그리기 호출을 보인다 */
+  /* 간이 프레임 표시: 실기기 착용 확인용. 시야 아래쪽에 작은 판으로 프레임 간격 중앙값·95%와 그리기 호출을 보인다
+     실사 계층과 같은 규칙: 기본은 숨김, ?prfps=1 또는 실사 패널 '성능 보기'(localStorage khpr.perf)일 때만, ?prfps=0 이면 끈다 */
   const Fps = X.fps = {
-    on: Q.get('prfps') === '1', ds: [], last: 0, t: 0, mesh: null, cv: null, tex: null,
+    on: Q.get('prfps') === '1' || (Q.get('prfps') !== '0' && (() => { try { return localStorage.getItem('khpr.perf') === '1'; } catch (e) { return false; } })()),
+    ds: [], last: 0, t: 0, mesh: null, cv: null, tex: null,
+    set(on) { this.on = !!on; this.ds = []; this.last = 0; if (this.mesh) this.mesh.visible = this.on; },
     tick(time, calls) {
       if (this.last) { this.ds.push(time - this.last); if (this.ds.length > 144) this.ds.shift(); } this.last = time;
       if (!this.mesh) {

@@ -1,6 +1,6 @@
 // 휴대폰 화면 겹침(T16)과 멀티플레이 연결 시간 초과 안내(T15) 시험: node mobile.mjs  (BASE=주소, 기본 http://localhost:8791)
 // 390×844(아이폰 크기) 흉내: 실사 패널이 처음에 접혀 있고 나침반·XR 버튼 줄과 겹치지 않는지, 펼쳤을 때 나침반이 위로 비켜 가는지.
-// 멀티플레이: 받은 방 링크(?room=)로 혼자 들어가 ?mpwait=3000 안에 아무와도 연결되지 않으면 안내와 다시 시도가 보이는지(인터넷 없이도 됨)
+// 멀티플레이: XR 없는 휴대폰에서 버튼이 숨는지, ?mp=1 로 받은 방 링크(?room=)로 혼자 들어가 ?mpwait=3000 안에 아무와도 연결되지 않으면 안내와 다시 시도가 보이는지(인터넷 없이도 됨)
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -27,6 +27,12 @@ await p.evaluate(() => document.querySelector('#pr-panel .pr-fold').click()); aw
 const r2 = await rects();
 ok('펼치면 나침반이 패널 위로 비켜 감(겹침 없음)', !r2.fold && !hit(r2.panel, r2.compass) && !hit(r2.panel, r2.bar), r2);
 await p.screenshot({ path: OUT + 'mobile-open.png' });
+// 멀티플레이 버튼: 몰입 VR·AR 이 없는 휴대폰 브라우저에서는 숨는다(방 링크로 열어도). ?mp=1 이면 보인다
+const mp0 = await p.evaluate(() => ({ btn: !!document.getElementById('khxr-mp'), sup: window.KHXRLayer && KHXRLayer.support }));
+ok('XR 없는 휴대폰: 멀티플레이 버튼 숨김', !mp0.btn, mp0);
+await p.goto(BASE + '/new/3d-model.html?pr=1&prsw=0&mp=1&room=khtest' + Math.random().toString(36).slice(2, 8) + '&mpwait=3000', { waitUntil: 'load', timeout: 120000 });
+await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.t.firstFrame != null && document.getElementById('khxr-mp'), { timeout: 120000 }).catch(() => {});
+ok('?mp=1: 멀티플레이 버튼 보임', await p.evaluate(() => !!document.getElementById('khxr-mp')), null);
 // 멀티플레이 시간 초과
 await p.evaluate(() => document.getElementById('khxr-mp').click());
 await p.waitForFunction(() => window.KHMP && document.querySelector('#khmp [data-a="join"]'), { timeout: 30000 });

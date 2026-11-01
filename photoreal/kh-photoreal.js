@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1101.f';
+  const VER = '1102.a';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -102,6 +102,19 @@
   }
   const TX = new Map(), pend = { n: 0, done: 0 };
   const isMobile = matchMedia('(pointer:coarse)').matches;
+  // 이방성 필터: 비스듬한 바닥의 흐림·무아레를 줄인다(기기 최대값 안에서 화면 16, 휴대폰·퀘스트 8)
+  const AA = Q.get('praa') !== '0';   // ?praa=0: 화질 결함 수정(이방성 상향·노멀 감쇠·스페큘러 AA·잎 앞뒤 조명)을 끈다(전후 비교용)
+  const ANISO = () => AA ? Math.min(R.capabilities.getMaxAnisotropy() || 1, isMobile ? 8 : 16) : isMobile ? 4 : 8;
+  // 성능 보기(fps·그리기 호출·켜기 시간): 아래 fpsStart·statLine 참고. 다른 코드가 먼저 읽을 수 있어 앞쪽에 둔다
+  const PERF = { on: Q.get('prfps') === '1' || (Q.get('prfps') !== '0' && (() => { try { return localStorage.getItem('khpr.perf') === '1'; } catch (e) { return false; } })()), el: null, started: false };
+  PR.perf = on => {
+    if (on == null) return PERF.on;
+    PERF.on = !!on; try { if (on) localStorage.setItem('khpr.perf', '1'); else localStorage.removeItem('khpr.perf'); } catch (e) {}
+    if (PERF.el) PERF.el.hidden = !on; if (on) fpsStart();
+    if (window.KHXRLayer && KHXRLayer.fps && KHXRLayer.fps.set) KHXRLayer.fps.set(on);
+    statLine(); return PERF.on;
+  };
+  if (PERF.on) setTimeout(fpsStart, 0);
   // 자리표시 이미지: 받는 동안 검게 보이지 않게, 평균색(색상)·평평한 노멀·중간 거칠기로 먼저 그린다
   function solid(rgb) { const c = document.createElement('canvas'); c.width = c.height = 4; const g = c.getContext('2d'); g.fillStyle = rgb; g.fillRect(0, 0, 4, 4); return c; }
   const HOLD = { color: '#9a9690', normal: '#8080ff', rough: '#b0b0b0' };
@@ -109,7 +122,7 @@
     const key = name + '_' + kind;
     if (TX.has(key)) return TX.get(key);
     const t = new T.Texture(solid(HOLD[kind] || '#ffffff'));
-    t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = isMobile ? 4 : 8;
+    t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = ANISO();
     if (kind === 'color') t.encoding = T.sRGBEncoding;
     t.needsUpdate = true; TX.set(key, t);
     pend.n++;
@@ -210,6 +223,12 @@
       if (o.under) { U.prUnder = { value: o.under }; fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\nuniform vec3 prUnder;\n');
         fs = fs.replace('#include <map_fragment>', '#include <map_fragment>\nbool prDown=normalize(vPrN).y<-0.5;if(prDown)diffuseColor.rgb=prUnder;');
         fs = fs.replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nif(prDown)roughnessFactor=0.92;'); }
+      // 바닥 반짝임 완화: 멀수록 노멀 맵을 약하게(비스듬한 먼 바닥의 잔무늬가 화소보다 잘아지는 것), 화소 안 법선 변화만큼 거칠기를 올린다(스페큘러 앤티에일리어싱)
+      if (AA && fs.includes('#include <roughnessmap_fragment>')) fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  #ifdef USE_NORMALMAP
+  normal=normalize(mix(normal,geometryNormal,clamp((length(vViewPosition)-8.0)/40.0,0.0,0.85)));
+  #endif
+  {vec3 prDx=dFdx(normal),prDy=dFdy(normal);roughnessFactor=sqrt(clamp(roughnessFactor*roughnessFactor+min(0.5*(dot(prDx,prDx)+dot(prDy,prDy)),0.18),0.0,1.0));}`);
       if (o.roof) fs = fs.replace('#include <map_fragment>', '#include <map_fragment>\nif(abs(normalize(vPrN).y)>0.7)diffuseColor.rgb=diffuse*0.5;');
       if (o.light) {
         U.prAmb = { value: o.light.amb || new T.Color(0, 0, 0) };
@@ -349,6 +368,17 @@
   // 모든 실사 재질: lin = 이미 선형 색(Wing linearize() 제외), EXTRA = 캐시 밖 재질(가구 등)의 반사 세기 되돌리기 목록
   const EXTRA = new Set();
   function std(o) { const m = new T.MeshStandardMaterial(o); m.userData.lin = true; return m; }
+  // 잎(양면 카드): three 는 뒷면 법선을 뒤집어 해 반대쪽 면이 어둡게 보인다. 앞뒤 같은 법선을 쓰고 하늘 쪽으로 기울여 어느 쪽에서 봐도 같은 색으로
+  function leafLit(m) {
+    if (!AA || m.userData.prLeaf) return m; m.userData.prLeaf = true;
+    const prev = m.onBeforeCompile !== T.Material.prototype.onBeforeCompile ? m.onBeforeCompile : null, prevKey = prev ? m.customProgramCacheKey() : '';
+    m.customProgramCacheKey = () => prevKey + 'leaf';
+    m.onBeforeCompile = (sh, rr) => { if (prev) prev.call(m, sh, rr);
+      sh.fragmentShader = sh.fragmentShader.replace('float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;', 'float faceDirection = 1.0;')
+        .replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n  normal=normalize(normalize((viewMatrix*vec4(0.0,1.0,0.0,0.0)).xyz)*0.7+normal*0.3);')
+        .replace('#include <map_fragment>', '#include <map_fragment>\n  diffuseColor.rgb*=0.78;'); };   // 하늘 쪽 법선은 늘 밝게 받으므로 잎 색을 조금 낮춘다
+    m.needsUpdate = true; return m;
+  }
   const keepEnv = m => { m.userData.lin = true; m.userData.prEnv = m.envMapIntensity; EXTRA.add(m); return m; };
   // 텍스처 세트 재질: name 세트의 color/normal/rough, w = 타일 크기(m)
   // 중립 세트: 오프라인에서 색 기울기를 없애고 선형 평균을 0.51로 맞춘 텍스처. tint 는 '보이는 평균색'(sRGB)
@@ -483,6 +513,18 @@
     const m = std({ map: markTex(kind), transparent: true, alphaTest: 0.02, roughness: 0.5, metalness: 0, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     m.envMap = parkEnv(); return patch(m, { light: Lp });
   }
+  const GEN = Q.get('prgen') !== '0';   // ?prgen=0: 기본 변환을 끈다(전후 비교용)
+  function genericMat(orig, zk) {
+    const m = std({ color: orig.color.clone(), map: orig.map || null, normalMap: orig.normalMap || null, roughness: orig.roughness, metalness: orig.metalness, roughnessMap: orig.roughnessMap || null,
+      transparent: orig.transparent, opacity: orig.opacity, side: orig.side, depthWrite: orig.depthWrite, alphaTest: orig.alphaTest, vertexColors: orig.vertexColors,
+      emissive: orig.emissive.clone(), emissiveMap: orig.emissiveMap || null, emissiveIntensity: orig.emissiveIntensity,
+      polygonOffset: orig.polygonOffset, polygonOffsetFactor: orig.polygonOffsetFactor, polygonOffsetUnits: orig.polygonOffsetUnits, flatShading: orig.flatShading });
+    if (!orig.userData.lin) m.color.convertSRGBToLinear();   // Wing 이 아직 선형화하지 않은 색
+    m.envMapIntensity = Math.min(orig.envMapIntensity != null ? orig.envMapIntensity : 0.6, 1);
+    m.userData.prGen = true; m.userData.prGenOrig = orig;
+    const light = zk === 'g' ? { amb: AMB.g() } : zk === 'u' ? { amb: AMB.u() } : zk[0] === 'b' ? { amb: new T.Color(0.2, 0.2, 0.21) } : null;
+    return light ? patch(m, { light }) : m;
+  }
   function matFor(orig, zone, L, ctxFacade) {
     if (!orig || !orig.isMaterial || orig.userData.prMade) return orig;
     if (orig.userData.prNone && orig.userData.prNone[zone[0]]) return orig;
@@ -493,6 +535,8 @@
       let m = zk !== 'x' ? zoneMake(orig, zk, L) : null, sync = null;
       if (!m) { const r = recipes().get(orig); if (r) { m = r.make(); sync = r.sync || null; } }
       if (!m && ctxFacade && orig.isMeshStandardMaterial && orig.map && orig.map.image && orig.map.image.getContext) m = facadeMat(orig);
+      // 전용 처방이 없는 우리 건물·현황 건물 재질(계단·코어·칸막이·설비 등. 주변 건물은 제외): 색·질감·투명도는 원본대로 두고 실사 조명(층별 굽기·실내 조도)과 반사만 맞춘다
+      if (!m && GEN && (!ctxFacade || ctxFacade === 'exist') && orig.isMeshStandardMaterial) { m = genericMat(orig, zk); sync = ['color', 'opacity', 'emissive']; }
       // lin: Wing 의 linearize() 가 색을 한 번 더 바꾸지 않게. prEnv: Wing 이 덮어쓴 반사 세기를 매 프레임 되돌린다
       if (m) { m.userData.prMade = true; m.userData.lin = true; m.userData.prEnv = m.envMapIntensity; m.name = 'pr:' + (orig.name || orig.uuid.slice(0, 6)); }
       if (!m) { (orig.userData.prNone = orig.userData.prNone || {})[zone[0]] = true; return orig; }
@@ -584,6 +628,17 @@
     for (let p = o; p; p = p.parent) { if (p.userData && p.userData.li != null) { const L = K.LEVELS[p.userData.li]; if (!L) return ['x', null]; return [L.kind === 'base' ? 'b:' + levelLight(L).sig : L.kind === 'ground' ? 'g' : (L.kind === 'upper' ? 'u' : 'x'), L]; } if (p === K.bld) break; }
     return ['x', null];
   }
+  // 기본 변환 재질은 VR 동안 Wing 원본으로 되돌린다: 층별 조명 보강이 달린 재질은 VR 합치기(단색 묶음)에서 따로 묶여 그리기 호출이 약 70회 늘었다(164 → 236)
+  const GENX = { list: new Set(), xr: false };
+  function genXR(xr) {
+    if (xr === GENX.xr) return; GENX.xr = xr;
+    const back = m => (m && m.userData.prGen ? m.userData.prGenOrig : m);
+    GENX.list.forEach(o => {
+      if (xr) { const cur = o.material; if (!(Array.isArray(cur) ? cur : [cur]).some(m => m && m.userData.prGen)) return; o.userData.prGenMat = cur; o.material = Array.isArray(cur) ? cur.map(back) : back(cur); }
+      else if (o.userData.prGenMat) { o.material = o.userData.prGenMat; delete o.userData.prGenMat; }
+    });
+    const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty();
+  }
   function swapIn(root, zoneFn, ctxFacade) {
     let n = 0;
     root.traverse(o => {
@@ -593,6 +648,8 @@
       const src = o.userData.prOrig;
       const nm = Array.isArray(src) ? src.map(m => matFor(m, zone, L, ctxFacade)) : matFor(src, zone, L, ctxFacade);
       if (nm !== o.material) { o.material = nm; n++; }
+      if ((Array.isArray(nm) ? nm : [nm]).some(m => m && m.userData.prGen)) { GENX.list.add(o);
+        if (GENX.xr) { o.userData.prGenMat = nm; o.material = Array.isArray(nm) ? nm.map(m => (m && m.userData.prGen ? m.userData.prGenOrig : m)) : nm.userData.prGen ? nm.userData.prGenOrig : nm; } }   // VR 중 조합 전환: 바로 원본으로
       CUR.swapped.push(o);
     });
     return n;
@@ -613,7 +670,7 @@
     placeCars(); placeTrees();
     let n = swapIn(K.bld, zoneOf);
     // 주변(도로·지면·주변 건물·차량)은 처음 한 번 + 지면은 매번(원본이 다시 만든다)
-    n += swapIn(K.site); n += swapIn(K.city, null, true); n += swapIn(K.ctx, null, true); n += swapIn(K.exist, null, true); n += swapIn(K.R3D.props);
+    n += swapIn(K.site); n += swapIn(K.city, null, true); n += swapIn(K.ctx, null, true); n += swapIn(K.exist, null, 'exist'); n += swapIn(K.R3D.props);
     scaleFigures();
     staticDone = true;
     PR.stat.swap = n; PR.stat.applyMs = Math.round(now() - t0); PR.stat.mats = CACHE.size;
@@ -622,7 +679,10 @@
   // 매 프레임(장면을 그리기 직전): 원본 재건 감지, 원본 쪽 색·투명도 변화 반영, 환경맵 유지, 내 묶음 표시 상태 맞추기
   let pendingSwitch = null;
   function frame() {
+    genXR(R.xr.isPresenting);
     if (!FURN.open && K.I.on) { FURN.go(); envAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
+    // 현황 건물(동광빌딩)은 '현황'·'비교'를 처음 고를 때 Wing 이 만든다: 층 배치가 그대로여도 새로 생긴 메시를 바꾼다
+    if (K.exist) { const es = K.exist.children.length + '|' + (K.exist.visible ? 1 : 0); if (es !== CUR.exist) { CUR.exist = es; if (staticDone) swapIn(K.exist, null, 'exist'); } }
     if (K.LEVELS !== CUR.levels) { applyAll('재건'); if (pendingSwitch) { PR.t.switchApply = Math.round(now() - pendingSwitch.t); } }
     if (pendingSwitch && !pendingSwitch.drawn) { pendingSwitch.drawn = true; const t = pendingSwitch.t; requestAnimationFrame(() => { PR.t.switch = Math.round(now() - t); pendingSwitch = null; statLine(); }); }
     CACHE.forEach(e => {
@@ -1160,7 +1220,7 @@
     const g = ENV.group = new T.Group(); g.name = 'pr-street';
     const tree = normModel(ENV.tree.clone(true), 1, false), b = new T.Box3().setFromObject(tree), h = b.max.y - b.min.y;
     // 잎 카드: 양면, 알파 잘라내기(정렬 없이 그려 퀘스트에서도 가볍다), 가을 톤은 Wing 계절에 맞춰 약하게
-    tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; if (K.R3D.season === 'autumn') m.color.setRGB(1.08, 1.0, 0.82); } m.userData.lin = true; m.needsUpdate = true; } });
+    tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; leafLit(m); if (K.R3D.season === 'autumn') m.color.setRGB(1.08, 1.0, 0.82); } m.userData.lin = true; m.needsUpdate = true; } });
     const walk = px => 1365 - 0.3604 * (px - 230) + 305;
     // 예전 위치에서 압구정로 쪽 우리 건물 앞(x=120, y 0～1365) 네 그루는 뺐다
     // 압구정로 건너편 보도(x=-1240)도 우리 건물 정면(y -200～1400)을 가리는 세 그루는 뺐다
@@ -1678,7 +1738,7 @@
       (set === 'now' ? nowG : root).add(m); GND.xr.push(m);
     });
     // 3) 나무(그림 카드 인스턴스): 350m 안은 그림자도 드리운다
-    const card = GND.card = treeCard(), tg = treeGeo(card.aspect), tm = std({ map: card.tex, alphaTest: 0.42, roughness: 0.9, metalness: 0, side: T.DoubleSide });
+    const card = GND.card = treeCard(), tg = treeGeo(card.aspect), tm = leafLit(std({ map: card.tex, alphaTest: 0.42, roughness: 0.9, metalness: 0, side: T.DoubleSide }));
     tm.envMapIntensity = 0.3; keepEnv(tm); tm.userData.prMade = true;
     const dm = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: card.tex, alphaTest: 0.42, side: T.DoubleSide });
     const lists = { near: [], far: [], now: [] };
@@ -1894,7 +1954,8 @@
 .pr-panel button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--panel)}.pr-panel small{color:var(--muted);display:block;margin-top:5px}
 @media (max-width:760px){.pr-panel{left:8px;bottom:8px;padding:6px 8px}.pr-panel button{padding:4px 6px;font-size:11.5px}}
 .pr-panel .pr-fold{display:none;float:right;margin-left:6px}
-@media (max-width:760px){.pr-panel .pr-fold{display:inline-block}.pr-panel.fold .r,.pr-panel.fold small:not(#pr-stat),.pr-panel.fold .pr-sub{display:none}.pr-panel.fold{max-width:calc(100% - 96px)}.pr-panel.fold #pr-stat{margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}`;
+.pr-panel .pr-perf{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+@media (max-width:760px){.pr-panel .pr-fold{display:inline-block}.pr-panel.fold .r,.pr-panel.fold .pr-perf,.pr-panel.fold small:not(#pr-stat),.pr-panel.fold .pr-sub{display:none}.pr-panel.fold{max-width:calc(100% - 96px)}.pr-panel.fold #pr-stat{margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}`;
     document.head.appendChild(st);
     document.querySelectorAll('input[name=vmode]').forEach(r => r.addEventListener('change', e => {
       if (e.target.value === 'pr3d') enable(true); else if (PR.on) enable(false);
@@ -1931,11 +1992,13 @@
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
 <div class="r" id="pr-q"><span style="align-self:center;color:var(--muted)">품질</span><button data-q="">자동</button><button data-q="high">높음</button><button data-q="medium">보통</button><button data-q="low">낮음</button></div>
+<label class="pr-perf"><input type="checkbox" id="pr-perf">성능 보기(fps·그리기 호출)</label>
 <small id="pr-stat" aria-live="polite">준비 중</small><small id="pr-fail" hidden style="color:var(--fg)"><span></span><button type="button" id="pr-retry">다시 시도</button></small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
       document.getElementById('viewer').appendChild(PNL);
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
       PNL.querySelector('#pr-retry').addEventListener('click', retryAll);
+      const pc = PNL.querySelector('#pr-perf'); pc.checked = PERF.on; pc.addEventListener('change', () => PR.perf(pc.checked));
       // 휴대폰(폭 760px 이하): 처음에는 접어서 제목과 상태 한 줄만(화면 아래 16%를 가리던 것). 눌러 펼친다(T16)
       const fb = PNL.querySelector('.pr-fold'), fold = on => { PNL.classList.toggle('fold', on); fb.textContent = on ? '펼치기 ▴' : '접기 ▾'; fb.setAttribute('aria-expanded', !on); };
       fold(matchMedia('(max-width:760px)').matches); fb.addEventListener('click', () => fold(!PNL.classList.contains('fold')));
@@ -1963,17 +2026,22 @@
     const t = PR.t, a = [];
     if (STG.cur >= 0) a.push(`받는 중 ${STG.cur + 1}/${STG.names.length}: ${STG.names[STG.cur]}` + (STG.cur === 0 && pend.n ? ` ${pend.done}/${pend.n}` : ''));
     else a.push(t.warm != null && t.plants != null ? `준비 완료 ${(Math.max(t.warm, t.plants, t.ground || 0) / 1000).toFixed(1)}초` : pend.n && pend.done < pend.n ? `텍스처 ${pend.done}/${pend.n}` : '');
-    if (t.firstFrame != null) a.push(`켜기 ${t.firstFrame}ms`);
-    if (t.switch != null) a.push(`조합 전환 ${t.switch}ms`);
+    const busy = STG.cur >= 0 || !(t.warm != null && t.plants != null);
+    if (PERF.on && t.firstFrame != null) a.push(`켜기 ${t.firstFrame}ms`);
+    if (PERF.on && t.switch != null) a.push(`조합 전환 ${t.switch}ms`);
     el.textContent = a.filter(Boolean).join(' · ') || '준비 중';
+    el.hidden = !busy && !PERF.on;   // 준비가 끝나면 성능 보기일 때만 시간 줄을 보인다
     const fe = document.getElementById('pr-fail');
     if (fe) { const n = [...STG.fails.keys()]; fe.hidden = !n.length; if (n.length) fe.firstChild.textContent = n.join(', ') + '을(를) 받지 못했습니다. 회선을 확인하고 '; }
     panelSync();
   }
   setInterval(() => { if (PR.on) statLine(); }, 1000);
-  /* 간이 프레임 표시(?prfps=1): 화면 왼쪽 위에 프레임 간격 중앙값·95%와 한 프레임 그리기 호출. 휴대폰·퀘스트 2D 브라우저 실기기 확인용(VR 안 표시는 XR 계층) */
-  if (Q.get('prfps') === '1') {
-    const el = document.createElement('div'); el.id = 'pr-fps';
+  /* 간이 프레임 표시: 화면 왼쪽 위에 프레임 간격 중앙값·95%와 한 프레임 그리기 호출. 휴대폰·퀘스트 2D 브라우저 실기기 확인용(VR 안 표시는 XR 계층)
+     성능 정보(이 표시, 상태 줄의 켜기·조합 전환 시간, VR 안 프레임 판)는 기본으로 숨긴다. ?prfps=1(또는 패널의 '성능 보기')일 때만 보인다.
+     패널 토글은 localStorage(khpr.perf)에 기억하고, ?prfps=0 이면 기억과 상관없이 끈다. XR 계층도 같은 키를 읽는다 */
+  function fpsStart() {
+    if (PERF.started) return; PERF.started = true;
+    const el = PERF.el = document.createElement('div'); el.id = 'pr-fps';
     el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:10000;background:rgba(0,0,0,.65);color:#fff;font:600 12px/1.35 ui-monospace,Menlo,monospace;padding:4px 7px;border-radius:4px;pointer-events:none;white-space:pre';
     const ds = []; let last = 0, t = 0, calls = 0;
     (function fr(n) {
@@ -1981,6 +2049,7 @@
       if (last) { ds.push(n - last); if (ds.length > 120) ds.shift(); } last = n;
       // 한 프레임에 여러 번 그리므로(화면 효과 단계) 프레임 단위로 합산한다
       if (R && !R.xr.isPresenting) { R.info.autoReset = false; calls = R.info.render.calls; R.info.reset(); }
+      if (!PERF.on) { ds.length = 0; last = 0; return; }   // 꺼 두면 재지 않는다
       if (n - t < 500 || ds.length < 10 || !R) return; t = n; if (!el.parentNode && document.body) document.body.appendChild(el);
       const a = ds.slice().sort((x, y) => x - y), q = k => a[Math.min(a.length - 1, Math.floor(a.length * k))], med = q(0.5), p95 = q(0.95);
       el.textContent = `${(1000 / med).toFixed(0)}fps 중앙 ${med.toFixed(1)}ms 95% ${p95.toFixed(1)}ms\n그리기 ${calls}회 · 화소배율 ${(K && K.R3D.composer && K.R3D.on ? K.R3D.composer._pixelRatio || 1 : R.getPixelRatio()).toFixed(2)}${PR.on ? ' · 실사 3D' : ''}${PR.q ? ' · 품질 ' + PR.q.name : ''}`;

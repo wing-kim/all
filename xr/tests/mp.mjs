@@ -22,7 +22,8 @@ async function open(tag, query) {
   await p.evaluateOnNewDocument(() => performance.setResourceTimingBufferSize(20000));   // 실사 3D 자산이 많아 기본 250개 기록이 넘친다
   p.on('pageerror', e => errors.push(tag + ' pageerror: ' + e.message));
   p.on('console', m => { if (m.type() === 'error' && !/Failed to load resource|WebSocket|relay/i.test(m.text())) errors.push(tag + ' ' + m.text()); });
-  await p.goto(BASE + '/' + PAGE + (query ? sep + query : ''), { waitUntil: 'load', timeout: 120000 });
+  // 헤드리스 PC 는 몰입 VR·AR 이 없어 멀티플레이 버튼이 숨으므로 ?mp=1 로 강제로 보인다(에뮬레이터 B 는 없어도 보임)
+  await p.goto(BASE + '/' + PAGE + sep + ['mp=1', query].filter(Boolean).join('&'), { waitUntil: 'load', timeout: 120000 });
   await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.rig && document.getElementById('khxr-mp'), { timeout: 60000 });
   return { b, p, tag, ev: (fn, ...a) => p.evaluate(fn, ...a) };
 }
