@@ -20,9 +20,9 @@ await p.goto(BASE + '/new/3d-model.html?pr=1' + QS, { waitUntil: 'load', timeout
 const tLoad = Date.now() - t0;
 const KEYS = ['firstFrame', 'env', 'bake', 'dress', 'env2', 'context', 'ground', 'warm', 'assets', 'plants'];
 await p.waitForFunction(k => window.KHPRLayer && KHPRLayer.t && k.every(x => KHPRLayer.t[x] != null), { timeout: 300000, polling: 200 }, KEYS).catch(() => {});
-const r = await p.evaluate(() => ({ t: KHPRLayer.t, pre: KHPRLayer.pre || null, stage: (document.getElementById('pr-stat') || {}).textContent, log: KHPRLayer.log.slice(-40) }));
+const r = await p.evaluate(() => ({ mbps: KHPRLayer.stat.mbps, fast: KHPRLayer.stage && KHPRLayer.stage.fast, t: KHPRLayer.t, pre: KHPRLayer.pre || null, stage: (document.getElementById('pr-stat') || {}).textContent, log: KHPRLayer.log.slice(-40) }));
 const all = Math.max(...KEYS.map(k => r.t[k] || 0));
-const res = { mode, base: BASE, qs: QS, at: new Date().toISOString(), pageLoadMs: tLoad, t: r.t, allReadyMs: all, MB: +(bytes / 1e6).toFixed(1), reqs, pre: r.pre, stage: r.stage, byFolderMB: Object.fromEntries(Object.entries(grp).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, v]) => [k, +(v / 1e6).toFixed(2)])), errors: errs.slice(0, 5) };
+const res = { mode, base: BASE, qs: QS, mbps: r.mbps, fast: r.fast, at: new Date().toISOString(), pageLoadMs: tLoad, t: r.t, allReadyMs: all, MB: +(bytes / 1e6).toFixed(1), reqs, pre: r.pre, stage: r.stage, byFolderMB: Object.fromEntries(Object.entries(grp).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([k, v]) => [k, +(v / 1e6).toFixed(2)])), errors: errs.slice(0, 5) };
 console.log(JSON.stringify(res, null, 1));
 fs.writeFileSync(OUT + 'net-' + mode + '.json', JSON.stringify({ ...res, log: r.log }, null, 1));
 await b.close();

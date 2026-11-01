@@ -1610,10 +1610,25 @@
   const STG = PR.stage = { names: ['우리 건물 재질', '하늘', '주변 건물', '실내 가구', '주변 땅·거리 소품', '실내 화분'], cur: -1, fails: new Map(), run: 0 };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   function fail(what, retry) { STG.fails.set(what, retry); statLine(); }
+  // 첫 단계(우리 건물 텍스처)의 실제 전송 속도(Mbps). 저장본에서 읽었으면(전송 0) 빠른 것으로 본다
+  function netMbps() {
+    const es = performance.getEntriesByType('resource').filter(e => e.name.startsWith(BASE + 'tex/') && /\.webp|\.ktx2|\.basis/.test(e.name));
+    if (!es.length) return 999;
+    const bytes = es.reduce((a, e) => a + (e.transferSize || 0), 0), t0 = Math.min(...es.map(e => e.startTime)), t1 = Math.max(...es.map(e => e.responseEnd));
+    return bytes < 50e3 ? 999 : bytes * 8 / 1e6 / Math.max(0.05, (t1 - t0) / 1000);
+  }
+  const FAST_MBPS = 30;   // 이보다 빠르면 단계를 기다리지 않고 한꺼번에 받는다(순서대로 받으면 단계마다 지연이 쌓여 오히려 늦다)
   async function loadSeq() {
     const run = ++STG.run, alive = () => PR.on && STG.run === run, step = i => { STG.cur = i; statLine(); };
     step(0); for (let i = 0; i < 80 && pend.done < pend.n; i++) await sleep(100);   // 최대 8초
     if (!alive()) return;
+    const mbps = netMbps(); PR.stat.mbps = Math.round(mbps); STG.fast = mbps >= FAST_MBPS;
+    if (STG.fast) {
+      // 빠른 회선·저장본: 모두 동시에(주변 땅은 주변 건물 자료가 있어야 만든다)
+      step(1); FURN.go(); envAssets(); plantAssets();
+      await Promise.all([skyLoad(bakeSlot() === 'night' ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day'), ctxLoad().then(() => { if (alive()) { ctxOn(); return groundLoad(); } }), plantAssets()]);
+      step(-1); return;
+    }
     step(1); { const sl = bakeSlot(); await Promise.race([skyLoad(sl === 'night' ? 'night' : sl === 'sunset' ? 'sunset' : 'day'), sleep(6000)]); }
     if (!alive()) return;
     step(2); await ctxLoad(); if (!alive()) return; ctxOn();
