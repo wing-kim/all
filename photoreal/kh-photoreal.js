@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1031.c';
+  const VER = '1101.b';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -30,23 +30,32 @@
     T = window.THREE; K = window.KHPR; R = window.KHXR.renderer; scene = window.KHXR.scene;
     PR.K = K;
     ui();
+    R.domElement.addEventListener('webglcontextrestored', restore);
+    swReg();
     // Wing 은 한 프레임에 장면을 여러 번 그린다(화면 효과 단계마다). 내 매 프레임 처리는 화면 프레임마다 한 번만 한다.
     // 창의 rAF 는 Wing 그리기 뒤에 돌아 다음 프레임 번호를 올린다. VR 중에는 창 rAF 가 멈추므로 그리기마다 처리한다(VR 은 프레임당 한 번 그림)
     (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
     let lastTick = -1;
     scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
-    // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다
-    setTimeout(prefetch, Q.get('pr') === '1' ? 0 : 2500);
+    // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다.
+    // ?pr=1 로 바로 켜는 경우는 미리받기가 실제 필요한 요청과 대역을 다투므로 하지 않는다(켜는 순간 남은 미리받기도 멈춘다)
+    if (Q.get('pr') !== '1') setTimeout(() => { if (!PR.on) prefetch(); }, 2500);
     if (Q.get('pr') === '1') { await new Promise(r => setTimeout(r, 300)); preset(Q.get('pf') || 'glass'); enable(true).then(() => { const lv = Q.get('lv'); if (lv) goLevel(lv); }); }
   }
 
   /* ================= 1. 자산 ================= */
+  // 자산 저장소(서비스 워커, T7): 두 번째 방문부터 실사 3D 자산을 네트워크 없이 읽는다. 파일 해시(prefetch.json)가 바뀐 것만 새로 받는다. ?prsw=0 이면 끈다
+  function swReg() {
+    if (Q.get('prsw') !== '1' || !('serviceWorker' in navigator) || !window.isSecureContext) return;   // 배치 C(T7)에서 기본 켬으로 바꾼다
+    navigator.serviceWorker.register(new URL('../new/kh-pr-sw.js', BASE).href, { scope: new URL('../new/', BASE).href })
+      .then(r => { PR.sw = r.active ? 'active' : 'installing'; }).catch(e => log('자산 저장소 등록 실패', e && e.message));
+  }
   function prefetch() {
     const c = navigator.connection; if (c && (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || ''))) { log('미리받기 생략(절약 모드)'); return; }
     const q0 = f => BASE + f + (/^(bake|codex|context)\//.test(f) ? '?v=' + VER : '');
     fetch(BASE + 'prefetch.json?v=' + VER).then(r => r.ok ? r.json() : null).then(async j => {
       if (!j) return; const q = j.files.slice(), t0 = now(); PR.pre = { n: q.length, done: 0, bytes: j.bytes };
-      const worker = async () => { while (q.length) { const f = q.shift(); try { const r = await fetch(q0(f), { priority: 'low' }); await r.arrayBuffer(); } catch (e) {} PR.pre.done++; } };
+      const worker = async () => { while (q.length && !PR.on) { const f = q.shift(); try { const r = await fetch(q0(f), { priority: 'low' }); await r.arrayBuffer(); } catch (e) {} PR.pre.done++; } };
       await Promise.all([worker(), worker(), worker()]); PR.pre.ms = Math.round(now() - t0); log('미리받기 완료', PR.pre.ms + 'ms', Math.round(j.bytes / 1e6) + 'MB');
     }).catch(() => {});
   }
@@ -95,7 +104,7 @@
       for (let y = 0; y < hh / 2; y += 2) for (let x = 0; x < w; x += 2) { const i = (y * w + x) * 4, v = half(data[i]) + half(data[i + 1]) + half(data[i + 2]); if (v > best) { best = v; bu = x / w; } }
       h.magFilter = h.minFilter = T.LinearFilter; h.generateMipmaps = false;
       res({ tex: h, sunU: bu });
-    }, undefined, () => { log('하늘 실패', key); res(null); }))));
+    }, undefined, () => { log('하늘 실패', key); delete SKYD[key]; fail('하늘', () => skyLoad(key)); res(null); }))));
   }
   function loadEnv() { return skyLoad('day'); }
   async function skyUpdate() {
@@ -560,6 +569,7 @@
   // 매 프레임(장면을 그리기 직전): 원본 재건 감지, 원본 쪽 색·투명도 변화 반영, 환경맵 유지, 내 묶음 표시 상태 맞추기
   let pendingSwitch = null;
   function frame() {
+    if (!FURN.open && K.I.on) { FURN.go(); envAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
     if (K.LEVELS !== CUR.levels) { applyAll('재건'); if (pendingSwitch) { PR.t.switchApply = Math.round(now() - pendingSwitch.t); } }
     if (pendingSwitch && !pendingSwitch.drawn) { pendingSwitch.drawn = true; const t = pendingSwitch.t; requestAnimationFrame(() => { PR.t.switch = Math.round(now() - t); pendingSwitch = null; statLine(); }); }
     CACHE.forEach(e => {
@@ -612,7 +622,28 @@
       g.visible = v;
     });
     perf();
+    optTick();
   }
+  /* ================= 5-3. 화면 메시 합치기(T1) =================
+     XR 계층의 합치기(KHXRLayer.opt)를 VR 밖 화면에서도 쓴다: 같은 재질 메시를 한 덩어리로 그려 그리기 호출을 줄인다(외관 약 6,900 → 1,000 미만 목표).
+     합칠 묶음은 실사 3D 가 아는 정적 묶음만(우리 건물·대지·주변·가구·땅). 장면 구성이 바뀌면 바로 걷고(원본이 보임) 0.4초 조용하면 다시 합친다.
+     ?propt=0 이면 끈다 */
+  const OPT = { on: Q.get('propt') !== '0', sig: '' };
+  const optApi = () => window.KHXRLayer && window.KHXRLayer.opt && window.KHXRLayer.opt.screenOn ? window.KHXRLayer.opt : null;
+  function optRoots() { return [K.bld, K.site, K.city, K.ctx, K.exist, K.R3D.props, DR.group, ENV.group, CTX.now, CTX.next, GND.g]; }
+  function optSig() {
+    let dv = ''; DR.groups.forEach(([g]) => { dv += g.visible ? 1 : 0; });
+    return [PF_.shSig, PF_.dvKey, dv, GND.g ? (GND.g.visible ? 1 : 0) + '' + (GND.now.visible ? 1 : 0) + GND.g.children.length : '-', ENV.added.length, DR.group ? DR.group.children.length : 0, R.xr.isPresenting ? 1 : 0].join('|');
+  }
+  function optTick() {
+    const O = optApi(); if (!O || !OPT.on || R.xr.isPresenting) return;
+    if (!O.roots) O.screenOn(optRoots);
+    const sg = optSig(); if (sg !== OPT.sig) { OPT.sig = sg; O.pause(400); }
+    O.screenTick(now());
+    PR.stat.opt = O.stat;
+  }
+  function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
+  PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
 
   /* ================= 5-2. 그리기 부담 줄이기 =================
      측정(10/31, 맥 M5 외관): 프레임당 삼각형 1,950만 개(장면 333만의 6배), 초당 12프레임. 원인과 처리:
@@ -665,12 +696,17 @@
     if (cc && !cc.prWrap) {
       const up = cc.update;
       cc.update = function () {
-        const hide = [DR.group, ENV.group, warmG].filter(g => g && g.visible), t0 = now();
-        if (PR.on) hide.forEach(g => { g.visible = false; });
-        const r = up.apply(this, arguments);
-        hide.forEach(g => { g.visible = true; });
-        PR.stat.cubeMs = Math.round(now() - t0); PF_.shDirty = true;
-        return r;
+        const self = this, args = arguments, O = optApi();
+        const run = () => {
+          const hide = [DR.group, ENV.group, warmG].filter(g => g && g.visible), t0 = now();
+          if (PR.on) hide.forEach(g => { g.visible = false; });
+          const r = up.apply(self, args);
+          hide.forEach(g => { g.visible = true; });
+          PR.stat.cubeMs = Math.round(now() - t0); PF_.shDirty = true;
+          return r;
+        };
+        // 합친 메시에는 건물이 섞여 있어 Wing 이 건물을 숨겨도 반사에 남는다 → 원본으로 되돌린 채 그린다
+        return PR.on && O ? O.bare(run) : run();
       };
       cc.prWrap = true;
     }
@@ -786,7 +822,9 @@
     const sig = dressSig();
     if (sig === DR.sig && DR.group && DR.group.parent) return;
     if (DR.busy) { DR.again = true; return; }
-    DR.busy = true; const t0 = now();
+    DR.busy = true;
+    await FURN.wait;   // 로딩 순서(T3): 밖에서 켜면 우리 건물·하늘·주변 건물 다음에 받는다. 실내로 들어가면 바로 연다
+    const t0 = now();
     try {
       await codexScripts();
       const extra = new T.Group(); extra.name = 'pr-dress'; extra.userData.interiorPlantAnchors = [];
@@ -806,7 +844,7 @@
       PR.stat.dressMs = Math.round(now() - t0); PR.stat.dressObjects = (() => { let n = 0; extra.traverse(o => { if (o.isMesh) n++; }); return n; })();
       if (PR.t.dress == null && PR.t.enable0) PR.t.dress = Math.round(now() - PR.t.enable0);
       log('실내 꾸밈', PR.stat.dressMs + 'ms', PR.stat.dressObjects + '개');
-    } catch (e) { log('실내 꾸밈 실패', e && e.message); console.warn(e); }
+    } catch (e) { log('실내 꾸밈 실패', e && e.message); console.warn(e); DR.ready = null; fail('실내 가구', () => dress()); }
     DR.busy = false;
     if (DR.again) { DR.again = false; dress(); }
   }
@@ -887,13 +925,22 @@
   function gltf() { if (!gltf.l) { const dl = new T.DRACOLoader(); dl.setDecoderPath(BASE + 'vendor/draco/'); gltf.l = new T.GLTFLoader(); gltf.l.setDRACOLoader(dl); } return gltf.l; }
   const loadGLB = f => new Promise(res => gltf().load(BASE + f, g => res(g.scene), undefined, () => { log('모델 실패', f); res(null); }));
   function envAssets() {
-    return ENV.p || (ENV.p = vendor().then(() => Promise.all([...CARS.map(c => loadGLB('assets/cars/car-' + c.f + '.glb')), loadGLB('assets/street-tree.glb'), loadGLB('assets/interior-foliage.glb')]))
+    return ENV.p || (ENV.p = vendor().then(() => Promise.all([...CARS.map(c => loadGLB('assets/cars/car-' + c.f + '.glb')), loadGLB('assets/street-tree.glb')]))
       .then(r => {
         ENV.cars = r.slice(0, CARS.length).map((sc, i) => sc && normModel(sc, CARS[i].len, true)).filter(Boolean);
-        ENV.tree = r[CARS.length]; ENV.plant = r[CARS.length + 1];
+        ENV.tree = r[CARS.length];
+        if (!ENV.tree || ENV.cars.length < CARS.length) { ENV.p = null; fail('거리 소품', envAssets); }
         PR.t.env2 = Math.round(now() - PR.t.enable0); log('거리 소품', PR.t.env2 + 'ms');
-        if (PR.on) { placeCars(); placeTrees(); if (DR.group) placePlants(DR.group); }
+        if (PR.on) { placeCars(); placeTrees(); }
       }));
+  }
+  // 실내 화분(1.9MB)은 가장 늦게: 밖에서는 거의 보이지 않는다
+  function plantAssets() {
+    return ENV.pp || (ENV.pp = vendor().then(() => loadGLB('assets/interior-foliage.glb')).then(g => {
+      if (!g) { ENV.pp = null; fail('실내 화분', plantAssets); return; }
+      ENV.plant = g; PR.t.plants = Math.round(now() - PR.t.enable0);
+      if (PR.on && DR.group) placePlants(DR.group);
+    }));
   }
   // 바닥 중심을 원점에, 긴 축을 X(Wing 차의 길이 방향)로, 길이를 실제 치수로 맞춘 묶음
   function normModel(sc, len, car) {
@@ -1184,7 +1231,7 @@
       PR.stat.ctxBuildMs = Math.round(now() - t1);
       PR.stat.context = CTX.next.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', '합치기 ' + PR.stat.ctxBuildMs + 'ms', CTX.next.userData.stats.buildings + '동');
       if (PR.on) ctxOn();
-    }).catch(e => log('주변 건물 실패', e && e.message)));
+    }).catch(e => { log('주변 건물 실패', e && e.message); CTX.p = null; fail('주변 건물', () => ctxLoad()); }));
   }
   // 현황(동광빌딩 시절) 보기: 재개발 구역 아파트까지 넣은 한 벌. 처음 '현황'을 고를 때 만든다
   function ctxNow() {
@@ -1258,7 +1305,7 @@
     (CTX.towers || []).forEach(t => { const o = t.mesh, p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
     if (CTX.now) scene.add(CTX.now); scene.add(CTX.next);
     if (DIST) DIST.parent && DIST.parent.remove(DIST);
-    groundLoad();
+    if (GND.g && !GND.g.parent) scene.add(GND.g);   // 다시 켰을 때(땅은 처음 한 번만 만든다). 처음 받기는 로딩 순서(loadSeq)가 한다
     if (PR.t.warm != null) setTimeout(refreshRefl, 50);   // 주변 건물이 유리 반사에 들어가게(워밍업 전이면 워밍업 끝에 함께)
   }
   function ctxOff() {
@@ -1273,9 +1320,9 @@
      대지에서 350m 바깥의 나무·차는 VR 에서 숨긴다(퀘스트 예산) */
   const GND = { p: null, g: null, now: null, far: [], data: null };
   function groundLoad() {
-    return GND.p || (GND.p = fetch(BASE + 'context/ground.json?v=' + VER).then(r => r.ok ? r.json() : null).then(d => { GND.data = d; return d && envAssets(); })
+    return GND.p || (GND.p = fetch(BASE + 'context/ground.json?v=' + VER).then(r => { if (!r.ok) throw new Error('ground.json ' + r.status); return r.json(); }).then(d => { GND.data = d; return envAssets(); })
       .then(() => { if (GND.data && PR.on && !GND.g) { const t0 = now(); groundBuild(); PR.stat.groundMs = Math.round(now() - t0); PR.t.ground = Math.round(now() - PR.t.enable0); log('주변 땅', PR.t.ground + 'ms', '만들기 ' + PR.stat.groundMs + 'ms'); } })
-      .catch(e => log('주변 땅 실패', e && e.message)));
+      .catch(e => { log('주변 땅 실패', e && e.message); GND.p = null; fail('주변 땅', groundLoad); }));
   }
   // Wing 이 이미 깐 바닥판(도로·보도·운동장 등, 700m 미만)의 삼각형 격자. 이 자리는 OSM 바닥을 깔지 않는다
   function wingFlats() {
@@ -1320,14 +1367,14 @@
     return M;
   }
   // 가로수 모델을 옆(왼쪽 절반)·위(오른쪽 위 1/4)에서 찍은 512px 그림 + 그 비율
-  function treeCard() {
+  function treeCard(rt0) {
     const tree = normModel(ENV.tree.clone(true), 1, false), bb = new T.Box3().setFromObject(tree), sz = bb.getSize(new T.Vector3()), w = Math.max(sz.x, sz.z);
     // 조명 없이 원래 색(알베도)만 찍는다: 장면에서 다시 해·하늘빛을 받으므로 두 번 어두워지지 않게. 잎 안쪽은 조금 어둡게
     tree.traverse(o => { if (o.isMesh && o.material) { const s0 = o.material, leaf = /leaves/i.test(s0.name);
       const m = new T.MeshBasicMaterial({ map: s0.map || null, color: s0.color ? s0.color.clone().multiplyScalar(leaf ? 0.9 : 0.75) : new T.Color(0.4, 0.33, 0.25), side: T.DoubleSide, alphaTest: leaf ? 0.45 : 0, transparent: false });
       o.material = m; } });
     const sc = new T.Scene(); sc.add(tree);
-    const rt = new T.WebGLRenderTarget(512, 512, { generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat });
+    const rt = rt0 || new T.WebGLRenderTarget(512, 512, { generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat });
     const prevRT = R.getRenderTarget(), prevAC = R.autoClear, cc = R.getClearColor(new T.Color()), ca = R.getClearAlpha(), xr = R.xr.enabled, sh = R.shadowMap.enabled, tm = R.toneMapping;
     R.xr.enabled = false; R.toneMapping = T.NoToneMapping;
     R.setClearColor(0x56663f, 0); R.setRenderTarget(rt); R.clear(); R.autoClear = false;
@@ -1428,7 +1475,7 @@
       (set === 'now' ? nowG : root).add(m); GND.xr.push(m);
     });
     // 3) 나무(그림 카드 인스턴스): 350m 안은 그림자도 드리운다
-    const card = treeCard(), tg = treeGeo(card.aspect), tm = std({ map: card.tex, alphaTest: 0.42, roughness: 0.9, metalness: 0, side: T.DoubleSide });
+    const card = GND.card = treeCard(), tg = treeGeo(card.aspect), tm = std({ map: card.tex, alphaTest: 0.42, roughness: 0.9, metalness: 0, side: T.DoubleSide });
     tm.envMapIntensity = 0.3; keepEnv(tm); tm.userData.prMade = true;
     const dm = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: card.tex, alphaTest: 0.42, side: T.DoubleSide });
     const lists = { near: [], far: [], now: [] };
@@ -1535,6 +1582,53 @@
     PF_.shDirty = true;
     if (PR.t.warm != null) setTimeout(refreshRefl, 50);   // 땅·나무가 유리 반사에 들어가게
   }
+  /* ================= 6-6. 그래픽 컨텍스트 복구(T6) =================
+     휴대폰·퀘스트는 메모리가 모자라면 WebGL 컨텍스트를 잃는다. three 는 되살아날 때 텍스처·형상·셰이더를 다시 올리지만,
+     렌더 타깃에 그려 둔 결과(하늘 배경·환경광, 주차장 반사, 나무 그림 카드, Wing 유리 반사, 그림자)는 비어 있으므로 다시 그린다 */
+  function restore() {
+    PR.stat.restored = (PR.stat.restored || 0) + 1; log('그래픽 컨텍스트 복구', PR.stat.restored);
+    if (scene.background === skyBG) scene.background = null;
+    if (scene.environment === envDay) scene.environment = null;
+    skyCur.rt = null; skyCur.cam = null; skyCur.env = null; skyCur.key = ''; skyCur.az = 999; skyCur.busy = false; skyBG = null; envDay = null; PR.lastEnv = null;
+    if (envPark) {
+      const old = envPark; envPark = null; const nw = parkEnv();
+      scene.traverse(o => { [].concat(o.material || []).forEach(m => { if (m.envMap === old) m.envMap = nw; }); });
+      Object.values(PF_.svc || {}).concat(Object.values(PF_.ceil || {}), Object.values(FLAT.mats)).forEach(m => { if (m && m.envMap === old) m.envMap = nw; });
+    }
+    if (GND.card && ENV.tree) treeCard(GND.card.rt);
+    PF_.shDirty = true; R.shadowMap.needsUpdate = true;
+    if (PR.on) { CUR.levels = null; setTimeout(refreshRefl, 50); }
+  }
+  PR.restore = restore;
+
+  /* ================= 6-5. 로딩 순서와 실패 안내(T3) =================
+     회선이 느리면 모든 자산이 같은 대역을 다툰다. 보이는 순서대로 차례로 받는다:
+     우리 건물 재질 → 하늘 → 주변 건물 → 실내 가구 → 주변 땅·거리 소품 → 실내 화분. 실내로 들어가면 가구는 바로 받는다.
+     단계마다 상태줄에 표시하고, 받지 못한 것은 사람 말로 알리고 '다시 시도' 버튼을 둔다 */
+  const FURN = { open: false, wait: null, go: null };
+  FURN.wait = new Promise(r => { FURN.go = () => { if (!FURN.open) { FURN.open = true; r(); } }; });
+  const STG = PR.stage = { names: ['우리 건물 재질', '하늘', '주변 건물', '실내 가구', '주변 땅·거리 소품', '실내 화분'], cur: -1, fails: new Map(), run: 0 };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function fail(what, retry) { STG.fails.set(what, retry); statLine(); }
+  async function loadSeq() {
+    const run = ++STG.run, alive = () => PR.on && STG.run === run, step = i => { STG.cur = i; statLine(); };
+    step(0); for (let i = 0; i < 80 && pend.done < pend.n; i++) await sleep(100);   // 최대 8초
+    if (!alive()) return;
+    step(1); { const sl = bakeSlot(); await Promise.race([skyLoad(sl === 'night' ? 'night' : sl === 'sunset' ? 'sunset' : 'day'), sleep(6000)]); }
+    if (!alive()) return;
+    step(2); await ctxLoad(); if (!alive()) return; ctxOn();
+    step(3); FURN.go(); for (let i = 0; i < 300 && !(DR.group && !DR.busy); i++) await sleep(100);
+    if (!alive()) return;
+    step(4); await envAssets(); await groundLoad();
+    if (!alive()) return;
+    step(5); await plantAssets();
+    step(-1);
+  }
+  function retryAll() {
+    const f = [...STG.fails.values()]; STG.fails.clear(); statLine();
+    f.forEach(fn => { try { const r = fn(); if (r && r.then) r.then(() => { if (PR.on) { if (CTX.next && !CTX.detached.length) ctxOn(); applyAll('다시 시도'); } }); } catch (e) {} });
+  }
+
   /* ================= 7. 켜기·끄기 ================= */
   async function enable(on) {
     if (on === PR.on) return;
@@ -1553,14 +1647,13 @@
       requestAnimationFrame(() => requestAnimationFrame(() => { PR.t.firstFrame = Math.round(now() - PR.t.enable0); statLine(); }));
       panel(true);
       if (!CTX.now) distantCity();
-      loadEnv(); envAssets(); loadBake();
-      // 주변 건물(3,888동 합치기)은 첫 화면이 나온 뒤에 시작한다. 그 전에는 Wing 의 주변 블록이 보인다
-      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { if (PR.on) ctxLoad().then(() => PR.on && ctxOn()); }, 120)));
+      loadBake();
+      loadSeq();
     } else {
       PR.on = false;
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
-      envOff(); ctxOff(); perfOff();
+      optOff(); envOff(); ctxOff(); perfOff();
       if (scene.environment === envDay) scene.environment = PR.wingEnv || null;
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
@@ -1587,7 +1680,7 @@
       if (e.target.value === 'pr3d') enable(true); else if (PR.on) enable(false);
     }));
     // 조합 변경 감지: Wing 설정 패널의 입력이 바뀐 순간부터 다음 화면까지 잰다
-    document.addEventListener('change', e => { PF_.shDirty = true; if (!PR.on || PR.silent) return; const n = e.target && e.target.name; if (n && n !== 'vmode' && e.target.closest && e.target.closest('aside,.panel,#panel')) { pendingSwitch = { t: now(), what: n }; } }, true);
+    document.addEventListener('change', e => { PF_.shDirty = true; if (!PR.on || PR.silent) return; { const O = optApi(); if (O) O.pause(400); } const n = e.target && e.target.name; if (n && n !== 'vmode' && e.target.closest && e.target.closest('aside,.panel,#panel')) { pendingSwitch = { t: now(), what: n }; } }, true);
   }
   const PF = { glass: ['combo', 'sty-glass'], brick: ['combo', 'sty-brick'], stack: ['preset', 'dsg-stack'], colonnade: ['preset', 'dsg-colonnade'] };
   const PFN = { glass: '올 글라스', brick: '벽돌 피어', stack: '스택 프레임', colonnade: '자이언트 오더 기둥' };
@@ -1617,10 +1710,11 @@
       PNL.innerHTML = `<b>실사 3D · 우선 조합</b> <span style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
-<small id="pr-stat">준비 중</small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
+<small id="pr-stat" aria-live="polite">준비 중</small><small id="pr-fail" hidden style="color:var(--fg)"><span></span><button type="button" id="pr-retry">다시 시도</button></small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
       document.getElementById('viewer').appendChild(PNL);
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
+      PNL.querySelector('#pr-retry').addEventListener('click', retryAll);
     }
     PNL.hidden = false; panelSync(); statLine();
   }
@@ -1634,13 +1728,32 @@
   function statLine() {
     const el = document.getElementById('pr-stat'); if (!el) return;
     const t = PR.t, a = [];
-    a.push(pend.n && pend.done < pend.n ? `텍스처 ${pend.done}/${pend.n}` : t.assets != null ? `자산 완료 ${(t.assets / 1000).toFixed(1)}초` : '');
+    if (STG.cur >= 0) a.push(`받는 중 ${STG.cur + 1}/${STG.names.length}: ${STG.names[STG.cur]}` + (STG.cur === 0 && pend.n ? ` ${pend.done}/${pend.n}` : ''));
+    else a.push(t.warm != null && t.plants != null ? `준비 완료 ${(Math.max(t.warm, t.plants, t.ground || 0) / 1000).toFixed(1)}초` : pend.n && pend.done < pend.n ? `텍스처 ${pend.done}/${pend.n}` : '');
     if (t.firstFrame != null) a.push(`켜기 ${t.firstFrame}ms`);
     if (t.switch != null) a.push(`조합 전환 ${t.switch}ms`);
     el.textContent = a.filter(Boolean).join(' · ') || '준비 중';
+    const fe = document.getElementById('pr-fail');
+    if (fe) { const n = [...STG.fails.keys()]; fe.hidden = !n.length; if (n.length) fe.firstChild.textContent = n.join(', ') + '을(를) 받지 못했습니다. 회선을 확인하고 '; }
     panelSync();
   }
   setInterval(() => { if (PR.on) statLine(); }, 1000);
+  /* 간이 프레임 표시(?prfps=1): 화면 왼쪽 위에 프레임 간격 중앙값·95%와 한 프레임 그리기 호출. 휴대폰·퀘스트 2D 브라우저 실기기 확인용(VR 안 표시는 XR 계층) */
+  if (Q.get('prfps') === '1') {
+    const el = document.createElement('div'); el.id = 'pr-fps';
+    el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:10000;background:rgba(0,0,0,.65);color:#fff;font:600 12px/1.35 ui-monospace,Menlo,monospace;padding:4px 7px;border-radius:4px;pointer-events:none;white-space:pre';
+    const ds = []; let last = 0, t = 0, calls = 0;
+    (function fr(n) {
+      requestAnimationFrame(fr);
+      if (last) { ds.push(n - last); if (ds.length > 120) ds.shift(); } last = n;
+      // 한 프레임에 여러 번 그리므로(화면 효과 단계) 프레임 단위로 합산한다
+      if (R && !R.xr.isPresenting) { R.info.autoReset = false; calls = R.info.render.calls; R.info.reset(); }
+      if (n - t < 500 || ds.length < 10 || !R) return; t = n; if (!el.parentNode && document.body) document.body.appendChild(el);
+      const a = ds.slice().sort((x, y) => x - y), q = k => a[Math.min(a.length - 1, Math.floor(a.length * k))], med = q(0.5), p95 = q(0.95);
+      el.textContent = `${(1000 / med).toFixed(0)}fps 중앙 ${med.toFixed(1)}ms 95% ${p95.toFixed(1)}ms\n그리기 ${calls}회 · 화소배율 ${R.getPixelRatio().toFixed(2)}${PR.on ? ' · 실사 3D' : ''}${PR.q ? ' · 품질 ' + PR.q.name : ''}`;
+      PR.fps = { med: +med.toFixed(1), p95: +p95.toFixed(1) };
+    })(0);
+  }
 
   /* ================= 9. 진단 ================= */
   // 한 프레임 전체(후처리 패스 포함)의 그리기 호출·삼각형

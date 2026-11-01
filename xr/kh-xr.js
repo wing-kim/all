@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1101.i1';
+  const VER = '1101.b';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -150,7 +150,7 @@
     if (mode === 'fig') { setMode('fig', { fromDesktop: true }); }
     else { setMode('vr'); placeFromDesktop(); }
     OnTop.apply(0, true);
-    if (S.opt) Opt.build();
+    if (S.opt) Opt.build(); else Opt.clear();   // 화면 합치기(실사 3D)가 켜져 있었으면 걷는다
     R.setAnimationLoop(frame);
     UI.onSessionStart();
   }
@@ -405,13 +405,21 @@
     return figPlanes;
   }
   function clipMaterials(on, time = 0) {
-    if (!on) { clipped.forEach(m => { m.clippingPlanes = m.userData.khxrClip || null; delete m.userData.khxrClip; }); clipped.clear(); return; }
+    // 피규어 중에 자르기가 걸린 재질을 복제한 사본(실내 가구 등)은 자르기 평면도 복제되어(three 의 copy) P 와 다른 배열을 갖는다.
+    // 표시(khxrClipped)와 원래 값(khxrClip)이 userData 와 함께 복사되므로, 그 값으로 원래 자르기를 되살린다
+    const orig = m => { if (!m.userData.khxrClipped) return m.clippingPlanes; const v = m.userData.khxrClip; return Array.isArray(v) ? v.map(p => p && p.isPlane ? p : new T.Plane(new T.Vector3(p.normal.x, p.normal.y, p.normal.z), p.constant)) : null; };
+    const back = m => { m.clippingPlanes = orig(m); delete m.userData.khxrClip; delete m.userData.khxrClipped; };
+    if (!on) {
+      clipped.forEach(m => { m.clippingPlanes = m.userData.khxrClip || null; delete m.userData.khxrClip; delete m.userData.khxrClipped; }); clipped.clear();
+      scene.traverse(o => { if (o.material) for (const m of (Array.isArray(o.material) ? o.material : [o.material])) if (m && m.userData.khxrClipped) back(m); });   // 마지막 훑기 뒤에 생긴 사본
+      return;
+    }
     if (time && time - clipT < 500) return; clipT = time;     // 새로 생긴 재질(병합 다시 만들기 등)은 0.5초마다 붙임
     const P = cropPlanes();
     (function walk(o) {
       if (o === rig || o.userData.khxr && o !== Opt.group) return;
       const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
-      for (const m of ms) if (m && m.clippingPlanes !== P) { if (!clipped.has(m)) { m.userData.khxrClip = m.clippingPlanes; clipped.add(m); } m.clippingPlanes = P; }
+      for (const m of ms) if (m && m.clippingPlanes !== P) { if (!clipped.has(m)) { m.userData.khxrClip = orig(m); m.userData.khxrClipped = true; clipped.add(m); } m.clippingPlanes = P; }
       for (const c of o.children) walk(c);
     })(scene);
   }
@@ -594,6 +602,7 @@
   let last = 0;
   function frame(time) {
     const dt = Math.min(0.1, (time - (last || time)) / 1000); last = time;
+    if (Fps.on) Fps.tick(time, R.info.render.calls);
     R.info.autoReset = false; R.info.reset();   // 한 프레임에 여러 번 그리므로(가상 방·UI 패스) 프레임 단위로 합산
     S.moving = Math.max(0, S.moving - dt * 4);
     pollGamepads(dt, time);
@@ -637,6 +646,25 @@
     if (!S.session) { fn(); return; }
     S.fade = { t: 0, dur, fn, done: false };
   }
+  /* 간이 프레임 표시(?prfps=1): 실기기 착용 확인용. 시야 아래쪽에 작은 판으로 프레임 간격 중앙값·95%와 그리기 호출을 보인다 */
+  const Fps = X.fps = {
+    on: Q.get('prfps') === '1', ds: [], last: 0, t: 0, mesh: null, cv: null, tex: null,
+    tick(time, calls) {
+      if (this.last) { this.ds.push(time - this.last); if (this.ds.length > 144) this.ds.shift(); } this.last = time;
+      if (!this.mesh) {
+        this.cv = document.createElement('canvas'); this.cv.width = 512; this.cv.height = 96; this.tex = new T.CanvasTexture(this.cv);
+        this.mesh = new T.Mesh(new T.PlaneGeometry(0.16, 0.03), new T.MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false }));
+        this.mesh.position.set(0, -0.11, -0.45); this.mesh.renderOrder = 9998; this.mesh.userData.khxr = true; xrCam.add(this.mesh);
+      }
+      if (time - this.t < 500 || this.ds.length < 10) return; this.t = time;
+      const a = this.ds.slice().sort((x, y) => x - y), q = k => a[Math.min(a.length - 1, Math.floor(a.length * k))], med = q(0.5), p95 = q(0.95);
+      const g = this.cv.getContext('2d'); g.clearRect(0, 0, 512, 96); g.fillStyle = 'rgba(0,0,0,0.6)'; g.fillRect(0, 0, 512, 96);
+      g.fillStyle = p95 <= 14.5 ? '#7dffa8' : p95 <= 20 ? '#ffd166' : '#ff7a6b'; g.font = '600 34px ' + FONT; g.textBaseline = 'middle';
+      g.fillText(`${(1000 / med).toFixed(0)}fps  중앙 ${med.toFixed(1)}ms  95% ${p95.toFixed(1)}ms`, 14, 32);
+      g.fillStyle = '#ffffff'; g.font = '500 26px ' + FONT; g.fillText(`그리기 ${calls}회  ${S.mode || ''}${window.KHPRLayer && KHPRLayer.on ? ' · 실사 3D' : ''}`, 14, 72);
+      this.tex.needsUpdate = true; X.fpsStat = { med: +med.toFixed(1), p95: +p95.toFixed(1), calls };
+    }
+  };
   function fadeTick(dt) {
     const F = S.fade; if (!F) return;
     F.t += dt; const half = F.dur / 2;
@@ -860,16 +888,20 @@
     clear() { this.done.forEach((v, o) => { o.renderOrder = v.ro; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m, i) => { if (m.transparent !== v.tr[i]) { m.transparent = v.tr[i]; m.needsUpdate = true; } }); }); this.done.clear(); this.t = 0; }
   };
   const Opt = X.opt = {
-    group: null, hidden: [], sig: '', t: 0, stat: null, need: false,
+    group: null, hidden: [], sig: '', t: 0, stat: null, need: false, roots: null, until: 0,
     visibleMeshes() {
-      const out = [];
-      (function walk(o) {
+      // 화면 합치기(VR 밖, screenOn)는 실사 3D 계층이 정한 묶음만 훑는다. Wing 의 가림 상자(userData.box)는 Wing 이 매 프레임 표시를 바꾸므로 합치지 않는다
+      const out = [], scr = this.screen(), seen = scr ? new Set() : null;
+      const walk = o => {
         if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
-        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o))) out.push(o);
+        if (scr && o.userData.box && o.userData.box.isBox3) return;
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !(seen && seen.has(o))) { out.push(o); if (seen) seen.add(o); }
         for (const c of o.children) walk(c);
-      })(scene);
+      };
+      if (scr) { for (const r of this.roots()) if (r && inScene(r) && visibleChain(r)) walk(r); } else walk(scene);
       return out;
     },
+    screen() { return !!this.roots && !S.session; },
     // 그릴 조각: 일반 메시, 선분, 재질이 여러 개인 메시는 그룹별로 나눈 조각
     parts(list) {
       const out = [];
@@ -964,7 +996,7 @@
       log('최적화', JSON.stringify(this.stat));
     },
     clear() {
-      this.hidden.forEach(m => { m.visible = true; }); this.hidden = []; this.hiddenSet = null;
+      this.hidden.forEach(m => { m.visible = true; }); this.hidden = []; this.hiddenSet = null; this.sig = '';
       if (this.group) { this.group.children.forEach(c => c.geometry.dispose()); scene.remove(this.group); this.group = null; }
       (this.mats || []).forEach(m => m.dispose()); this.mats = [];
       if (this.dw) { this.dw.forEach(m => { m.depthWrite = true; }); this.dw.clear(); }
@@ -991,8 +1023,22 @@
       const sig = this.sigOf(this.visibleMeshes()) + ':' + this.cullUnder();
       this.hidden.forEach(m => { m.visible = false; });
       if (sig !== this.sig || this.need) { this.need = false; this.build(); }
+    },
+    /* 화면(데스크톱·휴대폰·퀘스트 2D 브라우저) 합치기: 실사 3D 계층이 켠다. roots() = 합칠 묶음 목록.
+       VR 세션이 시작되면 세션용 합치기(장면 전체)가 대신하고, 끝나면 다시 화면 합치기로 돌아온다 */
+    screenOn(roots) { this.roots = roots; this.need = true; },
+    screenOff() { if (!this.roots) return; this.roots = null; if (!S.session) this.clear(); },
+    // 장면이 바뀌는 중에는 합친 메시를 걷고(원본이 그대로 보임) ms 동안 바뀜이 없으면 다시 합친다
+    pause(ms) { if (!this.screen() || this.busy) return; if (this.group) this.clear(); this.until = performance.now() + (ms || 400); this.need = true; },
+    screenTick(time) { if (!this.screen() || this.busy || time < this.until) return; this.check(time); },
+    // 원본 그대로 그려야 하는 순간(유리 반사 지도 등): 합친 메시를 숨기고 원본을 보이게 한 채 fn 실행
+    bare(fn) {
+      const g = this.group; if (!g || !this.screen()) return fn();
+      g.visible = false; this.hidden.forEach(m => { m.visible = true; }); this.busy = true;
+      try { return fn(); } finally { this.busy = false; this.hidden.forEach(m => { m.visible = false; }); g.visible = true; }
     }
   };
+  function inScene(o) { for (; o; o = o.parent) if (o === scene) return true; return false; }
 
   /* ================= 12. 메뉴(공간 UI) ================= */
   const UI = X.ui = (function () {

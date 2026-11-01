@@ -6647,7 +6647,7 @@ function makeLabels(){
   {const [cx,cz]=P(820,700);[['북',NV],['동',EV],['남',[-NV[0],-NV[1]]],['서',[-EV[0],-EV[1]]]].forEach(([t,v])=>addLabel(`<b>${t}</b>`,'st dir',new THREE.Vector3(cx+v[0]*78,0.3,cz+v[1]*78),{top:true}))}
 }
 const tmp=new THREE.Vector3();
-const visDeep=o=>{while(o){if(!o.visible)return false;o=o.parent}return true};
+const visDeep=o=>{const H=window.KHXRLayer&&KHXRLayer.opt&&KHXRLayer.opt.hiddenSet;while(o){if(!o.visible&&!(H&&H.has(o)))return false;o=o.parent}return true};   // [XR] 합친 메시(xr/kh-xr.js Opt)로 숨긴 원본은 보이는 것으로 친다
 function placeLabels(){updUp();
   const w=host.clientWidth,h=host.clientHeight,show=document.getElementById('t-labels').checked;
   labels.forEach(l=>{tmp.copy(l.v).project(camera);
