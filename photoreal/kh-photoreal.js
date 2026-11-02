@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.d';
+  const VER = '1102.e';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -743,7 +743,8 @@
       if (ms) m.samples = 4; m.texture.encoding = rt.texture.encoding; m.texture.generateMipmaps = false; rt.dispose(); obj[key] = m; return true; };
     if (swap(C, 'renderTarget1') | swap(C, 'renderTarget2')) { C.writeBuffer = C.renderTarget1; C.readBuffer = C.renderTarget2; PR.stat.msaa = ms ? 4 : 0; PR.stat.depth24 = true; }
     swap(R3.ssao, 'beautyRenderTarget');
-    const S = R3.ssao; if (S && S.depthTexture && S.depthTexture.type !== T.UnsignedIntType) { S.depthTexture.type = T.UnsignedIntType; S.depthTexture.needsUpdate = true; if (S.normalRenderTarget) S.normalRenderTarget.dispose(); }
+    const S = R3.ssao, dt = S && S.normalRenderTarget && S.normalRenderTarget.depthTexture;   // SSAOPass 의 깊이는 normalRenderTarget.depthTexture(UnsignedShort = 16비트)
+    if (dt && dt.type !== T.UnsignedIntType) { dt.type = T.UnsignedIntType; dt.needsUpdate = true; S.normalRenderTarget.dispose(); PR.stat.ssaoDepth32 = true; }
   }
   // 가로등 바닥 빛 웅덩이(야간): Wing 가로등(R3D.lamps, 점광원) 아래 땅에 따뜻한 둥근 빛을 더한다. 인스턴스 한 묶음(그리기 호출 1회), 야간·실사 켠 동안만
   const POOL = { m: null, n: -1 };
