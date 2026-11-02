@@ -9,7 +9,7 @@ const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 
 const BASE = process.argv.find(a => /^https?:/.test(a)) || 'http://localhost:8790';
 const SHOTS = process.argv.includes('--shots');
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import CHROME from '../../photoreal/tests/chrome.mjs';
 const PAGE = process.env.PAGE || 'new/3d-model.html';
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -83,7 +83,7 @@ try {
     for (let i = 0; i < 3; i++) await f();
     const before = KHXRLayer.rig.position.clone();
     c.updateButtonValue('trigger', 1); for (let i = 0; i < 6; i++) await f();
-    const mk = KHXRLayer.marker, aimOk = mk.visible && mk.material.color.getHex() === 0x7fd6ff;
+    const mk = KHXRLayer.marker, aimOk = mk.visible && mk.material.color.getHex() === 0xffc23d;   // 1102.k: 순간이동 바닥 표시는 노랑(메뉴 레이 청록과 구분)
     const U = KHXR.renderer.xr.getController(1).userData, U0 = KHXR.renderer.xr.getController(0).userData; const dbg = { r: { hand: U.hand, aim: U.aim, hit: !!U.hit, ui: !!U.uiHit, press: !!U.pressUI }, l: { hand: U0.hand, aim: U0.aim, hit: !!U0.hit, ui: !!U0.uiHit } };
     c.updateButtonValue('trigger', 0); await f(); await new Promise(r => setTimeout(r, 900)); await f();
     c.quaternion.set(0, 0, 0, 1);

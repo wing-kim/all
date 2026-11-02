@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.j';
+  const VER = '1102.k';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -42,10 +42,12 @@
     // 창의 rAF 는 Wing 그리기 뒤에 돌아 다음 프레임 번호를 올린다. VR 중에는 창 rAF 가 멈추므로 그리기마다 처리한다(VR 은 프레임당 한 번 그림)
     (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
     let lastTick = -1;
+    shaderGate();
     scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
     // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다.
     // ?pr=1 로 바로 켜는 경우는 미리받기가 실제 필요한 요청과 대역을 다투므로 하지 않는다(켜는 순간 남은 미리받기도 멈춘다)
-    if (Q.get('pr') !== '1') setTimeout(() => { if (!PR.on) prefetch(); }, 2500);
+    // 1102.k: 스케치업·렌더처럼 실사를 쓰지 않을 때 첫 화면과 다투지 않게 8초 뒤 브라우저가 한가할 때 시작한다(예전 2.5초). 느린 회선·저사양 기기는 받지 않는다(prefetch)
+    if (Q.get('pr') !== '1') setTimeout(() => { const go = () => { if (!PR.on) prefetch(); }; if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 10000 }); else go(); }, 8000);
     PR.boot = '준비 완료';
     if (Q.get('pr') === '1' || PR.want) { await new Promise(r => setTimeout(r, 300)); stage('켜기', () => { preset(Q.get('pf') || 'glass'); enable(true).then(() => { PR.boot = '준비 완료'; const lv = Q.get('lv'); if (lv) goLevel(lv); }).catch(e => { PR.err = '켜기: ' + (e && e.message || e); log('켜기 실패', PR.err); }); }); }
   }
@@ -59,6 +61,8 @@
   }
   function prefetch() {
     const c = navigator.connection; if (c && (c.saveData || /(^|-)2g|3g/.test(c.effectiveType || ''))) { log('미리받기 생략(절약 모드)'); return; }
+    // 회선이 5Mbps 아래로 보이거나 기기 메모리·코어가 적으면(4GB·4코어 미만) 받지 않는다. 실사 3D 를 고르면 그때 받는다
+    if ((c && c.downlink && c.downlink < 5) || (navigator.deviceMemory && navigator.deviceMemory < 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4)) { log('미리받기 생략(회선·기기)'); return; }
     const q0 = f => BASE + f + (/^(bake|codex|context)\//.test(f) ? '?v=' + VER : '');
     fetch(BASE + 'prefetch.json?v=' + VER).then(r => r.ok ? r.json() : null).then(async j => {
       if (!j) return; const q = j.files.slice(), t0 = now(); PR.pre = { n: q.length, done: 0, bytes: j.bytes };
@@ -808,12 +812,16 @@
     const cube = R3D.cube && R3D.cube.texture;
     if (cube) CACHE.forEach(e => { if (e && e.glass && e.m.envMap !== cube) { e.m.envMap = cube; e.m.needsUpdate = true; } });
     if (inBase) { if (R.toneMappingExposure !== 0.95) R.toneMappingExposure = 0.95; if (K.amb.intensity !== 0.04) K.amb.intensity = 0.04; }
-    warm();
+    warm(); gateRefl();
     skyUpdate();
     const wantSky = night ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day';
     const useSky = skyBG && !inBase && skyCur.key === wantSky;   // 새 시간대 하늘을 받기 전에는 Wing 하늘을 보인다
-    if (R3D.sky) R3D.sky.visible = !useSky;
-    if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
+    // VR 피규어(패스스루) 모드는 XR 계층이 배경·Wing 하늘을 비워 현실이 보이게 한다. 여기서 실사 하늘을 다시 넣으면 현실이 가려졌다(1102.k, 흉내 시험 투명 화소 0.04%)
+    const figXR = R.xr.isPresenting && window.KHXRLayer && KHXRLayer.state && KHXRLayer.state.mode === 'fig';
+    if (!figXR) {
+      if (R3D.sky) R3D.sky.visible = !useSky;
+      if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
+    }
     if (DIST) DIST.visible = (!K.I.on || !inBase) && !QS.cur.hideFar;
     // 지하층 안에서는 바깥이 보이지 않으므로 주변 건물·땅을 그리지 않는다(VR 그리기 호출 예산)
     // 미성아파트 일대(1102.g): '미래(추정)'(Wing state.ms, ?ms=future)를 고르고 신축 모드일 때만 재건축 가정 동이 있는 한 벌(CTX.next), 그 밖에는 실측 현재 단지가 있는 한 벌(CTX.now)
@@ -855,11 +863,18 @@
      휴대폰·퀘스트 2D 브라우저는 준비가 끝나고 2초 뒤부터 10초 동안 프레임 간격 중앙값으로 한 번 고른다(Jack 허용, 2026-11-01). 패널에서 직접 고를 수 있고 고른 값은 기억한다.
      문턱값은 실기기 측정 전 추정값이라 QCFG 에 모았다. ?prq=high|medium|low 로 강제 */
   const QCFG = { auto: isMobile || /OculusBrowser|Quest/i.test(navigator.userAgent), skipMs: 2000, sampleMs: 10000, lowMs: 40, medMs: 24 };
+  /* 데스크톱 자동 품질(1102.k, Wing 윈도우 PC 끊김): 휴대폰과 같은 원칙(Jack 허용)을 데스크톱에도 쓴다. 준비가 끝난 뒤 계속 6초 창의 프레임 간격 중앙값·95% 값을 보고
+     중앙값 > 33ms(30fps 아래) 또는 95% > 70ms 이면 한 단계 낮추고 안내한다(올리지는 않는다, 바꾼 뒤 4초는 보지 않음). 패널에서 고른 값이 있으면 그대로 둔다.
+     시험 자동화(navigator.webdriver) 중에는 기준 화면이 흔들리지 않게 끄고 ?prqauto=1 이면 켠다 */
+  QCFG.desk = !QCFG.auto && (!navigator.webdriver || Q.get('prqauto') === '1');
+  Object.assign(QCFG, { deskWin: 6000, deskHold: 4000, deskMed: 33, deskP95: 70 });
   const QLV = {
     high: { name: '높음', pr: null, noAO: false, shadow: null, hideFarDetail: false, hideFar: false },
     medium: { name: '보통', pr: 1.0, noAO: true, shadow: null, hideFarDetail: true, hideFar: false },
     low: { name: '낮음', pr: 0.75, noAO: true, shadow: 1024, hideFarDetail: true, hideFar: true },
   };
+  // 데스크톱 화소 배율: 높음은 Wing 고화질 상한 1.5(Wing HQ.cap), 보통 1.25, 낮음 1.0. 휴대폰은 화면이 작아 예전 값(1.0·0.75)
+  if (!isMobile) { QLV.medium.pr = 1.25; QLV.low.pr = 1.0; }
   const qStore = { get() { try { return localStorage.getItem('khpr.quality'); } catch (e) { return null; } }, set(v) { try { if (v) localStorage.setItem('khpr.quality', v); else localStorage.removeItem('khpr.quality'); } catch (e) {} } };
   const QS = PR.q = { key: 'high', cur: QLV.high, name: QLV.high.name, auto: null, manual: Q.get('prq') || qStore.get(), applied: '', sample: null };
   function qSet(key, why) { if (!QLV[key]) return; QS.key = key; QS.cur = QLV[key]; QS.name = QS.cur.name; QS.why = why; panelSync(); statLine(); }
@@ -869,6 +884,18 @@
       const t = now(), S = QS.sample || (QS.sample = { t0: t + QCFG.skipMs, ds: [], last: 0 });
       if (t >= S.t0) { if (S.last) S.ds.push(t - S.last); S.last = t;
         if (t - S.t0 >= QCFG.sampleMs && S.ds.length > 20) { const a = S.ds.slice().sort((x, y) => x - y), med = a[a.length >> 1]; QS.auto = med; qSet(med > QCFG.lowMs ? 'low' : med > QCFG.medMs ? 'medium' : 'high', '자동 ' + med.toFixed(0) + 'ms'); log('품질 자동 선택', QS.key, med.toFixed(1) + 'ms'); } }
+    }
+    // 받는 중(외관·가구·합치기·첫 그리기 미룸·반사 지도 다시 그리기): 자동 품질과 Wing 고화질 하향 판정(PR.loading)에서 뺀다. 한 번뿐인 긴 프레임으로 내려가지 않게
+    { const O = optApi(); PR.loading = PR.t.warm == null || PR.t.dress == null || DR.busy || STG.cur >= 0 || PR.tick - GATE.defer < 60 || !!GATE.reT || !!(O && (O.need || O.hold || QS.nb !== O.nBuild)); if (O) QS.nb = O.nBuild; }
+    if (!QS.manual && QCFG.desk && PR.t.warm != null && !R.xr.isPresenting && QS.key !== 'low') {
+      const t = now(), D = QS.desk || (QS.desk = { t0: t + QCFG.skipMs, ds: [], last: 0 }), busy = PR.loading;
+      if (document.hidden || K.R3D.busy || busy) { D.last = 0; D.ds = []; D.t0 = t + 1000; }
+      else if (t >= D.t0) { if (D.last && t - D.last < 1000) D.ds.push(t - D.last); D.last = t;
+        if (t - D.t0 >= QCFG.deskWin && D.ds.length > 30) { const a = D.ds.slice().sort((x, y) => x - y), med = a[a.length >> 1], p95 = a[Math.floor(a.length * 0.95)];
+          D.ds = []; D.t0 = t; D.last = 0;
+          if (med > QCFG.deskMed || p95 > QCFG.deskP95) { const nk = QS.key === 'high' ? 'medium' : 'low'; QS.auto = med; qSet(nk, '자동 ' + med.toFixed(0) + 'ms');
+            QS.note = `화면이 느려(프레임 ${med.toFixed(0)}ms) 품질을 '${QLV[nk].name}'으로 낮췄습니다. 품질 단추로 바꿀 수 있습니다`; QS.noteT = t + 8000; D.t0 = t + QCFG.deskHold;
+            log('품질 자동 하향', nk, 'med', med.toFixed(1), 'p95', p95.toFixed(1)); statLine(); setTimeout(statLine, 8100); } } }
     }
     const L = QS.cur, C = K.R3D.composer, sig = QS.key + '|' + (C ? 1 : 0) + '|' + (K.R3D.hq ? 1 : 0) + '|' + (CTX.next ? CTX.next.children.length : 0) + '|' + (GND.g ? 1 : 0);
     if (sig === QS.applied || R.xr.isPresenting) return; QS.applied = sig;
@@ -896,9 +923,14 @@
   function optTick() {
     const O = optApi(); if (!O || !OPT.on || R.xr.isPresenting) return;
     if (!O.roots) O.screenOn(optRoots);
-    const sg = optSig(); if (sg !== OPT.sig) { OPT.sig = sg; O.pause(400); }
+    // 받는 중(외관 단계·셰이더 준비·가구)에는 다시 합치기를 미룬다(1102.k): 로딩 중 구성이 바뀔 때마다 전체를 동기식으로 다시 합쳐 끊겼다.
+    // 미루는 동안은 원본을 그대로 그린다. 최대 10초(그 뒤 한 번 합치고 다시 미룸)
+    const loading = STG.cur >= 0 || PR.t.warm == null || DR.busy;
+    O.hold = loading ? (O.hold || now()) : 0;
+    // 반사 지도 갱신(refreshRefl)은 그리는 동안 그림자 서명 한 칸을 잠깐 바꾼다: 갱신 직후 0.7초의 바뀜은 다시 합칠 일이 아니다
+    const sg = optSig(); if (sg !== OPT.sig) { const refl = now() - (GATE.reflAt || -1e9) < 700; OPT.sig = sg; if (!refl) O.pause(loading ? 1500 : 400); }
     O.screenTick(now());
-    PR.stat.opt = O.stat;
+    PR.stat.opt = O.stat; PR.stat.optCheckMs = O.checkMs;
   }
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
@@ -1059,26 +1091,98 @@
      켠 직후부터 프레임마다 몇 개씩, 카메라 바로 앞의 아주 작은 판에 씌워 한 번 그려 미리 만들어 둔다. */
   const WARM = [];
   let warmG = null, warmMs = [];
+  // 1102.k(Wing 윈도우 PC 끊김): 윈도우 ANGLE D3D11 은 셰이더 하나에 수십～수백 ms 가 걸린다. 예전에는 한 프레임에 최대 32개를 그려 몇 초씩 멈출 수 있었다.
+  // - 병렬 컴파일(KHR_parallel_shader_compile)이 있으면: 작은 대리 장면(빛 개수만 같은 가짜 빛)에서 프로그램만 만들고(링크 결과를 기다리지 않음),
+  //   다음 프레임부터 완료 여부를 물어 끝난 것만 장면에 한 번 그린다. 컴파일은 GPU 프로세스에서 따로 돌아 메인 스레드가 멈추지 않는다.
+  // - 없으면: 셰이더 한 개의 비용을 직전 프레임 시간에서 추정해 프레임당 WCFG.budget(8ms) 안에 들어갈 만큼만 그린다(최소 1개).
+  // ?prpsc=0 이면 병렬 컴파일을 쓰지 않는다. 진행은 PR.stat.warm. (r128 의 재질 속성은 currentProgram: 예전 검사(pp.program)는 늘 비어 있어 이미 만든 셰이더도 다시 그렸다)
+  const WCFG = { budget: 8, maxPend: 48, maxDraw: 24 };
+  const WP = { ext: undefined, pend: [], ready: [], proxy: null, lsig: '', cost: 0, base: 16, n: 4, t: 0, done: 0 };
+  function pscExt() { if (WP.ext === undefined) WP.ext = Q.get('prpsc') === '0' ? null : R.getContext().getExtension('KHR_parallel_shader_compile'); return WP.ext; }
+  // 대리 장면: 실제 장면의 보이는 빛을 종류·그림자 여부별로 세어 같은 수의 가짜 빛을 둔다(three 는 빛 개수로 셰이더를 나눈다). 안개·환경 지도도 같게
+  function warmProxy() {
+    const cnt = {}; scene.traverseVisible(o => { if (o.isLight) { const k = o.type + (o.castShadow ? '+s' : ''); cnt[k] = (cnt[k] || 0) + 1; } });
+    const sig = JSON.stringify(cnt);
+    if (!WP.proxy || WP.lsig !== sig) { WP.lsig = sig; const S = new T.Scene();
+      for (const k in cnt) for (let i = 0; i < cnt[k]; i++) { const [ty, sh] = k.split('+'), L = T[ty] ? new T[ty]() : null; if (!L) continue; L.castShadow = !!sh; S.add(L); if (L.target) S.add(L.target); }
+      WP.mesh = new T.Mesh(new T.PlaneGeometry(1e-3, 1e-3)); S.add(WP.mesh); WP.proxy = S; }
+    WP.proxy.fog = scene.fog; WP.proxy.environment = scene.environment; return WP.proxy;
+  }
+  /* 첫 그리기 분산(1102.k): three r128 은 셰이더 프로그램을 만들자마자 유니폼을 조회해 그 자리에서 컴파일 끝을 기다린다(병렬 컴파일 확장이 있어도).
+     실사 재질로 바꾸는 순간·가구가 나타나는 순간 처음 그리는 재질 수십 개가 한 프레임에 몰려 윈도우에서 몇 초씩 멈췄다(맥 흉내 시험: 39개 3.1초).
+     화면 그리기에서 아직 프로그램이 없는 재질을 그리는 데 이번 프레임에 WCFG.budget(8ms)을 넘게 썼으면 남은 것은 다음 프레임에 그린다(그 물체는 한두 프레임 늦게 보인다).
+     반사 지도(정육면체, Wing 반사 갱신·refreshRefl)도 같은 예산으로 미루고, 미룬 것이 있으면 0.25초 뒤 반사 지도를 다시 그린다(반사 지도는 예산 3배, 최대 16번: 흉내 시험에서 한 번에 12개 3.2초 멈춤).
+     그림자·고화질 저장·VR 은 빠짐없이 그려야 하므로 미루지 않는다. ?prgate=0 이면 끈다 */
+  const GATE = { on: Q.get('prgate') !== '0', tick: -1, ms: 0, skip: 0, defer: 0, slow: 0, maxMs: 0, cskip: 0, reT: 0, tries: 0, cube: new WeakSet() };
+  function shaderGate() {
+    if (!GATE.on || R.__khGate) return; R.__khGate = true;
+    const rbd = R.renderBufferDirect, props = R.properties, gl = R.getContext();
+    R.renderBufferDirect = function (cam, sc, geo, mat, obj, grp) {
+      if (!mat || R.xr.isPresenting) return rbd.call(this, cam, sc, geo, mat, obj, grp);
+      if (gl.isContextLost() && !props.get(mat).currentProgram) return;   // 컨텍스트를 잃은 동안 새 셰이더를 만들면 three 가 빈 로그(null)를 읽다 멈춘다
+      // 실사 3D 가 켜져 있을 때만(1102.k: Wing 렌더 모드에서 반사 지도를 미루면 다시 그리기(gateRefl)가 돌지 않아 유리가 어둡게 남았다)
+      if (!sc || !(PR.on || PR.loading) || (K.R3D && K.R3D.busy)) return rbd.call(this, cam, sc, geo, mat, obj, grp);   // PR.loading: 켜기 직전 Wing 렌더 전환(반사 지도)도
+      // 반사 지도(정육면체)는 화면과 셰이더 변형이 달라 currentProgram 이 있어도 처음 그릴 때 새로 만든다: 재질마다 정육면체에 처음 그리는 것을 따로 센다
+      // 미루는 곳은 Wing 장면(scene)을 화면·합성 단계 버퍼(SSAO 의 장면 버퍼 등, 합성기를 다시 만들면 바뀐다)에 그릴 때와 Wing 반사 지도뿐.
+      // 하늘 정육면체는 다른 장면이라, 장면을 굽는 환경 지도(PMREM fromScene, CubeUV 버퍼: 지하 바닥 광택)는 버퍼 종류로 빼서 미루지 않는다(빠지면 어둡거나 광택이 없다). 정지 화면 찍기(PR.still)도
+      const rt = R.getRenderTarget(), cube = !!(rt && rt.isWebGLCubeRenderTarget);
+      // 후처리 단계의 화면 사각형(장면 대신 메시 하나를 그림): 실사 3D 를 켜며 Wing 합성기가 처음 만들어질 때 셰이더 15～20개가 한 프레임에 몰린다.
+      // 받는 중(PR.loading)에만 미룬다: 그 프레임은 후처리가 덜 된 화면이거나 앞 화면이 그대로 보인다
+      const post = !!(sc && !sc.isScene && sc.isMesh && PR.loading);
+      if (cube ? !(K.R3D.cube && (K.R3D.cube === rt || K.R3D.cube.renderTarget === rt)) : ((sc !== scene && !post) || PR.still || (rt && rt.texture && (rt.texture.mapping === T.CubeUVReflectionMapping || rt.texture.mapping === T.CubeUVRefractionMapping)))) return rbd.call(this, cam, sc, geo, mat, obj, grp);
+      // 화면: 프로그램이 있고 재질 버전이 같으면 이미 만든 것. 실사 켜기는 Wing 재질에 셰이더 보정을 붙이며 needsUpdate(버전 증가)로 다시 만들게 하므로 버전도 본다
+      const mp = props.get(mat);
+      if (cube ? GATE.cube.has(mat) && mp.__version === mat.version : mp.currentProgram && mp.__version === mat.version) return rbd.call(this, cam, sc, geo, mat, obj, grp);
+      if (GATE.tick !== PR.tick) { GATE.tick = PR.tick; GATE.ms = 0; }
+      if (GATE.ms > (cube ? WCFG.budget * 3 : WCFG.budget)) { GATE.skip++; GATE.defer = PR.tick; if (cube) GATE.cskip++; return; }
+      // 새 프로그램이 실제로 생긴 그리기만 예산에 넣는다(재질 버전만 바뀌고 같은 셰이더를 다시 쓰는 경우는 싸다: 그것까지 세면 매 프레임 수천 개를 건너뛰었다)
+      const t0 = now(), np = R.info.programs.length; const r = rbd.call(this, cam, sc, geo, mat, obj, grp); const d = now() - t0, made = R.info.programs.length > np; if (cube) GATE.cube.add(mat);
+      if (!made) return r; GATE.ms += d; if (d > GATE.maxMs) GATE.maxMs = Math.round(d); if (d > 50) GATE.slow++;
+      return r;
+    };
+  }
+  PR.gate = GATE;   // 진단용
+  // 반사 지도를 그리다 미룬 재질이 있으면 잠시 뒤 다시 그린다(frame 에서 부른다)
+  function gateRefl() {
+    if (!GATE.cskip || GATE.reT || GATE.tries >= 16) return; GATE.cskip = 0;
+    GATE.reT = setTimeout(() => { GATE.reT = 0; GATE.tries++; refreshRefl(); }, 250);
+  }
+  function warmDone() { return !WARM.length && !WP.pend.length && !WP.ready.length; }
   function warm() {
     if (warmG) { scene.remove(warmG); warmG = null; }
-    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && STG.cur === -1 && PR.t.ground != null) {   // 외관 준비가 끝난 뒤 남은 셰이더가 없으면(가구는 나중)
+    if (warmDone()) { if (PR.t.warm == null && PR.t.enable0 && STG.cur === -1 && PR.t.ground != null) {   // 외관 준비가 끝난 뒤 남은 셰이더가 없으면(가구는 나중)
        PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); } return; }
-    const props = R.properties, cam = window.KHXR.camera;
-    warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
-    const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3));
-    // 한 프레임에 준비할 수: 직전 프레임이 빨랐으면 두 배로(최대 32), 느렸으면 절반으로(최소 2). 다시 방문하면 브라우저가 셰이더를 기억해(프로그램 캐시)
-    // 빨리 끝나므로 4개씩 고정보다 2～3초 빨리 준비된다(1102: 재방문 기준 3초)
+    const props = R.properties, cam = window.KHXR.camera, ext = pscExt(), gl = R.getContext();
+    if (gl.isContextLost()) return;
     const tn = now(), dt = warm.t ? tn - warm.t : 16; warm.t = tn;
-    warm.n = Math.max(2, Math.min(32, dt < 24 ? (warm.n || 4) * 2 : dt > 50 ? (warm.n || 4) / 2 : warm.n || 4));
-    let n = 0;
-    while (WARM.length && n < warm.n) {
-      const m = WARM.shift(); const pp = props.get(m);
-      if (pp && pp.program) continue;
-      const me = new T.Mesh(geo, m); me.frustumCulled = false; me.renderOrder = -1;
-      const d = new T.Vector3(); cam.getWorldDirection(d); me.position.copy(cam.position).addScaledVector(d, Math.max(cam.near * 2, 0.6)); me.quaternion.copy(cam.quaternion);
-      warmG.add(me); n++;
+    let draw = [];
+    if (ext) {
+      // 1) 완료된 것 골라내기(완료 조회는 기다리지 않는다)
+      WP.pend = WP.pend.filter(e => { const pp = props.get(e.m), pg = pp && pp.currentProgram; if (!pg) return false;
+        if (gl.getProgramParameter(pg.program, ext.COMPLETION_STATUS_KHR)) { WP.ready.push(e.m); return false; } return true; });
+      // 2) 새로 컴파일 맡기기: 시간 예산 안에서
+      if (WARM.length && WP.pend.length < WCFG.maxPend) {
+        const S = warmProxy(), t0 = now(), chk = R.debug.checkShaderErrors; R.debug.checkShaderErrors = false;   // 오류 검사는 링크 결과를 기다리므로 끈다(완료 뒤 따로 본다)
+        try { while (WARM.length && WP.pend.length < WCFG.maxPend && now() - t0 < WCFG.budget) {
+          const m = WARM.shift(), pp = props.get(m); if (pp && pp.currentProgram) continue;
+          WP.mesh.material = m; R.compile(S, cam); WP.pend.push({ m, t: now() }); } }
+        finally { R.debug.checkShaderErrors = chk; WP.mesh.material = null; }
+      }
+      draw = WP.ready.splice(0, WCFG.maxDraw);
+    } else {
+      // 병렬 컴파일이 없으면 직전 프레임에서 셰이더 한 개 비용을 추정해 예산 안에서만
+      if (WP.last) { const c = Math.max(0.5, (dt - WP.base) / WP.last); WP.cost = WP.cost ? WP.cost * 0.6 + c * 0.4 : c; } else WP.base = WP.base * 0.8 + Math.min(dt, 50) * 0.2;
+      WP.n = Math.max(1, Math.min(32, Math.floor(WCFG.budget / Math.max(0.25, WP.cost || 2))));
+      while (WARM.length && draw.length < WP.n) { const m = WARM.shift(), pp = props.get(m); if (!(pp && pp.currentProgram)) draw.push(m); }
+      WP.last = draw.length;
     }
-    if (n) { scene.add(warmG); warmMs.push(n); }
+    if (!draw.length) return;
+    // 카메라 바로 앞의 아주 작은 판에 씌워 한 번 그린다(반사 지도·그림자용 변형과 유니폼 위치를 이 프레임에 만든다)
+    warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
+    const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3)), d = new T.Vector3(); cam.getWorldDirection(d);
+    draw.forEach(m => { const me = new T.Mesh(geo, m); me.frustumCulled = false; me.renderOrder = -1; me.position.copy(cam.position).addScaledVector(d, Math.max(cam.near * 2, 0.6)); me.quaternion.copy(cam.quaternion); warmG.add(me); });
+    scene.add(warmG); warmMs.push(draw.length); WP.done += draw.length;
+    PR.stat.gate = { skip: GATE.skip, slow: GATE.slow, maxMs: GATE.maxMs }; PR.stat.warm = { mode: ext ? 'parallel' : 'budget', done: WP.done, left: WARM.length + WP.pend.length + WP.ready.length, perFrame: ext ? null : WP.n, costMs: ext ? null : +(WP.cost || 0).toFixed(1) };
   }
   // Wing 의 유리 반사 지도를 실사 재질로 한 번 다시 그린다. 반사 지도용 셰이더 변형(그리는 대상이 정육면체 텍스처라 따로 만들어진다)을
   // 워밍업 끝에 미리 만들어, 첫 조합 전환(첫 벽돌 전환 6.6초 멈춤의 원인)에서 만들지 않게 한다. 주변 건물이 반사에 들어가는 효과도 있다.
@@ -1086,7 +1190,7 @@
   function refreshRefl() {
     if (!PR.on || !K.R3D.on) return;
     const e = document.getElementById('t-city'); if (!e) return;
-    const t0 = now(); PR.silent = true; e.dispatchEvent(new Event('change')); PR.silent = false;
+    const t0 = now(); PR.silent = true; e.dispatchEvent(new Event('change')); PR.silent = false; GATE.reflAt = now();
     PR.stat.reflMs = Math.round(now() - t0); log('반사 지도 갱신', PR.stat.reflMs + 'ms');
   }
   /* ================= 6. 실내 꾸밈 =================
@@ -2143,6 +2247,7 @@
 
   /* ================= 7. 켜기·끄기 ================= */
   async function enable(on) {
+    if (on) PR.loading = true;   // 첫 그리기 미룸·자동 품질이 켜는 순간부터 받는 중으로 본다(qTick 이 다시 계산)
     if (!K) { PR.want = on; log('Wing 준비 전이라 준비되면 켭니다'); return; }   // 단추가 Wing 보다 먼저 생기므로
     if (on === PR.on) return;
     if (on) {
@@ -2163,7 +2268,7 @@
       loadBake();
       loadSeq();
     } else {
-      PR.on = false;
+      PR.on = false; PR.loading = false;
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
       todApply(false); TODS.set = null; optOff(); envOff(); ctxOff(); perfOff();
@@ -2248,7 +2353,7 @@
         if (c.style.bottom !== b) c.style.bottom = b; };
       setInterval(lift, 700); addEventListener('resize', lift); fb.addEventListener('click', () => setTimeout(lift, 30));
       PNL.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.q; QS.manual = k || null; qStore.set(k || null);
-        if (k) qSet(k, '선택'); else { QS.auto = null; QS.sample = null; qSet('high', '자동'); } }));
+        if (k) qSet(k, '선택'); else { QS.auto = null; QS.sample = null; QS.desk = null; QS.note = null; qSet('high', '자동'); } }));
     }
     PNL.hidden = false; panelSync(); statLine();
   }
@@ -2269,8 +2374,9 @@
     const busy = STG.cur >= 0 || !(t.warm != null && t.ground != null) || t.dress == null;
     if (PERF.on && t.firstFrame != null) a.push(`켜기 ${t.firstFrame}ms`);
     if (PERF.on && t.switch != null) a.push(`조합 전환 ${t.switch}ms`);
+    const qn = PR.q && PR.q.note && now() < PR.q.noteT; if (qn) a.push(PR.q.note);
     el.textContent = a.filter(Boolean).join(' · ') || '준비 중';
-    el.hidden = !busy && !PERF.on;   // 준비가 끝나면 성능 보기일 때만 시간 줄을 보인다
+    el.hidden = !busy && !PERF.on && !qn;   // 준비가 끝나면 성능 보기일 때만 시간 줄을 보인다
     const fe = document.getElementById('pr-fail');
     if (fe) { const n = [...STG.fails.keys()]; fe.hidden = !n.length; if (n.length) fe.firstChild.textContent = n.join(', ') + '을(를) 받지 못했습니다. 회선을 확인하고 '; }
     panelSync();
@@ -2302,6 +2408,9 @@
   PR.groups = () => ({ ours: [K.bld, K.exist, DR.group].filter(Boolean), ctx: [CTX.now, CTX.next, K.ctx, K.city, DIST].filter(Boolean),
     ground: [GND.g, K.site].filter(Boolean), trees: [ENV.group, ...(GND.g ? GND.g.children.filter(o => /^pr-trees/.test(o.name)) : [])].filter(Boolean) });
   // 한 프레임 전체(후처리 패스 포함)의 그리기 호출·삼각형
+  // 진단 상자(?prdiag=1)의 성능 한 줄(1102.k): 품질 단계·셰이더 준비·합치기 횟수와 시간·화소 배율
+  PR.diagLine = () => { const w = PR.stat.warm || {}, O = optApi(), C = K.R3D && K.R3D.composer;
+    return `품질 ${QS.name}${QS.why ? '(' + QS.why + ')' : ''} · 셰이더 ${w.mode || '-'} 남음 ${w.left == null ? '-' : w.left} 미룸 ${GATE.skip} 느린 첫 그리기 ${GATE.slow}(최대 ${GATE.maxMs}ms) · 합치기 ${O ? O.nBuild + '회 합 ' + O.msTotal + 'ms 마지막 ' + (O.stat ? O.stat.ms : '-') + 'ms 점검 ' + O.checkMs + 'ms' : '-'} · 화소 ${R.getPixelRatio().toFixed(2)}/${C ? (C._pixelRatio || 1).toFixed(2) : '-'}`; };
   PR.frameInfo = () => new Promise(res => { const inf = R.info; inf.autoReset = false; inf.reset(); requestAnimationFrame(() => requestAnimationFrame(() => { const r = { calls: inf.render.calls, tris: inf.render.triangles, programs: inf.programs.length }; inf.autoReset = true; res(r); })); });
   PR.diag = () => {
     const i = R.info; return { ver: VER, on: PR.on, t: PR.t, stat: PR.stat, programs: i.programs.length, calls: i.render.calls, tris: i.render.triangles, geos: i.memory.geometries, textures: i.memory.textures, pending: pend.n - pend.done, mats: CACHE.size };

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.j';
+  const VER = '1102.k';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -169,6 +169,7 @@
     Opt.clear();
     if (window.KHPRLayer && KHPRLayer.xrQuality) KHPRLayer.xrQuality(0);
     UI.onSessionEnd();
+    ctrls.forEach(c => { const cu = c.userData.cursor; if (cu) { cu.visible = false; scene.remove(cu); } });
     scene.remove(rig);
     R.shadowMap.autoUpdate = S.saved.shAuto; R.shadowMap.needsUpdate = true;
     R.setClearAlpha(1);
@@ -468,8 +469,7 @@
     X.ray = new T.Raycaster();
     for (let i = 0; i < 2; i++) {
       const c = R.xr.getController(i);
-      const line = new T.Line(new T.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 0, -1)]), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.75 }));
-      line.scale.z = 3; line.visible = false; line.userData.keep = true; c.add(line);   // keep: Wing cleanLines() 가 렌더·실사 3D 에서 keep 없는 선을 모두 숨겨 레이가 사라졌다(1102.e)
+      const line = makeRay(); line.scale.z = 3; line.visible = false; c.add(line);
       c.userData = { i, line, hand: i ? 'right' : 'left', src: null, aim: false, sq: false, hit: null, uiHit: null, isHand: false };
       c.addEventListener('connected', e => { c.userData.src = e.data; c.userData.hand = e.data.handedness; c.userData.isHand = !!e.data.hand; line.visible = e.data.targetRayMode !== 'transient-pointer'; UI.detectInput(); });
       c.addEventListener('disconnected', () => { line.visible = false; c.userData.src = null; });
@@ -484,6 +484,36 @@
     // 바닥 표시
     const mk = new T.Mesh(new T.RingGeometry(0.2, 0.28, 40).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.9, depthTest: false }));
     mk.renderOrder = 999; mk.visible = false; mk.userData.khxr = true; X.marker = mk;
+  }
+  /* 레이(1102.k, Jack 퀘스트 확인: 1px 선은 퀘스트에서 굵기가 안 바뀌어 잘 안 보이고 패널을 뚫고 나가는 느낌):
+     흰 심(지름 3mm)과 청록 겉(지름 7mm)의 얇은 원기둥, 끝으로 갈수록 옅어진다. 길이 1(앞쪽 -Z)을 scale.z 로 늘린다. 메뉴를 가리키면 맞은 곳에서 끊고 커서를 둔다.
+     색: 메뉴를 가리킬 때 흰 심+청록, 그냥 가리킬 때 옅은 청록, 순간이동 포물선은 노랑(못 가는 곳은 빨강). 메시라 Wing cleanLines 와 상관없다 */
+  let rayFade = null;
+  function makeRay() {
+    if (!rayFade) { const cv = document.createElement('canvas'); cv.width = 4; cv.height = 64; const g = cv.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 64);
+      gr.addColorStop(0, '#000'); gr.addColorStop(0.55, '#888'); gr.addColorStop(1, '#fff'); g.fillStyle = gr; g.fillRect(0, 0, 4, 64); rayFade = new T.CanvasTexture(cv); }
+    const geo = r => new T.CylinderGeometry(r * 0.6, r, 1, 10, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -0.5);   // 위(먼 끝)가 조금 가늘다
+    const mat = (c, o) => new T.MeshBasicMaterial({ color: c, transparent: true, opacity: o, alphaMap: rayFade, depthWrite: false, toneMapped: false });
+    const g = new T.Group(); g.name = 'khxr-ray'; g.userData.khxr = true;
+    const core = new T.Mesh(geo(0.0015), mat(0xffffff, 0.95)), glow = new T.Mesh(geo(0.0035), mat(0x7fd6ff, 0.5));
+    [core, glow].forEach(m => { m.renderOrder = 1001; m.frustumCulled = false; m.userData.khxr = true; g.add(m); });
+    g.userData.core = core; g.userData.glow = glow; return g;
+  }
+  // 'ui': 메뉴를 가리킴, 'aim': 순간이동 조준(포물선이 따로 그려지므로 짧게), 'bad': 갈 수 없는 곳, 그 밖: 그냥 가리킴
+  function rayLook(line, kind) {
+    const C = line.userData.core.material, G = line.userData.glow.material;
+    if (kind === 'ui') { C.color.setHex(0xffffff); C.opacity = 1; G.color.setHex(0x3fe0ff); G.opacity = 0.75; }
+    else if (kind === 'bad') { C.color.setHex(0xffd0c8); C.opacity = 0.9; G.color.setHex(0xff7a6b); G.opacity = 0.6; }
+    else if (kind === 'aim') { C.color.setHex(0xfff2c0); C.opacity = 0.9; G.color.setHex(0xffc23d); G.opacity = 0.6; }
+    else { C.color.setHex(0xe8fbff); C.opacity = 0.85; G.color.setHex(0x7fd6ff); G.opacity = 0.45; }
+  }
+  // 메뉴·버튼을 가리킬 때 맞은 곳의 커서: 밝은 점 + 테두리 원, 늘 위에 그림(깊이 검사 끔), 레이 쪽을 향하고 패널보다 5mm 앞
+  function makeCursor() {
+    const g = new T.Group(); g.name = 'khxr-cursor'; g.userData.khxr = true; g.visible = false;
+    const m = (c, o) => new T.MeshBasicMaterial({ color: c, transparent: true, opacity: o, depthTest: false, depthWrite: false, toneMapped: false, side: T.DoubleSide });
+    const dot = new T.Mesh(new T.CircleGeometry(0.006, 20), m(0xffffff, 1)), ring = new T.Mesh(new T.RingGeometry(0.010, 0.0135, 32), m(0x3fe0ff, 0.95)), edge = new T.Mesh(new T.RingGeometry(0.0135, 0.0155, 32), m(0x0b2a33, 0.8));
+    [edge, ring, dot].forEach((o, i) => { o.renderOrder = 1002 + i; o.frustumCulled = false; o.userData.khxr = true; g.add(o); });
+    return g;
   }
   function aim(c) {
     const m = new T.Matrix4().extractRotation(c.matrixWorld);
@@ -539,7 +569,7 @@
   function updateRays() {
     let anyHit = null;
     for (const c of ctrls) {
-      const u = c.userData; u.uiHit = null;
+      const u = c.userData; u.uiHit = null; if (u.cursor) u.cursor.visible = false;
       if (!u.src) continue;
       aim(c);
       let len = 3;
@@ -552,11 +582,15 @@
         if (u.hit) anyHit = u.hit; else X.badHit = r.point;
       } else u.arcPts = null;
       u.line.scale.z = len / Math.max(rig.scale.x, 1e-6);
-      u.line.material.color.set(u.uiHit ? 0xffffff : (u.aim && !u.hit ? 0xff7a6b : 0x7fd6ff));
+      rayLook(u.line, u.uiHit ? 'ui' : u.aim ? (u.hit ? 'aim' : 'bad') : '');
+      // 커서: 메뉴·버튼을 맞힌 곳(레이 길이도 거기서 끊김)
+      const cu = u.cursor || (u.cursor = makeCursor());
+      if (uh) { if (!cu.parent) scene.add(cu); const s = Math.max(rig.scale.x, 1e-6), o = X.ray.ray.origin;
+        cu.position.copy(X.ray.ray.direction).multiplyScalar(Math.max(0, uh.distance - 0.005 * s)).add(o); cu.lookAt(o); cu.scale.setScalar(s); cu.visible = true; }
     }
     const mk = X.marker, aimC = ctrls.find(c => c.userData.arcPts);
     drawArc(aimC ? aimC.userData.arcPts : null, !!anyHit);
-    if (anyHit || (aimC && X.badHit)) { if (!mk.parent) scene.add(mk); mk.visible = true; mk.position.copy(anyHit || X.badHit).y += 0.02; mk.material.color.set(anyHit ? 0x7fd6ff : 0xff7a6b); } else mk.visible = false;
+    if (anyHit || (aimC && X.badHit)) { if (!mk.parent) scene.add(mk); mk.visible = true; mk.position.copy(anyHit || X.badHit).y += 0.02; mk.material.color.set(anyHit ? 0xffc23d : 0xff7a6b); } else mk.visible = false;
     X.badHit = null;
   }
   // 순간이동 포물선: 손이 가리키는 방향으로 던진 곡선이 처음 닿는 곳. 위를 향한 면이고(건물 안이면) 걸을 수 있는 곳이어야 함
@@ -619,7 +653,7 @@
     const a = arcLine.geometry.attributes.position; const n = Math.min(64, pts.length);
     for (let i = 0; i < n; i++) a.setXYZ(i, pts[i].x, pts[i].y, pts[i].z);
     arcLine.geometry.setDrawRange(0, n); a.needsUpdate = true;
-    arcLine.material.color.set(ok ? 0x7fd6ff : 0xff7a6b); arcLine.visible = true;
+    arcLine.material.color.set(ok ? 0xffc23d : 0xff7a6b); arcLine.visible = true;   // 순간이동 포물선은 노랑(메뉴 레이 청록과 구분)
   }
   function visibleChain(o) { for (; o; o = o.parent) if (!o.visible) return false; return true; }
   function pickables() { return scene.children.filter(o => o !== rig && o !== X.marker && !o.userData.khxr && o !== Opt.group && o.type !== 'DirectionalLight'); }
@@ -664,6 +698,7 @@
       R.clippingPlanes = cpR; const ac = R.autoClear; R.autoClear = false; R.render(scene, xrCam); R.autoClear = ac;
     } else R.render(scene, xrCam);
     if (fcHid) fcHid.forEach(o => { o.visible = true; });
+    if (S.ar || AlphaFix.probe) AlphaFix.run(S.mode === 'fig');
     if (cp0) R.clippingPlanes = cp0;
     if (split) {
       rig.visible = true; uiScene.add(rig);
@@ -672,6 +707,36 @@
       R.clippingPlanes = cpU; R.autoClear = ac; scene.add(rig);
     }
   }
+
+  /* 패스스루 알파 보정(1102.k, Jack 퀘스트 확인: 나뭇잎 자리에 현실이 비침): 패스스루가 되는 세션(immersive-ar)은 프레임 버퍼 알파가 1 보다 작은 화소를
+     현실과 섞는다. 잎·카드처럼 알파 시험(alphaTest)을 쓰는 불투명 재질은 블렌딩 없이 텍스처 알파(예: 0.6)를 그대로 써서 그 자리가 비쳤다.
+     장면을 그린 뒤 알파 채널만 1 로 채운다(색은 그대로): VR 은 화면 전체, 피규어는 무엇이 그려진 곳(깊이 < 1)만 → 모형 바깥만 투명, 모형 안 잎·유리는 불투명.
+     three 를 거치지 않는 작은 GL 프로그램으로 그리고 끝나면 three 상태를 되돌린다. ?pralpha=0 이면 끈다. 시험용으로 probe 가 켜져 있으면 알파를 읽어 둔다 */
+  const AlphaFix = X.alphaFix = {
+    on: Q.get('pralpha') !== '0', prog: null, vao: null, probe: false, last: null,
+    init(gl) {
+      const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; };
+      const p = gl.createProgram();
+      gl.attachShader(p, sh(gl.VERTEX_SHADER, '#version 300 es\nvoid main(){vec2 q=vec2(float((gl_VertexID<<1)&2),float(gl_VertexID&2));gl_Position=vec4(q*2.0-1.0,1.0,1.0);}'));
+      gl.attachShader(p, sh(gl.FRAGMENT_SHADER, '#version 300 es\nprecision mediump float;out vec4 o;void main(){o=vec4(0.0,0.0,0.0,1.0);}'));
+      gl.linkProgram(p); this.prog = p; this.vao = gl.createVertexArray();
+    },
+    run(depthOnly) {
+      if (!this.on && !this.probe) return; const gl = R.getContext(); if (!(gl instanceof WebGL2RenderingContext)) return;
+      if (!this.prog) this.init(gl);
+      const L = S.session && S.session.renderState.baseLayer; if (!L) return;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, L.framebuffer); gl.viewport(0, 0, L.framebufferWidth, L.framebufferHeight);
+      gl.disable(gl.SCISSOR_TEST); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE); gl.disable(gl.STENCIL_TEST); gl.disable(gl.POLYGON_OFFSET_FILL);
+      gl.colorMask(false, false, false, true); gl.depthMask(false);
+      if (depthOnly) { gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.GREATER); } else gl.disable(gl.DEPTH_TEST);   // 피규어: 깊이 1(먼 면)의 삼각형이 그려진 곳(깊이 < 1)만 통과
+      if (this.on) { gl.useProgram(this.prog); gl.bindVertexArray(this.vao); gl.drawArrays(gl.TRIANGLES, 0, 3); gl.bindVertexArray(null); }
+      if (this.probe) { const w = L.framebufferWidth, h = L.framebufferHeight, px = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px); let min = 255, n = 0, all = 0;
+        for (let i = 3; i < px.length; i += 16) { all++; if (px[i] < 255) { n++; if (px[i] < min) min = px[i]; } }
+        this.probe = false; this.last = { min, belowPct: +(n / all * 100).toFixed(2), mode: depthOnly ? 'fig' : 'vr', ar: !!S.ar, fixed: this.on }; }
+      gl.colorMask(true, true, true, true); gl.depthMask(true); gl.depthFunc(gl.LEQUAL);
+      R.resetState(); R.state.bindXRFramebuffer(L.framebuffer);   // resetState 는 XR 프레임 버퍼 기억도 지우므로 다시 묶는다(이어지는 피규어 UI 그리기가 같은 버퍼에)
+    }
+  };
 
   /* ================= 8. 화면 전환 효과 ================= */
   function fade(fn, dur = 0.35) {
@@ -756,10 +821,14 @@
       L.slice(0, 18).forEach((s, i) => g.fillText(String(s).slice(0, 80), 14, 30 + i * 27)); this.tex.needsUpdate = true;
     }
   };
+  X.fadeA = () => (fadeMesh && fadeMesh.visible ? fadeMesh.material.opacity : 0);   // 시험용: 전환 효과의 검은 정도
   function fadeTick(dt) {
     const F = S.fade; if (!F) return;
-    F.t += dt; const half = F.dur / 2;
+    F.t += Math.min(dt, 0.05); const half = F.dur / 2;   // 긴 프레임(합치기 등) 뒤 한꺼번에 밝아지지 않게 한 프레임 진행은 0.05초까지
     if (!F.done && F.t >= half) { F.done = true; try { F.fn(); } catch (e) { log('전환 오류', e.message); } }
+    // 이동 뒤 다시 합치기(층 이동 등)가 남아 있으면 검은 화면에서 끝내고 밝힌다(1102.k: 밝아지는 도중 합치기·그림자 다시 계산으로 끊김이 보였다). 최대 0.6초
+    // 이동 직후 0.3초는 검은 채로 두고 매 프레임 장면 구성을 점검해(실사 층 조명·가구 표시가 몇 프레임 늦게 바뀜), 바뀌었으면 그 합치기도 검은 화면에서 끝낸다(최대 1.5초)
+    else if (F.done && S.opt) { const w = performance.now() - (F.h0 || (F.h0 = performance.now())); if ((w < 300 || Opt.need) && w < 1500) { F.t = Math.min(F.t, half); Opt.t = 0; } }
     const a = F.t < half ? F.t / half : Math.max(0, 1 - (F.t - half) / half);
     fadeMesh.visible = a > 0.01; fadeMesh.material.opacity = a;
     if (F.t >= F.dur) { S.fade = null; fadeMesh.visible = false; }
@@ -979,12 +1048,14 @@
     clear() { this.done.forEach((v, o) => { o.renderOrder = v.ro; (Array.isArray(o.material) ? o.material : [o.material]).forEach((m, i) => { if (m.transparent !== v.tr[i]) { m.transparent = v.tr[i]; m.needsUpdate = true; } }); }); this.done.clear(); this.t = 0; }
   };
   const Opt = X.opt = {
-    group: null, hidden: [], sig: '', t: 0, stat: null, need: false, roots: null, until: 0,
-    visibleMeshes() {
+    group: null, hidden: [], sig: '', t: 0, stat: null, need: false, roots: null, until: 0, nBuild: 0, msTotal: 0, ui: false, hold: 0, checkMs: 0,
+    // withHidden: 합치느라 숨긴 원본도 보이는 것으로 친다(예전에는 점검 때마다 원본을 다 보였다 다시 숨겼다)
+    visibleMeshes(withHidden) {
+      const hs = withHidden ? this.hiddenSet : null;
       // 화면 합치기(VR 밖, screenOn)는 실사 3D 계층이 정한 묶음만 훑는다. Wing 의 가림 상자(userData.box)는 Wing 이 매 프레임 표시를 바꾸므로 합치지 않는다
       const out = [], scr = this.screen(), seen = scr ? new Set() : null;
       const walk = o => {
-        if (!o.visible || o === rig || o === Opt.group || o.userData.khxr) return;
+        if ((!o.visible && !(hs && hs.has(o))) || o === rig || o === Opt.group || o.userData.khxr) return;
         if (scr && o.userData.box && o.userData.box.isBox3) return;
         if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !(seen && seen.has(o))) { out.push(o); if (seen) seen.add(o); }
         for (const c of o.children) walk(c);
@@ -1089,6 +1160,7 @@
       this.hiddenSet = new Set(this.hidden);
       scene.add(grp); this.group = grp; this.sig = this.sigOf(objs) + ':' + this.cullUnder();
       this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, under: under.size, ms: Math.round(performance.now() - t0) };
+      this.nBuild++; this.msTotal += this.stat.ms; this.stat.n = this.nBuild; this.stat.total = this.msTotal;
       R.shadowMap.needsUpdate = true;
       log('최적화', JSON.stringify(this.stat));
     },
@@ -1098,7 +1170,8 @@
       (this.mats || []).forEach(m => m.dispose()); this.mats = [];
       if (this.dw) { this.dw.forEach(m => { m.depthWrite = true; }); this.dw.clear(); }
     },
-    dirty() { this.need = true; },
+    // VR 에서는 0.15초 안에 들어온 요청을 모아 한 번만 합친다(1102.k: 층 이동 한 번에 같은 구성으로 연달아 두 번 합쳐 퀘스트에서 끊겼다)
+    dirty() { if (!this.need) this.due = performance.now() + (S.session ? 150 : 0); this.need = true; },
     // 몰입 VR에서 건물 밖이고 '지하 보기'가 꺼져 있으면 땅 아래에 완전히 묻힌 메시는 보이지 않으므로 합치지도 그리지도 않는다
     cullUnder() { return S.mode === 'vr' && !(K.I && K.I.on) && !(document.getElementById('t-b1') || {}).checked && rigHeadWorld().y > -0.5; },
     underground(objs) {
@@ -1113,21 +1186,26 @@
       }
       return out;
     },
+    // 장면 구성 점검: VR 세션은 0.5초마다. 화면(1102.k, Wing 윈도우 PC 끊김)은 메시 수천 개를 훑는 서명 계산이 0.5초마다 끊김을 만들어
+    // 바뀜 알림(dirty·pause, 화면 조작 이벤트 ui)이 있을 때와 5초마다의 안전 점검만 한다
     check(time) {
-      if (time - this.t < 500 && !this.need) return;
-      this.t = time;
-      this.hidden.forEach(m => { m.visible = true; });
-      const sig = this.sigOf(this.visibleMeshes()) + ':' + this.cullUnder();
-      this.hidden.forEach(m => { m.visible = false; });
-      if (sig !== this.sig || this.need) { this.need = false; this.build(); }
+      const scr = this.screen();
+      if (this.need && this.due && performance.now() < this.due) return;
+      if (!this.need && (scr ? !this.ui && time - this.t < 5000 : time - this.t < 500)) return;
+      this.t = time; this.ui = false;
+      if (this.need) { this.need = false; this.build(); return; }
+      const t0 = performance.now(), sig = this.sigOf(this.visibleMeshes(true)) + ':' + this.cullUnder(); this.checkMs = Math.round((performance.now() - t0) * 10) / 10;
+      if (sig !== this.sig) this.build();
     },
     /* 화면(데스크톱·휴대폰·퀘스트 2D 브라우저) 합치기: 실사 3D 계층이 켠다. roots() = 합칠 묶음 목록.
        VR 세션이 시작되면 세션용 합치기(장면 전체)가 대신하고, 끝나면 다시 화면 합치기로 돌아온다 */
-    screenOn(roots) { this.roots = roots; this.need = true; },
+    screenOn(roots) { this.roots = roots; this.need = true;
+      if (!this.uiL) { this.uiL = () => { this.ui = true; }; ['change', 'input', 'click'].forEach(e => document.addEventListener(e, this.uiL, true)); } },
     screenOff() { if (!this.roots) return; this.roots = null; if (!S.session) this.clear(); },
     // 장면이 바뀌는 중에는 합친 메시를 걷고(원본이 그대로 보임) ms 동안 바뀜이 없으면 다시 합친다
     pause(ms) { if (!this.screen() || this.busy) return; if (this.group) this.clear(); this.until = performance.now() + (ms || 400); this.need = true; },
-    screenTick(time) { if (!this.screen() || this.busy || time < this.until) return; this.check(time); },
+    // hold: 실사 3D 가 받는 중(로딩 단계)이면 그 시각을 넣어 둔다. 끝날 때까지(최대 10초) 다시 합치지 않는다
+    screenTick(time) { if (!this.screen() || this.busy || time < this.until || (this.hold && time - this.hold < 10000)) return; this.check(time); },
     // 원본 그대로 그려야 하는 순간(유리 반사 지도 등): 합친 메시를 숨기고 원본을 보이게 한 채 fn 실행
     bare(fn) {
       const g = this.group; if (!g || !this.screen()) return fn();
@@ -1602,7 +1680,7 @@
     }
     function onSessionStart() { detectInput(); drawQuick(); Help.maybe(); }
     function onSessionEnd() { Photo.close(); if (Labels.g) Labels.g.visible = false; closeMenu(); quick.visible = false; [panelC, panelF].forEach(m => { if (m.parent) m.parent.remove(m); }); Help.hide(); }
-    return { init, raycast, activate, update, toggleMenu, dragStart, dragEnd, dragging: () => dragC, openMenu, closeMenu, menuOpen: () => open, cycle, toast, detectInput, onSessionStart, onSessionEnd,
+    return { init, raycast, activate, update, toggleMenu, dragStart, dragEnd, dragging: () => dragC, openMenu, closeMenu, menuOpen: () => open, hover: () => hover, cycle, toast, detectInput, onSessionStart, onSessionEnd,
       dirty: () => { dirtyFlag = true; }, dirtySoon: () => { soon = performance.now() + 150; }, cells: () => cells, qcells: () => qcells, setTab: i => { tab = i; dirtyFlag = true; }, cellPoint, pressStart, pressMove, pressEnd, panelFront, winScale, scrollBy, scrollOf: () => scroll[tab] || 0, contentH: () => contentH, panel: () => panel, tabs: () => tabs().map(t => t.t + ':' + t.sec.reduce((n, s) => n + s.items.length, 0)) };
   })();
 

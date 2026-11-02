@@ -11,7 +11,7 @@ const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const BASE = process.argv.find(a => /^https?:/.test(a)) || 'http://localhost:8790';
 const PAGE = (process.argv.find(a => a.startsWith('--page=')) || '--page=new/3d-model.html').slice(7);
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '').slice(7);
-const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+import CHROME from '../../photoreal/tests/chrome.mjs';
 fs.mkdirSync(OUT, { recursive: true });
 
 const results = []; const ok = (name, pass, detail) => { results.push({ name, pass: !!pass, detail }); console.log((pass ? 'PASS' : 'FAIL') + '  ' + name + (detail !== undefined ? '  ' + JSON.stringify(detail) : '')); };

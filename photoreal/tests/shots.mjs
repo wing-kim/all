@@ -1,10 +1,11 @@
 // 개발용 화면 확인: node shots.mjs [층들...] → out/s-<층>.jpg (기본: 외관 1F 3F 5F B1)
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const lv = process.argv.slice(2).length ? process.argv.slice(2) : ['out', '1F', '3F', '5F', 'B1'];
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new' });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new' });
 const p = await b.newPage(); await p.setViewport({ width: 1400, height: 860 });
 const errs = []; p.on('pageerror', e => errs.push(String(e.stack || e).slice(0, 600))); p.on('console', m => { if (m.type() === 'error' || /khpr/.test(m.text())) errs.push(m.text().slice(0, 200)); });
 await p.goto(BASE + '/new/3d-model.html?pr=1&pf=' + (process.env.PF || 'glass') + (process.env.QS || ''), { waitUntil: 'load' });

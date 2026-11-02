@@ -5,9 +5,10 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('../context/facade/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new' });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new' });
 const p = await b.newPage(); await p.setViewport({ width: 800, height: 600 });
 await p.goto(BASE + '/new/3d-model.html?pr=1&ctxgen=1', { waitUntil: 'load', timeout: 120000 });
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.stat && KHPRLayer.stat.context && KHPRLayer.FW.cv, { timeout: 120000 });

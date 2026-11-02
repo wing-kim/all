@@ -1,7 +1,8 @@
 // 개발용: 실사 3D 를 켠 뒤 페이지에서 식 하나를 평가해 출력. node ev.mjs '<식>'  (QS=추가 쿼리)
 import puppeteer from 'puppeteer-core';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 1200, height: 800 });
 const errs = []; p.on('pageerror', e => errs.push(String(e.stack || e).slice(0, 500)));
 await p.goto(BASE + '/new/3d-model.html?pr=1' + (process.env.QS || ''), { waitUntil: 'load' });

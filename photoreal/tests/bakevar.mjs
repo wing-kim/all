@@ -1,8 +1,9 @@
 // 조합별 굽기 확인: 주차 방식·1층 안을 바꾸고 1층·B1 화면과 사용 중인 굽기 변형을 기록. node bakevar.mjs
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791', OUT = fileURLToPath(new URL('./out/', import.meta.url));
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 1100, height: 700 });
 const errs = []; p.on('pageerror', e => errs.push(String(e).slice(0, 300)));
 await p.goto(BASE + '/new/3d-model.html?pr=1', { waitUntil: 'load' });

@@ -4,9 +4,10 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const res = { base: BASE, at: new Date().toISOString(), checks: [] };
 const ok = (name, pass, info) => { res.checks.push({ name, pass, info }); console.log(pass ? 'PASS' : 'FAIL', name, JSON.stringify(info)); };
 const wait = ms => new Promise(r => setTimeout(r, ms));

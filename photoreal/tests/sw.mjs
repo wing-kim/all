@@ -6,10 +6,11 @@ import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'khsw-'));
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', userDataDir: prof, args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', userDataDir: prof, args: ['--ignore-gpu-blocklist'] });
 // 전체 준비 = 외관(1102.d 부터 실내 가구·화분은 외관 준비 뒤 받는다). 실내(dress·plants)는 따로 interiorMs
 const KEYS = ['firstFrame', 'env', 'bake', 'env2', 'context', 'ground', 'warm', 'assets'], IKEYS = ['dress', 'plants'];
 const res = { base: BASE, at: new Date().toISOString(), visits: [], checks: [] };

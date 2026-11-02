@@ -4,9 +4,10 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 1280, height: 800 });
 const errs = []; p.on('pageerror', e => errs.push(String(e)));
 await p.goto(BASE + '/new/3d-model.html?xremu=1&pr=1&pf=glass' + (process.env.QS || ''), { waitUntil: 'load', timeout: 120000 });

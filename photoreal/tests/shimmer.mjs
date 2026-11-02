@@ -3,9 +3,10 @@
 // 12단계 넘게 바뀐 화소 비율(hiPct)을 잰다. SAVE=1 이면 화면과 열지도(빨강 = 깜빡임)를 scratch 폴더(SP)에 남긴다
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const SP=process.env.SP || fileURLToPath(new URL('./out/', import.meta.url));
 const BASE = process.env.BASE || 'http://localhost:8791';
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 1280, height: 720 }); const errs=[]; p.on('pageerror',e=>errs.push(String(e))); p.on('console',m=>{ if(m.type()==='error'||/THREE.WebGLProgram|Shader Error/.test(m.text())) errs.push(m.text().slice(0,300)); });
 await p.goto(BASE + '/new/3d-model.html?pr=1&prsw=0' + (process.env.QS||''), { waitUntil: 'load', timeout: 120000 });
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.t.warm != null && KHPRLayer.t.ground != null, { timeout: 180000 }).catch(()=>{});

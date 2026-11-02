@@ -8,6 +8,7 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/opt/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
 const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
@@ -64,7 +65,7 @@ const CROSS = [
 ];
 const STATES = [...AX, ...CROSS].filter(s => !ONLY || ONLY.has(s.axis));
 
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist', '--window-size=1280,760'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist', '--window-size=1280,760'] });
 const p = await b.newPage(); await p.setViewport({ width: 1280, height: 760 });
 let errs = [], e404 = 0;
 p.on('pageerror', e => errs.push('pageerror ' + String(e).slice(0, 200)));

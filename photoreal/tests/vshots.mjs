@@ -1,10 +1,11 @@
 // 시점별 화면 확인: node vshots.mjs 접두어 [시점들...]  (시점: Wing data-v 값, 또는 cam:x,y,z,tx,ty,tz)
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const [tag, ...vs] = process.argv.slice(2);
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 1400, height: 860 });
 const errs = []; p.on('pageerror', e => errs.push(String(e.stack || e).slice(0, 600))); p.on('console', m => { if (m.type() === 'error') errs.push(m.text().slice(0, 200)); });
 await p.goto(BASE + '/new/3d-model.html?pr=1' + (process.env.QS || ''), { waitUntil: 'load' });

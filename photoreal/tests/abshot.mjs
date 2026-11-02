@@ -5,10 +5,11 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
 import path from 'node:path';
+import CHROME from './chrome.mjs';
 const A = process.env.A || 'http://localhost:8791', B = process.env.B || A, QA = process.env.QA || '', QB = process.env.QB || '';
 const VIEWS = (process.env.VIEWS || 'out,front,1F,5F,B1').split(','), W = +(process.env.W || 960), H = +(process.env.H || 540);
 const OUT = path.resolve(process.env.OUT || './out/ab'); fs.mkdirSync(OUT, { recursive: true });
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 // 시점: out = Wing 모서리 보기, front = 압구정로에서 본 정면(가까이), 층 이름 = 그 층 실내
 async function shots(base, qs, tag) {
   const p = await b.newPage(); await p.setViewport({ width: W, height: H });

@@ -1,9 +1,10 @@
 // 마감재별 코너 투시 화면(실사 3D): node fins.mjs 접두어 [마감재 value ...]
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791', OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const [tag, ...fs] = process.argv.slice(2);
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const p = await b.newPage(); await p.setViewport({ width: 900, height: 860 });
 await p.goto(BASE + '/new/3d-model.html?pr=1', { waitUntil: 'load' });
 await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.on && KHPRLayer.t.warm != null, { timeout: 90000 });

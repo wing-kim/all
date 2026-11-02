@@ -11,13 +11,14 @@
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
 const QS = process.env.QS || '';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(OUT + 'qa-shots', { recursive: true });
 const ONLY = new Set((process.env.ONLY || 'flicker,alias,still,base,ui,mem').split(','));
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const MV = +(process.env.MOVE || 0.002);   // 깜빡임 측정의 한 프레임 이동(m): 2mm 는 25m 앞 바닥이 화면에서 약 0.1화소 움직이는 양
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const res = { base: BASE, qs: QS, at: new Date().toISOString(), flicker: {}, alias: {}, still: {}, ui: {}, mem: null, shots: [], errors: [] };
 
 async function open(dev, extra = '') {

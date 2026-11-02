@@ -1,8 +1,9 @@
 // 성능 정보 표시 규칙 시험: node perfui.mjs  (BASE=주소, 기본 http://localhost:8791)
 // 기본은 fps 표시·켜기 시간·VR 프레임 판 모두 숨김, 패널 '성능 보기'를 켜면 보이고 localStorage 로 기억, ?prfps=1 은 켜고 ?prfps=0 은 기억을 무시하고 끈다
 import puppeteer from 'puppeteer-core';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist'] });
 const res = []; const ok = (n, pass, info) => { res.push(pass); console.log(pass ? 'PASS' : 'FAIL', n, JSON.stringify(info)); };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const errs = [];

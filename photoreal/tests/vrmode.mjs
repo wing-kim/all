@@ -2,15 +2,16 @@
 // 스케치 → 렌더 → 실사 3D 로 바꿔도 컨트롤러 레이가 보이는지(Wing cleanLines 가 keep 없는 선을 숨기던 문제), 렌더에서 VR 밝기 보정이 걸리는지,
 // 실사 3D 에서 하늘 배경이 있는지, VR 메뉴 '빛과 시간' 보기 방식 맨 앞이 실사 3D 인지, 페이지 오류가 없는지 본다
 import puppeteer from 'puppeteer-core';
+import CHROME from './chrome.mjs';
 const BASE = process.env.BASE || 'http://localhost:8791';
-const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--window-size=1280,800', '--ignore-gpu-blocklist'] });
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--window-size=1280,800', '--ignore-gpu-blocklist'] });
 const res = []; const ok = (n, pass, info) => { res.push(!!pass); console.log(pass ? 'PASS' : 'FAIL', n, JSON.stringify(info)); };
 const p = await b.newPage(); await p.setViewport({ width: 1280, height: 800 }); const errs = []; p.on('pageerror', e => errs.push(String(e).slice(0, 200)));
 await p.goto(BASE + '/new/3d-model.html?xremu=1&prsw=0', { waitUntil: 'load', timeout: 120000 });
 await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support && window.KHPRLayer && KHPRLayer.boot === '준비 완료', { timeout: 180000 });
 const st = () => p.evaluate(async () => {
   const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 15; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
-  const R = KHXR.renderer; let ray = null; R.xr.getController(1).traverse(o => { if (o.isLine) ray = o.visible; });
+  const R = KHXR.renderer; let ray = null; { const g = R.xr.getController(1).getObjectByName('khxr-ray'); if (g) { ray = g.visible; g.traverse(o => { if (o !== g && !o.visible) ray = false; }); } }   // 1102.k: 레이는 선 대신 얇은 원기둥 묶음(khxr-ray)
   return { vmode: (document.querySelector('input[name=vmode]:checked') || {}).value, ray, exp: +R.toneMappingExposure.toFixed(3), hemi: +KHPR.hemi.intensity.toFixed(3), bg: !!KHXR.scene.background, wingSky: !!(KHPR.R3D.sky && KHPR.R3D.sky.visible), pr: !!KHPRLayer.on };
 });
 const pick = v => p.evaluate(v => { const e = document.querySelector('input[name=vmode][value=' + v + ']'); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); }, v);

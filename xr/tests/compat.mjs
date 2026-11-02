@@ -7,13 +7,14 @@ import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
+import CHROME from '../../photoreal/tests/chrome.mjs';
 const BASE = process.argv.find(a => /^https?:/.test(a)) || 'http://localhost:8790';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 fs.mkdirSync(OUT + 'orig/new', { recursive: true });
 fs.writeFileSync(OUT + 'orig/new/3d-model.html', execSync('git show origin/main:new/3d-model.html', { cwd: ROOT, maxBuffer: 64 << 20 }));
 const results = []; const ok = (n, p, d) => { results.push({ n, p: !!p, d }); console.log((p ? 'PASS' : 'FAIL') + '  ' + n + (d !== undefined ? '  ' + JSON.stringify(d) : '')); };
-const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
 async function open(url) {
   const p = await browser.newPage(); await p.setViewport({ width: 1280, height: 800 });
   await p.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'light' }, { name: 'prefers-reduced-motion', value: 'reduce' }]);
@@ -30,7 +31,7 @@ try {
   // Q2: 원본과 화면 비교
   for (const [name, setup] of [['스케치', ''], ['렌더', "document.querySelector('input[name=vmode][value=render]').click();"]]) {
     const shots = [];
-    for (const url of [BASE + '/xr/tests/out/orig/new/3d-model.html', BASE + '/new/3d-model.html']) {
+    for (const url of [BASE + '/xr/tests/out/orig/new/3d-model.html', BASE + '/new/3d-model.html?hqcap=0']) {   // hqcap=0: Wing 요청으로 바꾼 고화질 배율 상한·중앙값 하향(1102.k)만 끄고 나머지가 원본과 같은지
       const p = await open(url); await settle(p);
       if (setup) { await p.evaluate(setup); await p.evaluate(() => new Promise(r => setTimeout(r, 5000))); }
       const buf = Buffer.from(await p.screenshot({ clip: { x: 0, y: 0, width: 930, height: 800 } })); shots.push(buf);

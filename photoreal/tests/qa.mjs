@@ -12,16 +12,17 @@ import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
+import CHROME from './chrome.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, '../..'), XRT = path.join(ROOT, 'xr/tests'), QA = path.join(ROOT, 'docs/qa');
 const arg = k => { const a = process.argv.find(x => x.startsWith('--' + k)); return a ? (a.includes('=') ? a.slice(a.indexOf('=') + 1) : true) : null; };
-const QUICK = !!arg('quick'), ONLY = arg('only') ? new Set(String(arg('only')).split(',')) : null, ACCEPT = arg('accept');
+const QUICK = !!arg('quick'), ONLY = arg('only') ? new Set(String(arg('only')).split(',').map(g => g === 'perf' ? 'budget' : g)) : null, ACCEPT = arg('accept');   // perf 는 budget 의 별칭
 const want = g => !ONLY || ONLY.has(g);
 fs.mkdirSync(path.join(QA, 'history'), { recursive: true }); fs.mkdirSync(path.join(QA, 'baseline'), { recursive: true });
 
 /* ---------- 기준값(계획 문서 docs/goal-gap-plan.md 의 기준) ---------- */
 const TH = {
   pcCalls: 1000, pcFps: 60, phoneLowCalls: 400, vrCalls: 170, vrCap: 200, vrTris: 1e6, vrFig: 200, texMB: 150, prefetchMB: 18, first10: 12000, revisit10: 3000,
-  floorHi: 1.0, allHi: 2.0, satPct: 1.0, ceilBlack: 5.0, nightRatio: 1.0, sunset: -20, ctxSpread: 2.0, leafCV: 0.40, shotDiff: 4.0, shotBig: 3.0,
+  winMax: 2000, floorHi: 1.0, allHi: 2.0, satPct: 1.0, ceilBlack: 5.0, nightRatio: 1.0, sunset: -20, ctxSpread: 2.0, leafCV: 0.40, shotDiff: 4.0, shotBig: 3.0,
 };
 const items = [];   // { group, name, value, limit, pass, note, unstable, key }
 const add = (group, name, value, pass, limit = '', note = '', extra = {}) => { items.push({ group, name, value, limit, pass: pass === null ? null : !!pass, note, key: group + ':' + name, ...extra }); console.log((pass === null ? '정보' : pass ? '합격' : '불합격'), group, name, typeof value === 'object' ? JSON.stringify(value) : value, limit ? '(기준 ' + limit + ')' : '', note); };
@@ -33,7 +34,7 @@ const LOG = path.join(HERE, 'out', 'qa-server.log');
 if (!BASE) {
   const port = await freePort(); fs.mkdirSync(path.join(HERE, 'out'), { recursive: true });
   const lf = fs.openSync(LOG, 'w');
-  server = spawn('python3', ['-m', 'http.server', String(port), '--bind', '127.0.0.1'], { cwd: ROOT, stdio: ['ignore', lf, lf] });
+  server = spawn(process.execPath, [path.join(HERE, 'serve.mjs'), String(port), ROOT], { cwd: ROOT, stdio: ['ignore', lf, lf] });   // node 정적 서버(윈도우에 python3 가 없을 수 있음)
   BASE = 'http://127.0.0.1:' + port;
   for (let i = 0; i < 50; i++) { try { const r = await fetch(BASE + '/new/3d-model.html', { method: 'HEAD' }); if (r.ok) break; } catch (e) {} await new Promise(r => setTimeout(r, 200)); }
 }
@@ -66,7 +67,7 @@ if (want('reg')) {
   await regTest('ux', XRT, 'ux.mjs', [BASE], {}, 1);   // 계단 걷기: 맥 부하로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   await regTest('ux pr=1', XRT, 'ux.mjs', [BASE, '--page=new/3d-model.html?pr=1'], {}, 1);   // 계단 걷기가 셰이더 준비로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   if (!QUICK) await regTest('mp', XRT, 'mp.mjs', [BASE], {}, 2);   // 공개 중계망(Nostr) 타이밍: 두 번까지 재시도
-  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode']) await regTest(t, HERE, t + '.mjs');
+  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel']) await regTest(t, HERE, t + '.mjs');   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
   if (!QUICK) {
     const r = await run(HERE, 'options.mjs'); const o = readJ(path.join(HERE, 'out/options.json'));
     const s = o && o.summary;
@@ -93,6 +94,16 @@ if (want('budget')) {
     add('budget', 'VR 외관 삼각형(최대)', mt, mt <= TH.vrTris, '≤ 1,000,000'); }
   const cp = readJ(path.join(XRT, 'out/compat.json'));
   if (cp) { const p8 = cp.find(x => /^P8/.test(x.n)); const c = p8 && p8.d && p8.d.fig && p8.d.fig.calls; add('budget', 'VR 가상 방 피규어 그리기 호출(compat P8)', c != null ? c : '없음', c != null && c < TH.vrFig, '< ' + TH.vrFig, want('reg') ? '' : '직전 compat 결과'); }
+  // 윈도우 PC 흉내(1102.k): CPU 4배 감속·화소 배율 1.5·셰이더 링크 80ms. 첫 실사 전환의 가장 긴 프레임(고치기 전 5.4초)과 정상 상태
+  { await run(HERE, 'winsim.mjs'); const w = readJ(path.join(HERE, 'out/winsim.json'));
+    if (w && w.first) { add('budget', '윈도우 흉내 첫 실사 전환 가장 긴 프레임', w.first.maxMs + 'ms', w.first.maxMs <= TH.winMax, '≤ ' + TH.winMax + 'ms', `250ms 넘는 프레임 ${w.first.over250}개, 멈춤 합 ${w.first.stallMs}ms, 외관 준비 ${w.first.warm}ms(1102.j: 5394ms·12개·17754ms)`, { unstable: true });
+      add('budget', '윈도우 흉내 정상 상태 프레임 간격', w.steady2.medMs + 'ms', w.steady2.medMs <= 50, '중앙값 ≤ 50ms', `95% ${w.steady2.p95Ms}ms, 품질 ${w.state.q}, 화소 ${w.state.rendererPR}/${w.state.composerPR}, 합치기 ${w.state.optBuilds}회 ${w.state.optMs}ms`); } }
+  // VR 이동 끊김(퀘스트 CPU 흉내 4배 감속, IWER): 순간이동 10번·층 이동 5번 뒤 화면이 보이는 동안 가장 긴 프레임
+  { await run(HERE, 'vrfeel.mjs', [], { CPU: '4' }); const v = readJ(path.join(HERE, 'out/vrfeel.json'));
+    if (v && v.move) { add('budget', 'VR 순간이동 뒤 가장 긴 프레임(CPU 4배)', v.move.teleportMax + 'ms', v.move.teleportMax <= 100, '≤ 100ms', `72Hz 기준 놓친 프레임 ${v.move.missed72}(감속 때문에 평소도 놓침, 정상 상태 중앙값 ${v.move.baseMed}ms)`, { unstable: true });
+      add('budget', 'VR 층 이동 뒤 보이는 동안 가장 긴 프레임(CPU 4배)', v.move.floorMax + 'ms', v.move.floorMax <= 120, '≤ 120ms', '무거운 일은 검은 전환 화면에서(1102.j: 597ms, 합치기 2번)', { unstable: true }); } }
+  if (!QUICK) { await run(HERE, 'winsim.mjs', [], { CPU: '1', SHADER_MS: '0', DPR: '2' }); const w = readJ(path.join(HERE, 'out/winsim.json'));
+    if (w && w.state) add('budget', '맥 정상 조건 자동 품질', w.state.q, w.state.q === 'high', '높음 유지', `화소 ${w.state.rendererPR}/${w.state.composerPR}, 정상 상태 ${w.steady2.medMs}ms`); }
   const pf = readJ(path.join(ROOT, 'photoreal/prefetch.json')); if (pf) add('budget', '미리받기 목록', +(pf.bytes / 1e6).toFixed(2) + 'MB', pf.bytes / 1e6 <= TH.prefetchMB, '≤ ' + TH.prefetchMB + 'MB');
   if (!QUICK) {
     // 10Mbps 첫 방문: 로컬 서버(gzip 없음). 네트워크 시간은 흔들리므로 두 번 재서 작은 값
@@ -127,7 +138,7 @@ if (want('quality') || want('shots') || want('ui') || want('budget')) {
     add('quality', '잎 휘도 변동계수(앞뒤 색 차)', d.leafCV, d.leafCV <= TH.leafCV, '≤ ' + TH.leafCV, '수정 전(?praa=0) 0.45');
   }
   if (want('shots') && q.shots) {
-    const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new' }); const p = await b.newPage();
+    const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new' }); const p = await b.newPage();
     const changes = [];
     for (const f of q.shots) {
       const cur = path.join(HERE, 'out', f), base = path.join(QA, 'baseline', path.basename(f));
