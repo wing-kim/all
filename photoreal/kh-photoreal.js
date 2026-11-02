@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.i';
+  const VER = '1102.j';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -731,7 +731,7 @@
     let n = swapIn(K.bld, zoneOf);
     // 주변(도로·지면·주변 건물·차량)은 처음 한 번 + 지면은 매번(원본이 다시 만든다)
     n += swapIn(K.site); n += swapIn(K.city, null, true); n += swapIn(K.ctx, null, true); n += swapIn(K.exist, null, 'exist'); n += swapIn(K.R3D.props);
-    scaleFigures();
+    scaleFigures(); schoolFix(true);
     staticDone = true;
     PR.stat.swap = n; PR.stat.applyMs = Math.round(now() - t0); PR.stat.mats = CACHE.size;
     log('적용', reason, n + '개', PR.stat.applyMs + 'ms');
@@ -1439,6 +1439,32 @@
     litDress(extra);
     if (extra === DR.group) { tagDress(extra); PF_.dvKey = ''; }
   }
+  /* 신사중학교·현대고등학교 현재 판(1102.j, S맵·로드뷰 대조): Wing 은 두 학교 운동장에 같은 육상 트랙(타원) 그림을 쓰고, 신사중 건물은 덩어리 세 개(흰 5층·벽돌·서쪽 동)를
+     실측 건물 위에 겹쳐 둔다. S맵에서 신사중 운동장은 줄무늬 인조잔디 축구장(테두리 적갈색 띠, 타원 트랙 없음), 현대고는 가운데 흰 원 무늬 인조잔디(테두리 청회색)다.
+     실사 3D 동안 두 운동장 그림을 바꾸고, Wing 학교 건물 덩어리·간판은 숨겨 실측 건물(브이월드·OSM)만 남긴다. 끄면 되돌린다. Wing 화면 모드는 그대로 */
+  const SCH = { done: false, hid: [], maps: [] };
+  function pitchTex(kind) {
+    const c = document.createElement('canvas'); c.width = 320; c.height = 512; const g = c.getContext('2d');
+    g.fillStyle = kind === 'hd' ? '#6f7f86' : '#7c3b30'; g.fillRect(0, 0, 320, 512);              // 테두리 띠(현대고 청회색, 신사중 적갈색)
+    const m = 22; for (let i = 0; i < 12; i++) { g.fillStyle = i % 2 ? '#3f7a3c' : '#4a8a45'; g.fillRect(m, m + i * (512 - 2 * m) / 12, 320 - 2 * m, (512 - 2 * m) / 12 + 1); }   // 줄무늬 잔디
+    g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2.5; g.strokeRect(m + 8, m + 8, 320 - 2 * m - 16, 512 - 2 * m - 16);
+    g.beginPath(); g.moveTo(m + 8, 256); g.lineTo(320 - m - 8, 256); g.stroke(); g.beginPath(); g.arc(160, 256, 34, 0, 7); g.stroke();
+    [m + 8, 512 - m - 8].forEach((y, k) => { const d = k ? -1 : 1; g.strokeRect(160 - 70, Math.min(y, y + d * 64), 140, 64); g.strokeRect(160 - 32, Math.min(y, y + d * 24), 64, 24); });
+    if (kind === 'hd') { g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.arc(160, 256, 26, 0, 7); g.fill(); g.fillStyle = '#4a8a45'; g.beginPath(); g.arc(160, 256, 18, 0, 7); g.fill(); }
+    const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = ANISO(); return t;
+  }
+  function schoolFix(on) {
+    if (!on) { SCH.hid.forEach(o => { o.visible = true; }); SCH.hid = []; SCH.maps.forEach(([m, t]) => { m.map = t; m.needsUpdate = true; }); SCH.maps = []; SCH.done = false; return; }
+    if (SCH.done || !K.city) return; SCH.done = true;
+    const fields = []; K.city.traverse(o => { const m = o.material; if (o.isMesh && m && !Array.isArray(m) && m.map && m.map.image && m.map.image.width === 320 && m.map.image.height === 512 && o.geometry.type === 'PlaneGeometry') fields.push(o); });
+    const wp = new T.Vector3(), bb = new T.Box3();
+    const dist = f => { f.getWorldPosition(wp); return Math.hypot(wp.x, wp.z); }; fields.sort((a, b) => dist(a) - dist(b));
+    fields.forEach((f, i) => { const hd = fields.length > 1 && i === fields.length - 1;   // 가까운 것 신사중, 먼 것 현대고
+      const m = f.material.clone(); SCH.maps.push([f.material, f.material.map]); f.material.map = pitchTex(hd ? 'hd' : 'ss'); f.material.needsUpdate = true; m.dispose();
+      if (!hd) f.parent.children.forEach(o => { if (!o.isMesh || o === f) return; bb.setFromObject(o); const h = bb.max.y - bb.min.y;
+        if ((h > 3.2 || (o.material && o.material.isMeshBasicMaterial && bb.min.y > 6)) && o.visible) { o.visible = false; SCH.hid.push(o); } }); });
+    PR.stat.school = { fields: fields.length, hidden: SCH.hid.length };
+  }
   // 높이 y 가 속한 층: 바닥이 y 바로 아래(0.3m 여유)에 있는 층 중 가장 높은 층. 층 범위를 겹치게 찾으면 바닥 가까운 부품(의자 다리·화분)이 아래층으로 잡힌다
   function levelAtY(y) { let best = null, bt = -1e9; K.LEVELS.forEach(l => { const ft = K.floorTop(l); if (l.kind !== 'roof' && ft - 0.3 <= y && ft > bt) { bt = ft; best = l; } }); return best; }
   // 가구마다 층(prLv)과 '외벽에서 먼 안쪽'(prDeep: 가장 가까운 외벽선까지 PR_DEEP m 넘음)을 적어 둔다. 밖에서 볼 때 안쪽 가구는 그리지 않는다
@@ -1687,9 +1713,16 @@
       if (Q.get('ctxgen') === '1') await facadeImgs();
       const r = await fetch(url); if (!r.ok) throw new Error('buildings.json ' + r.status);
       CTX.data = await r.json(); CTX.redev = redev; CTX.area = area;
+      // 같은 건물이 브이월드와 OSM 에 두 번 들어간 경우(예: 신사중학교 본관, 외곽선이 5～7m 어긋나 벽이 겹쳐 보였다) OSM 쪽을 뺀다(1102.j):
+      // 중심 거리 15m 안, 면적 비 0.6～1.6 이면 같은 건물로 본다. 지니 모델로 바꿀 때도 같은 id 기준(b.id)으로 빼고 끼운다
+      { const B = CTX.data.buildings, ar = o => Math.abs(o.reduce((s, p, i) => { const q = o[(i + 1) % o.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0)) / 2,
+          cen = o => [o.reduce((s, q) => s + q[0], 0) / o.length, o.reduce((s, q) => s + q[1], 0) / o.length];
+        const vw = B.filter(b => b.src === 'vworld').map(b => ({ c: cen(b.outline), a: ar(b.outline) })), dup = new Set();
+        B.forEach(b => { if (b.src === 'vworld' || !b.near) return; const c = cen(b.outline), a = ar(b.outline); if (vw.some(v => Math.hypot(v.c[0] - c[0], v.c[1] - c[1]) < 15 && a / v.a > 0.6 && a / v.a < 1.6)) dup.add(b.id); });
+        CTX.dup = dup; PR.stat.ctxDup = dup.size; }
       const t1 = now();
       CTX.towers = wingTowers();
-      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b), detail: CTX_DET, detailNear: CTX_DN }));
+      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) && !CTX.dup.has(b.id), detail: CTX_DET, detailNear: CTX_DN }));
       if (CTX.towers.length) CTX.next.add(towerGroup());
       PR.stat.ctxBuildMs = Math.round(now() - t1);
       PR.stat.context = CTX.next.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', '합치기 ' + PR.stat.ctxBuildMs + 'ms', CTX.next.userData.stats.buildings + '동');
@@ -1699,7 +1732,7 @@
   // 현황(동광빌딩 시절) 보기: 재개발 구역 아파트까지 넣은 한 벌. 처음 '현황'을 고를 때 만든다
   function ctxNow() {
     if (CTX.now || !CTX.data) return;
-    CTX.now = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, detail: CTX_DET, detailNear: CTX_DN }));
+    CTX.now = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !CTX.dup.has(b.id), detail: CTX_DET, detailNear: CTX_DN }));
     if (CTX.detached.length) scene.add(CTX.now);
   }
   const CTXUP = new Map();
@@ -2138,6 +2171,7 @@
       if (scene.background === skyBG) scene.background = null; if (K.R3D.sky) K.R3D.sky.visible = true;
       if (DIST) { scene.remove(DIST); }
       if (POOL.m) POOL.m.visible = false; if (NT.g) NT.g.visible = false;
+      schoolFix(false);
       CUR.levels = null;
       document.querySelector('.app').classList.remove('pr3d');
       panel(false);
