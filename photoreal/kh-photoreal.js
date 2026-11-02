@@ -43,7 +43,7 @@
     (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
     let lastTick = -1;
     shaderGate();
-    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
+    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; { const rt = R.getRenderTarget(); if (rt && rt.isWebGLCubeRenderTarget) return; }   /* 반사 지도(정육면체)를 그리는 중에는 건너뜀: 유리 환경 지도를 다시 붙여 되먹임 GL 오류가 났다(1102.l) */ if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
     // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다.
     // ?pr=1 로 바로 켜는 경우는 미리받기가 실제 필요한 요청과 대역을 다투므로 하지 않는다(켜는 순간 남은 미리받기도 멈춘다)
     // 1102.k: 스케치업·렌더처럼 실사를 쓰지 않을 때 첫 화면과 다투지 않게 8초 뒤 브라우저가 한가할 때 시작한다(예전 2.5초). 느린 회선·저사양 기기는 받지 않는다(prefetch)

@@ -7505,8 +7505,8 @@ window.KHENV={ver:KH_ENV_VER,off:KH_ENV_OFF,ready:()=>khLoad(),models:()=>KHQ.fi
   real(on,later){KHR.real=!!on;if(R3D.on){khReal(KHR.real);if(KHR.real){if(!later)khRealLoad();linearize(true);khSeason();khSky()}}khStyle()},   // later: 받기는 나중에(실사 외관 준비 뒤 다시 부름)
   loaded:()=>({base:!!KHR.base,real:!!KHR.loading,n:KHQ.filter(q=>q.o).length,of:KHQ.length}),get busy(){return !!KHR.busy}};
 {const li=linearize;linearize=function(on){li(on);if(on)khGlass()}}
-{const ur=updateReflections;updateReflections=function(){   // [PR] 반사 지도를 그리는 동안 그 지도를 환경 지도로 읽는 지니 유리·금속을 잠시 떼어 둔다(되먹임 GL 오류, 1102.l)
-  const c=R3D.cube&&R3D.cube.texture,sv=c?(KHR.bld||[]).map(k=>k.material).filter(m=>m&&m.envMap===c):[];sv.forEach(m=>{m.envMap=null});try{return ur.apply(this,arguments)}finally{sv.forEach(m=>{m.envMap=c})}}}   // linearize resets envMapIntensity, so the probe settings go after it
+{const ur=updateReflections;updateReflections=function(){   // [PR] 반사 지도를 그리는 동안 그 지도를 환경 지도로 읽는 재질(지니 유리·금속, 지니 매스 자리의 실사 유리 등)을 잠시 떼어 둔다(되먹임 GL 오류, 1102.l)
+  const c=R3D.cube&&R3D.cube.texture,sv=new Set();if(c&&KHQ.length)scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m&&m.envMap===c)sv.add(m)})});sv.forEach(m=>{m.envMap=null});/* 장면 전체(숨긴 것 포함: 실사 3D 는 반사 지도를 그릴 때 합친 메시 대신 숨겨 둔 원본을 보인다) */try{return ur.apply(this,arguments)}finally{sv.forEach(m=>{m.envMap=c})}}}   // linearize resets envMapIntensity, so the probe settings go after it
 function buildContext(){
   // streets: 압구정로10길 (north, into the block) and 논현로175길 (parallel to 압구정로, one block in)
   roadBand(MAP(1095,150),MAP(1150,660),250);roadBand([2320,-2949],[2320,4734],300);   // env-test: 논현로175길 moved onto the surveyed gap between OSM 94/5 and 93/10/101/103 (centre x 33.8 m, was ~37.8)
