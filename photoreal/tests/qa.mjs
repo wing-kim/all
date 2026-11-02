@@ -97,9 +97,9 @@ if (want('budget')) {
   if (!QUICK) {
     // 10Mbps 첫 방문: 로컬 서버(gzip 없음). 네트워크 시간은 흔들리므로 두 번 재서 작은 값
     const fr = []; for (let i = 0; i < 2; i++) { await run(HERE, 'net.mjs', ['4g']); const n = readJ(path.join(HERE, 'out/net-4g.json')); if (n) fr.push(n); }
-    if (fr.length) { const best = fr.reduce((a, b) => a.allReadyMs < b.allReadyMs ? a : b); add('budget', '10Mbps 첫 방문 전체 준비', best.allReadyMs + 'ms', best.allReadyMs <= TH.first10, '≤ ' + TH.first10 + 'ms', `받은 양 ${best.MB}MB, 두 번 중 작은 값(${fr.map(x => x.allReadyMs).join('·')}), 로컬 서버(gzip 없음)`, { unstable: true }); }
+    if (fr.length) { const best = fr.reduce((a, b) => a.allReadyMs < b.allReadyMs ? a : b); add('budget', '10Mbps 첫 방문 외관 준비', best.allReadyMs + 'ms', best.allReadyMs <= TH.first10, '≤ ' + TH.first10 + 'ms', `실내 가구까지 ${best.interiorMs}ms, 받은 양 ${best.MB}MB, 두 번 중 작은 값(${fr.map(x => x.allReadyMs).join('·')}), 로컬 서버(gzip 없음)`, { unstable: true }); }
     await run(HERE, 'sw.mjs', [], { LOG }); const sw = readJ(path.join(HERE, 'out/sw.json'));
-    if (sw && sw.visits && sw.visits[2]) add('budget', '10Mbps 재방문 전체 준비(서비스 워커)', sw.visits[2].allReadyMs + 'ms', sw.visits[2].allReadyMs <= TH.revisit10, '≤ ' + TH.revisit10 + 'ms', `네트워크 ${sw.visits[2].netMB}MB`, { unstable: true });
+    if (sw && sw.visits && sw.visits[2]) add('budget', '10Mbps 재방문 외관 준비(서비스 워커)', sw.visits[2].allReadyMs + 'ms', sw.visits[2].allReadyMs <= TH.revisit10, '≤ ' + TH.revisit10 + 'ms', `실내 가구까지 ${sw.visits[2].interiorMs}ms, 네트워크 ${sw.visits[2].netMB}MB`, { unstable: true });
   }
 }
 

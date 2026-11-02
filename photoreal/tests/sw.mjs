@@ -10,7 +10,8 @@ const BASE = process.env.BASE || 'http://localhost:8791';
 const OUT = fileURLToPath(new URL('./out/', import.meta.url)); fs.mkdirSync(OUT, { recursive: true });
 const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'khsw-'));
 const b = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: 'new', userDataDir: prof, args: ['--ignore-gpu-blocklist'] });
-const KEYS = ['firstFrame', 'env', 'bake', 'dress', 'env2', 'context', 'ground', 'warm', 'assets', 'plants'];
+// 전체 준비 = 외관(1102.d 부터 실내 가구·화분은 외관 준비 뒤 받는다). 실내(dress·plants)는 따로 interiorMs
+const KEYS = ['firstFrame', 'env', 'bake', 'env2', 'context', 'ground', 'warm', 'assets'], IKEYS = ['dress', 'plants'];
 const res = { base: BASE, at: new Date().toISOString(), visits: [], checks: [] };
 const ok = (name, pass, info) => { res.checks.push({ name, pass, info }); console.log(pass ? 'PASS' : 'FAIL', name, JSON.stringify(info)); };
 // LOG=서버 접속 기록 파일(로컬 python http.server)이 있으면 회차마다 서버가 받은 실사 자산 요청 수를 센다(서비스 워커 안의 네트워크 요청은 페이지 기록에 안 잡힘)
@@ -27,8 +28,9 @@ async function visit(slow) {
   await p.goto(BASE + '/new/3d-model.html?pr=1', { waitUntil: 'load', timeout: 180000 });
   await p.waitForFunction(k => window.KHPRLayer && KHPRLayer.t && k.every(x => KHPRLayer.t[x] != null), { timeout: 240000, polling: 200 }, KEYS).catch(() => errs.push('timeout'));
   const r = await p.evaluate(k => ({ all: Math.max(...k.map(x => KHPRLayer.t[x] || 0)), t: KHPRLayer.t, ctl: !!navigator.serviceWorker.controller }), KEYS);
+  await p.waitForFunction(k => k.every(x => KHPRLayer.t[x] != null), { timeout: 240000, polling: 200 }, IKEYS).catch(() => {}); r.interior = await p.evaluate(k => Math.max(...k.map(x => KHPRLayer.t[x] || 0)), IKEYS);
   await new Promise(r => setTimeout(r, 1500)); await p.close();
-  const v = { slow, allReadyMs: r.all, netMB: +(net / 1e6).toFixed(2), fromSW: sw, serverAssetGets: n0 == null ? null : logN() - n0, controlled: r.ctl, t: r.t, errors: errs.slice(0, 3) };
+  const v = { slow, allReadyMs: r.all, interiorMs: r.interior, netMB: +(net / 1e6).toFixed(2), fromSW: sw, serverAssetGets: n0 == null ? null : logN() - n0, controlled: r.ctl, t: r.t, errors: errs.slice(0, 3) };
   res.visits.push(v); console.log(JSON.stringify(v)); return v;
 }
 await visit(false); const v2 = await visit(true); const v3 = await visit(true);

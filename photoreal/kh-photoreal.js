@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.c';
+  const VER = '1102.d';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -248,8 +248,8 @@
         U.prAmb = { value: o.light.amb || new T.Color(0, 0, 0) };
         U.prK = { value: o.light.k || 0 };
         // 굽기(BAKE.u)는 모든 실내 재질이 같은 uniform 객체를 공유한다: 시간대·층이 바뀌면 한 번만 바꾸면 된다
-        Object.assign(U, { prBake: BAKE.u.tex, prBakeK: BAKE.u.k, prBakeOn: BAKE.u.on, prLv: BAKE.u.lv, prLvBox: BAKE.u.box, prLvN: BAKE.u.n, prAtlas: BAKE.u.atlas });
-        let dec = 'uniform vec3 prAmb;uniform float prK;uniform sampler2D prBake;uniform float prBakeK;uniform float prBakeOn;uniform vec4 prLv[16];uniform vec4 prLvBox[16];uniform int prLvN;uniform vec2 prAtlas;\n';
+        Object.assign(U, { prBake: BAKE.u.tex, prBakeK: BAKE.u.k, prBakeOn: BAKE.u.on, prBakeN: BAKE.u.nTex, prBakeNK: BAKE.u.nK, prLv: BAKE.u.lv, prLvBox: BAKE.u.box, prLvN: BAKE.u.n, prAtlas: BAKE.u.atlas });
+        let dec = 'uniform vec3 prAmb;uniform float prK;uniform sampler2D prBake;uniform float prBakeK;uniform sampler2D prBakeN;uniform float prBakeNK;uniform float prBakeOn;uniform vec4 prLv[16];uniform vec4 prLvBox[16];uniform int prLvN;uniform vec2 prAtlas;\n';
         let add = 'float prFill=1.0-0.85*prBakeOn;irradiance+=prAmb*PI*prFill;';
         if (o.light.lm) { U.prLM = { value: o.light.lm }; U.prBox = { value: o.light.box }; dec += 'uniform sampler2D prLM;uniform vec4 prBox;\n'; add += '{vec3 prL=texture2D(prLM,(vPrW.xz-prBox.xy)*prBox.zw).rgb;prL=prL/(1.0+prL*0.6);irradiance+=prL*prK*1.3*PI*prFill*(normalize(vPrN).y<-0.5?0.12:1.0);}'; }   // 최댓값 압축(T11: 조명 아래 하얗게 타는 얼룩)
         if (o.light.cove) { U.prCove = { value: o.light.cove }; dec += 'uniform vec4 prCove;\n'; add += 'irradiance+=vec3(1.0,0.82,0.62)*prCove.z*PI*smoothstep(prCove.x,prCove.y,vPrW.y);'; }
@@ -261,7 +261,8 @@
     vec3 ef=pow(texture2D(prBake,(tf+uv)/prAtlas).rgb,vec3(2.2)),ec=pow(texture2D(prBake,(tc+uv)/prAtlas).rgb,vec3(2.2));
     float prNy=normalize(vPrN).y,prHf=clamp((vPrW.y-lv.x)/max(lv.y-lv.x,0.5),0.0,1.0);
     float prWf=abs(prNy)>0.5?clamp(prNy*0.5+0.5,0.0,1.0):mix(0.78,0.22,prHf);   // 벽·기둥: 아래는 바닥 쪽 빛, 위는 천장 쪽 빛(T10)
-    irradiance+=mix(ec,ef,prWf)*prBakeK;iblIrradiance*=0.25;}}`;
+    irradiance+=mix(ec,ef,prWf)*prBakeK;iblIrradiance*=0.25;
+    if(prBakeNK>0.0&&lv.x>-0.5)irradiance+=prAmb*PI*prBakeNK*mix(0.5,1.0,clamp(prNy*0.5+0.5,0.0,1.0));}}`;
         fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\n' + dec);
         fs = fs.replace('#include <lights_fragment_maps>', '#include <lights_fragment_maps>\n' + add);
       }
@@ -273,11 +274,11 @@
         fs = fs.replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   {vec3 prPc=floor(vPrW/vec3(1.5,3.6,1.5));float prPh=fract(sin(dot(prPc,vec3(12.9898,78.233,37.719)))*43758.5453),prPh2=fract(prPh*7.13);
    normal=normalize(normal+(vec3(prPh,0.0,prPh2)-vec3(0.5,0.0,0.5))*0.035);}`);
-        // 하늘 반사 섞기: Wing 큐브맵(건물 중심 한 점에서 찍은 주변)만으로는 반사가 한 가지 푸른 톤이라, 위를 향한 반사에 하늘 사진 큐브(배경과 같은 것)를 40%까지 섞는다
+        // 하늘 반사 섞기: Wing 큐브맵(건물 중심 한 점에서 찍은 주변)만으로는 반사가 한 가지 푸른 톤이라, 위를 향한 반사에 하늘 사진 큐브(배경과 같은 것)를 25%까지 섞는다(40% 는 유리 너머 실내가 거의 안 보였다, 1102.d)
         U.prSky = SKYU.tex; U.prSkyK = SKYU.k;
         fs = fs.replace('#include <lights_pars_begin>', '#include <lights_pars_begin>\nuniform samplerCube prSky;uniform float prSkyK;\n');
         fs = fs.replace('#include <aomap_fragment>', `#include <aomap_fragment>
-  if(prSkyK>0.0){vec3 prRv=inverseTransformDirection(reflect(-normalize(vViewPosition),normal),viewMatrix);float prUp=smoothstep(-0.05,0.35,prRv.y)*0.4*prSkyK;
+  if(prSkyK>0.0){vec3 prRv=inverseTransformDirection(reflect(-normalize(vViewPosition),normal),viewMatrix);float prUp=smoothstep(-0.05,0.35,prRv.y)*0.25*prSkyK;
     vec3 prSc=textureCube(prSky,vec3(-prRv.x,prRv.y,prRv.z)).rgb*envMapIntensity;float prFs=0.04+0.96*pow(1.0-abs(dot(normalize(vViewPosition),normal)),5.0);
     reflectedLight.indirectSpecular=mix(reflectedLight.indirectSpecular,prSc*prFs,prUp);}`);
         fs = fs.replace('#include <output_fragment>', `
@@ -297,7 +298,7 @@
      photoreal/bake/manifest.json 과 시간대별 아틀라스(bake-am|pm|sunset|night.png). 만드는 법은 photoreal/tools/bake/.
      Wing 의 시간대(오전·오후·석양·야간)를 따르고, 날짜·시각을 직접 고르면 해 높이로 가장 가까운 시간대를 쓴다. */
   const BAKE = { man: null, tex: {}, slot: null, sig: '', gain: { am: 1, pm: 1, sunset: 1.15, night: 2.6 },   // 야간 실내 빛을 키워 밖에서 우리 건물이 보이게(T8)
-    u: { tex: { value: null }, k: { value: 0 }, on: { value: 0 }, lv: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, box: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, 0, 1, 1)) }, n: { value: 0 }, atlas: { value: new THREE.Vector2(1, 1) } } };
+    u: { tex: { value: null }, k: { value: 0 }, on: { value: 0 }, nTex: { value: null }, nK: { value: 0 }, lv: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) }, box: { value: Array.from({ length: 16 }, () => new THREE.Vector4(0, 0, 1, 1)) }, n: { value: 0 }, atlas: { value: new THREE.Vector2(1, 1) } } };
   let bakeP = null;
   function loadBake() {
     return bakeP || (bakeP = fetch(BASE + 'bake/manifest.json?v=' + VER).then(r => r.ok ? r.json() : null).then(m => { BAKE.man = m; if (m) { BAKE.u.atlas.value.set(m.cols, m.rows); log('굽기 목록', Object.keys(m.slots).join(',')); } }).catch(() => log('굽기 없음')));
@@ -382,7 +383,12 @@
       BAKE.u.n.value = n;
     }
     BAKE.u.on.value = BAKE.u.tex.value && BAKE.u.tex.value.userData.ready ? 1 : 0;
+    // 실내 조명 켬(1102.d): 굽기의 야간 칸(조명 기구 빛)은 내보내기가 기구를 거의 광원으로 잡지 못해 지상층이 낮의 1/30～1/300 이다(1F 0.006).
+    // 그래서 굽기가 켜지면 실내 기본 채움빛이 15% 로 줄어 낮에는 하늘빛만, 밤에는 유리 발광만 남아 '조명이 꺼진' 실내로 보였다.
+    // 지상층 실내 재질에 조명 기구 빛 근사(구역 조명색 × 세기, 아래로 비추므로 바닥·책상 쪽 1, 천장 쪽 0.5)를 낮·밤 모두 더한다. 지하는 굽기에 조명이 있어 제외
+    BAKE.u.nK.value = DAYLIT;
   }
+  const DAYLIT = Q.get('prdaylit') != null ? +Q.get('prdaylit') : 1.0;   // 실내 조명 기구 빛 세기(구역 조명색 배율). ?prdaylit=0 은 끔(전후 비교용)
   PR.bake = BAKE;
 
   /* ================= 3. 재질 처방 ================= */
@@ -430,7 +436,8 @@
   function recipes() {
     if (RX) return RX;
     const { M, FM, DZM, BM2, RMAT, R3D, CM2, DM, FX } = K;
-    const glassUp = () => glassMat(0.26, 0.93), glassG = () => glassMat(0.1, 0.85), glassP = () => glassMat(0.16, 0.8);
+    const glassUp = () => glassMat(0.22, 0.8),   // 1102.d: 0.26·0.93 → 0.22·0.8(비스듬히·위에서 볼 때 거울처럼 막혀 조명 켠 실내가 안 보였다)
+      glassG = () => glassMat(0.1, 0.85), glassP = () => glassMat(0.16, 0.8);
     RX = new Map([
       [M.glass, { make: glassUp, sync: ['color', 'opacity', 'emissive'] }],
       [M.glass1, { make: glassG, sync: ['color', 'opacity', 'emissive'] }],
@@ -722,16 +729,21 @@
   let pendingSwitch = null;
   // 화면 앤티에일리어싱: Wing 은 늘 후처리 합성기로 그리는데 합성기 버퍼에는 MSAA 가 없어(캔버스의 antialias 는 쓰이지 않는다) 가는 형상(차선·줄눈·창틀)이
   // 화소 단위로 끊겨 움직일 때 자글거렸다. 장면을 받는 버퍼(합성기 두 장, SSAO 의 장면 버퍼)를 4배 MSAA 로 바꾼다(WebGL2). VR 은 합성기를 쓰지 않는다
+  // 깊이 정밀도(1102.d): three r128 은 스텐실 없는 렌더 타깃의 깊이를 16비트(DEPTH_COMPONENT16)로 만든다. 카메라 근거리 1m 에서 16비트는
+  // 80m 앞에서 약 10cm 단위라, 3～4cm 위아래로 겹친 도로판과 Wing 바닥이 깊이를 다투며 위에서 내려다보면 도로가 가로줄로 지지직거렸다
+  // (애플 GPU 는 더 높은 정밀도로 바꿔 줘 맥에서는 안 보이고 다른 GPU 에서 보인다). 합성기 버퍼에 스텐실을 켜 24비트 깊이(DEPTH24_STENCIL8)로,
+  // SSAO 깊이 텍스처는 32비트 정수로 바꾼다
   function msaaSync() {
-    const R3 = K.R3D, C = R3.composer; if (!AA || !C || !R.capabilities.isWebGL2 || !T.WebGLMultisampleRenderTarget) return;
+    const R3 = K.R3D, C = R3.composer; if (!C) return;
     // 화소 배율 1.3 이상(화면 '높음': 1.6배로 그려 줄임)은 이미 초표본이라 MSAA 를 더하면 fps 만 약 30% 떨어진다. 보통·낮음과 배율 1 기기에만
-    const ms = (C._pixelRatio || R.getPixelRatio()) < 1.3;
-    const swap = (obj, key) => { const rt = obj && obj[key]; if (!rt || !!rt.isWebGLMultisampleRenderTarget === ms) return false;
-      const o = { minFilter: rt.texture.minFilter, magFilter: rt.texture.magFilter, format: rt.texture.format, type: rt.texture.type, depthBuffer: rt.depthBuffer, stencilBuffer: rt.stencilBuffer };
+    const ms = AA && R.capabilities.isWebGL2 && !!T.WebGLMultisampleRenderTarget && (C._pixelRatio || R.getPixelRatio()) < 1.3;
+    const swap = (obj, key) => { const rt = obj && obj[key]; if (!rt || (!!rt.isWebGLMultisampleRenderTarget === ms && rt.stencilBuffer)) return false;
+      const o = { minFilter: rt.texture.minFilter, magFilter: rt.texture.magFilter, format: rt.texture.format, type: rt.texture.type, depthBuffer: true, stencilBuffer: true };
       const m = ms ? new T.WebGLMultisampleRenderTarget(rt.width, rt.height, o) : new T.WebGLRenderTarget(rt.width, rt.height, o);
       if (ms) m.samples = 4; m.texture.encoding = rt.texture.encoding; m.texture.generateMipmaps = false; rt.dispose(); obj[key] = m; return true; };
-    if (swap(C, 'renderTarget1') | swap(C, 'renderTarget2')) { C.writeBuffer = C.renderTarget1; C.readBuffer = C.renderTarget2; PR.stat.msaa = ms ? 4 : 0; }
+    if (swap(C, 'renderTarget1') | swap(C, 'renderTarget2')) { C.writeBuffer = C.renderTarget1; C.readBuffer = C.renderTarget2; PR.stat.msaa = ms ? 4 : 0; PR.stat.depth24 = true; }
     swap(R3.ssao, 'beautyRenderTarget');
+    const S = R3.ssao; if (S && S.depthTexture && S.depthTexture.type !== T.UnsignedIntType) { S.depthTexture.type = T.UnsignedIntType; S.depthTexture.needsUpdate = true; if (S.normalRenderTarget) S.normalRenderTarget.dispose(); }
   }
   // 가로등 바닥 빛 웅덩이(야간): Wing 가로등(R3D.lamps, 점광원) 아래 땅에 따뜻한 둥근 빛을 더한다. 인스턴스 한 묶음(그리기 호출 1회), 야간·실사 켠 동안만
   const POOL = { m: null, n: -1 };
@@ -757,7 +769,7 @@
       if (hp) PLH.list.forEach(o => { o.visible = false; });   // 합치기 재구성(clear)이 표시를 되돌리므로 매 프레임
       if (hp !== PLH.on) { PLH.on = hp; PLH.list.forEach(o => { o.visible = !hp; o.userData.khxr = hp; });   // khxr: 합치기 대상에서 뺀다
         const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } }
-    if (!FURN.open && K.I.on) { FURN.go(); envAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
+    if (!FURN.open && K.I.on) { FURN.go(); envAssets(); plantAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
     // 현황 건물(동광빌딩)은 '현황'·'비교'를 처음 고를 때 Wing 이 만든다: 층 배치가 그대로여도 새로 생긴 메시를 바꾼다
     if (K.exist) { const es = K.exist.children.length + '|' + (K.exist.visible ? 1 : 0); if (es !== CUR.exist) { CUR.exist = es; if (staticDone) swapIn(K.exist, null, 'exist'); } }
     if (K.LEVELS !== CUR.levels) { applyAll('재건'); if (pendingSwitch) { PR.t.switchApply = Math.round(now() - pendingSwitch.t); } }
@@ -1033,7 +1045,8 @@
   let warmG = null, warmMs = [];
   function warm() {
     if (warmG) { scene.remove(warmG); warmG = null; }
-    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && DR.group) { PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); } return; }
+    if (!WARM.length) { if (PR.t.warm == null && PR.t.enable0 && STG.cur === -1 && PR.t.ground != null) {   // 외관 준비가 끝난 뒤 남은 셰이더가 없으면(가구는 나중)
+       PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); } return; }
     const props = R.properties, cam = window.KHXR.camera;
     warmG = new T.Group(); warmG.userData.khxr = true;   // XR 병합 대상에서 제외
     const geo = warm.geo || (warm.geo = new T.PlaneGeometry(1e-3, 1e-3));
@@ -2041,7 +2054,7 @@
      단계마다 상태줄에 표시하고, 받지 못한 것은 사람 말로 알리고 '다시 시도' 버튼을 둔다 */
   const FURN = { open: false, wait: null, go: null };
   FURN.wait = new Promise(r => { FURN.go = () => { if (!FURN.open) { FURN.open = true; r(); } }; });
-  const STG = PR.stage = { names: ['우리 건물 재질', '하늘', '주변 건물', '실내 가구', '주변 땅·거리 소품', '실내 화분'], cur: -1, fails: new Map(), run: 0 };
+  const STG = PR.stage = { names: ['우리 건물 재질', '하늘', '주변 건물', '주변 땅·거리 소품'], cur: -1, fails: new Map(), run: 0 };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   function fail(what, retry) { STG.fails.set(what, retry); statLine(); }
   // 첫 단계(우리 건물 텍스처)의 실제 전송 속도(Mbps). 저장본에서 읽었으면(전송 0) 빠른 것으로 본다
@@ -2052,29 +2065,27 @@
     return bytes < 50e3 ? 999 : bytes * 8 / 1e6 / Math.max(0.05, (t1 - t0) / 1000);
   }
   const FAST_MBPS = 30;   // 이보다 빠르면 단계를 기다리지 않고 한꺼번에 받는다(순서대로 받으면 단계마다 지연이 쌓여 오히려 늦다)
+  // 받는 순서(1102.d, Jack 결정): 외관(우리 건물 재질·하늘·주변 건물·주변 땅·거리 소품)을 먼저 받고 그것으로 '준비 완료'.
+  // 실내 가구·화분(약 3.6MB, 조립에 CPU 약 2.5초)은 외관이 준비된 뒤 뒤에서 받는다. 그 전에 실내로 들어가면 바로 받는다(frame()).
+  // 그래서 밖에서 유리 너머 가구는 조금 늦게 나타난다(10Mbps 첫 방문 12초·다시 방문 3초 기준을 맞추기 위한 선택)
+  function interiorLater(alive) { if (!alive()) return; FURN.go(); plantAssets(); }
   async function loadSeq() {
     const run = ++STG.run, alive = () => PR.on && STG.run === run, step = i => { STG.cur = i; statLine(); };
-    // 다시 방문(서비스 워커가 자산을 저장소에서 준다): 회선을 기다릴 까닭이 없으므로 가구 조립(CPU 가 가장 오래 걸리는 단계)을 바로 시작한다
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) FURN.go();
     step(0); for (let i = 0; i < 80 && pend.done < pend.n; i++) await sleep(100);   // 최대 8초
     if (!alive()) return;
     const mbps = netMbps(); PR.stat.mbps = Math.round(mbps); STG.fast = mbps >= FAST_MBPS;
     if (STG.fast) {
-      // 빠른 회선·저장본: 모두 동시에(주변 땅은 주변 건물 자료가 있어야 만든다)
-      step(1); FURN.go(); envAssets(); plantAssets();
-      await Promise.all([skyLoad(bakeSlot() === 'night' ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day'), ctxLoad().then(() => { if (alive()) { ctxOn(); return groundLoad(); } }), plantAssets()]);
-      step(-1); return;
+      // 빠른 회선·저장본: 외관을 모두 동시에(주변 땅은 주변 건물 자료가 있어야 만든다)
+      step(1); envAssets();
+      await Promise.all([skyLoad(bakeSlot() === 'night' ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day'), ctxLoad().then(() => { if (alive()) { ctxOn(); return groundLoad(); } }), envAssets()]);
+      step(-1); interiorLater(alive); return;
     }
     step(1); { const sl = bakeSlot(); await Promise.race([skyLoad(sl === 'night' ? 'night' : sl === 'sunset' ? 'sunset' : 'day'), sleep(6000)]); }
     if (!alive()) return;
     step(2); await ctxLoad(); if (!alive()) return; ctxOn();
-    // (1102 시험: 가구 조립과 거리 소품·땅 받기를 겹치면 가구 받기가 대역을 나눠 써 로컬 10Mbps 12.6 → 15.1초로 오히려 늦었다. 순서 유지)
-    step(3); FURN.go(); for (let i = 0; i < 300 && !(DR.group && !DR.busy); i++) await sleep(100);
+    step(3); await envAssets(); await groundLoad();
     if (!alive()) return;
-    step(4); await envAssets(); await groundLoad();
-    if (!alive()) return;
-    step(5); await plantAssets();
-    step(-1);
+    step(-1); interiorLater(alive);
   }
   function retryAll() {
     const f = [...STG.fails.values()]; STG.fails.clear(); statLine();
@@ -2200,8 +2211,8 @@
     const el = document.getElementById('pr-stat'); if (!el) return;
     const t = PR.t, a = [];
     if (STG.cur >= 0) a.push(`받는 중 ${STG.cur + 1}/${STG.names.length}: ${STG.names[STG.cur]}` + (STG.cur === 0 && pend.n ? ` ${pend.done}/${pend.n}` : ''));
-    else a.push(t.warm != null && t.plants != null ? `준비 완료 ${(Math.max(t.warm, t.plants, t.ground || 0) / 1000).toFixed(1)}초` : pend.n && pend.done < pend.n ? `텍스처 ${pend.done}/${pend.n}` : '');
-    const busy = STG.cur >= 0 || !(t.warm != null && t.plants != null);
+    else a.push(t.warm != null && t.ground != null ? `준비 완료 ${(Math.max(t.warm, t.ground) / 1000).toFixed(1)}초` + (t.dress == null ? ' · 실내 가구 받는 중' : '') : pend.n && pend.done < pend.n ? `텍스처 ${pend.done}/${pend.n}` : '');
+    const busy = STG.cur >= 0 || !(t.warm != null && t.ground != null) || t.dress == null;
     if (PERF.on && t.firstFrame != null) a.push(`켜기 ${t.firstFrame}ms`);
     if (PERF.on && t.switch != null) a.push(`조합 전환 ${t.switch}ms`);
     el.textContent = a.filter(Boolean).join(' · ') || '준비 중';
