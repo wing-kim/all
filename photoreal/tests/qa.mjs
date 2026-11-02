@@ -63,7 +63,7 @@ const readJ = f => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catc
 if (want('reg')) {
   await regTest('smoke', XRT, 'smoke.mjs', [BASE]);
   await regTest('compat', XRT, 'compat.mjs', [BASE]);
-  await regTest('ux', XRT, 'ux.mjs', [BASE]);
+  await regTest('ux', XRT, 'ux.mjs', [BASE], {}, 1);   // 계단 걷기: 맥 부하로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   await regTest('ux pr=1', XRT, 'ux.mjs', [BASE, '--page=new/3d-model.html?pr=1'], {}, 1);   // 계단 걷기가 셰이더 준비로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   if (!QUICK) await regTest('mp', XRT, 'mp.mjs', [BASE], {}, 2);   // 공개 중계망(Nostr) 타이밍: 두 번까지 재시도
   for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality']) await regTest(t, HERE, t + '.mjs');

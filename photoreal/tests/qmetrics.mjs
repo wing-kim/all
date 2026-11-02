@@ -118,7 +118,7 @@ async function flicker(P, tag, views) {
         for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3;
         a /= D.length - 1; band[b][0] += a; band[b][1]++; if (a > 12) band[b][2]++; }
       // 화면 전체(나무 제외): 형상 가장자리(차선·줄눈·창틀)의 자글거림을 포함한 값
-      let as = 0, an = 0, ah = 0; for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const m = mk(x, y); if (m.grp === 4) continue; const i = (y * w + x) * 4; let a = 0;
+      let as = 0, an = 0, ah = 0; for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const m = mk(x, y); if (m.grp === 4 || (m.dist > 0 && m.dist < 1.5)) continue; /* 1.5m 안은 실제 움직임 */ const i = (y * w + x) * 4; let a = 0;
         for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1; as += a; an++; if (a > 12) ah++; }
       if (window.__qaSave) { const cv2 = document.createElement('canvas'); cv2.width = w; cv2.height = h; const g2 = cv2.getContext('2d'), id = g2.createImageData(w, h);
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; let a = 0; for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1;
