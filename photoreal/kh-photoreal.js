@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.h';
+  const VER = '1102.i';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -821,7 +821,10 @@
     if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
       const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
       if (GND.poles) { GND.poles.visible = !(xr && K.I.on) && !qFar && !(xr && XRQ.level >= 2); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
-      const gk = xr + '|' + QS.key + '|' + XRQ.level; if (GND.xrOn !== gk) { GND.xrOn = gk; GND.far.forEach(m => { m.visible = !xr && !qFar; }); GND.kind.forEach(m => { m.visible = !xr; }); GND.xr.forEach(m => { m.visible = xr; }); GND.near && (GND.near.visible = !(xr && XRQ.level >= 2)); }
+      const gk = xr + '|' + QS.key + '|' + XRQ.level; // VR 에서 종류별 바닥은 늘 숨기고 합치기 대상에서 뺀다(1102.i): 합치기가 다시 만들어질 때 숨겨 둔 원본의 표시를 되돌려,
+      // 미성 '현재' 상태에서 종류별 바닥(삼각형 약 10만, 그리기 약 5회)이 VR 묶음에 다시 들어갔다
+      if (xr) GND.kind.forEach(m => { m.visible = false; m.userData.khxr = true; });
+      if (GND.xrOn !== gk) { GND.xrOn = gk; if (!xr) GND.kind.forEach(m => { m.userData.khxr = false; }); { const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } GND.far.forEach(m => { m.visible = !xr && !qFar; }); GND.kind.forEach(m => { m.visible = !xr; }); GND.xr.forEach(m => { m.visible = xr; }); GND.near && (GND.near.visible = !(xr && XRQ.level >= 2)); }
       const ck = xr + '|' + QS.key + '|' + XRQ.level; if (PF_.xrCtx !== ck) { PF_.xrCtx = ck; [CTX.now, CTX.next].forEach(g => g && g.children.forEach(m => { const c = m.userData.cls;
         if (c === 'trim_far' || c === 'dong') m.visible = !xr && !qDet;
         if (/^far_/.test(c)) m.visible = !(xr && XRQ.level >= 3);   // VR 품질 3단계: 원경 건물 숨김(T5)
