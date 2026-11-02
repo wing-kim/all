@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.f';
+  const VER = '1102.g';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -1237,7 +1237,7 @@
           { h: '시각 (적용 버튼으로 반영)', items: range('sun-hour', v => (v | 0) + '시', [7, 9, 12, 15, 17, 19]).concat(buttons('#sun-apply')) },
           { h: '조명', items: checks(['t-citylights']) }] },
         { t: '보기', sec: [
-          { h: '현황과 신축', items: radios('era') }, { h: '겹쳐 보기', items: radios('mixq') },
+          { h: '현황과 신축', items: radios('era') }, { h: '미성아파트 일대', items: radios('ms') }, { h: '겹쳐 보기', items: radios('mixq') },
           { h: '주변', items: checks(['t-city', 't-ctx', 't-b1', 't-limits', 't-frame']) },
           { h: '단면', items: inside ? buttons('#secBtn,#secAllBtn') : [] },
           { h: '실사 사진', items: Photo.items() }] },
@@ -1324,7 +1324,7 @@
         else if (sec.h === '추천 시안') { sec.kind = 'thumbs'; sec.items.forEach(i => { i.thumb = thumbOf('preset', i.key.split(':')[2]); }); }
         else if (sec.h === '마감재') { sec.kind = 'thumbs'; sec.items.forEach(i => { i.thumb = thumbOf('finish', i.key.split(':')[2]); }); }
         else if (/색상$/.test(sec.h)) sec.kind = 'swatch';
-        else if (/^(보기 방식|시간대|계절|창 크기|현황과 신축|회전)$/.test(sec.h)) sec.kind = 'seg';
+        else if (/^(보기 방식|시간대|계절|창 크기|현황과 신축|미성아파트 일대|회전)$/.test(sec.h)) sec.kind = 'seg';
       }));
       T0.forEach(t => { const i = t.sec.findIndex(x => x.kind === 'floors'); if (i > 0) t.sec.unshift(t.sec.splice(i, 1)[0]); });
       const lt = T0.find(t => t.t === '빛과 시간');

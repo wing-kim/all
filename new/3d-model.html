@@ -561,6 +561,8 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       <label class="chk"><input type="checkbox" id="t-b1"> 지하층 투시 (지면 반투명)</label>
       <label class="chk"><input type="checkbox" id="t-ctx" checked> 북측 인접 건물 (도미노피자 건물)</label>
       <label class="chk"><input type="checkbox" id="t-city" checked> 주변 도시 (거리뷰 사진 기준 스케치)</label>
+      <div class="row" id="ms-row"><label>미성아파트 일대</label></div>   <!-- [PR] 미성아파트·신사중 라인 현재/미래(추정) 토글, ?ms=now|future -->
+      <div class="seg" role="group" aria-label="미성아파트 일대"><label><input type="radio" name="ms" id="ms-now" value="now" checked> 현재</label><label><input type="radio" name="ms" id="ms-future" value="future"> 미래(추정)</label></div>
     </div>
 
     <div class="sec newonly">
@@ -6168,7 +6170,7 @@ function cornerLantern(g,poly,yF,r){const k=cornerOf(poly),C=poly[k],A=poly[(k-1
 // Drawing north arrow: north points to the upper-left of the plan, ~36° above horizontal
 const NORTH_DEG=36,NV=[-Math.cos(NORTH_DEG*Math.PI/180),-Math.sin(NORTH_DEG*Math.PI/180)],EV=[-NV[1],NV[0]];
 // ================= build =================
-const state={era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
+const state={ms:new URLSearchParams(location.search).get('ms')==='future'?'future':'now',era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
 window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?[...e.parentElement.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
 const bld=new THREE.Group();scene.add(bld);
 const extG=new THREE.Group(),frG=new THREE.Group();
@@ -7180,7 +7182,7 @@ function applyTime(){if(typeof HQ!=='undefined')hqMark();if(!R3D.on||!R3D.sky)re
   R3D.sky.material.uniforms.sunPosition.value.copy(dir);
   const skyScene=new THREE.Scene();skyScene.add(R3D.sky);if(R3D.envRT)R3D.envRT.dispose();R3D.envRT=R3D.pmrem.fromScene(skyScene,0.02);scene.add(R3D.sky);
   scene.environment=R3D.envRT.texture;scene.background=null;
-  const sd=T.el>0?dir:new THREE.Vector3(-0.4,0.6,0.3).normalize();const big=state.era==='new'&&city.visible&&APT_NEW;sun.position.copy(sd.multiplyScalar(big?520:140));
+  const sd=T.el>0?dir:new THREE.Vector3(-0.4,0.6,0.3).normalize();const big=state.era==='new'&&state.ms==='future'&&city.visible&&APT_NEW;sun.position.copy(sd.multiplyScalar(big?520:140));
   Object.assign(sun.shadow.camera,big?{left:-260,right:200,top:230,bottom:-230,far:1200}:{left:-70,right:70,top:70,bottom:-70,far:320});sun.shadow.camera.updateProjectionMatrix();sun.shadow.bias=big?-0.0008:-0.0004;sun.color.set(T.sun);sun.intensity=T.si;
   hemi.intensity=T.hemi;hemi.color.set(T.night?0x6070a0:0xdfe9f3);hemi.groundColor.set(T.night?0x101218:0x8c8a80);
   renderer.toneMappingExposure=T.exp;if(!I.on){M.glass.opacity=T.night?0.7:0.88;M.glass1.opacity=T.night?0.75:0.84}
@@ -7605,18 +7607,20 @@ function ghostGroup(grp,op){grp.traverse(o=>{if(!o.material)return;if(o.userData
   if(op>=0.999){if(o.material!==orig)o.material=orig;return}o.material=Array.isArray(orig)?orig.map(m=>ghostMat(m,op)):ghostMat(orig,op)})}
 function applyCmp(){const on=state.era==='cmp',v=CMP.v/100,nOp=on?v:1,eOp=on?1-v:1;
   if(on){bld.visible=nOp>0.02;exist.visible=eOp>0.02}ghostGroup(bld,nOp);ghostGroup(exist,eOp);
-  if(APT_NOW){const a=on&&CMP.apt;APT_NOW.visible=state.era!=='new'&&(!a||eOp>0.02);APT_NEW.visible=state.era==='new'||(a&&nOp>0.02);ghostGroup(APT_NOW,a?eOp:1);ghostGroup(APT_NEW,a?nOp:1);APT_OL.visible=on&&CMP.ol}
+  if(APT_NOW&&state.ms!=='future'){APT_NOW.visible=true;APT_NEW.visible=false;ghostGroup(APT_NOW,1);ghostGroup(APT_NEW,1);APT_OL.visible=false}   // [PR] 현재: 겹쳐 보기 없음
+  else if(APT_NOW){const a=on&&CMP.apt;APT_NOW.visible=state.era!=='new'&&(!a||eOp>0.02);APT_NEW.visible=state.era==='new'||(a&&nOp>0.02);ghostGroup(APT_NOW,a?eOp:1);ghostGroup(APT_NEW,a?nOp:1);APT_OL.visible=on&&CMP.ol}
   outlineG.visible=on&&CMP.ol;const o=document.getElementById('o-mix');if(o)o.textContent=`현황 ${100-CMP.v} · 신축 ${CMP.v}`;
   const sc=document.getElementById('sec-cmp');if(sc)sc.hidden=!on;if(!I.on)controls.autoRotate=on&&CMP.spin;if(on)cmpTable()}
 function cmpTable(){const st=SCH.stats,up=LEVELS.filter(l=>l.kind==='upper').length,top=LEVELS.some(l=>l.dup==='hi');
   const rows=[['대지면적','약 532㎡ (161평)',st.site.replace('㎡','㎡ ('+(parseFloat(st.site)/3.3058).toFixed(0)+'평)')],['지상 층수','4층 + 계단탑',`${state.scheme==='self'?6:state.floors}층${top?' + PH':''}`],['최고 높이','약 15.4m',st.h.replace(/ \(.*\)/,'')],['지상 연면적','—',st.gfa],['용적률','—',st.far.toFixed(1)+'%'],['주차','동측 노외주차',st.park.replace(/ \(.*\)/,'')]];
   document.getElementById('cmp-t').innerHTML='<tr><th></th><th>현황</th><th>신축</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="up">${r[2]}</td></tr>`).join('')}
 function applyEra(){const e=state.era;if(typeof R3D!=='undefined'&&R3D.on){applyTime();updateReflections()}bld.visible=e!=='now';exist.visible=e!=='new';lotVis();buildOutline();
-  if(APT_NOW){APT_NOW.visible=e!=='new';APT_NEW.visible=e!=='now';APT_OL.visible=e==='cmp'}applyCmp();
+  if(APT_NOW){const fut=state.ms==='future'&&e!=='now';APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=e==='cmp'&&state.ms==='future'}applyCmp();   // [PR] 미성 일대는 '미래(추정)'를 고를 때만 재건축 가정
   document.querySelectorAll('.newonly').forEach(x=>x.hidden=e==='now');document.getElementById('sec-now').hidden=e==='new';
-  set('era-note',e==='new'?'선택한 주차 방식·외장으로 신축한 모습입니다. 좌우 건물은 현황 그대로이고, 건너편 미성아파트는 재건축(8개 동, 최고 66층) 가정 매스입니다. 렌더 모드에서는 재건축 타워의 그림자·반사까지 반영됩니다. 주변 건물 배치는 네이버지도, 높이는 거리뷰 사진 기준 근사값입니다.'
+  set('era-note',e==='new'?'선택한 주차 방식·외장으로 신축한 모습입니다. 좌우 건물은 현황 그대로이고, 건너편 미성아파트는 '+(state.ms==='future'?'재건축(8개 동, 최고 66층) 가정 매스입니다. 렌더 모드에서는 재건축 타워의 그림자·반사까지 반영됩니다.':'현재 모습입니다(재건축 가정은 화면 표시의 미성아파트 일대에서 미래(추정)를 고르면 보입니다).')+' 주변 건물 배치는 네이버지도, 높이는 거리뷰 사진 기준 근사값입니다.'
     :e==='now'?'현재 동광빌딩(지상 4층 적벽돌, 1층 투썸플레이스)과 좌우 건물, 건너편 미성아파트(약 15층) 현황입니다. 대지 표시(파란 선 = 현황 대지, 빨간 면 = 편입되는 3번지)는 배치 (위) 시점에서 보입니다. 주변 건물 배치는 네이버지도 기준입니다. 높이·윤곽은 사진에서 읽은 근사값입니다.'
     :'현황(동광빌딩·미성아파트) 위에 신축 윤곽(빨간 선)을 겹쳐 봅니다. 대지 표시는 배치 (위) 시점에서 보입니다. 우리 건물 신축 윤곽과 미성아파트 재건축(8개 동, 최고 66층 가정) 윤곽이 함께 그려지고, 주차 방식·매스 조정을 바꾸면 우리 건물 윤곽도 바뀝니다.')}
+document.querySelectorAll('input[name=ms]').forEach(r=>{r.checked=r.value===state.ms;r.addEventListener('change',e=>{state.ms=e.target.value;const fut=state.ms==='future'&&state.era!=='now';if(APT_NOW){APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=state.era==='cmp'&&state.ms==='future'}if(R3D.on){applyTime();updateReflections()}})});   // [PR] 미성 일대만 바꾼다(applyEra 의 applyCmp 는 재질을 원본으로 되돌린다)
 document.querySelectorAll('input[name=era]').forEach(r=>r.addEventListener('change',e=>{state.era=e.target.value;if(I.on&&state.era!=='new')exitInt();build();if(!I.on)go('corner')}));
 buildContext();existBuilding();
 // first open: browsers can restore old radio/checkbox states, so set every control from the defaults in state (1층 3안 등)

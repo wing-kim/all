@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.f';
+  const VER = '1102.g';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -811,8 +811,9 @@
     if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
     if (DIST) DIST.visible = (!K.I.on || !inBase) && !QS.cur.hideFar;
     // 지하층 안에서는 바깥이 보이지 않으므로 주변 건물·땅을 그리지 않는다(VR 그리기 호출 예산)
-    if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw && !inBase; CTX.next.visible = nw && !inBase; }
-    if (GND.g) { const nw = K.state.era === 'new', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
+    // 미성아파트 일대(1102.g): '미래(추정)'(Wing state.ms, ?ms=future)를 고르고 신축 모드일 때만 재건축 가정 동이 있는 한 벌(CTX.next), 그 밖에는 실측 현재 단지가 있는 한 벌(CTX.now)
+    if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new' && K.state.ms === 'future'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw && !inBase; CTX.next.visible = nw && !inBase; }
+    if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
       const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
       if (GND.poles) { GND.poles.visible = !(xr && K.I.on) && !qFar && !(xr && XRQ.level >= 2); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
       const gk = xr + '|' + QS.key + '|' + XRQ.level; if (GND.xrOn !== gk) { GND.xrOn = gk; GND.far.forEach(m => { m.visible = !xr && !qFar; }); GND.kind.forEach(m => { m.visible = !xr; }); GND.xr.forEach(m => { m.visible = xr; }); GND.near && (GND.near.visible = !(xr && XRQ.level >= 2)); }
@@ -2185,6 +2186,7 @@
       PNL.innerHTML = `<button type="button" class="pr-fold" aria-expanded="false">펼치기 ▴</button><b>실사 3D · 우선 조합</b> <span class="pr-sub" style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
+<div class="r" id="pr-ms"><span style="align-self:center;color:var(--muted)">미성 일대</span><button data-ms="now">현재</button><button data-ms="future">미래(추정)</button></div>
 <div class="r" id="pr-q"><span style="align-self:center;color:var(--muted)">품질</span><button data-q="">자동</button><button data-q="high">높음</button><button data-q="medium">보통</button><button data-q="low">낮음</button></div>
 <label class="pr-perf"><input type="checkbox" id="pr-perf">성능 보기(fps·그리기 호출)</label>
 <small id="pr-stat" aria-live="polite">준비 중</small><small id="pr-fail" hidden style="color:var(--fg)"><span></span><button type="button" id="pr-retry">다시 시도</button></small><small>주변 건물: 브이월드(국토교통부 건축물정보), © OpenStreetMap contributors</small>`;
@@ -2192,6 +2194,7 @@
       PNL.querySelectorAll('[data-pf]').forEach(b => b.addEventListener('click', () => preset(b.dataset.pf)));
       PNL.querySelectorAll('[data-lv]').forEach(b => b.addEventListener('click', () => goLevel(b.dataset.lv)));
       PNL.querySelector('#pr-retry').addEventListener('click', retryAll);
+      PNL.querySelectorAll('[data-ms]').forEach(b => b.addEventListener('click', () => { click('ms-' + b.dataset.ms); panelSync(); }));   // Wing 패널 '미성아파트 일대'와 같은 값
       const pc = PNL.querySelector('#pr-perf'); pc.checked = PERF.on; pc.addEventListener('change', () => PR.perf(pc.checked));
       // 휴대폰(폭 760px 이하): 처음에는 접어서 제목과 상태 한 줄만(화면 아래 16%를 가리던 것). 눌러 펼친다(T16)
       const fb = PNL.querySelector('.pr-fold'), fold = on => { PNL.classList.toggle('fold', on); fb.textContent = on ? '펼치기 ▴' : '접기 ▾'; fb.setAttribute('aria-expanded', !on); };
@@ -2211,6 +2214,7 @@
     if (!PNL) return; const s = K.state;
     const cur = s.mode === 'preset' ? (s.pdesign === 'stack' ? 'stack' : s.pdesign === 'colonnade' ? 'colonnade' : '') : (s.cfin === 'glass' && s.cform === 'none' ? 'glass' : s.cfin === 'brick' && s.cform === 'none' ? 'brick' : '');
     PNL.querySelectorAll('[data-pf]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pf === cur));
+    PNL.querySelectorAll('[data-ms]').forEach(b => b.setAttribute('aria-pressed', b.dataset.ms === (s.ms || 'now')));
     const lv = K.I.on ? (K.Lv() || {}).key : 'out';
     PNL.querySelectorAll('[data-lv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lv === lv));
     PNL.querySelectorAll('[data-q]').forEach(b => { b.setAttribute('aria-pressed', QS.manual ? b.dataset.q === QS.manual : b.dataset.q === ''); if (b.dataset.q === '') b.textContent = QS.manual ? '자동' : '자동(' + QS.name + ')'; });

@@ -208,6 +208,11 @@ async function baseShots(P) {
   await P.p.evaluate(() => { const e = document.getElementById('tod-night'); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); }); await wait(4500);
   await go(P, 'out'); await P.p.screenshot({ path: OUT + 'qa-shots/out-night.jpg', type: 'jpeg', quality: 80 }); res.shots.push('qa-shots/out-night.jpg');
   await P.p.evaluate(() => { const e = document.getElementById('tod-pm'); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); }); await wait(3000);
+  // 미성아파트·신사중 라인 현재/미래(추정), 미성아파트 방향 조감
+  const ms = v => P.p.evaluate(v => { const e = document.getElementById('ms-' + v); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); }, v);
+  await P.p.evaluate(() => document.getElementById('v-apt').click()); await wait(3500);
+  for (const v of ['now', 'future']) { await ms(v); await wait(2500); await P.p.screenshot({ path: OUT + 'qa-shots/apt-' + v + '.jpg', type: 'jpeg', quality: 80 }); res.shots.push('qa-shots/apt-' + v + '.jpg'); }
+  await ms('now'); await wait(1500);
 }
 /* ---------- UI ---------- */
 async function ui() {

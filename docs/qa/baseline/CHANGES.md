@@ -1,1 +1,2 @@
 - 2026-11-01T23:52 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg: 1102.b: 하늘 사진 해 방향 수정(환경광·반사), 유리 하늘 반사 섞기, 1층 의자 색 다양화, 5층 바닥 광택 완화, 석양 하늘 0.6·야간 유리 발광, 주차 번호
+- 2026-11-02T01:44 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg: 1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이

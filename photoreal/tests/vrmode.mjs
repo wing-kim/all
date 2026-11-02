@@ -29,6 +29,9 @@ const menu = await p.evaluate(async () => { const U = KHXRLayer.ui; if (!U || !U
   const t = U.tabs(), i = t.findIndex(x => /^빛과 시간/.test(x)); U.setTab(i); for (let k = 0; k < 5; k++) await new Promise(r => s.requestAnimationFrame(() => r()));
   return U.cells().map(c => c.key).filter(k => /vmode/.test(k)); });
 ok('VR 메뉴: 보기 방식 맨 앞이 실사 3D', menu && /pr3d/.test(menu[0] || ''), menu);
+const ms = await p.evaluate(async () => { const U = KHXRLayer.ui, s = KHXR.renderer.xr.getSession(); const t = U.tabs(), i = t.findIndex(x => /^보기/.test(x)); U.setTab(i); for (let k = 0; k < 5; k++) await new Promise(r => s.requestAnimationFrame(() => r()));
+  return U.cells().map(c => c.key).filter(k => /:ms:/.test(k)); });
+ok('VR 메뉴: 보기 탭에 미성아파트 일대(현재·미래)', ms && ms.length === 2, ms);
 await p.evaluate(() => KHXRLayer.exit()); await new Promise(r => setTimeout(r, 1500));
 const d = await p.evaluate(() => ({ exp: +KHXR.renderer.toneMappingExposure.toFixed(3), hemi: +KHPR.hemi.intensity.toFixed(3) }));
 ok('VR 종료 뒤 오류 없음', errs.length === 0, { d, errs: errs.slice(0, 3) });

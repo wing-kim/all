@@ -1,0 +1,80 @@
+{
+ "at": "2026-11-02T01:44:54.198Z",
+ "base": "http://127.0.0.1:50085",
+ "quick": false,
+ "only": [
+  "shots"
+ ],
+ "items": [
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:out.jpg",
+   "prev": "평균 차 2.73, 큰 차 1.05%"
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:street.jpg",
+   "prev": "평균 차 2.57, 큰 차 1.14%"
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:1F.jpg",
+   "prev": "평균 차 0.03, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:5F.jpg",
+   "prev": "평균 차 0.01, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:B1.jpg",
+   "prev": "평균 차 0.01, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:B3.jpg",
+   "prev": "평균 차 0, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이",
+   "key": "shots:out-night.jpg",
+   "prev": "평균 차 0.17, 큰 차 0%"
+  }
+ ]
+}

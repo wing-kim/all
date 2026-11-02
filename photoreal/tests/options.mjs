@@ -38,6 +38,9 @@ const AX = [
   { axis: 'floors', name: 'floors-8-int', set: ['c-floors=8'], view: '8F' },
   ...['3.6', '6.5'].map(v => ({ axis: 'h1', name: 'h1-' + v, set: ['c-h1=' + v], view: '1F' })),
   ...['3.0', '5.0'].map(v => ({ axis: 'ht', name: 'ht-' + v, set: ['c-ht=' + v], view: '3F' })),
+  // 미성아파트·신사중 라인(1102.g): 현재(실측) / 미래(재건축 가정), 신축·현황 모드, 조감 시점
+  { axis: 'ms', name: 'ms-future', set: ['ms-future'] }, { axis: 'ms', name: 'ms-future-apt', set: ['ms-future'], view: 'v-apt' }, { axis: 'ms', name: 'ms-now-apt', set: ['ms-now'], view: 'v-apt' },
+  { axis: 'ms', name: 'ms-future-eranow', set: ['ms-future', 'era-now'], view: 'v-apt' }, { axis: 'ms', name: 'ms-future-cmp', set: ['ms-future', 'era-cmp'], view: 'v-apt' },
   ...R('show', ['!t-labels', 't-cxlab', 't-limits', '!t-frame', 't-b1', '!t-ctx', '!t-city']),
   ...['v-int', 'v-front', 'v-side', 'v-stair', 'v-top', 'v-roof', 'v-apt', 'v-far'].map(k => ({ axis: 'view', name: k, set: [], view: k })),
   ...['1F', 'B1', 'B2', 'B3', '2F', '6F', 'PH1'].map(k => ({ axis: 'level', name: 'lv-' + k, set: [], view: k })),
