@@ -2068,6 +2068,7 @@
     step(1); { const sl = bakeSlot(); await Promise.race([skyLoad(sl === 'night' ? 'night' : sl === 'sunset' ? 'sunset' : 'day'), sleep(6000)]); }
     if (!alive()) return;
     step(2); await ctxLoad(); if (!alive()) return; ctxOn();
+    // (1102 시험: 가구 조립과 거리 소품·땅 받기를 겹치면 가구 받기가 대역을 나눠 써 로컬 10Mbps 12.6 → 15.1초로 오히려 늦었다. 순서 유지)
     step(3); FURN.go(); for (let i = 0; i < 300 && !(DR.group && !DR.busy); i++) await sleep(100);
     if (!alive()) return;
     step(4); await envAssets(); await groundLoad();
