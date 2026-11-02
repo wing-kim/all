@@ -233,6 +233,7 @@
     hit: null, mine: null, lines: new Map(), t: 0,
     mk(color) {
       const ln = new T.Line(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(6), 3)), new T.LineBasicMaterial({ color, transparent: true, opacity: 0.95, depthTest: false }));
+      ln.userData.keep = true;   // Wing cleanLines() 가 렌더·실사 3D 에서 keep 없는 선을 숨긴다
       const dot = new T.Mesh(new T.SphereGeometry(0.07, 14, 10), new T.MeshBasicMaterial({ color, depthTest: false, transparent: true }));
       ln.renderOrder = dot.renderOrder = 1001; ln.frustumCulled = false;
       const g = new T.Group(); g.add(ln, dot); g.userData.khxr = true; ln.userData.khxr = dot.userData.khxr = true; g.visible = false; scene.add(g);

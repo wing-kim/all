@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.e';
+  const VER = '1102.f';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -469,7 +469,7 @@
     for (let i = 0; i < 2; i++) {
       const c = R.xr.getController(i);
       const line = new T.Line(new T.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 0, -1)]), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.75 }));
-      line.scale.z = 3; line.visible = false; c.add(line);
+      line.scale.z = 3; line.visible = false; line.userData.keep = true; c.add(line);   // keep: Wing cleanLines() 가 렌더·실사 3D 에서 keep 없는 선을 모두 숨겨 레이가 사라졌다(1102.e)
       c.userData = { i, line, hand: i ? 'right' : 'left', src: null, aim: false, sq: false, hit: null, uiHit: null, isHand: false };
       c.addEventListener('connected', e => { c.userData.src = e.data; c.userData.hand = e.data.handedness; c.userData.isHand = !!e.data.hand; line.visible = e.data.targetRayMode !== 'transient-pointer'; UI.detectInput(); });
       c.addEventListener('disconnected', () => { line.visible = false; c.userData.src = null; });
@@ -612,7 +612,7 @@
   function drawArc(pts, ok) {
     if (!arcLine) {
       arcLine = new T.Line(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(64 * 3), 3)), new T.LineBasicMaterial({ color: 0x7fd6ff, transparent: true, opacity: 0.9, depthTest: false }));
-      arcLine.renderOrder = 999; arcLine.frustumCulled = false; arcLine.userData.khxr = true;
+      arcLine.renderOrder = 999; arcLine.frustumCulled = false; arcLine.userData.khxr = true; arcLine.userData.keep = true;
     }
     if (!pts) { arcLine.visible = false; return; }
     if (!arcLine.parent) scene.add(arcLine);
@@ -630,6 +630,8 @@
   function frame(time) {
     const dt = Math.min(0.1, (time - (last || time)) / 1000); last = time;
     if (Fps.on) Fps.tick(time, R.info.render.calls);
+    if (Diag.on) Diag.tick(time);
+    VRLit.tick();
     XQ.tick(time);
     R.info.autoReset = false; R.info.reset();   // 한 프레임에 여러 번 그리므로(가상 방·UI 패스) 프레임 단위로 합산
     S.moving = Math.max(0, S.moving - dt * 4);
@@ -720,6 +722,38 @@
       g.fillText(`${(1000 / med).toFixed(0)}fps  중앙 ${med.toFixed(1)}ms  95% ${p95.toFixed(1)}ms`, 14, 32);
       g.fillStyle = '#ffffff'; g.font = '500 26px ' + FONT; g.fillText(`그리기 ${calls}회  ${S.mode || ''}${window.KHPRLayer && KHPRLayer.on ? ' · 실사 3D' : ''}  품질 단계 ${XQ.level}${XQ.fixed != null ? '(고정)' : ''}`, 14, 72);
       this.tex.needsUpdate = true; X.fpsStat = { med: +med.toFixed(1), p95: +p95.toFixed(1), calls };
+    }
+  };
+  /* VR 렌더 모드 밝기 보정(1102.e): 화면의 렌더 모드는 합성기(SSAO·블룸·감마 단계)로 다듬지만 VR 은 후처리 없이 그려 반구광 0.12·노출 0.78 이
+     그대로 드러나 우리 건물 유리 입면이 거의 검고 조명이 죽어 보였다. VR 안 렌더 모드(실사 3D 아님)에서만 노출 ×1.3, 반구광 ×3 으로 올리고 나오면 되돌린다.
+     Wing 이 그 사이 값을 바꾸면(시간대 변경) 새 값을 기준으로 다시 잡는다 */
+  const VRLit = {
+    on: false, base: null,
+    tick() {
+      const W = window.KHPR, want = !!(R.xr.isPresenting && W && W.R3D && W.R3D.on && !(window.KHPRLayer && KHPRLayer.on));
+      const H = W && W.hemi;
+      if (want) {
+        if (!this.on || !this.base || Math.abs(R.toneMappingExposure - this.base.exp * 1.3) > 1e-3 || (H && Math.abs(H.intensity - this.base.hemi * 3) > 1e-3)) {
+          if (this.on && this.base) { this.base = { exp: R.toneMappingExposure, hemi: H ? H.intensity : 0 }; }   // Wing 이 값을 바꿈
+          else this.base = { exp: R.toneMappingExposure, hemi: H ? H.intensity : 0 };
+          this.on = true; R.toneMappingExposure = this.base.exp * 1.3; if (H) H.intensity = this.base.hemi * 3;
+        }
+      } else if (this.on) { this.on = false; if (this.base) { R.toneMappingExposure = this.base.exp; if (H) H.intensity = this.base.hemi; } this.base = null; }
+    }
+  };
+  /* 진단 판(?prdiag=1): Wing 페이지의 독립 감시 코드(window.__khDiag)가 모은 상태를 VR 시야 왼쪽 아래 판에 1초마다 보인다(퀘스트 실기기 확인용) */
+  const Diag = X.diag = {
+    on: Q.get('prdiag') === '1', t: 0, mesh: null, cv: null, tex: null,
+    tick(time) {
+      if (!this.mesh) {
+        this.cv = document.createElement('canvas'); this.cv.width = 1024; this.cv.height = 512; this.tex = new T.CanvasTexture(this.cv);
+        this.mesh = new T.Mesh(new T.PlaneGeometry(0.3, 0.15), new T.MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false }));
+        this.mesh.position.set(-0.12, -0.02, -0.5); this.mesh.renderOrder = 9998; this.mesh.userData.khxr = true; xrCam.add(this.mesh);
+      }
+      if (time - this.t < 1000) return; this.t = time;
+      const L = window.__khDiag && window.__khDiag.info ? window.__khDiag.info() : ['감시 코드 없음'], g = this.cv.getContext('2d');
+      g.clearRect(0, 0, 1024, 512); g.fillStyle = 'rgba(0,0,0,0.75)'; g.fillRect(0, 0, 1024, 512); g.fillStyle = '#fff'; g.font = '500 22px ' + FONT;
+      L.slice(0, 18).forEach((s, i) => g.fillText(String(s).slice(0, 80), 14, 30 + i * 27)); this.tex.needsUpdate = true;
     }
   };
   function fadeTick(dt) {
@@ -848,7 +882,7 @@
         const g = this.base = new T.Group(); g.name = 'khxr-base'; g.userData.khxr = true;
         const box = new T.Mesh(new T.BoxGeometry(1, 1, 1).translate(0, -0.5, 0), [side, side, top, bot, side, side]);
         const rim = new T.LineSegments(new T.EdgesGeometry(new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)), new T.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 }));
-        g.add(box, rim); g.userData.box = box; g.userData.rim = rim;
+        rim.userData.keep = true; g.add(box, rim); g.userData.box = box; g.userData.rim = rim;
       }
       const on = S.mode === 'fig';
       if (on && this.base.parent !== uiScene) uiScene.add(this.base);
@@ -1198,7 +1232,7 @@
           { h: '주차 방식', items: radios('sch') }, { h: '최상층', items: checks(['t-use7']) },
           { h: '내부 표시', items: inside ? buttons('[data-iv]') : [] }] },
         { t: '빛과 시간', sec: [
-          { h: '보기 방식', items: radios('vmode').filter(i => !/photo/.test(i.key)) },
+          { h: '보기 방식', items: radios('vmode').filter(i => !/photo/.test(i.key)).sort((a, b) => /pr3d/.test(b.key) - /pr3d/.test(a.key)) },   // 실사 3D 를 맨 앞에(1102.e)
           { h: '시간대', items: radios('tod') }, { h: '계절', items: radios('season') },
           { h: '시각 (적용 버튼으로 반영)', items: range('sun-hour', v => (v | 0) + '시', [7, 9, 12, 15, 17, 19]).concat(buttons('#sun-apply')) },
           { h: '조명', items: checks(['t-citylights']) }] },
@@ -1294,7 +1328,7 @@
       }));
       T0.forEach(t => { const i = t.sec.findIndex(x => x.kind === 'floors'); if (i > 0) t.sec.unshift(t.sec.splice(i, 1)[0]); });
       const lt = T0.find(t => t.t === '빛과 시간');
-      if (lt && !lt.sec.some(x => x.h === '시간대' && x.items.length)) lt.sec.push({ h: '', items: [{ key: 'info:sun', info: true, label: '시간대·계절·시각은 보기 방식을 렌더로 바꾸면 나타납니다' }], cols: 1 });
+      if (lt && !lt.sec.some(x => x.h === '시간대' && x.items.length)) lt.sec.push({ h: '', items: [{ key: 'info:sun', info: true, label: '시간대·계절·시각은 보기 방식을 실사 3D 나 렌더로 바꾸면 나타납니다' }], cols: 1 });
       if (lt) { const i = lt.sec.findIndex(x => /^시각/.test(x.h)); if (i >= 0) lt.sec[i] = { h: '시각 (끌어서 맞추고 놓으면 적용)', kind: 'slider', items: sunSlider() }; }
       return T0;
     }

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.e';
+  const VER = '1102.f';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -23,16 +23,21 @@
 
   /* ================= 0. 시작 ================= */
   const loadScript = src => new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); });
+  // 시작 순서(1102.e, 퀘스트에서 실사 계층이 아예 시작하지 않은 문제): '실사 3D' 단추(ui)를 가장 먼저 만들고, Wing 연결 통로(KHPR·KHXR)는
+  // 시간 기준으로 3분까지 기다린다(예전 15초: 퀘스트처럼 Wing 초기화가 느린 기기에서 조용히 포기했다). 단계마다 PR.boot 에 남기고 예외는 PR.err 에
+  const stage = (n, fn) => { PR.boot = n; try { return fn(); } catch (e) { PR.err = n + ': ' + (e && e.message || e); log('시작 실패', PR.err); } };
   async function boot() {
-    for (let i = 0; i < 150 && !(window.KHPR && window.KHXR); i++) await new Promise(r => setTimeout(r, 100));
-    if (!window.KHPR || !window.KHXR) { log('연결 통로(KHPR)가 없어 실사 3D를 켜지 않습니다'); return; }
+    stage('단추', () => ui());
+    PR.boot = 'Wing 기다림'; const t0 = now();
+    while (!(window.KHPR && window.KHXR && window.KHXR.renderer) && now() - t0 < 180000) await new Promise(r => setTimeout(r, 200));
+    if (!window.KHPR || !window.KHXR) { PR.boot = '실패: Wing 연결 통로 없음'; PR.err = 'Wing 이 3분 안에 준비되지 않았습니다(KHPR·KHXR 없음)'; log(PR.err); return; }
+    PR.bootWaitMs = Math.round(now() - t0);
     // K 는 복사하지 않는다(LEVELS 등은 읽을 때마다 최신 값)
     T = window.THREE; K = window.KHPR; R = window.KHXR.renderer; scene = window.KHXR.scene;
-    PR.K = K;
-    ui();
-    if (QS.manual && QLV[QS.manual]) qSet(QS.manual, '선택');   // 패널 변수(PNL)가 준비된 뒤에
-    R.domElement.addEventListener('webglcontextrestored', restore);
-    swReg();
+    PR.K = K; PR.boot = '연결됨';
+    stage('품질', () => { if (QS.manual && QLV[QS.manual]) qSet(QS.manual, '선택'); });   // 패널 변수(PNL)가 준비된 뒤에
+    stage('복구 연결', () => R.domElement.addEventListener('webglcontextrestored', restore));
+    stage('자산 저장소', () => swReg());
     // Wing 은 한 프레임에 장면을 여러 번 그린다(화면 효과 단계마다). 내 매 프레임 처리는 화면 프레임마다 한 번만 한다.
     // 창의 rAF 는 Wing 그리기 뒤에 돌아 다음 프레임 번호를 올린다. VR 중에는 창 rAF 가 멈추므로 그리기마다 처리한다(VR 은 프레임당 한 번 그림)
     (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
@@ -41,7 +46,8 @@
     // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다.
     // ?pr=1 로 바로 켜는 경우는 미리받기가 실제 필요한 요청과 대역을 다투므로 하지 않는다(켜는 순간 남은 미리받기도 멈춘다)
     if (Q.get('pr') !== '1') setTimeout(() => { if (!PR.on) prefetch(); }, 2500);
-    if (Q.get('pr') === '1') { await new Promise(r => setTimeout(r, 300)); preset(Q.get('pf') || 'glass'); enable(true).then(() => { const lv = Q.get('lv'); if (lv) goLevel(lv); }); }
+    PR.boot = '준비 완료';
+    if (Q.get('pr') === '1' || PR.want) { await new Promise(r => setTimeout(r, 300)); stage('켜기', () => { preset(Q.get('pf') || 'glass'); enable(true).then(() => { PR.boot = '준비 완료'; const lv = Q.get('lv'); if (lv) goLevel(lv); }).catch(e => { PR.err = '켜기: ' + (e && e.message || e); log('켜기 실패', PR.err); }); }); }
   }
 
   /* ================= 1. 자산 ================= */
@@ -2095,6 +2101,7 @@
 
   /* ================= 7. 켜기·끄기 ================= */
   async function enable(on) {
+    if (!K) { PR.want = on; log('Wing 준비 전이라 준비되면 켭니다'); return; }   // 단추가 Wing 보다 먼저 생기므로
     if (on === PR.on) return;
     if (on) {
       PR.t = { enable0: now() };
