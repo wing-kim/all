@@ -67,7 +67,7 @@ if (want('reg')) {
   await regTest('ux', XRT, 'ux.mjs', [BASE], {}, 1);   // 계단 걷기: 맥 부하로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   await regTest('ux pr=1', XRT, 'ux.mjs', [BASE, '--page=new/3d-model.html?pr=1'], {}, 1);   // 계단 걷기가 셰이더 준비로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   if (!QUICK) await regTest('mp', XRT, 'mp.mjs', [BASE], {}, 2);   // 공개 중계망(Nostr) 타이밍: 두 번까지 재시도
-  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel']) await regTest(t, HERE, t + '.mjs');   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
+  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel', 'env']) await regTest(t, HERE, t + '.mjs');   // env: 지니 주변 모델(1102.l)   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
   if (!QUICK) {
     const r = await run(HERE, 'options.mjs'); const o = readJ(path.join(HERE, 'out/options.json'));
     const s = o && o.summary;
@@ -138,6 +138,9 @@ if (want('quality') || want('shots') || want('ui') || want('budget')) {
     add('quality', '잎 휘도 변동계수(앞뒤 색 차)', d.leafCV, d.leafCV <= TH.leafCV, '≤ ' + TH.leafCV, '수정 전(?praa=0) 0.45');
   }
   if (want('shots') && q.shots) {
+    // 지니 주변 모델 스케치업 기준 화면(env.mjs 가 찍음, 1102.l). reg 를 돌리지 않았으면 여기서 찍는다
+    if (!want('reg')) await run(HERE, 'env.mjs');
+    if (fs.existsSync(path.join(HERE, 'out/qa-shots/env-sketch.jpg')) && !q.shots.includes('qa-shots/env-sketch.jpg')) q.shots.push('qa-shots/env-sketch.jpg');
     const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new' }); const p = await b.newPage();
     const changes = [];
     for (const f of q.shots) {

@@ -2,3 +2,4 @@
 - 2026-11-02T01:44 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg: 1102.d: 실내 조명 기구 빛(낮·밤), 유리 투명도·하늘 반사 조정, 24비트 깊이
 - 2026-11-02T02:59 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg: 1102.j: 신사중·현대고 운동장 그림, Wing 학교 덩어리 숨김, 미성 현재 판 기본, 실내 조명
 - 2026-11-02T05:23 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg: 1102.k: 데스크톱 고화질 화소 배율 상한 1.5(Wing 윈도우 끊김 대응), 첫 그리기 분산
+- 2026-11-02T07:24 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg: 1102.l: 지니 주변 모델(실사 3D 라이트맵·가로 요소·가로수), 신사중 실측 위치, 주변 스케치업 기준 화면 추가

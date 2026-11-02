@@ -13,6 +13,10 @@ const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 fs.mkdirSync(OUT + 'orig/new', { recursive: true });
 fs.writeFileSync(OUT + 'orig/new/3d-model.html', execSync('git show origin/main:new/3d-model.html', { cwd: ROOT, maxBuffer: 64 << 20 }));
+// 1102.l: 지니 주변 환경 작업이 Wing 장면에 넣은 변경(방위 화살표·논현로175길·매스 높이와 외곽선·교회·신사중 이름판, 지니 전달물 env-merge.patch 중 HTML 덩어리 4·6～10)을
+// 원본에도 적용해, 우리 쪽(?env=0: 지니 모델을 받지 않음)과 비교한다. patch 명령이 없으면(윈도우) 적용 없이 비교하고 결과에 적는다
+let jinnyPatched = false;
+try { execSync('patch -s -F3 --no-backup-if-mismatch "' + OUT + 'orig/new/3d-model.html" < "' + fileURLToPath(new URL('./jinny-ctx.patch', import.meta.url)) + '"', { stdio: 'ignore' }); jinnyPatched = true; } catch (e) {}
 const results = []; const ok = (n, p, d) => { results.push({ n, p: !!p, d }); console.log((p ? 'PASS' : 'FAIL') + '  ' + n + (d !== undefined ? '  ' + JSON.stringify(d) : '')); };
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
 async function open(url) {
@@ -31,14 +35,14 @@ try {
   // Q2: 원본과 화면 비교
   for (const [name, setup] of [['스케치', ''], ['렌더', "document.querySelector('input[name=vmode][value=render]').click();"]]) {
     const shots = [];
-    for (const url of [BASE + '/xr/tests/out/orig/new/3d-model.html', BASE + '/new/3d-model.html?hqcap=0']) {   // hqcap=0: Wing 요청으로 바꾼 고화질 배율 상한·중앙값 하향(1102.k)만 끄고 나머지가 원본과 같은지
+    for (const url of [BASE + '/xr/tests/out/orig/new/3d-model.html', BASE + '/new/3d-model.html?hqcap=0&env=0']) {   // hqcap=0: Wing 요청으로 바꾼 고화질 배율 상한·중앙값 하향(1102.k)만 끄고 나머지가 원본과 같은지
       const p = await open(url); await settle(p);
       if (setup) { await p.evaluate(setup); await p.evaluate(() => new Promise(r => setTimeout(r, 5000))); }
       const buf = Buffer.from(await p.screenshot({ clip: { x: 0, y: 0, width: 930, height: 800 } })); shots.push(buf);
       fs.writeFileSync(OUT + 'q2-' + name + (shots.length === 1 ? '-orig' : '-ours') + '.png', buf); await p.close();
     }
     const r = diff(shots[0], shots[1]);
-    ok('Q2 화면 모드 원본과 동일(' + name + ')', r < 0.01, { diffRatio: +r.toFixed(4) });
+    ok('Q2 화면 모드 원본과 동일(' + name + ')', r < 0.01, { diffRatio: +r.toFixed(4), jinnyPatched });
   }
   // Q14-a: 연결 통로 없음 → 최소 기능
   {

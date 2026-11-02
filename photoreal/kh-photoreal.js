@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.k';
+  const VER = '1102.l';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -825,6 +825,8 @@
     if (DIST) DIST.visible = (!K.I.on || !inBase) && !QS.cur.hideFar;
     // 지하층 안에서는 바깥이 보이지 않으므로 주변 건물·땅을 그리지 않는다(VR 그리기 호출 예산)
     // 미성아파트 일대(1102.g): '미래(추정)'(Wing state.ms, ?ms=future)를 고르고 신축 모드일 때만 재건축 가정 동이 있는 한 벌(CTX.next), 그 밖에는 실측 현재 단지가 있는 한 벌(CTX.now)
+    envLate();
+    if (window.KHENV && KHENV.lite) { const xr = R.xr.isPresenting || QS.key === 'low'; if (CTX.envLite !== xr) { CTX.envLite = xr; KHENV.lite(xr); const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } }   // VR·품질 '낮음'은 지니 단색·가로 요소 끔(그리기 수 예산: VR 외관 170, 휴대폰 낮음 400)
     if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new' && K.state.ms === 'future'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw && !inBase; CTX.next.visible = nw && !inBase; }
     if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
       const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
@@ -886,7 +888,7 @@
         if (t - S.t0 >= QCFG.sampleMs && S.ds.length > 20) { const a = S.ds.slice().sort((x, y) => x - y), med = a[a.length >> 1]; QS.auto = med; qSet(med > QCFG.lowMs ? 'low' : med > QCFG.medMs ? 'medium' : 'high', '자동 ' + med.toFixed(0) + 'ms'); log('품질 자동 선택', QS.key, med.toFixed(1) + 'ms'); } }
     }
     // 받는 중(외관·가구·합치기·첫 그리기 미룸·반사 지도 다시 그리기): 자동 품질과 Wing 고화질 하향 판정(PR.loading)에서 뺀다. 한 번뿐인 긴 프레임으로 내려가지 않게
-    { const O = optApi(); PR.loading = PR.t.warm == null || PR.t.dress == null || DR.busy || STG.cur >= 0 || PR.tick - GATE.defer < 60 || !!GATE.reT || !!(O && (O.need || O.hold || QS.nb !== O.nBuild)); if (O) QS.nb = O.nBuild; }
+    { const O = optApi(); PR.loading = PR.t.warm == null || PR.t.dress == null || DR.busy || STG.cur >= 0 || !!(window.KHENV && KHENV.busy) || PR.tick - GATE.defer < 60 || !!GATE.reT || !!(O && (O.need || O.hold || QS.nb !== O.nBuild)); if (O) QS.nb = O.nBuild; }
     if (!QS.manual && QCFG.desk && PR.t.warm != null && !R.xr.isPresenting && QS.key !== 'low') {
       const t = now(), D = QS.desk || (QS.desk = { t0: t + QCFG.skipMs, ds: [], last: 0 }), busy = PR.loading;
       if (document.hidden || K.R3D.busy || busy) { D.last = 0; D.ds = []; D.t0 = t + 1000; }
@@ -925,7 +927,7 @@
     if (!O.roots) O.screenOn(optRoots);
     // 받는 중(외관 단계·셰이더 준비·가구)에는 다시 합치기를 미룬다(1102.k): 로딩 중 구성이 바뀔 때마다 전체를 동기식으로 다시 합쳐 끊겼다.
     // 미루는 동안은 원본을 그대로 그린다. 최대 10초(그 뒤 한 번 합치고 다시 미룸)
-    const loading = STG.cur >= 0 || PR.t.warm == null || DR.busy;
+    const loading = STG.cur >= 0 || PR.t.warm == null || DR.busy || !!(window.KHENV && KHENV.busy);   // 지니 모델 받는 중에도 미룸
     O.hold = loading ? (O.hold || now()) : 0;
     // 반사 지도 갱신(refreshRefl)은 그리는 동안 그림자 서명 한 칸을 잠깐 바꾼다: 갱신 직후 0.7초의 바뀜은 다시 합칠 일이 아니다
     const sg = optSig(); if (sg !== OPT.sig) { const refl = now() - (GATE.reflAt || -1e9) < 700; OPT.sig = sg; if (!refl) O.pause(loading ? 1500 : 400); }
@@ -1151,7 +1153,7 @@
   function warm() {
     if (warmG) { scene.remove(warmG); warmG = null; }
     if (warmDone()) { if (PR.t.warm == null && PR.t.enable0 && STG.cur === -1 && PR.t.ground != null) {   // 외관 준비가 끝난 뒤 남은 셰이더가 없으면(가구는 나중)
-       PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); } return; }
+       PR.t.warm = Math.round(now() - PR.t.enable0); statLine(); setTimeout(refreshRefl, 50); envGo(); } return; }
     const props = R.properties, cam = window.KHXR.camera, ext = pscExt(), gl = R.getContext();
     if (gl.isContextLost()) return;
     const tn = now(), dt = warm.t ? tn - warm.t : 16; warm.t = tn;
@@ -1565,7 +1567,7 @@
     const dist = f => { f.getWorldPosition(wp); return Math.hypot(wp.x, wp.z); }; fields.sort((a, b) => dist(a) - dist(b));
     fields.forEach((f, i) => { const hd = fields.length > 1 && i === fields.length - 1;   // 가까운 것 신사중, 먼 것 현대고
       const m = f.material.clone(); SCH.maps.push([f.material, f.material.map]); f.material.map = pitchTex(hd ? 'hd' : 'ss'); f.material.needsUpdate = true; m.dispose();
-      if (!hd) f.parent.children.forEach(o => { if (!o.isMesh || o === f) return; bb.setFromObject(o); const h = bb.max.y - bb.min.y;
+      if (!hd) f.parent.children.forEach(o => { if (!o.isMesh || o === f || o.userData.khEnv) return; /* khEnv: 지니 학교 모델이 붙은 매스는 숨기지 않는다 */ bb.setFromObject(o); const h = bb.max.y - bb.min.y;
         if ((h > 3.2 || (o.material && o.material.isMeshBasicMaterial && bb.min.y > 6)) && o.visible) { o.visible = false; SCH.hid.push(o); } }); });
     PR.stat.school = { fields: fields.length, hidden: SCH.hid.length };
   }
@@ -1824,9 +1826,14 @@
         const vw = B.filter(b => b.src === 'vworld').map(b => ({ c: cen(b.outline), a: ar(b.outline) })), dup = new Set();
         B.forEach(b => { if (b.src === 'vworld' || !b.near) return; const c = cen(b.outline), a = ar(b.outline); if (vw.some(v => Math.hypot(v.c[0] - c[0], v.c[1] - c[1]) < 15 && a / v.a > 0.6 && a / v.a < 1.6)) dup.add(b.id); });
         CTX.dup = dup; PR.stat.ctxDup = dup.size; }
+      // 지니 주변 모델(1102.l): 같은 건물이면 지니 것을 쓴다. 모델을 다 받을 때까지(최대 20초) 기다린 뒤, 지니 모델 바닥 상자에 중심이 들어가거나
+      // 상자와 절반 넘게 겹치는 브이월드·OSM 건물을 뺀다(중복 그리기 없음). 지니 모델이 붙은 Wing 매스는 ctxOn 이 떼어내지 않는다
+      // 기다리지 않는다(1102.l: 지니 모델을 다 받을 때까지 기다리니 10Mbps 첫 방문 외관 준비가 7.4초 → 15.4초). 겹치는 실측 건물은 고정 목록(ENV_OUT)으로 바로 빼고,
+      // 모델이 오기 전에는 그 자리의 Wing 매스(khEnvQ)를 떼지 않고 둔다(실사 재질로 보임). 모델이 다 오면 envCheck 가 목록과 실제 겹침을 대조해 기록한다
+      if (window.KHENV) envAfter().then(() => { if (PR.on) envSchool(true); envCheck(); });
       const t1 = now();
       CTX.towers = wingTowers();
-      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) && !CTX.dup.has(b.id), detail: CTX_DET, detailNear: CTX_DN }));
+      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) && !CTX.dup.has(b.id) && !envOut(b), detail: CTX_DET, detailNear: CTX_DN }));
       if (CTX.towers.length) CTX.next.add(towerGroup());
       PR.stat.ctxBuildMs = Math.round(now() - t1);
       PR.stat.context = CTX.next.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', '합치기 ' + PR.stat.ctxBuildMs + 'ms', CTX.next.userData.stats.buildings + '동');
@@ -1836,7 +1843,7 @@
   // 현황(동광빌딩 시절) 보기: 재개발 구역 아파트까지 넣은 한 벌. 처음 '현황'을 고를 때 만든다
   function ctxNow() {
     if (CTX.now || !CTX.data) return;
-    CTX.now = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !CTX.dup.has(b.id), detail: CTX_DET, detailNear: CTX_DN }));
+    CTX.now = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !CTX.dup.has(b.id) && !envOut(b), detail: CTX_DET, detailNear: CTX_DN }));
     if (CTX.detached.length) scene.add(CTX.now);
   }
   const CTXUP = new Map();
@@ -1896,11 +1903,55 @@
     }
     return g0;
   }
+  /* 지니 신사중학교(school410)는 Wing 배치(로드뷰)라 S맵·브이월드 실측 ㄱ자보다 서쪽으로 약 47m, 북쪽으로 약 12m 떨어져 있다. 실사 3D 는 땅·도로가 실측이므로
+     모델 전체(운동장 포함)를 옮겨 높은 부분(본관·날개) 북서 모서리를 브이월드 '신사중학교' 외곽선 북서 모서리에 맞추고, 본관 높이를 실측 19.2m 에 맞춘다(Wing 18.5m 기준 배율).
+     스케치업·렌더는 Wing 배치 그대로. 서쪽 날개 길이는 지니 58m, 실측 111m 라 남쪽 약 33m 는 비어 있다(한계) */
+  const ESC = { o: null, p0: null, s0: null };
+  function envSchool(on) {
+    const m = window.KHENV && KHENV.models().find(q => q.id === 'school410'); if (!m) return; const o = m.o;
+    if (!on) { if (ESC.o) { ESC.o.position.copy(ESC.p0); ESC.o.scale.copy(ESC.s0); ESC.o = null; } return; }
+    if (ESC.o || !CTX.data) return;
+    const vw = CTX.data.buildings.find(b => b.src === 'vworld' && b.name === '신사중학교'); if (!vw) return;
+    ESC.o = o; ESC.p0 = o.position.clone(); ESC.s0 = o.scale.clone();
+    o.updateMatrixWorld(true); let x0 = 1e9, z0 = 1e9; const v = new T.Vector3();
+    o.traverse(k => { if (!k.isMesh) return; const a = k.geometry.attributes.position; for (let i = 0; i < a.count; i += 2) { v.fromBufferAttribute(a, i).applyMatrix4(k.matrixWorld); if (v.y > 12) { x0 = Math.min(x0, v.x); z0 = Math.min(z0, v.z); } } });
+    const rx = Math.min(...vw.outline.map(q => q[0])), rz = Math.min(...vw.outline.map(q => q[1]));
+    o.position.x += rx - x0; o.position.z += rz - z0; o.scale.y *= (vw.h || 19.2) / 18.5; o.updateMatrixWorld(true);
+    PR.stat.envSchool = { dx: +(rx - x0).toFixed(1), dz: +(rz - z0).toFixed(1), sy: +((vw.h || 19.2) / 18.5).toFixed(3) };
+  }
+  // 지니 모델(1102.l)과 같은 건물인 브이월드·OSM id(모델 바닥 상자 겹침으로 뽑음, 신사중은 실측 자리로 옮긴 뒤). 모델·buildings.json 을 바꾸면 envCheck 기록(PR.stat.envExtra·envMissing)을 보고 고친다
+  const ENV_OUT = new Set(['14325427', '14323047', '14322497', '13789002', '14387265', '14331039', '14315229', '14338263', '14336274', '14319433', '14314303', '14191837', '14862297', '14328631', '14323408', '14068515', '14339887'].map(n => 'vw:LT_C_BLDGINFO.' + n + '_0'));
+  // 지니 모델 받기 순서(1102.l): 실사 외관 준비(PR.t.warm)가 끝난 뒤 기본 모델(?pr=1 일 때)과 실사 계층(라이트맵·가로 요소·가로수·차량)을 받는다(회선을 나눠 쓰지 않게)
+  let envGoR = null; const envGoP = new Promise(r => { envGoR = r; });
+  function envGo() { if (window.KHENV && PR.on) { KHENV.ready(); KHENV.real(true); } envGoR(); }
+  function envAfter() { return envGoP.then(() => KHENV.ready()); }
+  function envOut(b) { return !!(window.KHENV && !KHENV.off && ENV_OUT.has(b.id)); }
+  function envCheck() {
+    if (!CTX.data || !window.KHENV) return; envBoxes(); const hit = new Set(); CTX.data.buildings.forEach(b => { if (b.near && envHit(b)) hit.add(b.id); });
+    PR.stat.envExtra = [...hit].filter(id => !ENV_OUT.has(id)); PR.stat.envMissing = [...ENV_OUT].filter(id => !hit.has(id)); PR.stat.envOut = [...CTX.envOut];
+    if (PR.stat.envExtra.length || PR.stat.envMissing.length) log('지니 겹침 목록 다름', JSON.stringify({ extra: PR.stat.envExtra, missing: PR.stat.envMissing }));
+  }
+  function envBoxes() {
+    CTX.env = (window.KHENV ? KHENV.models() : []).map(m => { const b = new T.Box3().setFromObject(m.o); return b.isEmpty() ? null : { id: m.id, x0: b.min.x, x1: b.max.x, z0: b.min.z, z1: b.max.z }; }).filter(Boolean);
+    CTX.envOut = new Set(); CTX.envN = CTX.env.length;
+  }
+  function envHit(b) {
+    if (!CTX.env || !CTX.env.length) return false; const o = b.outline; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, cx = 0, cz = 0;
+    o.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); z0 = Math.min(z0, q[1]); z1 = Math.max(z1, q[1]); cx += q[0] / o.length; cz += q[1] / o.length; });
+    const A = Math.max(1e-3, (x1 - x0) * (z1 - z0));
+    const hit = CTX.env.find(e => (cx > e.x0 - 0.5 && cx < e.x1 + 0.5 && cz > e.z0 - 0.5 && cz < e.z1 + 0.5) || Math.max(0, Math.min(x1, e.x1) - Math.max(x0, e.x0)) * Math.max(0, Math.min(z1, e.z1) - Math.max(z0, e.z0)) > 0.5 * A);
+    if (hit) CTX.envOut.add(b.id + '→' + hit.id); return !!hit;
+  }
+  // 실사가 켜진 뒤 늦게 붙은 지니 모델: 떼어 둔 매스를 다시 붙인다(모델이 매스의 자식이라)
+  function envLate() {
+    if (!window.KHENV) return; const n = KHENV.loaded().n; if (n === CTX.envSeen) return; CTX.envSeen = n; if (PR.on && CTX.data) envSchool(true);
+    CTX.detached = CTX.detached.filter(([p, o]) => { if (!o.userData.khEnv) return true; p.add(o); return false; });
+  }
   function ctxOn() {
     if (!CTX.next || CTX.detached.length) return;
     [K.city, K.ctx].forEach(root => {
       const list = []; root.traverse(o => { if (o.isMesh && Array.isArray(o.material)) list.push(o); });
-      list.forEach(o => { const b = new T.Box3().setFromObject(o); if (b.max.y - b.min.y > 100) return; const p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
+      list.forEach(o => { if (o.userData.khEnv || o.userData.khEnvQ) return; const b = new T.Box3().setFromObject(o); if (b.max.y - b.min.y > 100) return; const p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
     });
     (CTX.towers || []).forEach(t => { const o = t.mesh, p = o.parent; if (!p) return; p.remove(o); CTX.detached.push([p, o]); });
     if (CTX.now) scene.add(CTX.now); scene.add(CTX.next);
@@ -2257,6 +2308,7 @@
       if (!K.R3D.on) { vr.checked = true; vr.dispatchEvent(new Event('change', { bubbles: true })); }
       document.getElementById('vm-pr').checked = true;
       PR.on = true;
+      if (window.KHENV) { KHENV.real(true, true); if (CTX.data) envSchool(true); }   // 지니 실사 레이어(라이트맵·AO·보도와 가로 요소·가로수·차량)는 실사 3D 안에서(1102.l, Jack 결정)
       document.querySelector('.app').classList.add('pr3d');
       applyAll('켜기');
       // 우선 조합 4종에서 쓰는 외장 재질은 아직 장면에 없어도 미리 만들어 셰이더 준비 목록에 올린다(첫 전환 멈춤 방지)
@@ -2268,7 +2320,7 @@
       loadBake();
       loadSeq();
     } else {
-      PR.on = false; PR.loading = false;
+      PR.on = false; PR.loading = false; if (window.KHENV) KHENV.real(false); envSchool(false);
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
       todApply(false); TODS.set = null; optOff(); envOff(); ctxOff(); perfOff();

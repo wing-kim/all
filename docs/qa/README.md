@@ -31,10 +31,10 @@ node photoreal/tests/qa.mjs --only=shots --accept="하늘 사진 방향 수정�
 
 | 묶음 | 내용 | 기준 |
 |---|---|---|
-| reg | smoke, compat, ux, ux `pr=1`, mp, mobile, perfui, opt, ctxloss, quality, options(164개 상태) | 전부 통과, options 오류 0·미변환 ≤ 5 |
+| reg | smoke, compat, ux, ux `pr=1`, mp, mobile, perfui, opt, ctxloss, quality, vrmode, vrfeel(VR 알파·이동·레이), env(지니 주변 모델: 매스 대체·받기 순서·사우나·24 조합), options(164개 상태) | 전부 통과, options 오류 0·미변환 ≤ 5 |
 | budget(perf) | 화면·휴대폰 흉내·IWER VR 그리기 호출과 삼각형, 화면 fps, VR 가상 방 피규어, 텍스처 메모리 추정, 미리받기 크기, 10Mbps 첫 방문·재방문, 윈도우 PC 흉내(첫 실사 전환 멈춤·정상 상태), 맥 정상 조건 자동 품질 | `docs/goal-gap-plan.md` 의 기준값(아래 표) |
 | quality | 바닥 깜빡임(바닥 화소만, 거리 구간별, 화면·휴대폰 배율 3·퀘스트 한 눈 916×960×2 시야 97°·낮은 시점), 화면 전체 깜빡임, 초표본 대비 앨리어싱(정보), 포화 화소, 천장 검은 구멍, 야간 우리 건물/이웃 휘도, 석양 대 오후, 이웃 명도 편차, 잎 휘도 변동 | 아래 표 |
-| shots | 기준 화면 7장(외관·길·1F·5F·B1·B3·야간) 대비 평균 화소 차와 큰 차 화소 비율 | 평균 ≤ 4, 큰 차 ≤ 3% |
+| shots | 기준 화면(외관·길·1F·5F·B1·B3·야간·미성 현재/미래·지니 주변 스케치업) 대비 평균 화소 차와 큰 차 화소 비율 | 평균 ≤ 4, 큰 차 ≤ 3% |
 | ui | 화면·휴대폰의 겹침(실사 패널·나침반·XR 버튼·메뉴), 숨김 규칙(멀티플레이 버튼, fps, 시간 줄, VR 프레임 판), 콘솔 오류·4xx | 겹침 0, 모두 숨김, 오류 0 |
 
 | 예산·화질 기준 | 값 |

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.k';
+  const VER = '1102.l';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -1056,7 +1056,7 @@
       const out = [], scr = this.screen(), seen = scr ? new Set() : null;
       const walk = o => {
         if ((!o.visible && !(hs && hs.has(o))) || o === rig || o === Opt.group || o.userData.khxr) return;
-        if (scr && o.userData.box && o.userData.box.isBox3) return;
+        if (scr && o.userData.box && o.userData.box.isBox3) { if (o.userData.khEnv && !(K.I && K.I.on)) for (const c of o.children) walk(c); return; }   // 지니 모델이 붙은 매스(1102.l): 바깥 보기에서는 모델(자식)은 합친다
         if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !(seen && seen.has(o))) { out.push(o); if (seen) seen.add(o); }
         for (const c of o.children) walk(c);
       };
@@ -1093,7 +1093,7 @@
       const bake = !a.map && !a.vertexColors && !!a.color && !a.isLineDashedMaterial;
       const qv = (v, st) => (Math.round((v || 0) / st) * st).toFixed(2), qr = bake ? v => qv(v, this.VCQ.rough) : q4, qm = bake ? v => qv(v, this.VCQ.metal) : q4;
       // 단색 묶음은 텍스처 좌표(uv)를 쓰지 않으므로 uv 유무로 나누지 않는다(합칠 때 없는 쪽은 0 으로 채움)
-      const attrs = Object.keys(o.geometry.attributes).filter(k => !(bake && k === 'uv')).sort().join(',');
+      const attrs = Object.keys(o.geometry.attributes).filter(k => !(bake && (k === 'uv' || k === 'uv2'))).sort().join(',');   // uv2: 지니 모델 라이트맵 좌표(단색 묶음은 안 씀, 1102.l)
       return [pt.kind, a.type, bake ? 'VC' : a.uuid, hx(a.emissive), +(a.emissiveIntensity || 0).toFixed(2), this.texKey(a), a.transparent, +(a.opacity == null ? 1 : a.opacity).toFixed(2), a.side,
         qr(a.roughness), qm(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
         attrs, o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
@@ -1192,6 +1192,8 @@
       const scr = this.screen();
       if (this.need && this.due && performance.now() < this.due) return;
       if (!this.need && (scr ? !this.ui && time - this.t < 5000 : time - this.t < 500)) return;
+      // VR: 지니 주변 모델을 받는 중이거나 걷는 중이면 구성 점검을 미룬다(모델이 하나씩 붙을 때마다 다시 합쳐 끊기지 않게, 1102.l). 끝나면 다음 점검에서 한 번
+      if (!scr && !this.need && ((window.KHENV && KHENV.busy) || S.moving)) return;
       this.t = time; this.ui = false;
       if (this.need) { this.need = false; this.build(); return; }
       const t0 = performance.now(), sig = this.sigOf(this.visibleMeshes(true)) + ':' + this.cullUnder(); this.checkMs = Math.round((performance.now() - t0) * 10) / 10;

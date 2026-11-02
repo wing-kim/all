@@ -110,7 +110,7 @@ const audit = () => p.evaluate(() => {
   const vis = o => { for (let q = o; q; q = q.parent) if (!q.visible && !(hs && hs.has(q))) return false; return true; };
   // 무조명 표시 재질(MeshBasic: 바닥 표시선·간판 발광·라벨)은 조명과 무관하므로 따로 센다. gen = 기본 변환으로 바뀐 수
   const un = new Map(); let n = 0, ok = 0, basic = 0, gen = 0;
-  [['bld', K.bld], ['exist', K.exist], ['site', K.site]].forEach(([nm, r]) => r && r.traverse(o => { if (!o.isMesh || !vis(o)) return;
+  [['bld', K.bld], ['exist', K.exist], ['site', K.site]].forEach(([nm, r]) => r && r.traverse(o => { if (!o.isMesh || !vis(o) || o.userData.prSkip) return;   /* prSkip: 지니 주변 모델(1102.l)은 지니 재질 그대로가 맞다 */
     (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (!m) return; if (m.isMeshBasicMaterial) { basic++; return; } n++; if (m.userData.prMade) { ok++; if (m.userData.prGen) gen++; return; }
       const k = nm + ':' + (m.name || '-') + ':' + m.type.replace('Material', '') + ':' + (m.color ? '#' + m.color.getHexString() : '') + (m.map ? ':tex' : '') + (m.transparent ? ':t' + (+m.opacity).toFixed(2) : '');
       un.set(k, (un.get(k) || 0) + 1); }); }));

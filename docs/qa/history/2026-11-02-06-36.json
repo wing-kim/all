@@ -1,0 +1,777 @@
+{
+ "at": "2026-11-02T06:36:01.500Z",
+ "base": "http://127.0.0.1:57514",
+ "quick": false,
+ "only": null,
+ "items": [
+  {
+   "group": "reg",
+   "name": "smoke",
+   "value": "26/26",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:smoke",
+   "unstable": false,
+   "sec": 26,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "compat",
+   "value": "4/6",
+   "limit": "전부 통과",
+   "pass": false,
+   "note": "FAIL  Q2 화면 모드 원본과 동일(스케치)  {\"diffRatio\":0.1325} / FAIL  Q2 화면 모드 원본과 동일(렌더)  {\"diffRatio\":0.1901}",
+   "key": "reg:compat",
+   "unstable": false,
+   "sec": 57,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "ux",
+   "value": "17/17",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ux",
+   "unstable": true,
+   "sec": 56,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "ux pr=1",
+   "value": "17/17",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ux pr=1",
+   "unstable": true,
+   "sec": 75,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "mp",
+   "value": "28/28",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:mp",
+   "unstable": true,
+   "sec": 29,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "mobile",
+   "value": "8/8",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:mobile",
+   "unstable": false,
+   "sec": 14,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "perfui",
+   "value": "6/6",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:perfui",
+   "unstable": false,
+   "sec": 23,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "opt",
+   "value": "4/4",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:opt",
+   "unstable": false,
+   "sec": 34,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "ctxloss",
+   "value": "3/3",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:ctxloss",
+   "unstable": false,
+   "sec": 35,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "quality",
+   "value": "7/8",
+   "limit": "전부 통과",
+   "pass": false,
+   "note": "FAIL 휴대폰 낮음 한 프레임 그리기 호출 400 미만 464",
+   "key": "reg:quality",
+   "unstable": false,
+   "sec": 46,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "vrmode",
+   "value": "10/10",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:vrmode",
+   "unstable": false,
+   "sec": 46,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "vrfeel",
+   "value": "8/8",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:vrfeel",
+   "unstable": false,
+   "sec": 45,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "env",
+   "value": "7/7",
+   "limit": "전부 통과",
+   "pass": true,
+   "note": "",
+   "key": "reg:env",
+   "unstable": false,
+   "sec": 46,
+   "tries": 1
+  },
+  {
+   "group": "reg",
+   "name": "options 164",
+   "value": "169개, 오류 상태 0, 미변환 최대 15",
+   "limit": "오류 0, 미변환 ≤ 5",
+   "pass": false,
+   "note": "",
+   "key": "reg:options 164",
+   "sec": 860
+  },
+  {
+   "group": "budget",
+   "name": "화면 외관 그리기 호출(최대)",
+   "value": 527,
+   "limit": "< 1000",
+   "pass": true,
+   "note": "",
+   "key": "budget:화면 외관 그리기 호출(최대)"
+  },
+  {
+   "group": "budget",
+   "name": "화면 외관 fps(이동, 최소)",
+   "value": 85.5,
+   "limit": "≥ 60",
+   "pass": true,
+   "note": "맥 GPU 기준(실기기 아님). 다른 앱의 CPU·GPU 사용에 크게 흔들린다",
+   "key": "budget:화면 외관 fps(이동, 최소)",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "화면 외관 정지 fps",
+   "value": 60.2,
+   "limit": "",
+   "pass": null,
+   "note": "정보(측정마다 54～70)",
+   "key": "budget:화면 외관 정지 fps"
+  },
+  {
+   "group": "budget",
+   "name": "화면 실내 그리기 호출 1F·B1·B3",
+   "value": "292·298·278",
+   "limit": "",
+   "pass": null,
+   "note": "",
+   "key": "budget:화면 실내 그리기 호출 1F·B1·B3"
+  },
+  {
+   "group": "budget",
+   "name": "화면 삼각형(외관 이동)",
+   "value": 2112108,
+   "limit": "",
+   "pass": null,
+   "note": "",
+   "key": "budget:화면 삼각형(외관 이동)"
+  },
+  {
+   "group": "budget",
+   "name": "휴대폰 흉내 낮음 외관 그리기 호출",
+   "value": 492,
+   "limit": "< 400",
+   "pass": false,
+   "note": "fps 103.1(맥 GPU)",
+   "key": "budget:휴대폰 흉내 낮음 외관 그리기 호출"
+  },
+  {
+   "group": "budget",
+   "name": "VR 외관 그리기 호출(최대, IWER)",
+   "value": 170,
+   "limit": "≤ 170",
+   "pass": true,
+   "note": "",
+   "key": "budget:VR 외관 그리기 호출(최대, IWER)"
+  },
+  {
+   "group": "budget",
+   "name": "VR 실내 그리기 호출(최대)",
+   "value": 186,
+   "limit": "≤ 200",
+   "pass": true,
+   "note": "",
+   "key": "budget:VR 실내 그리기 호출(최대)"
+  },
+  {
+   "group": "budget",
+   "name": "VR 외관 삼각형(최대)",
+   "value": 986798,
+   "limit": "≤ 1,000,000",
+   "pass": true,
+   "note": "",
+   "key": "budget:VR 외관 삼각형(최대)"
+  },
+  {
+   "group": "budget",
+   "name": "VR 가상 방 피규어 그리기 호출(compat P8)",
+   "value": 152,
+   "limit": "< 200",
+   "pass": true,
+   "note": "",
+   "key": "budget:VR 가상 방 피규어 그리기 호출(compat P8)"
+  },
+  {
+   "group": "budget",
+   "name": "윈도우 흉내 첫 실사 전환 가장 긴 프레임",
+   "value": "1413.7ms",
+   "limit": "≤ 2000ms",
+   "pass": true,
+   "note": "250ms 넘는 프레임 14개, 멈춤 합 14440ms, 외관 준비 9230ms(1102.j: 5394ms·12개·17754ms)",
+   "key": "budget:윈도우 흉내 첫 실사 전환 가장 긴 프레임",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "윈도우 흉내 정상 상태 프레임 간격",
+   "value": "18.6ms",
+   "limit": "중앙값 ≤ 50ms",
+   "pass": true,
+   "note": "95% 20ms, 품질 high, 화소 1.5/1.5, 합치기 3회 985ms",
+   "key": "budget:윈도우 흉내 정상 상태 프레임 간격"
+  },
+  {
+   "group": "budget",
+   "name": "VR 순간이동 뒤 가장 긴 프레임(CPU 4배)",
+   "value": "37.1ms",
+   "limit": "≤ 100ms",
+   "pass": true,
+   "note": "72Hz 기준 놓친 프레임 413(감속 때문에 평소도 놓침, 정상 상태 중앙값 26.8ms)",
+   "key": "budget:VR 순간이동 뒤 가장 긴 프레임(CPU 4배)",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "VR 층 이동 뒤 보이는 동안 가장 긴 프레임(CPU 4배)",
+   "value": "196.4ms",
+   "limit": "≤ 120ms",
+   "pass": false,
+   "note": "무거운 일은 검은 전환 화면에서(1102.j: 597ms, 합치기 2번)",
+   "key": "budget:VR 층 이동 뒤 보이는 동안 가장 긴 프레임(CPU 4배)",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "맥 정상 조건 자동 품질",
+   "value": "high",
+   "limit": "높음 유지",
+   "pass": true,
+   "note": "화소 1.5/1.5, 정상 상태 18.6ms",
+   "key": "budget:맥 정상 조건 자동 품질"
+  },
+  {
+   "group": "budget",
+   "name": "미리받기 목록",
+   "value": "12.87MB",
+   "limit": "≤ 18MB",
+   "pass": true,
+   "note": "",
+   "key": "budget:미리받기 목록"
+  },
+  {
+   "group": "budget",
+   "name": "10Mbps 첫 방문 외관 준비",
+   "value": "7409ms",
+   "limit": "≤ 12000ms",
+   "pass": true,
+   "note": "실내 가구까지 17461ms, 받은 양 21.7MB, 두 번 중 작은 값(7409·7453), 로컬 서버(gzip 없음)",
+   "key": "budget:10Mbps 첫 방문 외관 준비",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "10Mbps 재방문 외관 준비(서비스 워커)",
+   "value": "1601ms",
+   "limit": "≤ 3000ms",
+   "pass": true,
+   "note": "실내 가구까지 2581ms, 네트워크 1.72MB",
+   "key": "budget:10Mbps 재방문 외관 준비(서비스 워커)",
+   "unstable": true
+  },
+  {
+   "group": "budget",
+   "name": "텍스처 GPU 메모리 추정",
+   "value": "278.7MB",
+   "limit": "≤ 150MB",
+   "pass": false,
+   "note": "고유 텍스처 275장",
+   "key": "budget:텍스처 GPU 메모리 추정"
+  },
+  {
+   "group": "quality",
+   "name": "바닥 깜빡임(강하게 바뀐 화소 %, 최악)",
+   "value": 0.7,
+   "limit": "≤ 1%",
+   "pass": true,
+   "note": "eye:street near · 구성: 화면·휴대폰(배율 3)·퀘스트 한 눈(916×960×2, 시야 97°)·낮은 시점",
+   "key": "quality:바닥 깜빡임(강하게 바뀐 화소 %, 최악)"
+  },
+  {
+   "group": "quality",
+   "name": "화면 전체 깜빡임(최악)",
+   "value": 2.38,
+   "limit": "≤ 2%",
+   "pass": false,
+   "note": "eye:5F",
+   "key": "quality:화면 전체 깜빡임(최악)"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:street",
+   "value": "0.03 / 0.03 / 0 · 전체 0.8",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:street"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:1F",
+   "value": "0.02 / 0 / 0 · 전체 0.78",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:1F"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:B1",
+   "value": "0 / 0 / - · 전체 0.11",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:B1"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:5F",
+   "value": "0.2 / 0 / - · 전체 2.04",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:5F"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:1F-low",
+   "value": "0 / - / - · 전체 0.9",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:1F-low"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 pc:B1-low",
+   "value": "0 / - / - · 전체 0.1",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 pc:B1-low"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:street",
+   "value": "0.48 / 0 / 0.12 · 전체 1.73",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:street"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:1F",
+   "value": "0.08 / 0 / 0 · 전체 1.36",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:1F"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 phone:B1",
+   "value": "0 / 0 / - · 전체 0.16",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 phone:B1"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:street",
+   "value": "0.7 / 0.02 / 0 · 전체 0.48",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:street"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:1F",
+   "value": "0.04 / 0 / 0 · 전체 0.99",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:1F"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:B1",
+   "value": "0 / 0 / - · 전체 0.2",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:B1"
+  },
+  {
+   "group": "quality",
+   "name": "깜빡임 eye:5F",
+   "value": "0.64 / 0 / - · 전체 2.38",
+   "limit": "",
+   "pass": null,
+   "note": "가까움/중간/멂 %",
+   "key": "quality:깜빡임 eye:5F"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:street",
+   "value": "2.91 / 4.34 / 13.03",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:street"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:out",
+   "value": "- / - / 11.58",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:out"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:1F",
+   "value": "0.16 / 0.58 / 1.74",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:1F"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:B1",
+   "value": "0.47 / 1.56 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:B1"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:5F",
+   "value": "0.25 / 0.35 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:5F"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:1F-low",
+   "value": "0.01 / 0.24 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:1F-low"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:B1-low",
+   "value": "0.28 / 2.01 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:B1-low"
+  },
+  {
+   "group": "quality",
+   "name": "앨리어싱 pc:5F-low",
+   "value": "0.58 / 0 / -",
+   "limit": "",
+   "pass": null,
+   "note": "1배 대 4배 초표본, 바닥 고주파 차 8 넘는 화소 %(정보)",
+   "key": "quality:앨리어싱 pc:5F-low"
+  },
+  {
+   "group": "quality",
+   "name": "포화 화소(최대)",
+   "value": "0%",
+   "limit": "≤ 1%",
+   "pass": true,
+   "note": "",
+   "key": "quality:포화 화소(최대)"
+  },
+  {
+   "group": "quality",
+   "name": "실내 천장 검은 구멍(최대)",
+   "value": "2.42%",
+   "limit": "≤ 5%",
+   "pass": true,
+   "note": "천장(아래를 보는 면) 중 휘도 14 미만",
+   "key": "quality:실내 천장 검은 구멍(최대)"
+  },
+  {
+   "group": "quality",
+   "name": "석양 처마 밑 검은 면",
+   "value": "29.32%",
+   "limit": "",
+   "pass": null,
+   "note": "정보: 바깥에서 본 아래 보는 면",
+   "key": "quality:석양 처마 밑 검은 면"
+  },
+  {
+   "group": "quality",
+   "name": "야간 우리 건물 / 이웃 휘도",
+   "value": 1.58,
+   "limit": "≥ 1",
+   "pass": true,
+   "note": "",
+   "key": "quality:야간 우리 건물 / 이웃 휘도"
+  },
+  {
+   "group": "quality",
+   "name": "석양 대 오후 화면 휘도",
+   "value": "-34.3%",
+   "limit": "≤ -20%",
+   "pass": true,
+   "note": "건물+지면 -68.4%",
+   "key": "quality:석양 대 오후 화면 휘도"
+  },
+  {
+   "group": "quality",
+   "name": "주변 건물 명도 편차(조감 p90/p10)",
+   "value": 2.85,
+   "limit": "≥ 2",
+   "pass": true,
+   "note": "",
+   "key": "quality:주변 건물 명도 편차(조감 p90/p10)"
+  },
+  {
+   "group": "quality",
+   "name": "잎 휘도 변동계수(앞뒤 색 차)",
+   "value": 0.32,
+   "limit": "≤ 0.4",
+   "pass": true,
+   "note": "수정 전(?praa=0) 0.45",
+   "key": "quality:잎 휘도 변동계수(앞뒤 색 차)"
+  },
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "평균 차 23.99, 큰 차 23.66%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:out.jpg",
+   "prev": "기준 갱신",
+   "worse": true
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "평균 차 20.85, 큰 차 21.98%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:street.jpg",
+   "prev": "기준 갱신",
+   "worse": true
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "평균 차 2.2, 큰 차 1.65%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:1F.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "평균 차 0.64, 큰 차 0.42%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:5F.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "평균 차 1.36, 큰 차 0%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:B1.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "평균 차 1.48, 큰 차 0%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:B3.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "평균 차 14.4, 큰 차 13.76%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:out-night.jpg",
+   "prev": "기준 갱신",
+   "worse": true
+  },
+  {
+   "group": "shots",
+   "name": "apt-now.jpg",
+   "value": "평균 차 1.89, 큰 차 1.49%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:apt-now.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "apt-future.jpg",
+   "value": "평균 차 1.89, 큰 차 1.57%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:apt-future.jpg",
+   "prev": "기준 갱신"
+  },
+  {
+   "group": "shots",
+   "name": "env-sketch.jpg",
+   "value": "기준 새로 만듦",
+   "limit": "",
+   "pass": true,
+   "note": "",
+   "key": "shots:env-sketch.jpg"
+  },
+  {
+   "group": "ui",
+   "name": "pc 겹침",
+   "value": "없음",
+   "limit": "",
+   "pass": true,
+   "note": "",
+   "key": "ui:pc 겹침"
+  },
+  {
+   "group": "ui",
+   "name": "pc 숨김 규칙(멀티플레이·성능 정보)",
+   "value": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐",
+   "limit": "모두 숨김",
+   "pass": true,
+   "note": "",
+   "key": "ui:pc 숨김 규칙(멀티플레이·성능 정보)"
+  },
+  {
+   "group": "ui",
+   "name": "pc 콘솔 오류",
+   "value": "0건",
+   "limit": "0",
+   "pass": true,
+   "note": "알려진 4xx(로컬 전용): 404 /kapehorn-media/catalog.js?v=1793601350990",
+   "key": "ui:pc 콘솔 오류"
+  },
+  {
+   "group": "ui",
+   "name": "phone 겹침",
+   "value": "없음",
+   "limit": "",
+   "pass": true,
+   "note": "",
+   "key": "ui:phone 겹침"
+  },
+  {
+   "group": "ui",
+   "name": "phone 숨김 규칙(멀티플레이·성능 정보)",
+   "value": "mp 숨김 · fps 숨김 · 시간 줄 숨김 · VR 판 꺼짐",
+   "limit": "모두 숨김",
+   "pass": true,
+   "note": "",
+   "key": "ui:phone 숨김 규칙(멀티플레이·성능 정보)"
+  },
+  {
+   "group": "ui",
+   "name": "phone 콘솔 오류",
+   "value": "0건",
+   "limit": "0",
+   "pass": true,
+   "note": "알려진 4xx(로컬 전용): 404 /kapehorn-media/catalog.js?v=1793601355898",
+   "key": "ui:phone 콘솔 오류"
+  }
+ ]
+}

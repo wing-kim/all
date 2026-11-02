@@ -1,0 +1,219 @@
+--- a/3d-model.html
++++ b/3d-model.html
+@@ -7136,5 +10770,5 @@
+   const geo=new THREE.ShapeGeometry(sh);geo.rotateX(-Math.PI/2);const ar=new THREE.Mesh(geo,m);g.add(ar);
+   const ring=new THREE.Mesh(new THREE.RingGeometry(4.6,5.0,48),w);ring.rotation.x=-Math.PI/2;g.add(ring);
+-  const [x,z]=P(1950,1300);g.position.set(x,0.06,z);g.rotation.y=Math.atan2(-NV[0],-NV[1]);site.add(g);})();
++  const [x,z]=P(1950,1300);g.position.set(x,0.06,z);g.rotation.y=Math.atan2(-NV[0],-NV[1]);/* env-test: removed from the scene (it lay on the 신사설렁탕 forecourt); the on-screen compass still shows north */})();
+ // --- sky + environment ---
+ function initSky(){if(R3D.sky||!THREE.Sky)return;const sky=new THREE.Sky();sky.scale.setScalar(4500);R3D.sky=sky;
+@@ -7372,16 +11007,108 @@
+   const o=out*S,p0=[a[0]+u[0]*L*t0+n[0]*o,a[1]+u[1]*L*t0+n[1]*o],p1=[a[0]+u[0]*L*t1+n[0]*o,a[1]+u[1]*L*t1+n[1]*o];const m=seg(P(...p0),P(...p1),y0,y1,thick,mat);m.castShadow=true;grp.add(m);return m}
+ const FX={glass:SM({color:0x31414c,roughness:.15,metalness:.4}),blue:SM({color:0x2456a6,roughness:.6}),white:SM({color:0xf5f5f2,roughness:.7}),stone:SM({color:0xd2c5a8,roughness:.85}),beige:SM({color:0xd9cfb8,roughness:.8}),ant:SM({color:0x9aa0a3,metalness:.5,roughness:.4})};
++// 주변 건물 실사 모델 (env-test 2026.10.30): Blender로 만든 건물(tools/build_*.py)을 첫 화면을 그린 뒤 불러와 회색 매스와 바꿈.
++// models/kh-lib.js = 공유 재질 표, models/<id>.js = 건물 GLB(형상·UV만), models/tex/<이름>.js = 텍스처(쓰는 것만, 한 번만 받음).
++// 모두 <script>로 불러오므로 깃허브 페이지와 PC에서 바로 연 파일(file://) 둘 다에서 동작. 못 불러오면 회색 매스가 그대로 남음
++const KHQ=[],KHM={},KHT={},KHR={base:null,loading:null,real:false,signs:[],bld:[],leaf:null,trees:[],cars:[],alley:[],grp:null,rm:null};
++function khModel(m,id,fit,also){KHQ.push({m,id,fit,also})}   // also = more masses / meshes the model replaces; fit {poly,w,d}: model is a w x d box (street face +z) fitted onto poly; no fit = modelled in page coordinates
++const khJS=(src,v)=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src+(v?'?v='+v:'');s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)});
++const khTex=n=>KHT[n]||(KHT[n]=khJS(`models/tex/${n}.js`,KH.ver['tex/'+n]).then(()=>new Promise((ok,no)=>{
++  const t=new THREE.TextureLoader().load(KH.tex[n],()=>ok(t),undefined,no);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.flipY=false;t.anisotropy=renderer.capabilities.getMaxAnisotropy()})));
++const khMat=n=>KHM[n]||(KHM[n]=(async()=>{const d=KH.mat[n],o={color:new THREE.Color(...d.color),roughness:d.rough,metalness:d.metal||0};   // colours are display values, like the rest of this page
++  if(d.map)o.map=await khTex(d.map);if(d.normal){o.normalMap=await khTex(d.normal);o.normalScale=new THREE.Vector2(d.nstr||1,-(d.nstr||1))}
++  if(d.alpha){o.alphaMap=await khTex(d.alpha);o.alphaTest=d.alphaTest||.5}if(d.double)o.side=THREE.DoubleSide;if(d.opacity){o.transparent=true;o.opacity=d.opacity}return SM(o)})());
++function khFit(o,poly,w,d){   // keep the street face exact (width, position) — plan outlines are often skewed — and take the depth along its normal
++  const W=poly.map(q=>P(...q)),c=W.reduce((s,q)=>[s[0]+q[0]/W.length,s[1]+q[1]/W.length],[0,0]),[fa,fb]=faceOf(poly).map(q=>P(...q)),
++    fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],L=Math.hypot(fb[0]-fa[0],fb[1]-fa[1]);let u=[(fb[0]-fa[0])/L,(fb[1]-fa[1])/L],n=[-u[1],u[0]];
++  if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
++  const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
++  o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
++const khLoad=()=>KHR.base||(KHR.base=khLoad0());
++async function khLoad0(){
++  try{await khJS('models/kh-lib.js',Date.now()/6e5|0)}catch(e){console.warn('env models',e);return}
++  // staged: buildings within 45 m of the site load first, the rest (school etc.) after them
++  const dist=q=>{const b=new THREE.Box3().setFromObject(q.m);return b.isEmpty()?0:b.getCenter(new THREE.Vector3()).setY(0).length()},qs=KHQ.slice().sort((a,b)=>dist(a)-dist(b));
++  const one=async q=>{try{
++    await khJS(`models/${q.id}.js`,KH.ver[q.id]);const g=await new Promise((ok,no)=>new THREE.GLTFLoader().load(KH.glb[q.id],ok,undefined,no)),o=g.scene,ms=[];
++    o.traverse(k=>{if(k.isMesh)ms.push(k)});
++    await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);
++      if(/^sign_/.test(k.userData.mn)){k.visible=R3D.on&&KHR.real;KHR.signs.push(k)}}));   // blank sign boxes: 렌더-실사 only
++    if(q.fit)khFit(o,q.fit.poly,q.fit.w,q.fit.d);q.o=o;
++    const hid=new THREE.MeshBasicMaterial({visible:false});(q.also||[]).forEach(a=>{if(a.userData.box||Array.isArray(a.material)){a.material=[hid,hid];a.children.slice().forEach(k=>a.remove(k))}else a.visible=false});q.m.material=[hid,hid];q.m.children.slice().forEach(k=>q.m.remove(k));q.m.add(o);
++    delete KH.glb[q.id]}catch(e){console.warn('env model',q.id,e)}};
++  await Promise.all(qs.filter(q=>dist(q)<45).map(one));await Promise.all(qs.filter(q=>dist(q)>=45).map(one))}
++// 렌더 mode realism layer, fetched the first time 렌더 is switched on (sketch-mode visitors never download it).
++// Lighting works like a game's "baked indirect" setup and touches only the env models (the tower keeps the page's lighting):
++//  - lightmaps baked in Blender (models/tex/<id>_lm.js: sky light + bounce light, with the neighbours and tree crowns as occluders)
++//    replace the hemisphere light and sky IBL on these models; the sun and its shadows stay realtime, so time of day still works
++//  - weathering maps (<id>_ao.js, G = grime) darken the albedo; glass and steel reflect the page's reflection probe (R3D.cube)
++// plus the 압구정로 street pack (paving, kerb, drains, tree grates, signal poles, flower baskets, bus shelter), instanced street
++// trees tinted by season, and lofted cars in place of the box cars
++const khGlb=async id=>{await khJS(`models/${id}.js`,KH.ver[id]);const g=await new Promise((ok,no)=>new THREE.GLTFLoader().load(KH.glb[id],ok,undefined,no)),ms=[];delete KH.glb[id];
++  g.scene.traverse(k=>{if(k.isMesh)ms.push(k)});
++  await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);
++    if(k.material.alphaMap)k.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,alphaMap:k.material.alphaMap,alphaTest:k.material.alphaTest})}));
++  return g.scene};
++const KHL={sky:new THREE.Vector3(1,1,1),k:2*Math.PI*Math.PI*0.4};   // lightmap stores sqrt(irradiance/2) in Blender units; 0.4 = tuned by eye so shade sides sit with the page-lit buildings next door
++const NL=String.fromCharCode(10);(window.KH=window.KH||{tex:{},glb:{}}).light=KHL;   // tuning handle (KH.light.k, then applyTime)
++function khPatch(m0,lm,ao){const m=m0.clone();m.lightMap=lm;m.lightMapIntensity=0;if(ao){m.aoMap=ao;m.aoMapIntensity=0}   // slots only bind the maps + vUv2
++  m.onBeforeCompile=sh=>{sh.uniforms.khSky={value:KHL.sky};
++    sh.fragmentShader='uniform vec3 khSky;'+NL+sh.fragmentShader
++      .replace('#include <map_fragment>','#include <map_fragment>'+NL+(ao?'diffuseColor.rgb *= texture2D( aoMap, vUv2 ).g;':''))
++      .replace('#include <lights_fragment_maps>','#include <lights_fragment_maps>'+NL+'{ vec3 t = texture2D( lightMap, vUv2 ).rgb; irradiance = t * t * khSky; iblIrradiance = vec3( 0.0 ); }')};
++  m.customProgramCacheKey=()=>ao?'khlm-g':'khlm';return m}
++function khSky(){if(!R3D.on)return;const s=R3D.sunNow,k=KHL.k;   // day / low sun / night tint of the baked sky light
++  if(!s)KHL.sky.set(.2,.25,.42).multiplyScalar(k*.12);else if(s.el<7)KHL.sky.set(1,.8,.64).multiplyScalar(k*.6);else KHL.sky.set(1,1,1).multiplyScalar(k*Math.min(1,.55+s.el/60))}
++const KHG=/^(glass|steel|car_glass)/;
++function khGlass(){if(!R3D.on||!R3D.cube)return;KHR.bld.forEach(k=>{const m=k.userData.m1;if(m&&KHG.test(k.userData.mn)){if(m.envMap!==R3D.cube.texture){m.envMap=R3D.cube.texture;m.needsUpdate=true}m.envMapIntensity=1}})}
++function khReal(on){   // the whole realism layer on / off (렌더-실사 vs 렌더 · 스케치업)
++  KHR.signs.forEach(k=>k.visible=on);KHR.bld.forEach(k=>k.material=on?k.userData.m1:k.userData.m0);if(KHR.grp)KHR.grp.visible=on;
++  KHR.cars.forEach(([o,n])=>{o.visible=!on;n.visible=on});KHR.alley.forEach(c=>c.visible=!on);
++  if(KHR.rm)[RMAT.walk,RMAT.road].forEach((m,i)=>{const r=KHR.rm[on?1:0][i];Object.assign(m,r);if(m.map)m.map.encoding=m.userData.lin?THREE.sRGBEncoding:THREE.LinearEncoding;m.needsUpdate=true})}
++function khSeason(){if(!KHR.leaf)return;const mo=R3D.custom&&R3D.cdate?R3D.cdate.getMonth()+1:{spring:4,summer:7,autumn:10,winter:1}[R3D.season];
++  const s=mo>=3&&mo<=5?[.55,.72,.32]:mo>=6&&mo<=8?[.36,.52,.24]:mo>=9&&mo<=11?[.80,.52,.16]:null,on=document.getElementById('t-trees').checked;
++  KHR.trees.forEach(t=>t.visible=on&&(t.material!==KHR.leaf||!!s));if(s){KHR.leaf.color.setRGB(...s);if(KHR.leaf.userData.lin)KHR.leaf.color.convertSRGBToLinear()}}
++function khRealLoad(){return KHR.loading||(KHR.loading=(async()=>{try{
++  await khLoad();
++  const lit=(o,lm,ao)=>o.traverse(k=>{if(!k.isMesh)return;k.userData.m0=k.material;k.userData.m1=khPatch(k.material,lm,ao);KHR.bld.push(k)});
++  await Promise.all(KHQ.filter(q=>q.o&&KH.ver['tex/'+q.id+'_lm']).map(async q=>lit(q.o,...await Promise.all([khTex(q.id+'_lm'),khTex(q.id+'_ao')]))));
++  const [st,tr,cr]=await Promise.all(['street_env','tree','cars'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null})));
++  KHR.grp=new THREE.Group();KHR.grp.visible=false;R3D.street.add(KHR.grp);
++  if(st){st.updateMatrixWorld(true);KHR.grp.add(st);if(KH.ver['tex/street_env_lm'])lit(st,await khTex('street_env_lm'));
++    const spots=[];st.traverse(k=>{if(/^tree_/.test(k.name))spots.push(k.matrixWorld.clone())});
++    if(tr){tr.updateMatrixWorld(true);tr.traverse(k=>{if(!k.isMesh)return;const im=new THREE.InstancedMesh(k.geometry,k.material,spots.length),m=new THREE.Matrix4();
++      spots.forEach((s,i)=>im.setMatrixAt(i,m.multiplyMatrices(s,k.matrixWorld)));im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;if(k.customDepthMaterial)im.customDepthMaterial=k.customDepthMaterial;
++      if(k.userData.mn==='leaves')KHR.leaf=k.material;KHR.trees.push(im);KHR.grp.add(im)})}}
++  if(cr){const tpl={};cr.children.forEach(c=>tpl[c.name]=c);
++    // parked cars east of 압구정로 (압구정로8길, the alley, the 동광 / sauna forecourts) are left out in 렌더-실사 (사용자 요청)
++    const w=new THREE.Vector3();scene.traverse(c=>{if(!c.userData.car)return;c.getWorldPosition(w);if(w.x>-19&&w.x<60&&w.z>-80&&w.z<90&&w.y>-1)KHR.alley.push(c)});
++    R3D.props.children.filter(c=>c.userData.car&&!KHR.alley.includes(c)).forEach(c=>{const body=c.children[0],t=tpl[body.geometry===CAR.body[1]?'SUV':'Sedan'];if(!t)return;
++      const n=t.clone();n.traverse(k=>{if(k.isMesh&&k.userData.mn==='car_paint')k.material=body.material});n.position.copy(c.position);n.rotation.copy(c.rotation);n.visible=false;c.userData.car=false;KHR.cars.push([c,n]);R3D.props.add(n)})}
++  const [pa,pn,as]=await Promise.all(['paver_albedo','paver_normal','asphalt_albedo'].map(khTex)),rp=(t,r)=>{t=t.clone();t.repeat.set(r,r);t.needsUpdate=true;return t};
++  const g=m=>({map:m.map,normalMap:m.normalMap||null,normalScale:m.normalScale.clone()});KHR.rm=[[g(RMAT.walk),g(RMAT.road)],
++    [{map:rp(pa,1/2.4),normalMap:rp(pn,1/2.4),normalScale:new THREE.Vector2(.6,-.6)},{map:rp(as,.25),normalMap:null,normalScale:RMAT.road.normalScale.clone()}]];
++  if(R3D.on&&KHR.real){khReal(true);linearize(true);khSeason();khSky()}}catch(e){console.warn('env realism',e)}})())}
++{const sr=setRender;let g0=null;
++  // (also puts the sketch road / pavement back: prepGround runs twice on the way into 렌더 and loses them, so 렌더 textures used to stay)
++  setRender=function(on,nb){if(on&&!g0)g0=site.children.filter(c=>c.isMesh&&(c.material===M.road||c.material===M.walk)).map(c=>[c,c.material]);
++    const real=on&&KHR.real;khReal(real);sr(on,nb);if(real){document.getElementById('vm-real').checked=true;khRealLoad()}
++    if(!on&&g0)g0.forEach(([c,m])=>c.material=m)}}
++{const at=applyTime;applyTime=function(){at();khSeason();khSky()}}
++{const li=linearize;linearize=function(on){li(on);if(on)khGlass()}}   // linearize resets envMapIntensity, so the probe settings go after it
+ function buildContext(){
+   // streets: 압구정로10길 (north, into the block) and 논현로175길 (parallel to 압구정로, one block in)
+-  roadBand(MAP(1095,150),MAP(1150,660),250);roadBand(MAP(1400,520),MAP(-60,1420),300);
+-  // along 압구정로, north of the site: 114 도미노피자 (narrow 5F), 116 아인슈타인학원 (5F), 118 오피스 (6F)
+-  // (street view 2026.07) 114 = narrow grey-white 4F with the blue Domino's awning; 116 = white tiled 5F academy with a dark glass stair strip and a rooftop box + antennas; 118 = beige stone 5F ribbon-window office with a set-back 6th floor
+-  {const p114=backF(mp([[590,412],[650,378],[752,520],[690,555]])),m=mass(p114,14.2,0xffffff,'grey','114 도미노피자 건물 (약 4층)',ctx,{rv:3.4});
+-    onFace(m,p114,0.05,0.95,2.6,3.15,0.55,1.1,FX.blue);onFace(m,p114,0.08,0.92,3.15,3.9,0.1,0.2,FX.blue);onFace(m,p114,0.3,0.7,3.3,3.75,0.22,0.06,FX.white)}
+-  {const p116=backF(mp([[665,340],[770,282],[873,415],[775,495]])),m=mass(p116,18.4,0xffffff,'band','116 아인슈타인학원 (약 5층)',city,{rv:3.6});
+-    onFace(m,p116,0.80,0.97,3.6,18.4,0.12,0.35,FX.glass);for(let f=1;f<5;f++)onFace(m,p116,0.80,0.97,3.6*f+3.1,3.6*f+3.25,0.3,0.12,FX.white);
+-    const top=offsetPoly(p116,1.6*S);const rb=mass(top,3.2,0xffffff,'grey',null,m,{y0:18.4,rv:3.2,detail:false,noOcc:true});const [cx,cz]=P(...centroid(top));
+-    [[-1.2,0],[0.4,0.8],[1.4,-0.6]].forEach(([dx,dz],k)=>{const a=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,3.2+k*0.6,6),FX.ant);a.position.set(cx+dx,18.4+3.2+(3.2+k*0.6)/2,cz+dz);m.add(a);const pn=box(cx+dx-0.25,cx+dx+0.25,21.6+k*0.4,22.6+k*0.4,cz+dz-0.08,cz+dz+0.08,FX.ant);m.add(pn)})}
+-  {const p118=backF(mp([[810,255],[1050,165],[1050,265],[975,295],[975,420],[880,410]]),260),m=mass(p118,18.6,0xffffff,'ribbon','118 오피스 (약 6층)',city,{rv:3.7});
++  roadBand(MAP(1095,150),MAP(1150,660),250);roadBand([2320,-2949],[2320,4734],300);   // env-test: 논현로175길 moved onto the surveyed gap between OSM 94/5 and 93/10/101/103 (centre x 33.8 m, was ~37.8)
++  // along 압구정로, north of the site: 114 도미노피자 (narrow 5F), 116 아인슈타인학원 (4F), 118 오피스 (6F)
++  // (street view 2026.07) 114 = narrow grey-white 4F with the blue Domino's awning; 116 = white tiled 4F academy with a dark glass stair strip and a rooftop box + antennas; 118 = beige stone 5F ribbon-window office with a set-back 6th floor
++  // (env-test 2026.10.30) roadview 2026.06 + S-Map: 3층 + 파라펫 약 12.4m, 연회색 석재 패널, 2층 곡면 돌출창, 3층 띠창, 1층 후퇴 유리 + 파란 차양 (간판 생략)
++  // → Blender 모델(tools/build_domino.py → models/domino114.js)을 대지 외곽선에 맞춰 끼움
++  {const p114=backF(mp([[590,412],[650,378],[752,520],[690,555]])),m=mass(p114,12.4,0xffffff,'grey','114 도미노피자 건물 (3층)',ctx,{rv:3.4,detail:false});
++    khModel(m,'domino114',{poly:[[396,131],[1056,134],[1060,-206],[399,-209]],w:7.45,d:15})/* env-test: surveyed footprint (OSM) */}
++  // (env-test 2026.10.30) roadview 2026.06.17 (양방향) + S-Map: 4층 + 파라펫 약 15.5m (5층 아님), 흰 대형 판석 타일, 층마다 긴 반투명 띠창,
++  // 도미노 쪽 끝 계단실 유리 띠(흰 가로살), 1층 차량 통로 + 갈색 화강석 상가, 옥상 기계실 + 안테나 (간판 생략) → models/einstein116.js
++  {const p116=backF(mp([[665,340],[770,282],[873,415],[775,495]])),m=mass(p116,15.5,0xffffff,'band','116 아인슈타인학원 (4층)',city,{rv:3.6,detail:false});
++    khModel(m,'einstein116')}
++  {const p118=[[341,-1807],[382,-859],[980,-867],[941,-1549]],   // env-test: surveyed footprint (OSM 118)
++    m=mass(p118,18.6,0xffffff,'ribbon','118 오피스 (약 6층)',city,{rv:3.7});
+     const ph=offsetPoly(p118,2.2*S);mass(ph,3.6,0xffffff,'ribbon',null,m,{y0:18.6,rv:3.6,detail:false,noOcc:true});
+     onFace(m,p118,0.0,1.0,18.6,19.2,0.15,0.5,FX.stone)}
+@@ -7398,27 +11125,31 @@
+     mass(rectQ(300,-8900,1300,-7950),18,0xffffff,'wrib','김상호EMK학원 (약 5층)',city,{rv:3.6})}
+   // next block SW past the white 3F row: ESMOD 7F grey granite (green glass shaft), 디드로메디칼 white 6F
+-  {const pe=rectQ(320,3990,1250,4760),me=mass(pe,26,0xffffff,'esm','에스모드서울 (약 7층)',city,{rv:3.7});onFace(me,pe,0.4,0.58,6,24,0.25,0.4,SM({color:0x5c8f7a,roughness:.15,metalness:.3}));onFace(me,pe,0.0,1.0,0,4,0.1,0.2,FX.glass)}
+-  {const pd=rectQ(330,4880,1500,6350);mass(pd,22.5,0xffffff,'wrib','디드로메디칼 (약 6층)',city,{rv:3.7})}
++  {const pe=rectQ(320,3990,1250,4760),me=mass(pe,26,0xffffff,'esm','에스모드서울 (약 7층)',city,{rv:3.7});onFace(me,pe,0.4,0.58,6,24,0.25,0.4,SM({color:0x5c8f7a,roughness:.15,metalness:.3}));onFace(me,pe,0.0,1.0,0,4,0.1,0.2,FX.glass);khModel(me,'esmod528')}   // env-test: surveyed footprint (OSM 106)
++  {const pd=rectQ(330,4880,1500,6350);khModel(mass(pd,22.5,0xffffff,'wrib','더카리 · 디드로메디칼 (6층)',city,{rv:3.7}),'kary528')}   // env-test: surveyed footprint (OSM 104)
+   // behind: 96 (white), 94 스타벅스, 5 양식당더램키친 (east neighbour on the 6M road), 3층 근생 north of 10길
+-  mass(mp([[712,640],[795,595],[895,745],[810,790]]),11,0xeceae4,'office','96 (약 3층)');
+-  mass(mp([[885,605],[1075,483],[1120,610],[980,720]]),14,0xe2d6bf,'office','94 스타벅스 (약 4층)');
+-  mass(mp([[590,775],[705,700],[800,830],[720,860]]),8,0xf0eeea,'shop','5 양식당더램키친 (약 2층)');
++  khModel(mass(mp([[712,640],[795,595],[895,745],[810,790]]),11,0xeceae4,'office','유리 커튼월 건물 (약 6층)'),'glass529');   // env-test: tools/build_block.py
++  khModel(mass(mp([[885,605],[1075,483],[1120,610],[980,720]]),14,0xe2d6bf,'office','보성파워텍 · 임도빌딩 (약 4층)'),'bosung529');
++  khModel(mass(mp([[590,775],[705,700],[800,830],[720,860]]),12,0xf0eeea,'shop','양식당 더램키친 (4층)'),'lamb529');
+   mass(mp([[1200,330],[1270,320],[1330,470],[1215,475]]),12,0xe9e7e1,'office','5 (약 3층)');mass(mp([[1270,320],[1420,230],[1540,300],[1330,470]]),13,0xdcd7cd,'office','88');
+   // across the 6M road: 커스텀잇·세레스학원 블록 (4F, corner), 오토김밥·원조마포 wing, 우유니 (small, at the intersection)
+-  {const pc=backF(mp([[240,625],[330,700],[430,875],[440,945],[205,1090],[75,740]])),mc=mass(pc,15.2,0xffffff,'tile','커스텀잇 · 세레스학원 건물 (약 4층)',city,{rv:3.55});
+-    // beige entrance portal of CUSTOM EAT on the corner, and the 신사설렁탕 / 씨에스학원 sign bands
+-    const [a,b]=[pc[0],pc[1]],[x1,z1]=P(...a),[x2,z2]=P(...b),mx=(x1+x2)/2,mz=(z1+z2)/2,ux=(x2-x1),uz=(z2-z1),L=Math.hypot(ux,uz),nx=-uz/L,nz=ux/L;
+-    const pt=(t,o)=>[x1+ux*t+nx*o,z1+uz*t+nz*o];mc.add(seg(pt(0.35,-0.6),pt(0.65,-0.6),0,4.2,0.5,FX.beige));mc.add(seg(pt(0.38,-0.9),pt(0.62,-0.9),3.6,4.2,0.6,FX.beige));
+-    mc.add(seg(pt(0.15,-0.08),pt(0.6,-0.08),10.1,10.8,0.12,SM({color:0x24324d,roughness:.6})));mc.add(seg(pt(0.2,-0.08),pt(0.7,-0.08),6.6,7.2,0.12,SM({color:0x2a2a2a,roughness:.6})))}
+-  mass(backF(mp([[0,760],[75,740],[205,1090],[110,1140],[0,1130]])),11,0xe7e2d8,'shop','오토김밥 (약 3층)');
+-  mass(mp([[690,860],[740,835],[775,880],[720,905]]),6.5,0xf3f6f7,'shop');
++  // (env-test 2026.10.30) 110 화인빌딩 (신사동 528-4): roadview 2026.06–07 + S-Map — 4층 + 파라펫 약 15.2m, 흰 줄눈 모자이크 타일(벽돌 쌓기 무늬),
++  // 청동색 창틀의 펀치창, 베이지 박스 포털(CUSTOM EAT) 2곳, 6M도로 쪽 남색 차양 3개와 오목한 계단실 띠창 (간판·글씨 생략) → tools/build_customeat.py
++  {const pc=backF(mp([[240,625],[330,700],[430,875],[440,945],[205,1090],[75,740]])),mc=mass(pc,15.2,0xffffff,'tile','커스텀잇 · 세레스학원 건물 (4층)',city,{rv:3.55,detail:false});
++    khModel(mc,'customeat110')}
++  khModel(mass(backF(mp([[0,760],[75,740],[205,1090],[110,1140],[0,1130]])),12.8,0xe7e2d8,'shop','덕산빌딩 · 압구정웰동물병원 (4층)'),'deoksan528');
++  {const m=mass(mp([[690,860],[740,835],[775,880],[720,905]]),6.5,0xf3f6f7,'shop');   // env-test: overlaps 더램키친 — not in the 2026.07 roadview, so the lamb529 model hides it
++    const q=KHQ.find(q=>q.id==='lamb529');if(q)q.also=(q.also||[]).concat(m)}
+   // east of 논현로175길 / south of the intersection: 93 CU, 14 디에이치푸드, 호프만베이커리 블록, MAX STUDIO
+-  mass(mp([[880,940],[1105,805],[1130,945],[950,1020]]),11,0xeef0f0,'office','93 CU (약 3층)');
++  khModel(mass([[2548,287],[2511,-611],[2634,-796],[3001,-629],[3011,165],[2839,318]],21.1,0xeef0f0,'office','웅암빌딩 · CU (6층)'),'woongam531');/* env-test: surveyed footprint (OSM) */
+   mass(mp([[1030,1060],[1150,1005],[1185,1170],[1120,1185]]),13,0xe2d6bf,'office');
+-  mass(mp([[600,1085],[720,1015],[800,1140],[660,1220]]),12,0xe7e2d8,'shop','호프만베이커리 (약 3층)');
+-  mass(mp([[440,1150],[540,1105],[630,1240],[520,1300]]),9,0xdedad1,'shop');mass(mp([[700,1240],[880,1160],[930,1270],[760,1330]]),10,0xeceae4,'shop');
++  khModel(mass(mp([[600,1085],[720,1015],[800,1140],[660,1220]]),12,0xe7e2d8,'shop','호프만베이커리 · BOGO빌딩 (3층)'),'hoffman525');   // env-test: tools/build_block.py
++  khModel(mass(mp([[440,1150],[540,1105],[630,1240],[520,1300]]),14,0xdedad1,'shop','야키토리 요이사 건물 (4층)'),'yakitori525');khModel(mass(mp([[700,1240],[880,1160],[930,1270],[760,1330]]),16.4,0xeceae4,'shop','썬더빌딩 (5층)'),'thunder525');
++  // env-test: 헬렌비 (525-11) and 마마논마마 (525-22) had no mass in the page — models in their own placeholders (2026.07 roadview)
++  for(const id of ['helenbi525','mamanon525']){const ph=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({visible:false}));ctx.add(ph);khModel(ph,id)}
+   // church spire seen behind the 커스텀잇 block (street view)
+-  {const ch=mp([[90,1180],[200,1130],[260,1250],[150,1300]]);mass(ch,12,0xece8df,'office','교회');const [cx,cz]=P(...centroid(ch)),sp=new THREE.Mesh(new THREE.ConeGeometry(1.1,16,8),SM({color:0xd9d6cf,roughness:.8}));sp.position.set(cx,12+8+4,cz);sp.castShadow=true;city.add(sp);
+-    const tw=box(cx-1.6,cx+1.6,12,16,cz-1.6,cz+1.6,SM({color:0xe7e3da,roughness:.9}));city.add(tw);const cr=box(cx-0.05,cx+0.05,32,34.5,cz-0.05,cz+0.05,M.dark);city.add(cr);city.add(box(cx-0.6,cx+0.6,33.5,33.65,cz-0.05,cz+0.05,M.dark));const cbx=new THREE.Box3(new THREE.Vector3(cx-1.6,0,cz-1.6),new THREE.Vector3(cx+1.6,35,cz+1.6));[sp,tw,cr].forEach(m=>{m.userData.box=cbx;OCC.push(m)})}
++  {const ch=mp([[90,1180],[200,1130],[260,1250],[150,1300]]);const chm=mass(ch,12,0xece8df,'office','교회');const [cx,cz]=P(...centroid(ch)),sp=new THREE.Mesh(new THREE.ConeGeometry(1.1,16,8),SM({color:0xd9d6cf,roughness:.8}));sp.position.set(cx,12+8+4,cz);sp.castShadow=true;city.add(sp);
++    const tw=box(cx-1.6,cx+1.6,12,16,cz-1.6,cz+1.6,SM({color:0xe7e3da,roughness:.9}));city.add(tw);const cr=box(cx-0.05,cx+0.05,32,34.5,cz-0.05,cz+0.05,M.dark);city.add(cr);const cb=box(cx-0.6,cx+0.6,33.5,33.65,cz-0.05,cz+0.05,M.dark);city.add(cb);const cbx=new THREE.Box3(new THREE.Vector3(cx-1.6,0,cz-1.6),new THREE.Vector3(cx+1.6,35,cz+1.6));[sp,tw,cr].forEach(m=>{m.userData.box=cbx;OCC.push(m)});
++    // env-test: no church here in the survey (OSM) or the 2026 roadview — the cross stands on 덕산빌딩's roof, so the deoksan528 model hides this block
++    {const q=KHQ.find(q=>q.id==='deoksan528');if(q)q.also=(q.also||[]).concat([chm,sp,tw,cr,cb])}}
+   // west across 압구정로: apartment slabs behind a stone wall, school north of the side street
+   const wallM=SM({color:0x8d8377,roughness:.95}),pierM=wm('brick',0xffffff);
+@@ -7450,19 +11181,21 @@
+       c.beginPath();c.arc(160,256,22,0,7);c.stroke()});
+     tt.wrapS=tt.wrapT=THREE.ClampToEdgeWrapping;tt.repeat.set(1,1);
+-    const fg=new THREE.PlaneGeometry(Math.abs(FW),Math.abs(FD));fg.rotateX(-Math.PI/2);const field=new THREE.Mesh(fg,SM({map:tt,roughness:1}));field.position.set((X0+X1)/2,0.06,(Z0+Z1)/2);field.receiveShadow=true;sch.add(field);
++    const SCH=[];const fg=new THREE.PlaneGeometry(Math.abs(FW),Math.abs(FD));fg.rotateX(-Math.PI/2);const field=new THREE.Mesh(fg,SM({map:tt,roughness:1}));SCH.push(field);field.position.set((X0+X1)/2,0.06,(Z0+Z1)/2);field.receiveShadow=true;sch.add(field);
+     // goals
+-    for(const zz of[Z0+FD*0.12,Z1-FD*0.12]){const gx=(X0+X1)/2;sch.add(box(gx-3.6,gx-3.5,0,2.4,zz-0.05,zz+0.05,steelSch()));sch.add(box(gx+3.5,gx+3.6,0,2.4,zz-0.05,zz+0.05,steelSch()));sch.add(box(gx-3.6,gx+3.6,2.35,2.45,zz-0.05,zz+0.05,steelSch()))}
++    for(const zz of[Z0+FD*0.12,Z1-FD*0.12]){const gx=(X0+X1)/2;SCH.push(sch.add(box(gx-3.6,gx-3.5,0,2.4,zz-0.05,zz+0.05,steelSch())).children.at(-1));SCH.push(sch.add(box(gx+3.5,gx+3.6,0,2.4,zz-0.05,zz+0.05,steelSch())).children.at(-1));SCH.push(sch.add(box(gx-3.6,gx+3.6,2.35,2.45,zz-0.05,zz+0.05,steelSch())).children.at(-1))}
+     // school building: main bar north (5F) + west wing (4F)
+     const schTex=canvasTex(64,64,(c,w,h)=>{c.fillStyle='#ece3cf';c.fillRect(0,0,w,h);c.fillStyle='#6f8796';c.fillRect(4,22,56,24);c.fillStyle='#ece3cf';c.fillRect(30,22,4,24);c.fillStyle='#c9b996';c.fillRect(0,50,w,4)});
+     const sm=SM({map:texRep(schTex,1/3.6,1/3.5),color:0xffffff,roughness:.9});
+-    mass(rectQ(-3650,-4420,-2450,-3700),18.5,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true});
+-    {const gm=SM({map:texRep(TEX.brick,1.6,4.2),color:0x6f6c68,roughness:.95});mass(rectQ(-2420,-4460,-1560,-3720),13.5,0xffffff,'office','신사중학교',sch,{mat:gm,shop:false,noOcc:true,detail:false});
++    const mA=mass(rectQ(-3650,-4420,-2450,-3700),18.5,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true});
++    {const gm=SM({map:texRep(TEX.brick,1.6,4.2),color:0x6f6c68,roughness:.95});SCH.push(mass(rectQ(-2420,-4460,-1560,-3720),13.5,0xffffff,'office','신사중학교',sch,{mat:gm,shop:false,noOcc:true,detail:false}));
+       const gT=textTex('신 사 중 학 교',768,96,'#4b4845','#d8b768','700 66px "IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif');
+       const [ax,az]=P(-1990,-4462),pl=new THREE.Mesh(new THREE.PlaneGeometry(14,1.8),new THREE.MeshBasicMaterial({map:gT}));pl.position.set(ax,11,az-0.03);pl.rotation.y=Math.PI;sch.add(pl)}
+-    mass(rectQ(-3650,-3700,-3150,-1250),15,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true});
++    SCH.push(mass(rectQ(-3650,-3700,-3150,-1250),15,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true}));
++    // (env-test 2026.10.31) roadview 2026.06–07 → Blender 모델(tools/build_school.py → models/school410.js)이 매스·운동장·골대를 대신함 (이름판은 그대로)
++    khModel(mA,'school410',null,SCH);
+     // sign on the building facing the field and 압구정로
+     const sgT=textTex('신사중학교',512,96,'#2f5d3a','#ffffff','700 62px "IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif');
+     {const [sx,sz]=P(-2600,-3700),pl=new THREE.Mesh(new THREE.PlaneGeometry(9,1.7),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=-Math.PI/2+Math.atan2(0,1)+Math.PI/2;pl.position.set(sx,15.2,sz+0.05);sch.add(pl)}
+-    {const [sx,sz]=P(-1560,-4060),pl=new THREE.Mesh(new THREE.PlaneGeometry(7,1.3),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=Math.PI/2;pl.position.set(sx+0.05,15.6,sz);sch.add(pl)}
++    {const [sx,sz]=P(-1560,-4060),pl=new THREE.Mesh(new THREE.PlaneGeometry(7,1.3),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=Math.PI/2;pl.position.set(sx+0.05,13.6,sz);sch.add(pl)}   // 13.6 (was 15.6): stays on the curved gable of the env-test model
+     // 현대고등학교: next block NE of 신사중 across the side street — field with track, long white 5F main building, gym
+     roadBand([-1188,-5150],[-6200,-5150],330);
+@@ -7549,4 +11282,5 @@
+   [[960,420],[1060,420],[960,700],[1060,700]].forEach(([x,y],k)=>{const [X,Z]=P(x,y);car(g,X,Z,0.04,false,k+1)});
+   // 3번지 (편입 필지): existing low building on the east lot
++  const KHS0=g.children.length;
+   {const q=[[1150,196],[1585,196],[1585,yRoad(1585)-30],[1150,yRoad(1150)-30]],base=[[1150,196],[1585,196],[1585,yRoad(1585)-230],[1150,yRoad(1150)-230]];
+     const meshTex=canvasTex(64,128,(c,w,h)=>{c.fillStyle='#dfe2e3';c.fillRect(0,0,w,h);for(let i=0;i<500;i++){c.fillStyle='rgba(120,128,132,.18)';c.fillRect(Math.random()*w,Math.random()*h,1,1)}c.fillStyle='#b9bec1';c.fillRect(0,0,3,h)});
+@@ -7567,4 +11301,7 @@
+         const L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.round(L/1.6);for(let k=1;k<n;k++){const t=k/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;g.add(box(x-0.04,x+0.04,Y,Y+H,z-0.04,z+0.04,steelW))}}
+       const [xa,za]=P(1470,300),[xb,zb]=P(1575,430);g.add(box(xa,xb,13.0,16.4,za,zb,baseM));g.add(box(xa,xb,15.4,17.4,za,zb,frost))}
++    // (env-test 2026.11.02) 에가 브레인 사우나 (압구정로8길 3): press photos 2026.07.31 + roadview 2026.07.13 → models/sauna529.js
++    // existing state only (① 현황 · ③ 비교): this lot is merged into the tower site, so the sauna is gone in ② 신축
++    {const al=g.children.slice(KHS0),ph=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({visible:false}));g.add(ph);khModel(ph,'sauna529',null,al)}
+     [[1260,yRoad(1260)-120],[1450,yRoad(1450)-120]].forEach(([x,y],k)=>{const [X,Z]=P(x,y);car(g,X,Z,0.04,true,k+2)})}
+   // 동광빌딩 rear parking: brick-paved lot with a parking booth

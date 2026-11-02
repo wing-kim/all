@@ -32,5 +32,10 @@ size = sum((root / f).stat().st_size for f in lst)
 extra = ['bake/manifest.json', 'context/kh-context.js', 'context/buildings.json', 'context/ground.json', 'vendor/GLTFLoader.js', 'vendor/DRACOLoader.js', 'vendor/RGBELoader.js'] + [f for f in files('vendor') if f.endswith(('.js', '.wasm'))]
 hashed = sorted(set(lst + [f for f in extra if (root / f).exists()]))
 h = {f: hashlib.sha1((root / f).read_bytes()).hexdigest()[:12] for f in hashed}
+# 지니 주변 모델(new/models/, 1102.l): 서비스 워커 해시만(재방문 캐시). 미리받기 목록에는 넣지 않는다(실사 3D 를 켜기 전에는 라이트맵·가로 요소를 받지 않음)
+md = root.parent / 'new' / 'models'
+if md.exists():
+    for p in sorted(x for x in md.rglob('*') if x.suffix in ('.js', '.ktx2')):
+        h['../new/models/' + str(p.relative_to(md))] = hashlib.sha1(p.read_bytes()).hexdigest()[:12]
 (root / 'prefetch.json').write_text(json.dumps({'files': lst, 'bytes': size, 'hash': h}, ensure_ascii=False))
 print(len(lst), 'files', round(size / 1e6, 1), 'MB')
