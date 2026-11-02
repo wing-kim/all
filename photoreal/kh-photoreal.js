@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.g';
+  const VER = '1102.h';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -147,7 +147,8 @@
   // 배경 큐브와 환경광(PMREM)을 만든다. 시간대나 날짜·시각으로 해 방위가 바뀌면(5° 이상) 다시 만든다(약 30～60ms).
   const SKY = { day: 'daylight-sky_1k.hdr', sunset: 'sunset-sky_1k.hdr', night: 'night-sky_1k.hdr' }, SKYD = {};
   let skyCur = { key: '', az: 999, busy: false };
-  const SKYU = { tex: { value: null }, k: { value: 0 } };   // 유리 하늘 반사용(배경 하늘 큐브)
+  const SKYU = { tex: { value: null }, k: { value: 0 } };
+  PR.sky = () => skyCur;   // 진단(하늘 큐브·키)   // 유리 하늘 반사용(배경 하늘 큐브)
   const half = h => { const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023; return e === 0 ? s * 6.1035e-5 * (f / 1024) : e === 31 ? 0 : s * Math.pow(2, e - 15) * (1 + f / 1024); };
   // 하늘 사진은 RGBE(.hdr 과 같은 값)를 알파 없는 무손실 WebP 한 장(왼쪽 절반 RGB, 오른쪽 절반 지수)으로 묶은 파일(.rgbe.webp)을 먼저 받는다.
   // .hdr 3장 3.9MB → 1.2MB(같은 값, 무손실). 알파를 쓰지 않는 까닭은 브라우저가 알파 이미지를 미리 곱해 값이 깎이기 때문. 실패하면 .hdr
@@ -177,6 +178,10 @@
     const R3D = K.R3D, slot = bakeSlot(), key = slot === 'night' ? 'night' : slot === 'sunset' ? 'sunset' : 'day';
     const d = K.sun.position, azW = Math.atan2(d.z, d.x);
     if (skyCur.busy || (key === skyCur.key && Math.abs(azW - skyCur.az) < 0.09)) return;
+    // VR 중에는 하늘 큐브·환경광을 만들지 않는다(1102.h): VR 안에서 실사 3D 로 바꾸면 큐브 촬영 결과가 모두 0 이라(XR 을 잠시 꺼도 같음) 하늘이 검게 나왔다.
+    // 그동안은 아래 frame 규칙(useSky = 지금 시간대 하늘이 만들어졌을 때만)에 따라 Wing 하늘·환경광을 쓰고, VR 을 나오면 바로 만든다.
+    // VR 에 들어가기 전에 실사 3D 를 켜 두면 하늘이 미리 만들어져 VR 에서도 실사 하늘이 보인다
+    if (R.xr.isPresenting) { skyCur.xrWait = true; return; }
     skyCur.busy = true;
     const sd = await skyLoad(key); if (!sd) { skyCur.busy = false; return; }
     // 구 안쪽에 사진을 입혀 돌린 장면 → 큐브 카메라(배경) → PMREM(환경광)
