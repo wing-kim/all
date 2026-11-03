@@ -19,7 +19,10 @@ const ev = (f, ...a) => p.evaluate(f, ...a);
 await ev(() => { window.F = async n => { const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < n; i++) await new Promise(r => s.requestAnimationFrame(() => r())); };
   // 이동 뒤 n 프레임의 간격(세션 rAF 시각 차)
   // 보이는 프레임만(그 프레임이 시작될 때 전환 효과가 0.9 이상 검었으면 뺀다): 검은 화면의 끊김은 눈에 덜 띈다. 모든 프레임은 FTall
-  window.FTall = []; window.FT = async n => { const s = KHXR.renderer.xr.getSession(), ds = []; FTall = []; let t = null, a0 = 0; for (let i = 0; i < n; i++) { const now = await new Promise(r => s.requestAnimationFrame(tt => r(tt))); if (t != null) { FTall.push(now - t); if (a0 < 0.9) ds.push(now - t); } t = now; a0 = KHXRLayer.fadeA(); } return ds; }; });
+  // FTw: 보이는 프레임 중 가장 긴 프레임에 그 프레임 동안 생긴 일(합치기 횟수·새 셰이더·새 텍스처·구성 점검 시간)을 적는다(최적화 4번 원인 찾기, 1102.m)
+  window.FTall = []; window.FTw = null; window.FT = async n => { const s = KHXR.renderer.xr.getSession(), R = KHXR.renderer, O = KHXRLayer.opt, ds = []; FTall = []; FTw = null; let t = null, a0 = 0, st = null;
+    const snap = () => ({ b: O.nBuild, p: R.info.programs.length, x: R.info.memory.textures, g: R.info.memory.geometries, c: O.checkMs });
+    for (let i = 0; i < n; i++) { const now = await new Promise(r => s.requestAnimationFrame(tt => r(tt))), sn = snap(); if (t != null) { FTall.push(now - t); if (a0 < 0.9) { ds.push(now - t); if (!FTw || now - t > FTw.ms) FTw = { ms: +(now - t).toFixed(1), i, builds: sn.b - st.b, programs: sn.p - st.p, textures: sn.x - st.x, geos: sn.g - st.g, checkMs: sn.c }; } } t = now; st = sn; a0 = KHXRLayer.fadeA(); } return ds; }; });
 await ev(() => KHXRLayer.enter('vr')); await new Promise(r => setTimeout(r, 2500)); await ev(() => F(30));
 // 1) 알파: 바깥에서 건물과 나무가 보이게(머리 위치·방향은 에뮬레이터)
 const alpha = async on => ev(async on => { const A = KHXRLayer.alphaFix; A.on = on; A.probe = true; await F(3); return A.last; }, on);
@@ -34,7 +37,7 @@ res.base = stat(await ev(() => FT(60)));
 const tele = [];
 for (let i = 0; i < 10; i++) { tele.push(stat(await ev(async i => { const a = i * 0.9, r = 18 + (i % 3) * 8; const n0 = KHXRLayer.opt.nBuild; KHXRLayer.teleportTo(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), a); const ds = await FT(30); window.__nb = KHXRLayer.opt.nBuild - n0; return ds; }, i))); tele[i].builds = await ev(() => window.__nb); }
 const fl = [];
-for (const k of ['1F', '2F', '5F', 'B1', '1F']) { fl.push({ k, ...stat(await ev(async k => { const n0 = KHXRLayer.opt.nBuild; KHXRLayer.goLevel(KHXR.LEVELS.findIndex(l => l.key === k)); const ds = await FT(45); window.__nb = KHXRLayer.opt.nBuild - n0; window.__all = Math.round(Math.max(...FTall)); window.__ms = KHXRLayer.opt.stat && KHXRLayer.opt.stat.ms; return ds; }, k)), builds: await ev(() => window.__nb), optMs: await ev(() => window.__ms), maxAll: await ev(() => window.__all) }); }
+for (const k of ['1F', '2F', '5F', 'B1', '1F']) { fl.push({ k, ...stat(await ev(async k => { const n0 = KHXRLayer.opt.nBuild; KHXRLayer.goLevel(KHXR.LEVELS.findIndex(l => l.key === k)); const ds = await FT(45); window.__nb = KHXRLayer.opt.nBuild - n0; window.__all = Math.round(Math.max(...FTall)); window.__ms = KHXRLayer.opt.stat && KHXRLayer.opt.stat.ms; return ds; }, k)), builds: await ev(() => window.__nb), optMs: await ev(() => window.__ms), maxAll: await ev(() => window.__all), worst: await ev(() => window.FTw) }); }
 res.teleport = tele; res.floors = fl;
 const tMax = Math.max(...tele.map(x => x.max)), fMax = Math.max(...fl.map(x => x.max)), miss = tele.concat(fl).reduce((s, x) => s + x.missed72, 0);
 res.move = { teleportMax: tMax, floorMax: fMax, missed72: miss, baseMed: res.base.med };

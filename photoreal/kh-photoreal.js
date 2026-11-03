@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.l';
+  const VER = '1102.m';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -785,7 +785,7 @@
       if (hp) PLH.list.forEach(o => { o.visible = false; });   // 합치기 재구성(clear)이 표시를 되돌리므로 매 프레임
       if (hp !== PLH.on) { PLH.on = hp; PLH.list.forEach(o => { o.visible = !hp; o.userData.khxr = hp; });   // khxr: 합치기 대상에서 뺀다
         const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } }
-    if (!FURN.open && K.I.on) { FURN.go(); envAssets(); plantAssets(); }   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
+    if (!FURN.open && (K.I.on || R.xr.isPresenting)) { FURN.go(); envAssets(); plantAssets(); }   // 1102.m: VR 은 들어가자마자 받는다(처음 층 이동 뒤 늦게 붙어 보이는 동안 약 300ms 멈춤)   // 실내(주차장 차량 포함)로 들어가면 가구·차량을 바로 받는다
     // 현황 건물(동광빌딩)은 '현황'·'비교'를 처음 고를 때 Wing 이 만든다: 층 배치가 그대로여도 새로 생긴 메시를 바꾼다
     if (K.exist) { const es = K.exist.children.length + '|' + (K.exist.visible ? 1 : 0); if (es !== CUR.exist) { CUR.exist = es; if (staticDone) swapIn(K.exist, null, 'exist'); } }
     if (K.LEVELS !== CUR.levels) { applyAll('재건'); if (pendingSwitch) { PR.t.switchApply = Math.round(now() - pendingSwitch.t); } }
@@ -826,6 +826,8 @@
     // 지하층 안에서는 바깥이 보이지 않으므로 주변 건물·땅을 그리지 않는다(VR 그리기 호출 예산)
     // 미성아파트 일대(1102.g): '미래(추정)'(Wing state.ms, ?ms=future)를 고르고 신축 모드일 때만 재건축 가정 동이 있는 한 벌(CTX.next), 그 밖에는 실측 현재 단지가 있는 한 벌(CTX.now)
     envLate();
+    // 1102.m(최적화 5번): 지하층 안에서는 바깥이 보이지 않으므로 지니 주변 모델과 보도·가로 요소도 그리지 않는다(주변 건물·땅과 같은 규칙)
+    if (window.KHENV && CTX.envHid !== inBase) { CTX.envHid = inBase; KHENV.models().forEach(m => { m.o.visible = !inBase; }); const G = KHENV.R.grp; if (G) G.visible = !inBase && !!KHENV.R.real && !KHENV.R.lite; const O = optApi(); if (O && O.dirty) O.dirty(); }
     if (window.KHENV && KHENV.lite) { const xr = R.xr.isPresenting || QS.key === 'low'; if (CTX.envLite !== xr) { CTX.envLite = xr; KHENV.lite(xr); const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); } }   // VR·품질 '낮음'은 지니 단색·가로 요소 끔(그리기 수 예산: VR 외관 170, 휴대폰 낮음 400)
     if (CTX.next && CTX.detached.length) { const nw = K.state.era === 'new' && K.state.ms === 'future'; if (!nw) ctxNow(); if (CTX.now) CTX.now.visible = !nw && !inBase; CTX.next.visible = nw && !inBase; }
     if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
@@ -931,11 +933,13 @@
     O.hold = loading ? (O.hold || now()) : 0;
     // 반사 지도 갱신(refreshRefl)은 그리는 동안 그림자 서명 한 칸을 잠깐 바꾼다: 갱신 직후 0.7초의 바뀜은 다시 합칠 일이 아니다
     const sg = optSig(); if (sg !== OPT.sig) { const refl = now() - (GATE.reflAt || -1e9) < 700; OPT.sig = sg; if (!refl) O.pause(loading ? 1500 : 400); }
+    if (O.dynTick) O.dynTick();   // 1102.m: Wing 가림(OCC)이 숨긴 지니 매스를 합친 메시에서도 뺀다(다시 합치지 않음)
     O.screenTick(now());
     PR.stat.opt = O.stat; PR.stat.optCheckMs = O.checkMs;
   }
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
+  PR.settling = () => !!(DR.busy || STG.cur >= 0 || (window.KHENV && KHENV.busy) || (ENV.pp && PR.t.plants == null) || (ENV.p && PR.t.env2 == null));   // 실내 화분·차량을 받아 붙이는 중 포함(처음 실내에 들어갈 때 늦게 붙어 287ms 멈춤)   // VR 이동 전환 화면이 이 동안 검은 채로 기다린다(1102.m, kh-xr.js fadeTick)
   /* VR 품질 단계(T5): XR 계층(kh-xr.js XQ)이 프레임 간격을 보고 정한 단계를 받는다. 0·1 은 XR 계층(포비에이션)만,
      2 = 가까운 나무 카드·전신주 숨김, 3 = 원경 주변 건물까지 숨김. 그림자 형식(PCF Soft)은 셰이더를 모두 다시 만들어야 해 바꾸지 않는다 */
   const XRQ = { level: 0 };

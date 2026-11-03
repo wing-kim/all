@@ -1,5 +1,5 @@
 // 화면 메시 합치기(T1) 시험: node opt.mjs  (BASE=주소, 기본 http://localhost:8791)
-// 1) 외관 한 프레임 그리기 호출(합치기 켬/끔), 2) 같은 시점 화면 차이(평균 화소 차), 3) 1층 걷기 클릭 목표가 켬/끔에서 같은지
+// 1) 외관 한 프레임 그리기 호출(합치기 켬/끔), 2) 같은 시점 화면 차이(평균 화소 차, 가림 시점 포함), 3) 1층 걷기 클릭 목표가 켬/끔에서 같은지
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
@@ -47,6 +47,12 @@ const imOn = await snap();
 const d = await diff(imOff, imOn);
 fs.writeFileSync(OUT + 'opt-off.png', Buffer.from(imOff.split(',')[1], 'base64')); fs.writeFileSync(OUT + 'opt-on.png', Buffer.from(imOn.split(',')[1], 'base64'));
 ok('합치기 켬/끔 화면 차이 작음(평균 < 3, 큰 차이 화소 < 2%)', d.mean < 3 && d.bigPct < 2, d);
+// 1102.m: Wing 가림(OCC)이 지니 건물(glass529·domino114)을 숨기는 시점. 합친 메시가 가림을 따라가는지(기준 코드에서는 창틀만 남은 건물이 우리 건물 앞을 가렸다)
+await ev(() => { const C = KHXR.controls; KHXR.camera.position.set(-8, 3, -48); C.target.set(18, 9, -20); C.update(); }); await wait(1500);
+await ev(() => KHPRLayer.optSet(false)); await settle(); const ocOff = await snap();
+await ev(() => KHPRLayer.optSet(true)); await settle(); const ocOn = await snap(); const d2 = await diff(ocOff, ocOn);
+fs.writeFileSync(OUT + 'opt-occ-off.png', Buffer.from(ocOff.split(',')[1], 'base64')); fs.writeFileSync(OUT + 'opt-occ-on.png', Buffer.from(ocOn.split(',')[1], 'base64'));
+ok('가림 시점 합치기 켬/끔 화면 차이 작음(평균 < 3, 큰 차이 화소 < 2%)', d2.mean < 3 && d2.bigPct < 2, d2);
 // 1층 걷기 클릭: 같은 화면 위치를 눌렀을 때 걷기 목표가 같은지
 const walk = async () => {
   await ev(() => document.querySelector('[data-lv="1F"]').click()); await wait(2500);

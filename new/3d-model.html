@@ -7401,17 +7401,25 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.l';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.m';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
+/* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
+   fetch 로 받는다(20개 6.97MB → 1.51MB, base64 풀기·문자열 해석이 주 스레드에서 빠짐). 해독기는 meshoptimizer(MIT, photoreal/vendor). 바로 연 파일(file://)·실패·?envbin=0 이면 원래 .js */
+let KHMO=null;const khMopt=()=>KHMO||(KHMO=khJS('../photoreal/vendor/meshopt_decoder.js').then(()=>MeshoptDecoder.ready).then(()=>MeshoptDecoder));
+const khBinOK=location.protocol!=='file:'&&new URLSearchParams(location.search).get('envbin')!=='0';
+const khGet=async id=>{const h=khBinOK&&KH.bin&&KH.bin[id];
+  if(h){try{const l=new THREE.GLTFLoader();l.setMeshoptDecoder(await khMopt());const g=await l.loadAsync(`models/${id}.glb?v=${h}`);delete KH.glb[id];return g}catch(e){console.warn('env glb',id,e)}}
+  await khJS(`models/${id}.js`,KH.ver[id]);const g=await new Promise((ok,no)=>new THREE.GLTFLoader().load(KH.glb[id],ok,undefined,no));delete KH.glb[id];return g};
 async function khLoad0(){
   KHR.busy=true;   // [PR] 받는 중(실사 3D·VR 합치기가 이 동안 다시 합치지 않는다)
   // [PR] 캐시: 10분 단위(Date.now()/6e5) 대신 판 문자열(KH_ENV_VER, 모델을 다시 올리면 올림). GLTFLoader 는 인라인 대신 실사 3D 와 같은 r128 판을 필요할 때 받는다
   try{if(!THREE.GLTFLoader)await khJS('../photoreal/vendor/GLTFLoader.js');await khJS('models/kh-lib.js',KH_ENV_VER)}catch(e){console.warn('env models',e);return}
+  if(khBinOK)await khJS('models/bin-list.js',KH_ENV_VER).catch(e=>console.warn('env bin',e));   // [PR] .glb 목록(없으면 .js)
   // staged: buildings within 45 m of the site load first, the rest (school etc.) after them
   const dist=q=>{const b=new THREE.Box3().setFromObject(q.m);return b.isEmpty()?0:b.getCenter(new THREE.Vector3()).setY(0).length()},qs=KHQ.slice().sort((a,b)=>dist(a)-dist(b));
   const one=async q=>{try{
-    await khJS(`models/${q.id}.js`,KH.ver[q.id]);const g=await new Promise((ok,no)=>new THREE.GLTFLoader().load(KH.glb[q.id],ok,undefined,no)),o=g.scene,ms=[];
+    const g=await khGet(q.id),o=g.scene,ms=[];   // [PR] .glb(fetch) 또는 .js
     o.traverse(k=>{if(k.isMesh)ms.push(k)});
     await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);
       if(/^sign_/.test(k.userData.mn)){k.visible=R3D.on&&KHR.real;KHR.signs.push(k)}}));   // blank sign boxes: 렌더-실사 only
@@ -7426,19 +7434,26 @@ async function khLoad0(){
 //  - weathering maps (<id>_ao.js, G = grime) darken the albedo; glass and steel reflect the page's reflection probe (R3D.cube)
 // plus the 압구정로 street pack (paving, kerb, drains, tree grates, signal poles, flower baskets, bus shelter), instanced street
 // trees tinted by season, and lofted cars in place of the box cars
-const khGlb=async id=>{await khJS(`models/${id}.js`,KH.ver[id]);const g=await new Promise((ok,no)=>new THREE.GLTFLoader().load(KH.glb[id],ok,undefined,no)),ms=[];delete KH.glb[id];
+const khGlb=async id=>{const g=await khGet(id),ms=[];   // [PR] .glb(fetch) 또는 .js
   g.scene.traverse(k=>{if(k.isMesh)ms.push(k)});
   await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);
     if(k.material.alphaMap)k.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,alphaMap:k.material.alphaMap,alphaTest:k.material.alphaTest})}));
   return g.scene};
 const KHL={sky:new THREE.Vector3(1,1,1),k:2*Math.PI*Math.PI*0.4};   // lightmap stores sqrt(irradiance/2) in Blender units; 0.4 = tuned by eye so shade sides sit with the page-lit buildings next door
 const NL=String.fromCharCode(10);(window.KH=window.KH||{tex:{},glb:{}}).light=KHL;   // tuning handle (KH.light.k, then applyTime)
-function khPatch(m0,lm,ao){const m=m0.clone();m.lightMap=lm;m.lightMapIntensity=0;if(ao){m.aoMap=ao;m.aoMapIntensity=0}   // slots only bind the maps + vUv2
+function khPatch(m0,lm,ao,pk){const m=m0.clone();m.lightMap=lm;m.lightMapIntensity=0;if(ao&&!pk){m.aoMap=ao;m.aoMapIntensity=0}   // slots only bind the maps + vUv2   // [PR] pk: 아틀라스(색 = 라이트맵, 알파 = 노후 맵, 1102.m)
   m.onBeforeCompile=sh=>{sh.uniforms.khSky={value:KHL.sky};
     sh.fragmentShader='uniform vec3 khSky;'+NL+sh.fragmentShader
-      .replace('#include <map_fragment>','#include <map_fragment>'+NL+(ao?'diffuseColor.rgb *= texture2D( aoMap, vUv2 ).g;':''))
+      .replace('#include <map_fragment>','#include <map_fragment>'+NL+(pk?'diffuseColor.rgb *= texture2D( lightMap, vUv2 ).a;':ao?'diffuseColor.rgb *= texture2D( aoMap, vUv2 ).g;':''))
       .replace('#include <lights_fragment_maps>','#include <lights_fragment_maps>'+NL+'{ vec3 t = texture2D( lightMap, vUv2 ).rgb; irradiance = t * t * khSky; iblIrradiance = vec3( 0.0 ); }')};
-  m.customProgramCacheKey=()=>ao?'khlm-g':'khlm';return m}
+  m.customProgramCacheKey=()=>pk?'khlm-a':ao?'khlm-g':'khlm';return m}
+/* [PR] 최적화 1번(1102.m): 건물마다 두 장(라이트맵·노후 맵)이던 텍스처를 아틀라스 한 장(photoreal/tools/ktx/env-atlas.py)으로. 텍스처 36 → 1장,
+   같은 지니 재질을 쓰는 건물끼리 실사 재질도 하나를 같이 써서 화면 합치기(Opt)가 건물을 넘어 묶는다. 휴대폰·퀘스트·품질 '낮음'은 칸 256 판.
+   uv2(건물마다 0～1)를 그 건물 칸 자리로 옮긴다. 못 읽으면(또는 ?envatlas=0) 건물별 텍스처 그대로 */
+let KHAT=null;const khAtlas=()=>KHAT||(KHAT=(async()=>{const k=await khKtx(),A=KH.atlas;if(!k||!A||new URLSearchParams(location.search).get('envatlas')==='0')return null;
+  const lo=matchMedia('(pointer:coarse)').matches||/OculusBrowser|Quest/i.test(navigator.userAgent)||!!(window.KHPRLayer&&KHPRLayer.q&&KHPRLayer.q.key==='low'),n='env_lmao'+(lo?'_256':'');
+  try{const t=await k.loadAsync(`models/tex/${n}.ktx2?v=${A['file'+(lo?'_256':'')]}`);t.name=n;t.encoding=THREE.LinearEncoding;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;t.anisotropy=renderer.capabilities.getMaxAnisotropy();KHR.atlas=n;return t}catch(e){console.warn('env atlas',e);return null}})());
+function khAtlasUV(a,r){for(let i=0;i<a.count;i++)a.setXY(i,r[0]+a.getX(i)*r[2],r[1]+a.getY(i)*r[3]);a.needsUpdate=true}
 function khSky(){if(!R3D.on)return;const s=R3D.sunNow,k=KHL.k;   // day / low sun / night tint of the baked sky light
   if(!s)KHL.sky.set(.2,.25,.42).multiplyScalar(k*.12);else if(s.el<7)KHL.sky.set(1,.8,.64).multiplyScalar(k*.6);else KHL.sky.set(1,1,1).multiplyScalar(k*Math.min(1,.55+s.el/60))}
 const KHG=/^(glass|steel|car_glass)/;
@@ -7452,12 +7467,15 @@ function khSeason(){if(!KHR.leaf)return;const mo=R3D.custom&&R3D.cdate?R3D.cdate
   KHR.trees.forEach(t=>t.visible=on&&(t.material!==KHR.leaf||!!s));if(s){KHR.leaf.color.setRGB(...s);if(KHR.leaf.userData.lin)KHR.leaf.color.convertSRGBToLinear()}}
 function khRealLoad(){if(KH_ENV_OFF)return Promise.resolve();return KHR.loading||(KHR.loading=(async()=>{try{
   await khLoad();KHR.busy=true;
-  const lit=(o,lm,ao)=>o.traverse(k=>{if(!k.isMesh)return;k.userData.m0=k.material;k.userData.m1=khPatch(k.material,lm,ao);KHR.bld.push(k)});
-  await Promise.all(KHQ.filter(q=>q.o&&KH.ver['tex/'+q.id+'_lm']).map(async q=>lit(q.o,...await Promise.all([khTex(q.id+'_lm'),khTex(q.id+'_ao')]))));
+  const AT=await khAtlas(),P1=new Map(),tl=id=>AT&&KH.atlas.tile[id];   // [PR] 아틀라스(1102.m): 같은 바탕 재질 → 같은 실사 재질
+  const lit=(o,lm,ao,r,own)=>{const sg=new Set();o.traverse(k=>{if(!k.isMesh)return;k.userData.m0=k.material;   // own: 메시마다 재질 따로(보도: 땅과 겹친 면이라 합치면 그리는 순서가 바뀌어 깜빡임)
+    if(r){const g=k.geometry,u=g.attributes.uv2;if(u&&!sg.has(g)){sg.add(g);khAtlasUV(u,r)}let m=own?null:P1.get(k.material);if(!m){m=khPatch(k.material,AT,AT,true);if(!own)P1.set(k.material,m)}k.userData.m1=m}
+    else k.userData.m1=khPatch(k.material,lm,ao);KHR.bld.push(k)})};
+  await Promise.all(KHQ.filter(q=>q.o&&KH.ver['tex/'+q.id+'_lm']).map(async q=>tl(q.id)?lit(q.o,null,null,tl(q.id)):lit(q.o,...await Promise.all([khTex(q.id+'_lm'),khTex(q.id+'_ao')]))));
   // [PR] 차량(cars)은 받지 않는다: 실사 3D 가 Wing 상자 차를 자체 차량 모델로 바꾸므로 지니 차량을 더하면 같은 자리에 두 대가 겹쳤다(1102.l)
   const [st,tr]=await Promise.all(['street_env','tree'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null}))),cr=null;
   KHR.grp=new THREE.Group();KHR.grp.visible=false;R3D.street.add(KHR.grp);
-  if(st){st.updateMatrixWorld(true);KHR.grp.add(st);if(KH.ver['tex/street_env_lm'])lit(st,await khTex('street_env_lm'));
+  if(st){st.updateMatrixWorld(true);KHR.grp.add(st);if(KH.ver['tex/street_env_lm'])tl('street_env')?lit(st,null,null,tl('street_env'),true):lit(st,await khTex('street_env_lm'));
     const spots=[];st.traverse(k=>{if(/^tree_/.test(k.name))spots.push(k.matrixWorld.clone())});
     if(tr){tr.updateMatrixWorld(true);tr.traverse(k=>{if(!k.isMesh)return;const im=new THREE.InstancedMesh(k.geometry,k.material,spots.length),m=new THREE.Matrix4();
       spots.forEach((s,i)=>im.setMatrixAt(i,m.multiplyMatrices(s,k.matrixWorld)));im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;if(k.customDepthMaterial)im.customDepthMaterial=k.customDepthMaterial;

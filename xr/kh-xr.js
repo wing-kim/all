@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.l';
+  const VER = '1102.m';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -825,10 +825,17 @@
   function fadeTick(dt) {
     const F = S.fade; if (!F) return;
     F.t += Math.min(dt, 0.05); const half = F.dur / 2;   // 긴 프레임(합치기 등) 뒤 한꺼번에 밝아지지 않게 한 프레임 진행은 0.05초까지
-    if (!F.done && F.t >= half) { F.done = true; try { F.fn(); } catch (e) { log('전환 오류', e.message); } }
+    if (!F.done && F.t >= half) { F.done = true; try { F.fn(); } catch (e) { log('전환 오류', e.message); }
+      // 1102.m: 이동 직후 실사 계층이 몇 프레임에 걸쳐 새 층의 재질·조명을 바꾼다. 바로 합치면 재질이 바뀐 뒤 한 번 더 합쳐(층마다 2번, CPU 4배에서 각 약 200ms)
+      // 그 둘째가 밝아진 뒤에 일어나기도 했다. 첫 합치기를 0.45초 뒤로 미뤄 한 번에 합친다(그동안 검은 화면)
+      if (S.opt) { Opt.need = true; Opt.due = performance.now() + 450; } }
     // 이동 뒤 다시 합치기(층 이동 등)가 남아 있으면 검은 화면에서 끝내고 밝힌다(1102.k: 밝아지는 도중 합치기·그림자 다시 계산으로 끊김이 보였다). 최대 0.6초
     // 이동 직후 0.3초는 검은 채로 두고 매 프레임 장면 구성을 점검해(실사 층 조명·가구 표시가 몇 프레임 늦게 바뀜), 바뀌었으면 그 합치기도 검은 화면에서 끝낸다(최대 1.5초)
-    else if (F.done && S.opt) { const w = performance.now() - (F.h0 || (F.h0 = performance.now())); if ((w < 300 || Opt.need) && w < 1500) { F.t = Math.min(F.t, half); Opt.t = 0; } }
+    // 1102.m(최적화 4번): 실사 계층이 아직 받거나 만드는 중이면(처음 가는 층의 가구 등) 또는 방금 긴 프레임(50ms 넘음)이 있었으면 검은 화면을 더 둔다(최대 1.5초 그대로).
+    // 처음 1층에 들어갈 때 가구 만들기, 5층의 늦은 합치기가 밝아진 뒤에 일어나 보이는 동안 약 100ms 멈춤이 남았다
+    else if (F.done && S.opt) { const t = performance.now(), w = t - (F.h0 || (F.h0 = t)); if (dt > 0.05) F.lg = t;
+      const busy = !!(window.KHPRLayer && KHPRLayer.settling && KHPRLayer.settling()), long = !!F.lg && t - F.lg < 300;
+      if ((w < 300 || Opt.need || busy || long) && w < 1500) { F.t = Math.min(F.t, half); Opt.t = 0; } }
     const a = F.t < half ? F.t / half : Math.max(0, 1 - (F.t - half) / half);
     fadeMesh.visible = a > 0.01; fadeMesh.material.opacity = a;
     if (F.t >= F.dur) { S.fade = null; fadeMesh.visible = false; }
@@ -1053,13 +1060,17 @@
     visibleMeshes(withHidden) {
       const hs = withHidden ? this.hiddenSet : null;
       // 화면 합치기(VR 밖, screenOn)는 실사 3D 계층이 정한 묶음만 훑는다. Wing 의 가림 상자(userData.box)는 Wing 이 매 프레임 표시를 바꾸므로 합치지 않는다
-      const out = [], scr = this.screen(), seen = scr ? new Set() : null;
-      const walk = o => {
-        if ((!o.visible && !(hs && hs.has(o))) || o === rig || o === Opt.group || o.userData.khxr) return;
-        if (scr && o.userData.box && o.userData.box.isBox3) { if (o.userData.khEnv && !(K.I && K.I.on)) for (const c of o.children) walk(c); return; }   // 지니 모델이 붙은 매스(1102.l): 바깥 보기에서는 모델(자식)은 합친다
-        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !(seen && seen.has(o))) { out.push(o); if (seen) seen.add(o); }
-        for (const c of o.children) walk(c);
+      const out = [], scr = this.screen(), seen = scr ? new Set() : null, dyn = this.dynOf = new Map(), masses = [];
+      // 지니 모델이 붙은 매스(1102.l): 바깥 보기에서는 모델(자식)도 다른 건물과 합친다. Wing 가림(OCC)이 이 매스를 숨겼다 보였다 해도
+      // 다시 합치지 않도록(1102.m: 합친 메시가 가림을 따라가지 못해 우리 건물 앞에 남았다) 숨김과 상관없이 훑고, 합친 메시에서 그 매스의 꼭짓점 구간을 뺀다(dynTick)
+      const walk = (o, d) => {
+        const envBox = scr && o.userData.box && o.userData.box.isBox3 && o.userData.khEnv;
+        if ((!o.visible && !envBox && !(hs && hs.has(o))) || o === rig || o === Opt.group || o.userData.khxr) return;
+        if (scr && o.userData.box && o.userData.box.isBox3) { if (envBox && !(K.I && K.I.on) && masses.length < 32) { masses.push(o); for (const c of o.children) walk(c, masses.length); } return; }
+        if ((o.isMesh || o.isLineSegments) && !o.isSkinnedMesh && o.geometry && o.geometry.attributes.position && (!o.isInstancedMesh || Opt.instOk(o)) && !(seen && seen.has(o))) { out.push(o); if (seen) seen.add(o); if (d) dyn.set(o, d); }
+        for (const c of o.children) walk(c, d);
       };
+      this.dynMasses = masses;
       if (scr) { for (const r of this.roots()) if (r && inScene(r) && visibleChain(r)) walk(r); } else walk(scene);
       return out;
     },
@@ -1121,6 +1132,11 @@
         let off = 0; for (const g of geos) { const src = g.attributes[n]; if (src) arr.set(src.array, off); off += g.attributes.position.count * a0.itemSize; }
         out.setAttribute(n, new T.BufferAttribute(arr, a0.itemSize, a0.normalized));
       }
+      if (pts.some(pt => this.dynOf.has(pt.o))) {   // 가림 매스별 꼭짓점 구간 [매스 번호(1부터, 0 = 가림 없음), 시작, 개수]. 조각 순서는 그대로(바꾸면 땅과 겹친 면의 앞뒤가 달라진다)
+        const rs = []; let off = 0;
+        pts.forEach((pt, i) => { const d = this.dynOf.get(pt.o) || 0, n = geos[i].attributes.position.count, l = rs[rs.length - 1]; if (l && l[0] === d) l[2] += n; else rs.push([d, off, n]); off += n; });
+        out.userData.khr = rs;
+      }
       if (bake) {
         const col = new Float32Array(total * 3); let off = 0;
         pts.forEach((pt, i) => { const c = pt.m.color, n = geos[i].attributes.position.count; for (let k = 0; k < n; k++) { col[off++] = c.r; col[off++] = c.g; col[off++] = c.b; } });
@@ -1132,7 +1148,7 @@
     build() {
       this.clear();
       scene.updateMatrixWorld(true);
-      const t0 = performance.now(), objs = this.visibleMeshes(), under = this.underground(objs), pts = this.parts(under.size ? objs.filter(o => !under.has(o)) : objs), buckets = new Map(), cache = new Map();
+      const t0 = performance.now(), objs = this.visibleMeshes(), dynM = this.dynMasses, dynObjs = [], under = this.underground(objs), pts = this.parts(under.size ? objs.filter(o => !under.has(o)) : objs), buckets = new Map(), cache = new Map();
       for (const pt of pts) { const k = this.keyOf(pt); (buckets.get(k) || buckets.set(k, []).get(k)).push(pt); }
       const grp = new T.Group(); grp.name = 'khxr-proxy'; grp.userData.khxr = true;
       this.mats = this.mats || [];
@@ -1144,25 +1160,45 @@
         const must = list.some(p => multiObjs.has(p.o));
         if (list.length < 2 && !bake && !must) continue;
         let mat = list[0].m;
+        const dyn = list.some(p => this.dynOf.has(p.o));
         // 반투명을 한 덩어리로 합치면 three 의 물체 단위 정렬(뒤→앞)이 깨진다. 깊이를 쓰면 먼저 그린 가까운 면이
         // 뒤의 반투명(벽 표시·유리 너머 요소)을 지워 버리므로, 합친 반투명은 깊이를 쓰지 않게(XR 동안만, 끝나면 원복)
         if (mat.transparent && mat.depthWrite && !bake) { this.dw = this.dw || new Set(); this.dw.add(mat); mat.depthWrite = false; }
         if (bake) { const f = k.split('|'); mat = mat.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true; if ('roughness' in mat) { mat.roughness = +f[9]; mat.metalness = +f[10]; } if (mat.transparent) mat.depthWrite = false; mat.needsUpdate = true; this.mats.push(mat); }
+        if (dyn && bake) this.dynMat(mat, list[0].m);
         const geo = this.merge(list, bake, cache);
         const obj = list[0].kind === 'L' ? new T.LineSegments(geo, mat) : new T.Mesh(geo, mat);
         obj.castShadow = list[0].o.castShadow; obj.receiveShadow = list[0].o.receiveShadow; obj.renderOrder = list[0].o.renderOrder;
         obj.matrixAutoUpdate = false; grp.add(obj);
+        if (dyn) dynObjs.push(obj);
+        { let r = list[0].o; while (r.parent && r.parent !== scene) r = r.parent; obj.userData.khRoot = (r.name || r.type) + (list[0].o.userData.khEnv || (r !== list[0].o && list.some(p => { for (let q = p.o; q; q = q.parent) if (q.userData.khEnv) return true; return false; })) ? '+env' : ''); }   // 진단: 이 묶음의 첫 조각이 속한 장면 최상위 묶음(최적화 5번 그리기 수 분석)
         list.forEach(p => merged.add(p.o));
       }
       cache.forEach(g => g.dispose());
       merged.forEach(o => { o.visible = false; this.hidden.push(o); });
       under.forEach(o => { o.visible = false; this.hidden.push(o); });
       this.hiddenSet = new Set(this.hidden);
+      this.dynM = dynM; this.dynObjs = dynObjs; this.dynMask = '';
       scene.add(grp); this.group = grp; this.sig = this.sigOf(objs) + ':' + this.cullUnder();
       this.stat = { objects: objs.length, parts: pts.length, groups: grp.children.length, under: under.size, ms: Math.round(performance.now() - t0) };
       this.nBuild++; this.msTotal += this.stat.ms; this.stat.n = this.nBuild; this.stat.total = this.msTotal;
       R.shadowMap.needsUpdate = true;
       log('최적화', JSON.stringify(this.stat));
+    },
+    // 가림 매스(1102.m): 단색 묶음 복제 재질에 원래 재질의 셰이더 손질(지니 라이트맵 khPatch, 복제하면 빠진다)을 잇는다
+    dynM: [], dynObjs: [], dynMask: '',
+    dynMat(mat, src) { const ob = src.onBeforeCompile, ck = src.customProgramCacheKey; mat.onBeforeCompile = (sh, r) => ob.call(src, sh, r); mat.customProgramCacheKey = () => ck.call(src); mat.needsUpdate = true; },
+    // 매 프레임(Wing 가림 처리 뒤, 그리기 전): 가림 매스 표시가 바뀌었을 때만 합친 메시의 인덱스를 보이는 매스 구간으로 다시 만든다.
+    // 셰이더로 숨기면 후처리(SSAO 등 덮어쓰기 재질)·그림자에 숨긴 건물이 남으므로 꼭짓점 자체를 뺀다(바뀔 때 1ms 안팎)
+    dynTick() {
+      if (!this.dynObjs.length) return; const vis = this.dynM.map(m => visibleChain(m)), mask = vis.map(v => v ? 1 : 0).join(''); if (mask === this.dynMask) return; this.dynMask = mask;
+      for (const o of this.dynObjs) {
+        const g = o.geometry, rs = g.userData.khr, on = rs.filter(r => !r[0] || vis[r[0] - 1]);
+        const n = on.reduce((s, r) => s + r[2], 0); o.visible = n > 0; if (!n) continue;
+        // 인덱스는 메시마다 한 벌(전체 크기)을 두고 앞쪽만 채워 그리는 범위를 줄인다(바꿀 때마다 새 버퍼를 만들면 GPU 버퍼가 쌓인다)
+        if (!g.index) { if (on.length === rs.length) continue; g.setIndex(new T.BufferAttribute(new Uint32Array(g.attributes.position.count), 1)); }
+        const ix = g.index.array; let k = 0; for (const r of on) for (let i = 0; i < r[2]; i++) ix[k++] = r[1] + i; g.index.needsUpdate = true; g.setDrawRange(0, k);
+      }
     },
     clear() {
       this.hidden.forEach(m => { m.visible = true; }); this.hidden = []; this.hiddenSet = null; this.sig = '';

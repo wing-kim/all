@@ -31,7 +31,7 @@ await p.screenshot({ path: OUT + 'qa-shots/env-sketch.jpg', type: 'jpeg', qualit
 res.sketchMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { if (!k.visible) return; n++; if (k.material.map) tex++; }); return { n, tex }; });
 ok('스케치업: 지니 재질에 텍스처 없음', res.sketchMats.n > 0 && res.sketchMats.tex === 0, res.sketchMats);
 // 2) 실사 3D 전 네트워크
-const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|street_env|^tree\.js/;   // 1102.l: 텍스처는 KTX2 를 먼저 받는다
+const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|env_lmao|street_env|^tree\.js/;   // 1102.l: 텍스처는 KTX2 를 먼저 받는다
 res.beforeReal = reqs.filter(r => realRe.test(r.replace(/^tex\//, '')));
 await ev(() => document.getElementById('vm-render').click()); await new Promise(r => setTimeout(r, 2500));
 res.renderMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { n++; if (k.material.map) tex++; }); return { n, tex, lm: (KHENV.R.all || []).filter(k => k.material.lightMap).length }; });
