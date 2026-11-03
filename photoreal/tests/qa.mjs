@@ -140,7 +140,7 @@ if (want('quality') || want('shots') || want('ui') || want('budget')) {
   if (want('shots') && q.shots) {
     // 지니 주변 모델 스케치업 기준 화면(env.mjs 가 찍음, 1102.l). reg 를 돌리지 않았으면 여기서 찍는다
     if (!want('reg')) await run(HERE, 'env.mjs');
-    if (fs.existsSync(path.join(HERE, 'out/qa-shots/env-sketch.jpg')) && !q.shots.includes('qa-shots/env-sketch.jpg')) q.shots.push('qa-shots/env-sketch.jpg');
+    for (const f of ['env-sketch.jpg', 'env-school.jpg']) if (fs.existsSync(path.join(HERE, 'out/qa-shots/' + f)) && !q.shots.includes('qa-shots/' + f)) q.shots.push('qa-shots/' + f);   // env-school: 신사중학교 실사 3D(1102.n)
     const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new' }); const p = await b.newPage();
     const changes = [];
     for (const f of q.shots) {

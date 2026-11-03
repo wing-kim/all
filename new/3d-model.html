@@ -7401,7 +7401,7 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.m';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.n';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -7472,6 +7472,12 @@ function khRealLoad(){if(KH_ENV_OFF)return Promise.resolve();return KHR.loading|
     if(r){const g=k.geometry,u=g.attributes.uv2;if(u&&!sg.has(g)){sg.add(g);khAtlasUV(u,r)}let m=own?null:P1.get(k.material);if(!m){m=khPatch(k.material,AT,AT,true);if(!own)P1.set(k.material,m)}k.userData.m1=m}
     else k.userData.m1=khPatch(k.material,lm,ao);KHR.bld.push(k)})};
   await Promise.all(KHQ.filter(q=>q.o&&KH.ver['tex/'+q.id+'_lm']).map(async q=>tl(q.id)?lit(q.o,null,null,tl(q.id)):lit(q.o,...await Promise.all([khTex(q.id+'_lm'),khTex(q.id+'_ao')]))));
+  /* [PR] 신사중학교 실사 3D 판(1102.n, 지니 모델을 우리가 늘림): 서쪽 날개를 실측 ㄱ자 111m(브이월드)에 맞춰 늘려 다시 구운 school410r
+     (photoreal/tools/model/jinny/build_school.py, KH_WING_Z1=-16.0). 실사 레이어가 켜진 동안만 원래 학교 대신 보인다(스케치업·렌더는 Wing 배치 그대로) */
+  {const q=KHQ.find(q=>q.id==='school410');if(q&&q.o&&KH.ver.school410r){try{const g=await khGet('school410r'),r=g.scene,ms=[];r.traverse(k=>{if(k.isMesh)ms.push(k)});
+    await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);k.userData.mBase=k.material}));
+    r.traverse(k=>{k.userData.prSkip=true});q.o.add(r);KHR.sch=r;(KHR.all=KHR.all||[]).push(...ms);
+    if(tl('school410r'))lit(r,null,null,tl('school410r'));else lit(r,...await Promise.all([khTex('school410r_lm'),khTex('school410r_ao')]))}catch(e){console.warn('env school410r',e)}}}
   // [PR] 차량(cars)은 받지 않는다: 실사 3D 가 Wing 상자 차를 자체 차량 모델로 바꾸므로 지니 차량을 더하면 같은 자리에 두 대가 겹쳤다(1102.l)
   const [st,tr]=await Promise.all(['street_env','tree'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null}))),cr=null;
   KHR.grp=new THREE.Group();KHR.grp.visible=false;R3D.street.add(KHR.grp);
@@ -7514,7 +7520,8 @@ const KHF=new Map();   // 지니 재질 → VR 단색 재질(텍스처 평균색
 const KHA=new WeakMap();   // 텍스처 → 평균색(r128 텍스처에는 userData 가 없다)
 function khAvg(t){if(t&&t.name&&KH.avg&&KH.avg[t.name])return new THREE.Color(...KH.avg[t.name]).convertSRGBToLinear();const im=t&&t.image;if(!im||!im.width||t.isCompressedTexture)return null;if(KHA.has(t))return KHA.get(t);let a=null;try{const c=document.createElement('canvas');c.width=c.height=4;const g=c.getContext('2d');g.drawImage(im,0,0,4,4);const d=g.getImageData(0,0,4,4).data;let r=0,gg=0,b=0;for(let i=0;i<64;i+=4){r+=d[i];gg+=d[i+1];b+=d[i+2]}a=new THREE.Color(r/4080,gg/4080,b/4080).convertSRGBToLinear()}catch(e){a=null}KHA.set(t,a);return a}
 function khFlatMat(m){if(m.alphaMap||m.transparent)return m;let f=KHF.get(m);if(f)return f;const c=m.color.clone(),a=khAvg(m.map);if(a)c.multiply(a);f=SM({color:c,roughness:m.roughness,metalness:m.metalness});if(m.userData.lin)f.userData.lin=true;f.side=m.side;f.name='vr_'+(m.name||'');KHF.set(m,f);return f}
-function khStyle(){const sk=!R3D.on;(KHR.all||[]).forEach(k=>{const b=k.userData.mBase;if(!b)return;if(sk)k.material=khSketchMat(b);else if(KHR.lite)k.material=khFlatMat(b);else if(KHR.real&&k.userData.m1)k.material=k.userData.m1;else k.material=k.userData.m0||b});if(!sk&&(KHR.all||[]).length)linearize(true)}   // 렌더: 스케치업 동안 장면 밖에 있던 지니 재질도 선형 색으로(linearize 는 표시된 것만 바꿈)
+function khSch(){const r=KHR.sch;if(!r||!r.parent)return;const on=R3D.on&&KHR.real;r.visible=on;r.parent.children.forEach(c=>{if(c!==r&&!c.isLineSegments)c.visible=!on})}   // [PR] 늘린 학교(1102.n)와 원래 학교 바꿔 보이기
+function khStyle(){khSch();const sk=!R3D.on;(KHR.all||[]).forEach(k=>{const b=k.userData.mBase;if(!b)return;if(sk)k.material=khSketchMat(b);else if(KHR.lite)k.material=khFlatMat(b);else if(KHR.real&&k.userData.m1)k.material=k.userData.m1;else k.material=k.userData.m0||b});if(!sk&&(KHR.all||[]).length)linearize(true)}   // 렌더: 스케치업 동안 장면 밖에 있던 지니 재질도 선형 색으로(linearize 는 표시된 것만 바꿈)
 // 실사 3D(KHPRLayer)와 시험이 쓰는 연결: ready() = 모델 받기 끝, real(on) = 라이트맵·AO·가로 요소·가로수·차량, models() = 받은 모델(id·객체)
 window.KHENV={ver:KH_ENV_VER,off:KH_ENV_OFF,ready:()=>khLoad(),models:()=>KHQ.filter(q=>q.o).map(q=>({id:q.id,o:q.o,m:q.m})),R:KHR,Q:KHQ,
   // VR(실사 3D 가 켬): 그리기 수 예산(외관 170). 지니 건물은 텍스처 평균색의 단색(VR 합치기가 같은 성질끼리 한 번에 그림), 가로 요소·가로수·간판 끔, 차량은 Wing 상자 차로

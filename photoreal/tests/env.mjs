@@ -51,12 +51,17 @@ const modes = ['vm-sketch', 'vm-render', 'vm-pr', 'vm-photo'], msIds = ['ms-now'
 for (const m of modes) {
   await pick(m);
   if (m === 'vm-pr') { await p.waitForFunction(() => KHPRLayer.t && KHPRLayer.t.warm != null && KHPRLayer.t.dress != null, { timeout: 180000 }).catch(() => {}); await new Promise(r => setTimeout(r, 2500));
+    // 1102.n: 신사중학교 실사 3D 기준 화면(압구정로 쪽, 서쪽 날개를 실측 111m 로 늘린 school410r). 목표를 학교 상자 밖에 두어 Wing 가림이 학교를 숨기지 않게
+    await ev(() => { const C = KHXR.controls; KHXR.camera.position.set(-45, 45, -95); C.target.set(-97, 8, -80); C.update(); }); await new Promise(r => setTimeout(r, 2500));
+    await p.screenshot({ path: OUT + 'qa-shots/env-school.jpg', type: 'jpeg', quality: 80 });
+    res.school = await ev(() => { const r = KHENV.R.sch, b = r && new THREE.Box3().setFromObject(r); let v = !!r; for (let o = r; o; o = o.parent) if (!o.visible) v = false; return r ? { shown: v, south: +b.max.z.toFixed(1), north: +b.min.z.toFixed(1) } : null; });
     res.afterPr = reqs.filter(r => realRe.test(r.replace(/^tex\//, ''))).length; res.prEnv = await ev(() => ({ real: KHENV.R.real, lm: (KHENV.R.all || []).filter(k => k.material.lightMap).length, out: (KHPRLayer.stat.envOut || []).length, school: KHPRLayer.stat.envSchool })); }
   else await new Promise(r => setTimeout(r, 1500));
   for (const e of eraIds) for (const s of msIds) { const n0 = errs.length; await pick(e); await pick(s); await new Promise(r => setTimeout(r, 500)); combo.push({ m, e, s, err: errs.length - n0 }); }
 }
 res.combo = combo;
 ok('실사 3D 를 켜면 라이트맵·가로 요소를 받고 지니 라이트맵 적용, 겹친 브이월드·OSM 건물 뺌', res.afterPr > 0 && res.prEnv.real && res.prEnv.lm > 0 && res.prEnv.out >= 10, { reqs: res.afterPr, ...res.prEnv });
+ok('실사 3D 신사중학교: 늘린 판(school410r)이 보이고 서쪽 날개 남쪽 끝이 실측(z -28.2) ±1m', res.school && res.school.shown && Math.abs(res.school.south + 28.2) <= 1, res.school);
 ok('보기 방식 4 × 시대 ' + eraIds.length + ' × 미성 2 조합에서 페이지 오류 없음(' + combo.length + '개)', combo.every(c => c.err === 0) && errs.length === 0, { errs: errs.slice(0, 3), bad: combo.filter(c => c.err) });
 fs.writeFileSync(OUT + 'env.json', JSON.stringify(res, null, 1));
 console.log('결과', oks.filter(Boolean).length + '/' + oks.length);

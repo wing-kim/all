@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.m';
+  const VER = '1102.n';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -1571,7 +1571,7 @@
     const dist = f => { f.getWorldPosition(wp); return Math.hypot(wp.x, wp.z); }; fields.sort((a, b) => dist(a) - dist(b));
     fields.forEach((f, i) => { const hd = fields.length > 1 && i === fields.length - 1;   // 가까운 것 신사중, 먼 것 현대고
       const m = f.material.clone(); SCH.maps.push([f.material, f.material.map]); f.material.map = pitchTex(hd ? 'hd' : 'ss'); f.material.needsUpdate = true; m.dispose();
-      if (!hd) f.parent.children.forEach(o => { if (!o.isMesh || o === f || o.userData.khEnv) return; /* khEnv: 지니 학교 모델이 붙은 매스는 숨기지 않는다 */ bb.setFromObject(o); const h = bb.max.y - bb.min.y;
+      if (!hd) f.parent.children.forEach(o => { if (!o.isMesh || o === f || o.userData.khEnv || o.userData.khEnvQ) return; /* khEnv·khEnvQ: 지니 학교 모델이 붙(을)은 매스는 숨기지 않는다(1102.n: 모델이 실사 외관 뒤에 오므로 그 전에 숨겨 학교가 통째로 빠졌다) */ bb.setFromObject(o); const h = bb.max.y - bb.min.y;
         if ((h > 3.2 || (o.material && o.material.isMeshBasicMaterial && bb.min.y > 6)) && o.visible) { o.visible = false; SCH.hid.push(o); } }); });
     PR.stat.school = { fields: fields.length, hidden: SCH.hid.length };
   }
@@ -1909,7 +1909,7 @@
   }
   /* 지니 신사중학교(school410)는 Wing 배치(로드뷰)라 S맵·브이월드 실측 ㄱ자보다 서쪽으로 약 47m, 북쪽으로 약 12m 떨어져 있다. 실사 3D 는 땅·도로가 실측이므로
      모델 전체(운동장 포함)를 옮겨 높은 부분(본관·날개) 북서 모서리를 브이월드 '신사중학교' 외곽선 북서 모서리에 맞추고, 본관 높이를 실측 19.2m 에 맞춘다(Wing 18.5m 기준 배율).
-     스케치업·렌더는 Wing 배치 그대로. 서쪽 날개 길이는 지니 58m, 실측 111m 라 남쪽 약 33m 는 비어 있다(한계) */
+     스케치업·렌더는 Wing 배치 그대로. 서쪽 날개는 실측 111m 로 늘려 다시 구운 school410r(1102.n)을 실사 3D 에서 쓴다 */
   const ESC = { o: null, p0: null, s0: null };
   function envSchool(on) {
     const m = window.KHENV && KHENV.models().find(q => q.id === 'school410'); if (!m) return; const o = m.o;
