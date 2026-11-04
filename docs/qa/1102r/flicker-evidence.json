@@ -1,0 +1,6 @@
+{"view":"eye:5F (퀘스트 한 눈 모사 916x960 DSF2, fov 97, 합성기 배율 1.25, MSAA 4)","formula":"옛 측정식(OLDFL=1, 1.5m 안만 뺌) all.hiPct",
+ "byMove":{"0mm(정지)":0.0,"1mm":1.12,"2mm(기준)":2.31,"4mm":4.62},
+ "newFormula2mm":1.51,
+ "parallaxExplained2mm":{"hiPct":2.31,"unexplainedPct":0.6,"note":"가로 기울기 × 예상 화면 이동량으로 설명되는 화소를 뺀 나머지"},
+ "hotObjects":{"Leaves(화분)":"2.81m","Monitor_01_B":"2.17m","OfficeChairPlastic":"1.40m","기둥 pr:4581F4":"1.86m"},
+ "conclusion":"정지 0%, 이동량에 거의 정비례(1:2:4 → 1.12:2.31:4.62). 시간에 따른 잡음이 아니라 2mm 이동에 따른 1.4～2.8m 물체의 실제 화면 이동(시차)이다"}

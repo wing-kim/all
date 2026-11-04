@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.q';
+  const VER = '1102.r2';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -581,6 +581,8 @@
         u.hit = r.ok ? r.point : null; u.arcPts = r.pts; len = 0.3;
         if (u.hit) anyHit = u.hit; else X.badHit = r.point;
       } else u.arcPts = null;
+      // 1102.r: 메뉴·순간이동이 아닐 때 레이를 벽·물체에서 끊는다(3m 안, 퀘스트 CPU 를 아끼려고 3프레임마다·지금 층(실내) 또는 우리 건물(바깥)만 판정, 그 사이는 앞 값)
+      if (!uh && !u.aim) { if (((u.rf = (u.rf || 0) + 1) % 3) === 1 || u.wallLen == null) { const h = wallHit(X.ray.ray.origin.clone(), X.ray.ray.direction.clone(), 3); u.wallLen = h ? h.distance : 3; } len = u.wallLen; } else u.wallLen = null;
       u.line.scale.z = len / Math.max(rig.scale.x, 1e-6);
       rayLook(u.line, u.uiHit ? 'ui' : u.aim ? (u.hit ? 'aim' : 'bad') : '');
       // 커서: 메뉴·버튼을 맞힌 곳(레이 길이도 거기서 끊김)
@@ -625,6 +627,13 @@
       const m = Array.isArray(ob.material) ? ob.material[0] : ob.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.9))) continue;   // 보이는 유리 너머로도 갈 수 있게(유리문·통창)
       return h;
     }
+    return null;
+  }
+  // 1102.r: 레이를 끊을 벽 판정은 장면 전체 대신 지금 층 묶음(실내)이나 우리 건물(바깥)만(장면 전체는 CPU 4배에서 순간이동마다 130ms)
+  function wallHit(o, d, far) {
+    const li = K.I && K.I.on && K.I.li != null ? K.I.li : -1, tg = li >= 0 && K.LG && K.LG[li] ? [K.LG[li]] : K.bld ? [K.bld] : [];
+    X.ray.set(o, d); X.ray.near = 0; X.ray.far = far;
+    for (const h of X.ray.intersectObjects(tg, true)) { const ob = h.object; if (!ob.isMesh || !visibleForPick(ob)) continue; const m = Array.isArray(ob.material) ? ob.material[0] : ob.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.9))) continue; return h; }
     return null;
   }
   function isUp(h) { return !!h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6; }
@@ -823,7 +832,7 @@
   };
   X.fadeA = () => (fadeMesh && fadeMesh.visible ? fadeMesh.material.opacity : 0);   // 시험용: 전환 효과의 검은 정도
   function fadeTick(dt) {
-    const F = S.fade; if (!F) return;
+    const F = S.fade; if (!F) { if (dt > 0 && dt < 0.5) S.dtAvg = S.dtAvg ? S.dtAvg * 0.95 + dt * 0.05 : dt; return; }   // 1102.r: 평소 프레임 간격(전환 밖)
     F.t += Math.min(dt, 0.05); const half = F.dur / 2;   // 긴 프레임(합치기 등) 뒤 한꺼번에 밝아지지 않게 한 프레임 진행은 0.05초까지
     if (!F.done && F.t >= half) { F.done = true; try { F.fn(); } catch (e) { log('전환 오류', e.message); }
       // 1102.m: 이동 직후 실사 계층이 몇 프레임에 걸쳐 새 층의 재질·조명을 바꾼다. 바로 합치면 재질이 바뀐 뒤 한 번 더 합쳐(층마다 2번, CPU 4배에서 각 약 200ms)
@@ -833,7 +842,7 @@
     // 이동 직후 0.3초는 검은 채로 두고 매 프레임 장면 구성을 점검해(실사 층 조명·가구 표시가 몇 프레임 늦게 바뀜), 바뀌었으면 그 합치기도 검은 화면에서 끝낸다(최대 1.5초)
     // 1102.m(최적화 4번): 실사 계층이 아직 받거나 만드는 중이면(처음 가는 층의 가구 등) 또는 방금 긴 프레임(50ms 넘음)이 있었으면 검은 화면을 더 둔다(최대 1.5초 그대로).
     // 처음 1층에 들어갈 때 가구 만들기, 5층의 늦은 합치기가 밝아진 뒤에 일어나 보이는 동안 약 100ms 멈춤이 남았다
-    else if (F.done && S.opt) { const t = performance.now(), w = t - (F.h0 || (F.h0 = t)); if (dt > 0.05) F.lg = t;
+    else if (F.done && S.opt) { const t = performance.now(), w = t - (F.h0 || (F.h0 = t)); if (dt > Math.max(0.05, (S.dtAvg || 0) * 1.8)) F.lg = t;   // 1102.r: 긴 프레임은 평소의 1.8배(최소 50ms). 평소가 50ms 안팎인 기기에서 검은 화면이 늘 1.5초까지 갔다
       const busy = !!(window.KHPRLayer && KHPRLayer.settling && KHPRLayer.settling()), long = !!F.lg && t - F.lg < 300;
       if ((w < 300 || Opt.need || busy || long) && w < 1500) { F.t = Math.min(F.t, half); Opt.t = 0; } }
     const a = F.t < half ? F.t / half : Math.max(0, 1 - (F.t - half) / half);
@@ -1101,11 +1110,11 @@
     keyOf(pt) {
       const q4 = v => (Math.round((v || 0) * 4) / 4).toFixed(2);   // 거칠기·금속성은 0.25 단위로 묶음
       const a = pt.m, o = pt.o, hx = c => (c && c.getHexString ? c.getHexString() : '');
-      const bake = !a.map && !a.vertexColors && !!a.color && !a.isLineDashedMaterial;
+      const va = !!(a.userData && a.userData.khAtlas), bake = va || (!a.map && !a.vertexColors && !!a.color && !a.isLineDashedMaterial);   // va: 지니 아틀라스 대리 재질(1102.r) = 색·칸 번호를 꼭짓점에 구워 같은 아틀라스끼리
       const qv = (v, st) => (Math.round((v || 0) / st) * st).toFixed(2), qr = bake ? v => qv(v, this.VCQ.rough) : q4, qm = bake ? v => qv(v, this.VCQ.metal) : q4;
       // 단색 묶음은 텍스처 좌표(uv)를 쓰지 않으므로 uv 유무로 나누지 않는다(합칠 때 없는 쪽은 0 으로 채움)
-      const attrs = Object.keys(o.geometry.attributes).filter(k => !(bake && (k === 'uv' || k === 'uv2'))).sort().join(',');   // uv2: 지니 모델 라이트맵 좌표(단색 묶음은 안 씀, 1102.l)
-      return [pt.kind, a.type, bake ? 'VC' : a.uuid, hx(a.emissive), +(a.emissiveIntensity || 0).toFixed(2), this.texKey(a), a.transparent, +(a.opacity == null ? 1 : a.opacity).toFixed(2), a.side,
+      const attrs = Object.keys(o.geometry.attributes).filter(k => !(bake && ((k === 'uv' && !va) || k === 'uv2'))).sort().join(',');   // uv2: 지니 모델 라이트맵 좌표(단색 묶음은 안 씀, 1102.l)
+      return [pt.kind, a.type, va ? 'VA' : bake ? 'VC' : a.uuid, hx(a.emissive), +(a.emissiveIntensity || 0).toFixed(2), this.texKey(a), a.transparent, +(a.opacity == null ? 1 : a.opacity).toFixed(2), a.side,
         qr(a.roughness), qm(a.metalness), a.depthWrite, a.depthTest, a.wireframe, (a.clippingPlanes || []).length, a.linewidth,
         attrs, o.castShadow, o.receiveShadow, o.renderOrder, a.polygonOffset, a.polygonOffsetFactor].join('|');   // 그림자 드리우기·받기가 다른 메시는 섞지 않음(자기 그림자 얼룩 방지)
     },
@@ -1141,11 +1150,17 @@
         const col = new Float32Array(total * 3); let off = 0;
         pts.forEach((pt, i) => { const c = pt.m.color, n = geos[i].attributes.position.count; for (let k = 0; k < n; k++) { col[off++] = c.r; col[off++] = c.g; col[off++] = c.b; } });
         out.setAttribute('color', new T.BufferAttribute(col, 3));
+        if (pts[0].m.userData.khAtlas) {   // 아틀라스 칸(열, 행)
+          const tl = new Float32Array(total * 2); let o2 = 0;
+          pts.forEach((pt, i) => { const c = pt.m.userData.khAtlas || [0, 0], n = geos[i].attributes.position.count; for (let k = 0; k < n; k++) { tl[o2++] = c[0]; tl[o2++] = c[1]; } });
+          out.setAttribute('khTile', new T.BufferAttribute(tl, 2));
+        }
       }
       geos.forEach(g => { if (!cache.has(g)) g.dispose(); });
       out.computeBoundingSphere(); return out;
     },
     build() {
+      if (S.session) OnTop.apply(performance.now(), true);   // 1102.r: 맨 앞 요소 정리(0.5초마다)가 합친 뒤에 바뀌어 층 이동마다 합치기가 두 번 일어났다. 합치기 전에 먼저
       this.clear();
       scene.updateMatrixWorld(true);
       const t0 = performance.now(), objs = this.visibleMeshes(), dynM = this.dynMasses, dynObjs = [], under = this.underground(objs), pts = this.parts(under.size ? objs.filter(o => !under.has(o)) : objs), buckets = new Map(), cache = new Map();
@@ -1156,7 +1171,7 @@
       // 재질이 여러 개인 메시는 일부 조각만 합치면 나머지가 사라지므로, 조각이 속한 묶음은 크기와 상관없이 모두 만든다
       const multiObjs = new Set(pts.filter(p => p.multi).map(p => p.o));
       for (const [k, list] of buckets) {
-        const bake = k.split('|')[2] === 'VC';
+        const bake = k.split('|')[2] === 'VC' || k.split('|')[2] === 'VA';
         const must = list.some(p => multiObjs.has(p.o));
         if (list.length < 2 && !bake && !must) continue;
         let mat = list[0].m;
@@ -1166,6 +1181,7 @@
         if (mat.transparent && mat.depthWrite && !bake) { this.dw = this.dw || new Set(); this.dw.add(mat); mat.depthWrite = false; }
         if (bake) { const f = k.split('|'); mat = mat.clone(); mat.color.setRGB(1, 1, 1); mat.vertexColors = true; if ('roughness' in mat) { mat.roughness = +f[9]; mat.metalness = +f[10]; } if (mat.transparent) mat.depthWrite = false; mat.needsUpdate = true; this.mats.push(mat); }
         if (dyn && bake) this.dynMat(mat, list[0].m);
+        if (mat.userData.khAtlas) this.vraMat(mat);
         const geo = this.merge(list, bake, cache);
         const obj = list[0].kind === 'L' ? new T.LineSegments(geo, mat) : new T.Mesh(geo, mat);
         obj.castShadow = list[0].o.castShadow; obj.receiveShadow = list[0].o.receiveShadow; obj.renderOrder = list[0].o.renderOrder;
@@ -1187,6 +1203,28 @@
     },
     // 가림 매스(1102.m): 단색 묶음 복제 재질에 원래 재질의 셰이더 손질(지니 라이트맵 khPatch, 복제하면 빠진다)을 잇는다
     dynM: [], dynObjs: [], dynMask: '',
+    // 지니 아틀라스 묶음(1102.r): 꼭짓점의 칸 번호(khTile)로 아틀라스 안 칸을 찾고, 반복 좌표는 fract 로 칸 안에 접는다.
+    // 밉맵은 원래 uv 의 기울기로 고르되(fract 이음매에서 밉맵이 튀지 않게) 칸 둘레(16화소)를 넘지 않게 4단까지만
+    vraMat(mat) {
+      const A = mat.userData.khVra, ob = mat.onBeforeCompile, ck = mat.customProgramCacheKey;
+      mat.onBeforeCompile = (sh, r) => { if (ob) ob.call(mat, sh, r);
+        sh.vertexShader = 'attribute vec2 khTile;\nvarying vec2 vKhTile;\n' + sh.vertexShader.replace('#include <uv_vertex>', '#include <uv_vertex>\nvKhTile = khTile;');
+        sh.fragmentShader = 'varying vec2 vKhTile;\n' + sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
+  vec2 khQ = fract(vUv), khS = vec2(${(A.tile - 2 * A.pad).toFixed(1)}) / vec2(${A.w.toFixed(1)}, ${A.h.toFixed(1)});
+  vec2 khUV = (vKhTile * ${A.tile.toFixed(1)} + ${A.pad.toFixed(1)}) / vec2(${A.w.toFixed(1)}, ${A.h.toFixed(1)}) + khQ * khS;
+  vec2 khDx = dFdx(vUv) * khS, khDy = dFdy(vUv) * khS; float khF = max(length(khDx * vec2(${A.w.toFixed(1)}, ${A.h.toFixed(1)})), length(khDy * vec2(${A.w.toFixed(1)}, ${A.h.toFixed(1)})));
+  if (khF > 16.0) { khDx *= 16.0 / khF; khDy *= 16.0 / khF; }
+  #if __VERSION__ >= 300
+  vec4 texelColor = textureGrad(map, khUV, khDx, khDy);
+  #else
+  vec4 texelColor = texture2D(map, khUV);
+  #endif
+  texelColor = mapTexelToLinear(texelColor);
+  diffuseColor *= texelColor;
+#endif`); };
+      mat.customProgramCacheKey = () => (ck ? ck.call(mat) : '') + '|vra';
+      mat.needsUpdate = true;
+    },
     dynMat(mat, src) { const ob = src.onBeforeCompile, ck = src.customProgramCacheKey; mat.onBeforeCompile = (sh, r) => ob.call(src, sh, r); mat.customProgramCacheKey = () => ck.call(src); mat.needsUpdate = true; },
     // 매 프레임(Wing 가림 처리 뒤, 그리기 전): 가림 매스 표시가 바뀌었을 때만 합친 메시의 인덱스를 보이는 매스 구간으로 다시 만든다.
     // 셰이더로 숨기면 후처리(SSAO 등 덮어쓰기 재질)·그림자에 숨긴 건물이 남으므로 꼭짓점 자체를 뺀다(바뀔 때 1ms 안팎)
@@ -1271,6 +1309,7 @@
     // 메뉴 캔버스: 왼쪽 세로 탭 레일 + 오른쪽 스크롤 본문. 컨트롤러는 1.25m 곡면(약 72°), 핸드는 0.48m 평면(검지로 누름)
     const W = 1728, H = 900, RAIL = 216, CX = 240, CY = 104, CW = W - CX - 56, CH = H - CY - 52;
     const CURVE = { r: 1.25, a: 72 * Math.PI / 180 }, FLAT = { w: 0.70, d: 0.48 };
+    const isHov = k => !!hover && (hover === k || hover.split('|').includes(k));
     let cv, g, tex, panel, panelC, panelF, open = false, cells = [], hover = '', tab = 0, toastMsg = '', toastT = 0, dirtyFlag = true, lastDraw = 0, soon = 0;
     const scroll = {}; let contentH = 0; const thumbs = new Map();
     let cycleTarget = null;    // 조합 넘기기 대상 {name, mode}
@@ -1502,7 +1541,7 @@
       tex.needsUpdate = true; lastDraw = performance.now(); dirtyFlag = false;
     }
     function drawCell(c) {
-      const hov = hover === c.key, on = c.on ? c.on() : false, off = c.off ? c.off() : false;
+      const hov = isHov(c.key), on = c.on ? c.on() : false, off = c.off ? c.off() : false;
       if (c.round || c.color) {   // 색 견본: 원
         const r = Math.min(c.w, c.h) / 2; g.fillStyle = c.color || '#888'; g.beginPath(); g.arc(c.x + r, c.y + r, r - 4, 0, 7); g.fill();
         if (on || hov) { g.strokeStyle = on ? '#7fd6ff' : '#fff'; g.lineWidth = 5; g.beginPath(); g.arc(c.x + r, c.y + r, r - 2, 0, 7); g.stroke(); }
@@ -1597,7 +1636,7 @@
         S.mode === 'fig' ? ['q:rr', '돌리기 ↷', () => { S.fig.yaw += Math.PI / 8; }] : ['q:rr', '30° ↷', () => snapTurn(-Math.PI / 6)]] : [];
       [row1, row2].forEach((row, r) => row.forEach(([k, t, a], i) => {
         const c = { key: k, x: 16 + i * 122, y: 112 + r * 104, w: 114, h: 92, label: t, act: a }; qcells.push(c);
-        q.fillStyle = hover === k ? 'rgba(127,214,255,.3)' : 'rgba(255,255,255,.1)'; q.beginPath(); q.roundRect ? q.roundRect(c.x, c.y, c.w, c.h, 14) : q.rect(c.x, c.y, c.w, c.h); q.fill();
+        q.fillStyle = isHov(k) ? 'rgba(127,214,255,.3)' : 'rgba(255,255,255,.1)'; q.beginPath(); q.roundRect ? q.roundRect(c.x, c.y, c.w, c.h, 14) : q.rect(c.x, c.y, c.w, c.h); q.fill();
         q.fillStyle = '#fff'; q.font = '600 24px ' + FONT; q.textAlign = 'center'; q.fillText(t, c.x + c.w / 2, c.y + 56); q.textAlign = 'left';
       }));
       if (S.input !== 'hand') {   // 지금 상황(건물 밖·안·피규어·메뉴)에서 쓸 수 있는 버튼 안내
@@ -1722,10 +1761,10 @@
     function update(time) {
       palmQuick();
       if (S.input === 'hand') handPoke(time);
-      const hk = ctrls.map(c => c.userData.uiHit && c.userData.uiHit.key).filter(Boolean)[0] || (S.input === 'hand' ? hover : '');
+      const hk = [...new Set(ctrls.map(c => c.userData.uiHit && c.userData.uiHit.key).filter(Boolean))].join('|') || (S.input === 'hand' ? hover : '');   // 1102.r: 두 손이 다 메뉴를 가리키면 둘 다 강조('|' 로 이음)
       if (hk !== hover && S.input !== 'hand') { hover = hk || ''; dirtyFlag = true; }
       if (open && (dirtyFlag || time - lastDraw > 1000 || (soon && performance.now() > soon))) { soon = 0; draw(); }
-      if (open && panel.userData.ctl) panel.userData.ctl.forEach(m => { const on = (wdrag && 'win:' + wdrag.mode === 'win:' + m.userData.win) || hover === 'win:' + m.userData.win; m.material.opacity = on ? 1 : 0.55; });
+      if (open && panel.userData.ctl) panel.userData.ctl.forEach(m => { const on = (wdrag && 'win:' + wdrag.mode === 'win:' + m.userData.win) || isHov('win:' + m.userData.win); m.material.opacity = on ? 1 : 0.55; });
       if (quick.visible && (dirtyFlag || time % 500 < 20)) drawQuick();
       if (dirtyFlag && !open) drawQuick();
     }

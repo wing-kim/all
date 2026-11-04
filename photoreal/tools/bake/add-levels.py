@@ -15,13 +15,17 @@ res, cols, rows = man['res'], man['cols'], man['rows']
 used = {t for L in man['levels'] for t in L['tile']}
 free = [i for i in range(cols * rows) if i not in used]
 new = [L for L in add['levels'] if not any(M['key'] == L['key'] for M in man['levels'])]
-assert len(free) >= 2 * len(new), f'빈 칸 부족: {len(free)} < {2 * len(new)}'
+# 1102.r: 빈 칸이 모자라면 아틀라스 위쪽에 행을 더한다(행 번호는 아래부터라 기존 칸 자리는 그대로)
+grow = 0
+while len(free) < 2 * len(new): free += list(range(cols * (rows + grow), cols * (rows + grow + 1))); grow += 1
+if grow: man['rows'] = rows + grow; print('아틀라스 행 추가', grow)
 def box(img, i, c):   # 칸 i 의 화소 범위(행은 텍스처 아래쪽부터: 이미지 y = 높이 - (행+1)·해상도)
     H = img.shape[0]; col, row = i % c, i // c; y = H - (row + 1) * res; return slice(y, y + res), slice(col * res, col * res + res)
 for slot, info in man['slots'].items():
     if slot not in add['slots']: continue
     a = info; b = add['slots'][slot]
     A = np.asarray(Image.open(root / a['file']).convert('RGB')).astype(np.float32)
+    if grow: A = np.concatenate([np.zeros((grow * res, A.shape[1], 3), np.float32), A], 0)
     B = np.asarray(Image.open(src / b['file']).convert('RGB')).astype(np.float32)
     S = max(a['scale'], b['scale'])
     A *= (a['scale'] / S) ** (1 / 2.2); B *= (b['scale'] / S) ** (1 / 2.2)

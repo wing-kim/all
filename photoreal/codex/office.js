@@ -91,7 +91,7 @@ window.dressTowerOffice=async function(C,root,key='2F'){
   maps[0].encoding=T.sRGBEncoding;for(const t of maps){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1/F.repeat,1/F.repeat);t.anisotropy=8}
   const finish=new T.MeshStandardMaterial({map:maps[0],normalMap:maps[1],roughnessMap:maps[2]||null,roughness:F.roughness,name:F.name});finish.normalScale.set(F.normalScale,F.normalScale);
   const shape=new T.Shape();L.poly.map(world).forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();
-  for(const [a,b,c,d] of rects){const h=new T.Path();h.moveTo(a,-b);h.lineTo(a,-d);h.lineTo(c,-d);h.lineTo(c,-b);h.closePath();shape.holes.push(h)}
+  const rc=rects.map(([a,b,c,d])=>[[a,b],[a,d],[c,d],[c,b]]);if(!C.holeMask)for(const [a,b,c,d] of rects){const h=new T.Path();h.moveTo(a,-b);h.lineTo(a,-d);h.lineTo(c,-d);h.lineTo(c,-b);h.closePath();shape.holes.push(h)}   // 1102.r: 계단·코어 자리도 가림 무늬로(겹친 구멍에서 earcut 이 깨져 B3 마감 725㎡ > 바닥 698㎡)
   const g=new T.ShapeGeometry(shape);g.rotateX(-Math.PI/2);const f=add(g,finish,0,floor+.004,0);f.castShadow=false;f.name='Office floor finish';
  }catch(error){console.warn('Office floor texture unavailable',error)}
  // 천장(목재형, 6F 복층 레스토랑): 월넛 천장면과 테이블 위 유리 원통 샹들리에 무리.
@@ -238,18 +238,20 @@ window.dressTowerParking=async function(C,root,key){
  const box=(m,x,y,z,w,h,d,ry=0)=>{const o=new T.Mesh(unit,m);o.position.set(x,y,z);o.scale.set(w,h,d);o.rotation.y=ry;o.castShadow=o.receiveShadow=true;group.add(o);return o};
  const px=(x,z)=>[x*41.6+914,z*41.6+770],world=q=>C.P(q[0],q[1]),poly=L.poly.map(world);
  const rects=(L.blocks||[]).map(b=>{const [x0,z0]=world([b.r[0],b.r[1]]),[x1,z1]=world([b.r[2],b.r[3]]);return [Math.min(x0,x1),Math.min(z0,z1),Math.max(x0,x1),Math.max(z0,z1)]});
- const inside=(x,z)=>C.inPoly(px(x,z),L.poly)&&!rects.some(([a,b,c,d])=>x>a-.3&&x<c+.3&&z>b-.3&&z<d+.3);
+ const rh=C.rampCuts?C.rampCuts(L,'floor').concat(C.rampCuts(L,'ceil')):[],inRh=(x,z)=>rh.some(a=>{let c=false;for(let i=0,j=a.length-1;i<a.length;j=i++){const [xi,zi]=a[i],[xj,zj]=a[j];if(((zi>z)!==(zj>z))&&x<(xj-xi)*(z-zi)/(zj-zi)+xi)c=!c}return c});   // 1102.r: 램프 구멍(세계 좌표) 위에는 등을 달지 않는다
+ const inside=(x,z)=>C.inPoly(px(x,z),L.poly)&&!rects.some(([a,b,c,d])=>x>a-.3&&x<c+.3&&z>b-.3&&z<d+.3)&&!inRh(x,z);
  // 바닥: 3F 콘크리트 텍스처를 회색 에폭시 톤·낮은 거칠기로(주차 구획선이 덮이지 않게 원본 바닥 바로 위 2 mm).
  try{
   const loader=new T.TextureLoader(),ld=C.loadTex||(u=>loader.loadAsync(u)),[color,normal]=await Promise.all(['color','normal'].map(n=>ld('../photoreal/assets/office-concrete_'+n+'.webp?v=2')));
   color.encoding=T.sRGBEncoding;for(const t of [color,normal]){t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1/3,1/3);t.anisotropy=8}
   const epoxy=new T.MeshStandardMaterial({map:color,normalMap:normal,roughness:.16,name:'Parking grey epoxy floor'});epoxy.color.setRGB(.55,.57,.6);epoxy.normalScale.set(.15,.15);
   const shape=new T.Shape();poly.forEach(([x,z],i)=>i?shape.lineTo(x,-z):shape.moveTo(x,-z));shape.closePath();
-  for(const [a,b,c,d] of rects){const h=new T.Path();h.moveTo(a,-b);h.lineTo(a,-d);h.lineTo(c,-d);h.lineTo(c,-b);h.closePath();shape.holes.push(h)}
-  const g=new T.ShapeGeometry(shape);g.rotateX(-Math.PI/2);const f=new T.Mesh(g,epoxy);f.position.y=floor+.002;f.receiveShadow=true;f.name='Parking floor finish';group.add(f);
+  const rc=rects.map(([a,b,c,d])=>[[a,b],[a,d],[c,d],[c,b]]);if(!C.holeMask)for(const [a,b,c,d] of rects){const h=new T.Path();h.moveTo(a,-b);h.lineTo(a,-d);h.lineTo(c,-d);h.lineTo(c,-b);h.closePath();shape.holes.push(h)}   // 1102.r: 계단·코어 자리도 가림 무늬로(겹친 구멍에서 earcut 이 깨져 B3 마감 725㎡ > 바닥 698㎡)
+  // 1102.r: 내려가는 램프 자리(원본 바닥 구멍 floorHoles)는 비운다. 덮여 있어 아래층으로 내려가는 램프가 바닥에 가려 안 보였다(구멍은 셰이더 가림 무늬로, kh-photoreal holeMask)
+  const g=new T.ShapeGeometry(shape);g.rotateX(-Math.PI/2);const f=new T.Mesh(g,C.holeMask?C.holeMask(epoxy,poly,C.rampCuts(L,'floor').concat(rc),key+'f'):epoxy);f.position.y=floor+.002;f.receiveShadow=true;f.name='Parking floor finish';group.add(f);
  }catch(error){console.warn('Parking floor texture unavailable',error)}
  // 천장 도장면과 선형 LED(통로 방향과 직각으로 반복).
- {const shape=new T.Shape();poly.forEach(([x,z],i)=>i?shape.lineTo(x,z):shape.moveTo(x,z));shape.closePath();const g=new T.ShapeGeometry(shape);g.rotateX(Math.PI/2);const c=new T.Mesh(g,dark);c.position.y=ceiling-.012;c.name='Parking dark ceiling';group.add(c);}
+ {const shape=new T.Shape();poly.forEach(([x,z],i)=>i?shape.lineTo(x,z):shape.moveTo(x,z));shape.closePath();const g=new T.ShapeGeometry(shape);g.rotateX(Math.PI/2);const c=new T.Mesh(g,C.holeMask?C.holeMask(dark,poly,C.rampCuts(L,'ceil'),key+'c'):dark);c.position.y=ceiling-.012;c.name='Parking dark ceiling';group.add(c);}
  const xs=poly.map(p=>p[0]),zs=poly.map(p=>p[1]);let leds=0;
  for(let z=Math.min(...zs)+1.5;z<Math.max(...zs)-1;z+=3.2)for(let x=Math.min(...xs)+1.8;x<Math.max(...xs)-1;x+=3.6)
   if(inside(x-1.3,z)&&inside(x+1.3,z)){box(white,x,ceiling-.05,z,2.4,.05,.08);box(glow,x,ceiling-.078,z,2.36,.008,.06);leds++}

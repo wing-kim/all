@@ -34,8 +34,11 @@ try {
   await shot('01-desktop');
 
   // 몰입
+  // 1102.r: 지니 주변 모델(31동)이 VR 들어간 직후 붙는 동안은 합치기 전이라 그리기 호출이 112～400 으로 흔들렸다. 모델이 다 붙고 합치기가 끝난 상태를 잰다
+  await page.waitForFunction(() => !window.KHENV || KHENV.off || (KHENV.loaded().n === KHENV.loaded().of && KHENV.loaded().of > 0 && !KHENV.busy), { timeout: 120000 }).catch(() => {});
   await ev(() => KHXRLayer.enter('vr'));
-  let calls = await frames(10);
+  await ev(async () => { const s = KHXR.renderer.xr.getSession(), O = KHXRLayer.opt; let quiet = 0; for (let i = 0; i < 600 && quiet < 20; i++) { const b0 = O.nBuild; await new Promise(r => s.requestAnimationFrame(() => r())); quiet = O.need || O.nBuild !== b0 || !O.group ? 0 : quiet + 1; } });
+  let calls = await frames(3);
   const vr = await ev(() => ({ mode: KHXRLayer.state.mode, sm: KHXRLayer.state.sessionMode, opt: KHXRLayer.opt.stat }));
   ok('몰입 진입', vr.mode === 'vr', vr.sm);
   ok('외부 그리기 호출 < 200', calls < 200, calls);

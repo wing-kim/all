@@ -3,7 +3,8 @@
 //  1) KHDATA 를 꺼내 지난번 들여온 판(photoreal/tools/model/jinny/import-state.json 의 해시)과 비교해 바뀐 것만 고른다
 //  2) 모델: Draco 를 풀어(gltf-transform + draco3dgltf) 평범한 GLB 를 new/models/<id>.js(바로 연 파일 file:// 대비)로 쓰고,
 //     env-glb.mjs 로 meshopt(.glb, gltfpack -cc) 압축과 bin-list.js 를 갱신한다
-//  3) 텍스처: webp 를 new/models/tex/<이름>.js 로 쓰고 env-ktx.py 로 바뀐 것만 KTX2, 라이트맵·노후 맵이 바뀌면 env-atlas.py 로 아틀라스를 다시 만든다
+//  3) 텍스처: webp 를 new/models/tex/<이름>.js 로 쓰고 env-ktx.py 로 바뀐 것만 KTX2, 라이트맵·노후 맵이 바뀌면 env-atlas.py 로 아틀라스를 다시 만든다.
+//     VR 용 색 텍스처 아틀라스(vr-atlas.py, new/models/tex/vr_atlas.ktx2 + vr-atlas.js)도 다시 굽는다
 //  4) 재질표: HTML 의 KH.mat 을 new/models/kh-lib.js 에 넣고 KH.ver(캐시 꼬리표)를 바뀐 파일만 새로 매긴다. 우리가 만든 모델(school410r 등)은 그대로 둔다
 //  5) 코드: KHDATA·Draco 해독기 같은 큰 덩어리를 뺀 HTML 을 지난번 판과 줄 단위로 비교해 out/jinny-import/<판>-code.diff 와 요약을 남긴다(자동 반영은 하지 않음)
 //  6) prefetch-list.py 로 미리받기 목록을 다시 만든다
@@ -81,6 +82,7 @@ if (glb.length) {
 for (const n of tex) fs.writeFileSync(path.join(TX, n + '.js'), `(window.KH=window.KH||{tex:{},glb:{}});KH.tex['${n}']='data:image/webp;base64,${DATA['tex/' + n]}';\n`);
 if (tex.length) execFileSync('python3', ['-I', path.join(ROOT, 'photoreal/tools/ktx/env-ktx.py'), ...tex], { stdio: 'inherit' });
 if (tex.length || glb.length) execFileSync('python3', ['-I', path.join(ROOT, 'photoreal/tools/ktx/env-atlas.py')], { stdio: 'inherit' });   // env-ktx 가 목록을 다시 쓰면 아틀라스 칸 자리도 다시 붙여야 한다
+if (tex.length || MAT) execFileSync('python3', ['-I', path.join(ROOT, 'photoreal/tools/ktx/vr-atlas.py')], { stdio: 'inherit' });   // 1102.r: VR 용 색 텍스처 아틀라스(재질표가 쓰는 색 텍스처가 바뀌면 칸도 바뀐다)
 /* ---------- 6. 재질표·캐시 꼬리표 ---------- */
 {
   const lib = path.join(M, 'kh-lib.js'), s = fs.readFileSync(lib, 'utf8'), old = grab(s, 'KH.ver='), ver = old ? JSON.parse(old.text) : {};

@@ -67,7 +67,7 @@ if (want('reg')) {
   await regTest('ux', XRT, 'ux.mjs', [BASE], {}, 1);   // 계단 걷기: 맥 부하로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   await regTest('ux pr=1', XRT, 'ux.mjs', [BASE, '--page=new/3d-model.html?pr=1'], {}, 1);   // 계단 걷기가 셰이더 준비로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   if (!QUICK) await regTest('mp', XRT, 'mp.mjs', [BASE], {}, 2);   // 공개 중계망(Nostr) 타이밍: 두 번까지 재시도
-  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel', 'env', 'furn', 'shadow']) await regTest(t, HERE, t + '.mjs', [], {}, t === 'vrfeel' ? 1 : 0);   // vrfeel: 감속 없는 층 이동 50ms 기준은 맥 부하로 한 번씩 80ms 가 난다(1102.m, 한 번 재시도)   // env: 지니 주변 모델(1102.l)   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
+  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel', 'env', 'furn', 'shadow', 'ramp']) await regTest(t, HERE, t + '.mjs', [], {}, t === 'vrfeel' ? 1 : 0);   // vrfeel: 감속 없는 층 이동 50ms 기준은 맥 부하로 한 번씩 80ms 가 난다(1102.m, 한 번 재시도)   // env: 지니 주변 모델(1102.l)   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
   if (!QUICK) {
     const r = await run(HERE, 'options.mjs'); const o = readJ(path.join(HERE, 'out/options.json'));
     const s = o && o.summary;

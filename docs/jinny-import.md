@@ -26,7 +26,7 @@ node photoreal/tools/model/jinny-import.mjs "<지니 HTML 경로>" --deps ~/khj-
 
 1. HTML 안의 `window.KHDATA`(Draco 압축 GLB와 webp 텍스처)를 꺼내, 지난번에 들여온 판의 해시(`photoreal/tools/model/jinny/import-state.json`)와 비교해 바뀐 것만 고릅니다.
 2. 바뀐 모델은 Draco를 풀어 `new/models/<id>.js`(파일을 바로 연 file:// 대비)로 쓰고, `env-glb.mjs`로 meshopt 압축 `.glb`와 `bin-list.js`를 갱신합니다. GitHub Pages가 .glb를 gzip으로 보내므로 meshopt 쪽이 Draco보다 받는 양이 비슷하거나 작고, Draco 해독기를 외부 CDN에서 받지 않아도 됩니다.
-3. 바뀐 텍스처는 `new/models/tex/<이름>.js`로 쓰고 `env-ktx.py`로 그 텍스처만 KTX2로 바꾼 뒤, `env-atlas.py`로 라이트맵·노후 맵 아틀라스를 다시 만듭니다.
+3. 바뀐 텍스처는 `new/models/tex/<이름>.js`로 쓰고 `env-ktx.py`로 그 텍스처만 KTX2로 바꾼 뒤, `env-atlas.py`로 라이트맵·노후 맵 아틀라스를 다시 만듭니다 이어서 `vr-atlas.py`로 VR 용 색 텍스처 아틀라스(`new/models/tex/vr_atlas.ktx2`, 칸 표 `new/models/vr-atlas.js`)를 다시 굽습니다. VR과 화면 품질 '낮음'은 지니 건물을 이 아틀라스 한 장으로 몇 묶음에 그립니다.
 4. HTML의 재질표(`KH.mat`)를 `new/models/kh-lib.js`에 넣고, 바뀐 파일만 캐시 꼬리표(`KH.ver`)를 새로 매깁니다. 우리가 만든 모델(`school410r` 등)은 지우거나 덮지 않습니다.
 5. 큰 데이터를 뺀 코드를 지난번 판(`photoreal/tools/model/jinny/import-code.html`)과 줄 단위로 비교해 `photoreal/tests/out/jinny-import/<이전 판>-<새 판>-code.diff`로 남깁니다. 코드 변경은 자동으로 넣지 않습니다.
 6. `prefetch-list.py`로 미리받기 목록을 다시 만듭니다.

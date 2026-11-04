@@ -245,7 +245,8 @@
   }
 
   /* ---------- 공개 함수 ---------- */
-  function build(data, opts = {}) {
+  // 1102.r: 건물 하나씩 처리(one)와 마무리(finish)로 나눠, 실사 3D 가 여러 프레임에 걸쳐 만들 수 있게(buildAsync). 윈도우 흉내(CPU 4배)에서 3,738동 합치기가 한 프레임 1.4초였다
+  function make(data, opts = {}) {
     const T = window.THREE, grp = new T.Group(); grp.name = 'khContext';
     const ex = new Set(opts.exclude || []), want = b => !ex.has(b.id) && (opts.near !== false || !b.near) && (opts.far !== false || b.near)
       && (!opts.maxDist || b.dist <= opts.maxDist) && (!opts.filter || opts.filter(b));
@@ -261,7 +262,7 @@
     const labels = new Map();
     if (DET) data.buildings.forEach(b => { if (b.cls !== 'apt' || b.dist > DET || labels.size >= 256) return; const l = dongLabel(b); if (l && !labels.has(l)) labels.set(l, labels.size); });
     let nB = 0;
-    list.forEach((b, bi) => {
+    const one = (b, bi) => {
       const pts = b.outline;
       let A = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; A += p[0] * q[1] - q[0] * p[1]; }
       // 같은 계열 색(밝은 미장 5종이 79%)이 줄지어 같은 밝기로 보이지 않게 건물마다 명도(선형 0.5～1.06배)·색온도(±6%)를 조금씩 다르게(그리기 호출·자료 변화 없음)
@@ -316,7 +317,8 @@
       const R = buf('roof'), rc = det ? R.col : [col[0] * 0.55 + 0.12, col[1] * 0.55 + 0.12, col[2] * 0.55 + 0.12];
       roof(R, pts, b.h, rc);
       nB++;
-    });
+    };
+    const finish = () => {
     let tris = 0;
     for (const k of Object.keys(bufs)) {
       const B = bufs[k]; if (!B.tris) continue;
@@ -328,6 +330,14 @@
     grp.userData.stats = { buildings: nB, triangles: tris, drawCalls: grp.children.length, meshes: grp.children.map(m => [m.name, m.geometry.attributes.position.count / 3]) };
     grp.userData.meta = data.meta;
     return grp;
+    };
+    return { list, one, finish };
+  }
+  function build(data, opts = {}) { const m = make(data, opts); m.list.forEach(m.one); return m.finish(); }
+  async function buildAsync(data, opts = {}, budget = 12) {
+    const m = make(data, opts), now = () => performance.now(); let t0 = now();
+    for (let i = 0; i < m.list.length; i++) { m.one(m.list[i], i); if (now() - t0 > budget) { await new Promise(r => requestAnimationFrame(r)); t0 = now(); } }
+    return m.finish();
   }
   async function load(url, opts) { const r = await fetch(url); if (!r.ok) throw new Error('buildings.json ' + r.status); return build(await r.json(), opts); }
   // 위경도 → Wing 월드 [x, z] (buildings.json meta.transform 사용)
@@ -336,5 +346,5 @@
     const e = (lon - lon0) * kx, n = (lat - lat0) * ky;
     return [M[0][0] * e + M[0][1] * n + o[0], M[1][0] * e + M[1][1] * n + o[1]];
   }
-  window.KHContext = { build, load, lonLatToWorld, defaultMaterial, NEAR_CLS, hsh, dongLabel };
+  window.KHContext = { build, buildAsync, load, lonLatToWorld, defaultMaterial, NEAR_CLS, hsh, dongLabel };
 })();

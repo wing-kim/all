@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.q';
+  const VER = '1102.r2';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -494,13 +494,16 @@
       // 지하: Wing 이 노출을 크게 낮추므로(PR 켜짐 동안 frame() 에서 0.95로 고정) 그 기준으로 맞춘 값
       const Lp = { lm: LT.lm, box: LT.box, k: 1.0, amb: new T.Color(0.05, 0.05, 0.052) }, PE = parkEnv();
       const env = (m, e) => { m.envMap = PE; if (e != null) m.envMapIntensity = e; return m; };
-      if (orig === M.bfloor || orig === M.ramp) return env(texMat('office-concrete', 3, { tint: 0x8a8d91, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.16 }, under: lin(0xb9bab7) }), 1.0);
+      // 1102.r: 바닥은 깊이를 한 칸 뒤로(위에 2mm 로 까는 주차 바닥 마감과 램프 끝이 같은 높이에서 다투지 않게). 램프는 따로: Wing 처럼 양면(면 방향이 섞여
+      // 위에서 보면 일부 구간이 뒷면으로 빠져 안 보였다), 바닥보다 조금 어둡고 거친 콘크리트로 구분, 바닥과 만나는 끝은 램프가 이기게
+      if (orig === M.bfloor) { const m = env(texMat('office-concrete', 3, { tint: 0x8a8d91, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.16 }, under: lin(0xb9bab7) }), 1.0); m.polygonOffset = true; m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 2; return m; }
+      if (orig === M.ramp) { const m = env(texMat('office-concrete', 2, { tint: 0x6e7276, light: Lp, ns: 0.45, noRough: true, p: { roughness: 0.55 }, under: lin(0xb9bab7) }), 0.5); m.side = T.DoubleSide; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; return m; }
       if (orig === BM2.pad) return env(texMat('office-concrete', 3, { tint: 0x96999e, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.22 } }), 0.9);
       if (orig === M.paint) return env(paint(0xf2f1ec, 0.4, 0.5, Lp));
       if (orig === M.paintY) return env(paint(0xe6b52e, 0.4, 0.5, Lp));
       if (orig === BM2.stop) return env(paint(0x5d6064, 0.6, 0.4, Lp));
       if (orig === M.bceil) return env(texMat('concrete-wall', 2.7, { tint: 0xb9bab7, ns: 0.4, light: { amb: new T.Color(0.16, 0.16, 0.16), lm: LT.lm, box: LT.box, k: 0.5 } }), 0.4);
-      if (orig === M.bwall || orig === M.rampwall) return env(texMat('wall-beige', 3, { tint: 0xd6cfc4, ns: 0.5, light: { amb: new T.Color(0.2, 0.185, 0.165) } }), 0.5);
+      if (orig === M.bwall || orig === M.rampwall) { const m = env(texMat('wall-beige', 3, { tint: 0xd6cfc4, ns: 0.5, light: { amb: new T.Color(0.2, 0.185, 0.165) } }), 0.5); m.side = orig.side; return m; }   // 램프 벽은 Wing 처럼 양면
       if (orig === BM2.stripe || orig === BM2.stripeK) return env(paint(0x1c1e20, 0.45, 0.6, { amb: new T.Color(0.08, 0.08, 0.08) }));
       if (orig === M.col) return env(texMat('plaster-white', 1.2, { tint: 0xf3f2ef, ns: 0.3, light: { amb: new T.Color(0.3, 0.3, 0.3), lm: LT.lm, box: LT.box, k: 0.35 } }), 0.4);
       if (orig === M.corewall || orig === M.core || orig === M.wellwall) return env(texMat('plaster-white', 1.2, { tint: 0xe3ddd2, ns: 0.3, light: { amb: new T.Color(0.25, 0.24, 0.23) } }), 0.4);
@@ -844,7 +847,7 @@
       })); } }
     NIGHT.value = night ? 1 : 0;
     lampPools(); if (POOL.m) POOL.m.visible = night && !inBase;
-    nearTreeModels(); nearTreeSync(R.xr.isPresenting); if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
+    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); carLodSync(R.xr.isPresenting); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
@@ -1244,6 +1247,33 @@
     });
     PR.stat.furnVariants = V.size;
   }
+  // 지하 램프 구멍(1102.r): 'floor' = 이 층 바닥 구멍(내려가는 램프), 'ceil' = 이 층 천장 구멍 + 바로 위 지하층 바닥 구멍(올라가는 램프). 세계 좌표 [x, z] 다각형
+  // 램프 구멍 위 덮개는 그 층 실내에 있을 때만(다른 층에서는 겹쳐 쌓인 램프 통로를 가린다). 합치기(Opt)가 묶어 버리면 표시를 바꿀 수 없어 userData.khxr 로 빼 둔다(층당 그리기 1～2회)
+  const RCAP = []; let rcapKey = null;
+  function rampCapSync() { const L = K.I.on && K.Lv(), key = L ? L.key : ''; if (key === rcapKey) return; rcapKey = key; RCAP.forEach(c => { c.visible = c.userData.prLv === key; }); const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty && RCAP.length) O.dirty(); }
+  function rampCuts(L, kind) {
+    const up = K.LEVELS.filter(l => l.kind === 'base' && l.y > L.y + 0.1).sort((a, b) => a.y - b.y)[0];
+    const src = kind === 'floor' ? (L.floorHoles || []) : (L.ceilHoles || []).concat(up ? up.floorHoles || [] : []);
+    return src.filter(h => h && h.length > 2).map(h => h.map(q => K.P(q[0], q[1])));
+  }
+  // 바닥·천장 마감에 구멍 내기(1102.r): 마감판에 다각형 구멍을 직접 뚫으면(earcut) 램프 구멍이 계단·코어 구멍과 겹칠 때 삼각분할이 깨져
+  // 구멍 자리를 다시 덮었다(B1 마감 면적 744.9㎡ > 바닥 698㎡). 대신 층 바닥 범위를 덮는 1024 그림에 남길 곳을 칠하고, 셰이더가 세계 좌표로 읽어 빈 곳은 버린다(3cm 단위)
+  function holeMask(m, outer, cuts, key) {
+    if (!cuts.length) return m;
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; outer.forEach(([x, z]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); });
+    x0 -= 1; z0 -= 1; x1 += 1; z1 += 1;
+    const N = 1024, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), sx = N / (x1 - x0), sz = N / (z1 - z0);
+    const path = a => { g.beginPath(); a.forEach(([x, z], i) => { const u = (x - x0) * sx, v = (z - z0) * sz; if (i) g.lineTo(u, v); else g.moveTo(u, v); }); g.closePath(); };
+    g.fillStyle = '#fff'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'destination-out'; cuts.forEach(a => { path(a); g.fill(); });
+    const t = new T.CanvasTexture(c); t.flipY = false; t.generateMipmaps = false; t.minFilter = T.LinearFilter;
+    const mm = m.clone(); mm.userData = Object.assign({}, m.userData, { prHoleMask: key, prHoleCuts: cuts });   /* prHoleCuts: 시험(ramp.mjs)이 광선 판정에 같은 구멍을 쓴다 */ if (m.userData.prMade) WARM.push(mm);
+    const prev = m.onBeforeCompile !== T.Material.prototype.onBeforeCompile ? m.onBeforeCompile : null, pk = prev ? m.customProgramCacheKey() : '';
+    mm.onBeforeCompile = (sh, rr) => { if (prev) prev.call(mm, sh, rr); sh.uniforms.prHM = { value: t }; sh.uniforms.prHB = { value: new T.Vector4(x0, z0, 1 / (x1 - x0), 1 / (z1 - z0)) };
+      sh.vertexShader = 'varying vec2 vPrHW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvPrHW = (modelMatrix * vec4(transformed, 1.0)).xz;');
+      sh.fragmentShader = 'uniform sampler2D prHM;\nuniform vec4 prHB;\nvarying vec2 vPrHW;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\n  if (texture2D(prHM, (vPrHW - prHB.xy) * prHB.zw).a < 0.5) discard;'); };
+    mm.customProgramCacheKey = () => pk + '|hm';
+    return mm;
+  }
   function dressSig() { return K.LEVELS.map(l => l.key + ':' + l.kind + ':' + l.y.toFixed(2) + ':' + l.h.toFixed(2) + ':' + JSON.stringify(l.poly)).join('|'); }
   async function timber() {
     if (DR.timber) return DR.timber;
@@ -1262,7 +1292,7 @@
       await codexScripts();
       const extra = new T.Group(); extra.name = 'pr-dress'; extra.userData.interiorPlantAnchors = [];
       // 모듈이 기대하는 연결 객체(예전 TOWER_LAB_CONTEXT 의 일부). M.stone 은 빈 객체로 넘겨 원본 1층 바닥을 건드리지 않게 한다.
-      const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, scene, M: { stone: {} }, city: K.city, site: K.site, loadTex };
+      const C = { THREE: T, bld: K.bld, R3D: K.R3D, inPoly: K.inPoly, levels: () => K.LEVELS, P: K.P, interiorDressing: extra, ceilOf: K.ceilOf, floorTop: K.floorTop, holeMask, rampCuts, scene, M: { stone: {} }, city: K.city, site: K.site, loadTex };
       await window.dressTowerCafe(C, extra, await timber());
       // 사무실 층: 실제 층 목록에서(층수 7·8, PH1 → 7층 사용이면 7F·8F 도 꾸민다). 시안이 없는 층은 3F·4F·5F 시안을 돌려 쓴다.
       // 7층 사용(6·7층 분리)이면 6F 는 복층이 아니므로 복층 천장 계산을 끈 사본을 쓴다
@@ -1273,7 +1303,7 @@
       for (const key of (OS ? ups : window.OFFICE_FLOORS || [])) await window.dressTowerOffice(C, extra, key);
       for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
       if (window.swapInteriorModels) await window.swapInteriorModels(C, extra);
-      dropFallback(extra);
+      dropFallback(extra); thinRods(extra); a2c(extra);
       furnVariety(extra);
       placePlants(extra);
       parkingServices(extra);
@@ -1301,7 +1331,8 @@
     const headG = PF_.headG || (PF_.headG = new T.CylinderGeometry(0.035, 0.05, 0.09, 8));
     const edgeDist = (x, z, P) => { let d = 1e9; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [ax, az] = P[j], [bx, bz] = P[i], dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz || 1, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)); d = Math.min(d, Math.hypot(ax + dx * t - x, az + dz * t - z)); } return d; };
     levels.forEach(L => {
-      const P = L.poly.map(q => K.P(q[0], q[1])), inside = (x, z, m) => inPolyW([x, z], P) && edgeDist(x, z, P) > m;
+      const RH = rampCuts(L, 'floor').concat(rampCuts(L, 'ceil'));   // 1102.r: 램프 구멍 안에는 관·트레이·바닥 화살표를 두지 않는다(구멍 위에 떠 있었다)
+      const P = L.poly.map(q => K.P(q[0], q[1])), inside = (x, z, m) => inPolyW([x, z], P) && edgeDist(x, z, P) > m && !RH.some(a => inPolyW([x, z], a));
       const bd = polyBounds(L), wx = bd[2] - bd[0], wz = bd[3] - bd[1], alongX = wx >= wz;
       // (u: 긴 축, v: 짧은 축) → 월드
       const W = (u, v) => alongX ? [u, v] : [v, u];
@@ -1323,7 +1354,12 @@
       inst(headG, MS.head, lists.head, ([x, z, y]) => { pos.set(x, y, z); q.identity(); sc.set(1, 1, 1); });
       // 천장판: 실내 보기에서는 위층(=천장 슬래브)이 숨겨져 천장 자리에 배경(검정)이 보였다. 밝은 회색 도장 콘크리트 천장을 층마다 깐다
       const sh = new T.Shape(P.map(([x, z]) => new T.Vector2(x, z))), cg = new T.ShapeGeometry(sh); cg.rotateX(Math.PI / 2);
-      const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
+      const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm0 = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
+      // 1102.r: 램프가 지나가는 천장 구멍(이 층 ceilHoles + 바로 위 지하층 floorHoles)은 비운다. 막혀 있어 올라가는 램프가 천장에 묻혀 안 보였다
+      const cm = holeMask(cm0, P, rampCuts(L, 'ceil'), L.key + 'c');
+      // 구멍 위 덮개: 실내 보기는 위층을 숨겨 구멍 너머가 검은 배경이었다. 위층 천장 높이에 구멍 모양 판을 덮어 램프가 경사 통로처럼 위로 이어져 보이게
+      { const up = K.LEVELS.filter(l => l.y > L.y + 0.1).sort((a, b) => a.y - b.y)[0], cy = up ? K.ceilOf(up) - 0.02 : yC + 3;
+        rampCuts(L, 'ceil').forEach(a => { const hg = new T.ShapeGeometry(new T.Shape(a.map(([x, z]) => new T.Vector2(x, z)))); hg.rotateX(Math.PI / 2); const cap = new T.Mesh(hg, PF_.cap || (PF_.cap = (() => { const m = new T.MeshBasicMaterial({ color: 0x3b3c3e, side: T.DoubleSide }); m.userData.prMade = true; return m; })()));   /* 층 조명(라이트맵 상자) 밖이라 같은 천장 재질은 검게 나왔다: 빛을 받지 않는 짙은 회색 */ cap.position.y = cy; RCAP.push(cap); cap.castShadow = false; cap.receiveShadow = false; Object.assign(cap.userData, { prLv: L.key, prDeep: true, prNoCast: true, prSkip: true, prLit: true, prRampCap: true, khxr: true }); g.add(cap); }); }
       const ce = new T.Mesh(cg, cm); ce.position.y = yC - 0.02; ce.castShadow = false; ce.receiveShadow = false; Object.assign(ce.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(ce);
       const ar = aisleArrows(L, P, inside, alongX, W, [u0, u1, v0, v1]); if (ar) g.add(ar);
       const sm = stallMarks(L, inside); if (sm) g.add(sm);
@@ -1563,6 +1599,99 @@
     });
     scene.add(g);
   }
+  /* 1102.r: VR 에서는 압구정로 가로수 모델(8그루, 잎 카드 7,072장씩)의 잎 카드를 하나 걸러 남기고 1.3배 키운 판으로 바꾼다(가구·화분 모델을 가볍게 할 때와 같은 방법,
+     tools/model/lighten.mjs). 잎 삼각형 5.7만 → 2.8만(한 눈), VR 외관 삼각형 105만 → 100만 아래. 화면은 그대로 */
+  const STL = { full: null, half: null, xr: null };
+  function streetLeafSync(xr) {
+    if (!ENV.group || STL.xr === xr) return;
+    const leaves = []; ENV.group.traverse(o => { if (o.isMesh && /leaves/i.test(o.material.name)) leaves.push(o); }); if (!leaves.length) return;
+    STL.xr = xr; STL.full = STL.full || leaves[0].geometry;
+    if (xr && !STL.half) {
+      const g = STL.full, ix = g.index.array, P = g.attributes.position, out = new T.BufferGeometry(), keep = [];
+      for (let q = 0; q < ix.length / 6; q += 2) keep.push(q);   // 카드 = 꼭짓점 4개·인덱스 6개(0,1,2,1,3,2)
+      const nv = keep.length * 4, attrs = {}; for (const k in g.attributes) attrs[k] = new Float32Array(nv * g.attributes[k].itemSize);
+      const idx = new Uint32Array(keep.length * 6), c = new T.Vector3(), v = new T.Vector3();
+      keep.forEach((q, n) => { const vs = [ix[q * 6], ix[q * 6 + 1], ix[q * 6 + 2], ix[q * 6 + 4]]; c.set(0, 0, 0); vs.forEach(i => c.add(v.fromBufferAttribute(P, i))); c.multiplyScalar(0.25);
+        vs.forEach((i, j) => { for (const k in g.attributes) { const A = g.attributes[k], s = A.itemSize; for (let e = 0; e < s; e++) attrs[k][(n * 4 + j) * s + e] = A.array[i * s + e]; }
+          v.fromBufferAttribute(P, i).sub(c).multiplyScalar(1.3).add(c); attrs.position.set([v.x, v.y, v.z], (n * 4 + j) * 3); });
+        idx.set([0, 1, 2, 1, 3, 2].map(i => n * 4 + i), n * 6); });
+      for (const k in attrs) out.setAttribute(k, new T.BufferAttribute(attrs[k], g.attributes[k].itemSize));
+      out.setIndex(new T.BufferAttribute(idx, 1)); out.computeBoundingSphere(); STL.half = out;
+    }
+    leaves.forEach(o => { o.geometry = xr ? STL.half : STL.full; });
+    const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty();
+  }
+  /* 1102.r: VR 실내 지상층(1F 위)에서는 바닥판에 가려 안 보이는 지하층(B1～B4 건물·주차 차량·지하 꾸밈)과 250m 밖 원경 주변 건물을 그리지 않는다. VR 실내 1F 삼각형 136만 → 아래.
+     Wing 이 층 표시를 다시 켜므로 매 프레임 맞추고, 바뀌면 VR 합치기를 다시 만든다 */
+  const UBH = { key: '', hid: [] };
+  function underHide() {
+    const xr = R.xr.isPresenting, L = K.I.on && K.Lv && K.Lv(), on = xr && L && L.kind !== 'base';
+    const key = on ? 'on|' + L.key + '|' + K.LEVELS.length + '|' + (DR.group ? DR.group.uuid : '') : '';
+    if (on) UBH.hid.forEach(o => { if (o.visible) o.visible = false; });
+    if (key === UBH.key) return; UBH.key = key;
+    UBH.hid.forEach(o => { o.visible = true; }); UBH.hid = [];
+    if (on) {
+      const add = o => { if (o && o.visible) { o.visible = false; UBH.hid.push(o); } };
+      K.LEVELS.forEach((l, i) => { if (l.kind === 'base') add(K.LG[i]); });
+      K.R3D.props.children.forEach(c => { if (c.userData.car && c.position.y < -1) add(c); });
+      DR.groups.forEach(([g, k]) => { const l = K.LEVELS.find(q => q.key === k); if (l && l.kind === 'base') add(g); });
+      // 실내에서는 250m 밖 원경 주변 건물(가까운 건물에 가려 안 보임)도 뺀다
+      const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 250) add(m); }));
+    }
+    const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty();
+  }
+  /* 1102.r: VR 에서는 차량 모델(15대, 약 11만 삼각형)을 꼭짓점은 그대로 두고 인덱스만 줄인 판(meshoptimizer 0.22 단순화, MIT, vendor/meshopt_simplifier.js)으로 바꾼다.
+     법선·uv 는 원래 꼭짓점 것을 그대로 쓴다. 같은 차종은 형상을 같이 쓰므로 형상마다 한 번만 만든다. 화면은 그대로 */
+  // 위치·법선(0.1 단위)이 같은 꼭짓점을 붙여(모서리 날은 법선이 달라 그대로) 줄인다. 꼭짓점마다 따로인 모델(차량)도 줄어든다
+  function weldLod(S, g, ratio) {
+    const P = g.attributes.position, N = g.attributes.normal, n = P.count, ix = g.index, W = new Map(), rep = [], re = new Uint32Array(n);
+    for (let i = 0; i < n; i++) { const key = Math.round(P.getX(i) * 1000) + ',' + Math.round(P.getY(i) * 1000) + ',' + Math.round(P.getZ(i) * 1000) + (N ? '|' + Math.round(N.getX(i) * 10) + ',' + Math.round(N.getY(i) * 10) + ',' + Math.round(N.getZ(i) * 10) : '');
+      let w = W.get(key); if (w === undefined) { w = rep.length; W.set(key, w); rep.push(i); } re[i] = w; }
+    const cnt = ix ? ix.count : n, src = new Uint32Array(cnt); for (let i = 0; i < cnt; i++) src[i] = re[ix ? ix.getX(i) : i];
+    const pos = new Float32Array(rep.length * 3); rep.forEach((v, k) => { pos[k * 3] = P.getX(v); pos[k * 3 + 1] = P.getY(v); pos[k * 3 + 2] = P.getZ(v); });
+    const tgt = Math.floor(cnt * ratio / 3) * 3; if (tgt < 60) return null;
+    const [out] = S.simplify(src, pos, 3, tgt, 0.01, []); if (out.length > cnt * 0.8) return null;
+    const lod = new T.BufferGeometry();
+    for (const a in g.attributes) { const A = g.attributes[a], sz = A.itemSize, arr = new Float32Array(rep.length * sz); rep.forEach((v, k) => { for (let e = 0; e < sz; e++) arr[k * sz + e] = A.getComponent ? A.getComponent(v, e) : A.array[v * sz + e]; }); lod.setAttribute(a, new T.BufferAttribute(arr, sz, A.normalized)); }
+    lod.setIndex(new T.BufferAttribute(out, 1)); lod.boundingSphere = g.boundingSphere; lod.boundingBox = g.boundingBox; return lod;
+  }
+  const CLOD = { map: new Map(), xr: null, busy: false };
+  function carLodSync(xr) {
+    const ck = xr + '|' + ENV.added.length; if (CLOD.xr === ck || CLOD.busy) return;   // 조합을 바꾸면 차량을 다시 놓으므로 개수도 본다
+    const meshes = []; ENV.added.forEach(c => { if (!c.userData.prCar) return; c.traverse(k => { if (k.isMesh && k.geometry.attributes.position) meshes.push(k); }); });
+    if (!meshes.length) return;
+    const apply = () => { meshes.forEach(k => { const e = CLOD.map.get(k.userData.clod0 || k.geometry); if (!e) return; if (!k.userData.clod0) k.userData.clod0 = k.geometry; k.geometry = xr && e.lod ? e.lod : k.userData.clod0; }); CLOD.xr = ck; const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); };
+    if (!xr || meshes.every(k => CLOD.map.has(k.userData.clod0 || k.geometry))) return apply();
+    CLOD.busy = true;
+    (window.__khSimp || (window.__khSimp = loadScript(BASE + 'vendor/meshopt_simplifier.js?v=' + VER).then(() => MeshoptSimplifier.ready).then(() => MeshoptSimplifier).catch(() => null)))
+      .then(S => { if (!S) { CLOD.busy = false; return; }
+      meshes.forEach(k => { const g = k.userData.clod0 || k.geometry; if (CLOD.map.has(g)) return; let lod = null;
+        try { lod = weldLod(S, g, 0.45); } catch (e) { log('차량 단순화 실패', e && e.message); }
+        CLOD.map.set(g, { lod }); });
+      { let a = 0, b = 0, n = 0; CLOD.map.forEach((e, g) => { const t = (g.index ? g.index.count : g.attributes.position.count) / 3; a += t; b += e.lod ? e.lod.index.count / 3 : t; if (e.lod) n++; }); PR.stat.carLod = { geos: CLOD.map.size, reduced: n, tris: [Math.round(a), Math.round(b)] }; }
+      CLOD.busy = false; CLOD.xr = null; if (R.xr.isPresenting === xr) apply();
+    }).catch(() => { CLOD.busy = false; });
+  }
+  /* 1102.r: 지니 가로수(실사 레이어)가 보이면 그 자리 5m 안의 우리 가로수(모델 8그루·가까운 나무 모델·그림 카드)는 숨긴다. 압구정로 보도에서 두 나무가 나란히 서 보였다.
+     VR·품질 '낮음'(지니 가로수 꺼짐)에서는 우리 나무를 그대로 둔다 */
+  const TDD = { key: '' };
+  function treeDedupe() {
+    const E = window.KHENV && KHENV.R, on = !!(E && E.real && !E.lite && E.grp && E.grp.visible && E.trees && E.trees.length) && PR.on && !R.xr.isPresenting;
+    const key = on ? 'on|' + E.trees.length + '|' + (ENV.group ? ENV.group.children.length : 0) + '|' + (NT.mats ? NT.mats.length : 0) + '|' + (GND.near ? GND.near.uuid : '') : 'off|' + R.xr.isPresenting;
+    if (key === TDD.key) return; TDD.key = key;
+    const sp = [], m4 = new T.Matrix4(), v = new T.Vector3();
+    if (on) { const t = E.trees[0]; t.updateMatrixWorld(true); for (let i = 0; i < t.count; i++) { t.getMatrixAt(i, m4); v.setFromMatrixPosition(m4).applyMatrix4(t.matrixWorld); sp.push([v.x, v.z]); } }
+    const near = (x, z) => sp.some(([a, c]) => (a - x) * (a - x) + (c - z) * (c - z) < 25);
+    let n = 0;
+    if (ENV.group) ENV.group.children.forEach(o => { const h = on && near(o.position.x, o.position.z); o.visible = !h; if (h) n++; });
+    // 인스턴스 나무(가까운 나무 모델, 그림 카드): 원래 행렬을 한 번 보관하고 숨길 것만 0 크기로
+    const z = new T.Matrix4().makeScale(0, 0, 0);
+    [...(NT.m || []), ...(GND.far || []).filter(o => o && o.isInstancedMesh && /tree/.test(o.name))] /* 가까운 카드(GND.near)는 화면에서 이미 모델로 바뀌고 VR 은 nearTreeSync 가 맡는다 */.forEach(im => {
+      const u = im.userData; if (!u.tdd0) u.tdd0 = im.instanceMatrix.array.slice(); im.instanceMatrix.array.set(u.tdd0);
+      if (on) for (let i = 0; i < im.count; i++) { m4.fromArray(u.tdd0, i * 16); v.setFromMatrixPosition(m4).applyMatrix4(im.matrixWorld); if (m4.elements[0] !== 0 && near(v.x, v.z)) { im.setMatrixAt(i, z); n++; } }
+      im.instanceMatrix.needsUpdate = true; });
+    PR.stat.treeDedupe = n; PF_.shDirty = true; const O = optApi(); if (O && O.dirty) O.dirty();
+  }
   function placePlants(extra) {
     if (!ENV.plant) return;
     const anchors = (extra.userData.interiorPlantAnchors || []).slice(0, 14);
@@ -1624,6 +1753,14 @@
         if (r > 0.5 && iv > 0.005) { out.push({ mat: o.material && o.material.name, in: h.u, lv: o.userData.prLv, r: +r.toFixed(2), at: bb.getCenter(new T.Vector3()).toArray().map(v => +v.toFixed(1)) }); break; } } });
     return { boxes: bx.length, hits: out.length, list: out.slice(0, 8) };
   };
+  // 1102.r: 조명 매다는 줄(반지름 3mm 원기둥)은 화면에서 1화소보다 가늘어 카메라가 움직이면 자글거린다(퀘스트 한 눈 5F 화면 전체 깜빡임의 큰 몫). 길이 30cm 넘는 4mm 이하 줄은 그리지 않는다
+  function thinRods(root) { const drop = []; root.traverse(o => { if (o.isMesh && o.scale.x <= 0.004 && o.scale.z <= 0.004 && o.scale.y >= 0.3) drop.push(o); }); drop.forEach(o => o.parent.remove(o)); PR.stat.thinRods = drop.length; }
+  // 1102.r: 잎처럼 알파로 잘라 낸 재질은 다중 표본(MSAA)이 켜졌을 때 가장자리를 부드럽게(alphaToCoverage). 실내 화분 잎이 퀘스트 한 눈 5F 화면 깜빡임의 절반이었다
+  function a2c(root) { root.traverse(o => { if (!o.isMesh) return; [].concat(o.material).forEach(m => { if (!m) return; if (m.alphaTest > 0 && !m.alphaToCoverage) { m.alphaToCoverage = true; m.needsUpdate = true; }
+    // 잎 재질의 금속성·반사(모델 원본 값, 예: 'Leaves' 금속성 0.5)는 잎마다 반짝임을 만들어 자글거린다. 잎은 비금속·거칠게
+    if (m.emissiveMap && /monitor|screen/i.test(m.name || '') && !m.userData.prScr) { m.userData.prScr = true; m.emissiveIntensity *= 0.35; }   // 1102.r: 화면 속 글자(밝은 글자·검은 바탕)가 1화소 안팎으로 자글거렸다. 화면 발광을 낮춘다
+    if (!m.userData.prAniso) { m.userData.prAniso = true; ['map', 'normalMap', 'roughnessMap', 'aoMap', 'emissiveMap'].forEach(k => { const t = m[k]; if (t && t.anisotropy < ANISO()) { t.anisotropy = ANISO(); t.needsUpdate = true; } }); }   // GLB 가구 텍스처는 비등방 거르기 1 이라 비스듬한 면(책상·바닥·화면)이 자글거렸다
+    if (/leaf|leaves|foliage/i.test(m.name || '') && !m.userData.prLeafFix) { m.userData.prLeafFix = true; m.metalness = 0; m.roughness = Math.max(m.roughness, 0.85); m.envMapIntensity = Math.min(m.envMapIntensity, 0.4); } }); }); }
   function tagDress(root) {
     root.updateMatrixWorld(true);
     const polys = new Map(), box = new T.Box3(), c = new T.Vector3();
@@ -1884,7 +2021,7 @@
       if (window.KHENV) envAfter().then(() => { if (PR.on) envSchool(true); envCheck(); });
       const t1 = now();
       CTX.towers = wingTowers();
-      CTX.next = ctxPrep(window.KHContext.build(CTX.data, { near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) && !CTX.dup.has(b.id) && !envOut(b), detail: CTX_DET, detailNear: CTX_DN }));
+      CTX.next = ctxPrep(await (window.KHContext.buildAsync || window.KHContext.build)(CTX.data, { /* 1102.r: 여러 프레임에 나눠 만든다(한 프레임 12ms 안팎) */ near: true, far: true, material: ctxFacadeMat, filter: b => !redev(b) && !CTX.dup.has(b.id) && !envOut(b), detail: CTX_DET, detailNear: CTX_DN }));
       if (CTX.towers.length) CTX.next.add(towerGroup());
       PR.stat.ctxBuildMs = Math.round(now() - t1);
       PR.stat.context = CTX.next.userData.stats; PR.t.context = Math.round(now() - PR.t.enable0); log('주변 건물', PR.t.context + 'ms', '합치기 ' + PR.stat.ctxBuildMs + 'ms', CTX.next.userData.stats.buildings + '동');

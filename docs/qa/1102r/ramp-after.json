@@ -1,0 +1,109 @@
+{
+ "at": "2026-11-04T07:15:38.426Z",
+ "runs": [
+  {
+   "k": "B4",
+   "y": -13.2,
+   "down": 0,
+   "downCovered": 0,
+   "up": 0,
+   "upCovered": 0,
+   "by": {},
+   "flick": {},
+   "tag": "pr"
+  },
+  {
+   "k": "B3",
+   "y": -10.5,
+   "down": 0,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B2",
+   "y": -6.9,
+   "down": 48,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0,
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B1",
+   "y": -3.3,
+   "down": 48,
+   "downCovered": 0,
+   "up": 32,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0.04,
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B4",
+   "y": -13.2,
+   "down": 0,
+   "downCovered": 0,
+   "up": 0,
+   "upCovered": 0,
+   "by": {},
+   "flick": {},
+   "tag": "base"
+  },
+  {
+   "k": "B3",
+   "y": -10.5,
+   "down": 0,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "up": 0
+   },
+   "tag": "base"
+  },
+  {
+   "k": "B2",
+   "y": -6.9,
+   "down": 48,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0,
+    "up": 0
+   },
+   "tag": "base"
+  },
+  {
+   "k": "B1",
+   "y": -3.3,
+   "down": 48,
+   "downCovered": 0,
+   "up": 32,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0,
+    "up": 0.02
+   },
+   "tag": "base"
+  }
+ ]
+}

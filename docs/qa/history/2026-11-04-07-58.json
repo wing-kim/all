@@ -1,0 +1,120 @@
+{
+ "at": "2026-11-04T07:58:19.965Z",
+ "base": "http://127.0.0.1:55138",
+ "quick": false,
+ "only": [
+  "shots"
+ ],
+ "items": [
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:out.jpg",
+   "prev": "평균 차 8.28, 큰 차 7.4%"
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:street.jpg",
+   "prev": "평균 차 7.71, 큰 차 7.56%"
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:1F.jpg",
+   "prev": "평균 차 0.59, 큰 차 0.45%"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:5F.jpg",
+   "prev": "평균 차 0.53, 큰 차 0.09%"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:B1.jpg",
+   "prev": "평균 차 0.34, 큰 차 0.02%"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:B3.jpg",
+   "prev": "평균 차 0.29, 큰 차 0.01%"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:out-night.jpg",
+   "prev": "평균 차 5.76, 큰 차 5.19%"
+  },
+  {
+   "group": "shots",
+   "name": "apt-now.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:apt-now.jpg",
+   "prev": "평균 차 0.92, 큰 차 0.18%"
+  },
+  {
+   "group": "shots",
+   "name": "apt-future.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:apt-future.jpg",
+   "prev": "평균 차 0.92, 큰 차 0.2%"
+  },
+  {
+   "group": "shots",
+   "name": "env-sketch.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:env-sketch.jpg",
+   "prev": "평균 차 0, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "env-school.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정",
+   "key": "shots:env-school.jpg",
+   "prev": "평균 차 0.66, 큰 차 0%"
+  }
+ ]
+}

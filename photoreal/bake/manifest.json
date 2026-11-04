@@ -1,7 +1,7 @@
 {
  "res": 160,
  "cols": 6,
- "rows": 4,
+ "rows": 5,
  "levels": [
   {
    "key": "B3",
@@ -196,30 +196,47 @@
     23
    ],
    "from": "out-lv-f8"
+  },
+  {
+   "key": "B4",
+   "kind": "base",
+   "floor": -13.2,
+   "ceil": -10.8,
+   "box": [
+    -3.572115384615385,
+    -13.924999999999999,
+    15.99230769230769,
+    9.186393351119728
+   ],
+   "tile": [
+    24,
+    25
+   ],
+   "from": "b4"
   }
  ],
  "slots": {
   "pm": {
    "file": "bake-pm.png",
-   "scale": 7.232394695281982,
+   "scale": 11.188575744628906,
    "gamma": 2.2,
    "seconds": 91.5
   },
   "am": {
    "file": "bake-am.png",
-   "scale": 7.8407769203186035,
+   "scale": 11.188575744628906,
    "gamma": 2.2,
    "seconds": 48.0
   },
   "sunset": {
    "file": "bake-sunset.png",
-   "scale": 7.2323198318481445,
+   "scale": 11.188575744628906,
    "gamma": 2.2,
    "seconds": 57.9
   },
   "night": {
    "file": "bake-night.png",
-   "scale": 7.2323198318481445,
+   "scale": 11.188575744628906,
    "gamma": 2.2,
    "seconds": 38.0
   }

@@ -1,0 +1,121 @@
+{
+ "at": "2026-11-04T07:16:38.604Z",
+ "runs": [
+  {
+   "k": "B4",
+   "y": -13.2,
+   "down": 0,
+   "downCovered": 0,
+   "up": 0,
+   "upCovered": 0,
+   "by": {},
+   "flick": {},
+   "tag": "pr"
+  },
+  {
+   "k": "B3",
+   "y": -10.5,
+   "down": 0,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 53,
+   "by": {
+    "pr-lv-B3-band/": 51,
+    "pr-lv-B3-deep/Parking LED diffuser": 2
+   },
+   "flick": {
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B2",
+   "y": -6.9,
+   "down": 48,
+   "downCovered": 48,
+   "up": 54,
+   "upCovered": 53,
+   "by": {
+    "Parking floor finish/Parking grey epoxy floor": 48,
+    "pr-lv-B2-band/": 50,
+    "Parking dark ceiling/Parking dark ceiling paint": 1,
+    "pr-lv-B2-deep/Parking LED diffuser": 2
+   },
+   "flick": {
+    "down": 0.16,
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B1",
+   "y": -3.3,
+   "down": 48,
+   "downCovered": 48,
+   "up": 32,
+   "upCovered": 30,
+   "by": {
+    "Parking floor finish/Parking grey epoxy floor": 48,
+    "pr-lv-B1-band/": 29,
+    "pr-lv-B1-deep/Parking LED diffuser": 1
+   },
+   "flick": {
+    "down": 0.17,
+    "up": 0
+   },
+   "tag": "pr"
+  },
+  {
+   "k": "B4",
+   "y": -13.2,
+   "down": 0,
+   "downCovered": 0,
+   "up": 0,
+   "upCovered": 0,
+   "by": {},
+   "flick": {},
+   "tag": "base"
+  },
+  {
+   "k": "B3",
+   "y": -10.5,
+   "down": 0,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "up": 0
+   },
+   "tag": "base"
+  },
+  {
+   "k": "B2",
+   "y": -6.9,
+   "down": 48,
+   "downCovered": 0,
+   "up": 54,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0,
+    "up": 0
+   },
+   "tag": "base"
+  },
+  {
+   "k": "B1",
+   "y": -3.3,
+   "down": 48,
+   "downCovered": 0,
+   "up": 32,
+   "upCovered": 0,
+   "by": {},
+   "flick": {
+    "down": 0,
+    "up": 0.02
+   },
+   "tag": "base"
+  }
+ ]
+}
