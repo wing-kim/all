@@ -82,6 +82,7 @@ node xr.mjs                # IWER 퀘스트 3 에뮬레이터로 XR 그리기 �
 | `vendor/GLTFLoader.js`, `DRACOLoader.js`, `RGBELoader.js` | three.js r128 examples | three.js authors | MIT (`vendor/THREE-LICENSE.txt`) |
 | `vendor/draco/` | Google Draco 디코더 | Google | Apache 2.0 (`vendor/draco/LICENSE`) |
 | `vendor/meshopt_decoder.js` | meshoptimizer 0.22 해독기(지니 주변 모델 형상 압축 풀기, 1102.m) | Arseny Kapoulkine | MIT (`vendor/MESHOPT-LICENSE.md`) |
+| `vendor/meshopt_simplifier.js` | meshoptimizer 0.22 단순화(VR·품질 '낮음'에서 먼 지니 건물을 줄인 형상, 1102.q) | Arseny Kapoulkine | MIT (`vendor/MESHOPT-LICENSE.md`) |
 | 도구(저장소에 넣지 않음) | gltfpack 0.22(npm, 형상 압축), basis_universal 2.50(KTX2 인코더) | Arseny Kapoulkine / Binomial | MIT / Apache 2.0 |
 
 CC BY 4.0 모델은 출처 표기가 의무이며, 이 표로 표기합니다(https://creativecommons.org/licenses/by/4.0/). 가구 모델과 일부 텍스처는 예전 실사 3D 작업(`codex/tower-360-validation` 브랜치 `new/360/assets/`)에서 같은 파일을 가져왔고, 그쪽 출처 기록과 같습니다. 모두 검토용 표현이며 실제 마감·가구 사양이 아닙니다.

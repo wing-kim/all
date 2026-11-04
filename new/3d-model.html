@@ -7666,7 +7666,7 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.p';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.q';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -7693,7 +7693,7 @@ async function khLoad0(){
     if(q.m.userData.box){const s1=new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()),s0=q.m.userData.box.getSize(new THREE.Vector3());   /* a model spanning several buildings (미성, fill sets) */
       if(s1.x*s1.z>2*s0.x*s0.z){const i=OCC.indexOf(q.m);if(i>=0)OCC.splice(i,1);q.m.visible=true}}   /* must not vanish with its host's see-through (occl) */
     delete KH.glb[q.id]}catch(e){console.warn('env model',q.id,e)}};
-  await Promise.all(qs.filter(q=>dist(q)<45).map(one));await Promise.all(qs.filter(q=>dist(q)>=45).map(one));khDropOverlaps(qs);KHR.busy=false}   // [PR] 지니의 스케치업 가로 묶음(khSketchLoad)·미리받기(khPrefetch)는 부르지 않는다: 첫 화면에서 가로 요소를 받지 않음(1102.l 규칙), 미리받기는 실사 3D 목록이 맡음
+  await Promise.all(qs.filter(q=>dist(q)<45).map(one));await Promise.all(qs.filter(q=>dist(q)>=45).map(one));khDropOverlaps(qs);KHR.busy=false;if(KHR.lite)khLod(true)}   // [PR] 지니의 스케치업 가로 묶음(khSketchLoad)·미리받기(khPrefetch)는 부르지 않는다: 첫 화면에서 가로 요소를 받지 않음(1102.l 규칙), 미리받기는 실사 3D 목록이 맡음
 // env-test: 스케치업 shows the same big forms as 렌더-실사 — the roadview-based road, pavements, access lane, gate piers, poles (road_env,
 // street_env, ground_fill) — in flat colours (kh-lib 'flat' = tint x mean texture colour), no textures or baked light; the page's old
 // road paint, signals, boundary wall and piers (RDP) are hidden there and in 렌더-실사, so only plain 렌더 keeps the original drawing
@@ -7795,7 +7795,7 @@ function khSky(){if(!R3D.on)return;const s=R3D.sunNow,k=KHL.k;   // day / low su
 const KHG=/^(glass|steel|car_glass)/;
 function khGlass(){if(!R3D.on||!R3D.cube)return;KHR.bld.forEach(k=>{const m=k.userData.m1;if(m&&KHG.test(k.userData.mn)){if(m.envMap!==R3D.cube.texture){m.envMap=R3D.cube.texture;m.needsUpdate=true}m.envMapIntensity=1}})}
 function khReal(on){   // the whole realism layer on / off (렌더-실사 vs 렌더 · 스케치업)
-  KHR.signs.forEach(k=>k.visible=on);khRDP();   /* RDP + khHide: occl() (see-through) must not bring them back */KHR.lampAt&&R3D.lamps.forEach((L,i)=>{if(!L.userData.p0)L.userData.p0=L.position.clone();L.position.copy(on&&KHR.lampAt[i]?KHR.lampAt[i]:L.userData.p0)});R3D.props.children.forEach(g=>{if(g.userData.person)g.visible=!on});KHR.bld.forEach(k=>k.material=on?k.userData.m1:k.userData.m0);if(KHR.grp)KHR.grp.visible=on;
+  KHR.signs.forEach(k=>k.visible=on&&!KHR.lite);khRDP();   /* RDP + khHide: occl() (see-through) must not bring them back */KHR.lampAt&&R3D.lamps.forEach((L,i)=>{if(!L.userData.p0)L.userData.p0=L.position.clone();L.position.copy(on&&KHR.lampAt[i]?KHR.lampAt[i]:L.userData.p0)});R3D.props.children.forEach(g=>{if(g.userData.person)g.visible=!on});KHR.bld.forEach(k=>k.material=on?k.userData.m1:k.userData.m0);if(KHR.grp)KHR.grp.visible=on&&!KHR.lite;   /* [PR] VR·낮음(lite) 동안은 끈 채로(1102.q: 지니 v107 도로·바닥·2·3구역이 VR 에 다시 켜져 삼각형이 늘었다) */
   KHR.cars.forEach(([o,n])=>{o.visible=!on;n.visible=on});KHR.alley.forEach(c=>c.visible=!on);
   if(KHR.rm)[RMAT.walk,RMAT.road].forEach((m,i)=>{const r=KHR.rm[on?1:0][i];Object.assign(m,r);if(m.map)m.map.encoding=m.userData.lin?THREE.sRGBEncoding:THREE.LinearEncoding;m.needsUpdate=true});if(typeof khStyle==='function')khStyle()}
 function khSeason(){const mo=R3D.custom&&R3D.cdate?R3D.cdate.getMonth()+1:{spring:4,summer:7,autumn:10,winter:1}[R3D.season];
@@ -7866,12 +7866,32 @@ const KHF=new Map();   // 지니 재질 → VR 단색 재질(텍스처 평균색
 const KHA=new WeakMap();   // 텍스처 → 평균색(r128 텍스처에는 userData 가 없다)
 function khAvg(t){if(t&&t.name&&KH.avg&&KH.avg[t.name])return new THREE.Color(...KH.avg[t.name]).convertSRGBToLinear();const im=t&&t.image;if(!im||!im.width||t.isCompressedTexture)return null;if(KHA.has(t))return KHA.get(t);let a=null;try{const c=document.createElement('canvas');c.width=c.height=4;const g=c.getContext('2d');g.drawImage(im,0,0,4,4);const d=g.getImageData(0,0,4,4).data;let r=0,gg=0,b=0;for(let i=0;i<64;i+=4){r+=d[i];gg+=d[i+1];b+=d[i+2]}a=new THREE.Color(r/4080,gg/4080,b/4080).convertSRGBToLinear()}catch(e){a=null}KHA.set(t,a);return a}
 function khFlatMat(m){if(m.alphaMap||m.transparent)return m;let f=KHF.get(m);if(f)return f;const c=m.color.clone(),a=khAvg(m.map);if(a)c.multiply(a);f=SM({color:c,roughness:m.roughness,metalness:m.metalness});if(m.userData.lin)f.userData.lin=true;f.side=m.side;f.name='vr_'+(m.name||'');KHF.set(m,f);return f}
+/* [PR] VR·품질 '낮음' 단순화(1102.q): 지니 건물을 거리에 따라 줄인 형상으로 바꾼다(15m 안 그대로, 15～30m 50%, 30～80m 30%, 80m 밖 12%, 80m 안은 테두리 고정).
+   꼭짓점 버퍼는 원래 것을 같이 쓰고 인덱스만 새로 만든다(메모리 거의 그대로). 해독기와 같은 meshoptimizer 0.22 단순화(MIT, photoreal/vendor).
+   처음 한 번은 비동기로 만들고(VR 들어가는 검은 화면 동안), 끝나면 VR 합치기를 다시 만든다. 지니 모델 증가로 VR 외관 삼각형이 117.8만이 되어 기준 100만을 넘었다 */
+let KHLODP=null;const khLodLib=()=>KHLODP||(KHLODP=khJS('../photoreal/vendor/meshopt_simplifier.js').then(()=>MeshoptSimplifier.ready).then(()=>MeshoptSimplifier).catch(e=>{console.warn('env lod',e);return null}));
+function khLodGeo(S,g,r,err){const ix=g.index,p=g.attributes.position;if(!ix||!p||p.itemSize!==3)return null;   // 지니 메시는 면마다 꼭짓점이 따로라(평면 음영·uv 이음매) 위치로 붙인 뒤 줄이고, 결과는 면 법선으로 다시 만든다(VR 은 단색 재질)
+  const W=new Map(),wp=[],re=new Uint32Array(p.count);for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),key=Math.round(x*500)+','+Math.round(y*500)+','+Math.round(z*500);let w=W.get(key);if(w===undefined){w=wp.length/3;W.set(key,w);wp.push(x,y,z)}re[i]=w}
+  const src=new Uint32Array(ix.count);for(let i=0;i<ix.count;i++)src[i]=re[ix.getX(i)];const tgt=Math.floor(src.length*r/3)*3;if(tgt<36)return null;
+  const pos=new Float32Array(wp),[out]=S.simplify(src,pos,3,tgt,err,r>.25?['LockBorder']:[]);   // 80m 밖은 테두리도 줄인다(틈이 멀어서 안 보임)if(out.length>=src.length*0.9)return null;
+  const n=new THREE.BufferGeometry(),a=new Float32Array(out.length*3);for(let i=0;i<out.length;i++){a[i*3]=pos[out[i]*3];a[i*3+1]=pos[out[i]*3+1];a[i*3+2]=pos[out[i]*3+2]}
+  n.setAttribute('position',new THREE.BufferAttribute(a,3));n.computeVertexNormals();
+  for(const k in g.attributes)if(k!=='position'&&k!=='normal')n.setAttribute(k,new THREE.BufferAttribute(new Float32Array(out.length*g.attributes[k].itemSize),g.attributes[k].itemSize));   // 합치기가 같은 속성끼리 묶도록 자리만(단색 재질이라 쓰지 않음)
+  n.computeBoundingSphere();n.computeBoundingBox();return n}
+function khLod(on){const swap=()=>{let t0=0,t1=0,ch=0;KHQ.forEach(q=>{if(!q.o)return;q.o.traverse(k=>{const u=k.userData;if(!k.isMesh||k.isLineSegments||!u.lodG)return;const g0=u.lodG0||(u.lodG0=k.geometry),gn=on?u.lodG:g0;if(k.geometry!==gn){k.geometry=gn;ch++}t0+=g0.index.count/3;t1+=u.lodG.attributes.position.count/3})});
+    KHR.lodTris=[Math.round(t0),Math.round(t1)];const O=window.KHXRLayer&&KHXRLayer.opt;if(ch&&O&&O.dirty)O.dirty()};   // 바뀐 것이 있을 때만 합치기를 다시
+  if(on&&!(R3D.on&&KHR.real))on=false;   // 실사 3D(실사 레이어)일 때만. 스케치업 VR 은 지니 외곽선·스케치 재질이라 그대로 둔다
+  if(!on||KHQ.every(q=>!q.o||q.lod))return swap();
+  khLodLib().then(S=>{if(!S||!KHR.lite)return;const v=new THREE.Vector3(),t=performance.now();
+    KHQ.forEach(q=>{if(!q.o||q.lod)return;q.lod=true;const c=new THREE.Box3().setFromObject(q.o).getCenter(v),d=Math.hypot(c.x,c.z),r=d<15?1:d<30?.5:d<80?.3:.12;if(r>=1)return;
+      q.o.traverse(k=>{if(!k.isMesh||k.isLineSegments||k.userData.lodG)return;try{const n=khLodGeo(S,k.geometry,r,r<.2?.25:.12);if(n)k.userData.lodG=n;else KHR.lodNull=(KHR.lodNull||0)+1}catch(e){KHR.lodErr=String(e)}})});
+    KHR.lodMs=(KHR.lodMs||0)+Math.round(performance.now()-t);if(KHR.lite)swap()})}
 function khSch(){const r=KHR.sch;if(!r||!r.parent)return;const on=R3D.on&&KHR.real;r.visible=on;r.parent.children.forEach(c=>{if(c!==r&&!c.isLineSegments)c.visible=!on})}   // [PR] 늘린 학교(1102.n)와 원래 학교 바꿔 보이기
 function khStyle(){khSch();const sk=!R3D.on;(KHR.all||[]).forEach(k=>{const b=k.userData.mBase;if(!b)return;if(sk)k.material=khSketchMat(b);else if(KHR.lite)k.material=khFlatMat(b);else if(KHR.real&&k.userData.m1)k.material=k.userData.m1;else k.material=k.userData.m0||b});if(!sk&&(KHR.all||[]).length)linearize(true)}   // 렌더: 스케치업 동안 장면 밖에 있던 지니 재질도 선형 색으로(linearize 는 표시된 것만 바꿈)
 // 실사 3D(KHPRLayer)와 시험이 쓰는 연결: ready() = 모델 받기 끝, real(on) = 라이트맵·AO·가로 요소·가로수·차량, models() = 받은 모델(id·객체)
 window.KHENV={ver:KH_ENV_VER,off:KH_ENV_OFF,ready:()=>khLoad(),models:()=>KHQ.filter(q=>q.o).map(q=>({id:q.id,o:q.o,m:q.m})),R:KHR,Q:KHQ,
   // VR(실사 3D 가 켬): 그리기 수 예산(외관 170). 지니 건물은 텍스처 평균색의 단색(VR 합치기가 같은 성질끼리 한 번에 그림), 가로 요소·가로수·간판 끔, 차량은 Wing 상자 차로
-  lite(on){on=!!on;if(KHR.lite===on)return;KHR.lite=on;const real=R3D.on&&KHR.real;if(KHR.grp)KHR.grp.visible=real&&!on;KHR.signs.forEach(k=>k.visible=real&&!on);
+  lite(on){on=!!on;if(KHR.lite===on)return;KHR.lite=on;khLod(on);const real=R3D.on&&KHR.real;if(KHR.grp)KHR.grp.visible=real&&!on;KHR.signs.forEach(k=>k.visible=real&&!on);
     KHR.cars.forEach(([o,n])=>{o.visible=!(real&&!on);n.visible=real&&!on});khStyle()},
   real(on,later){KHR.real=!!on;if(R3D.on){khReal(KHR.real);if(KHR.real){if(!later)khRealLoad();linearize(true);khSeason();khSky()}}khStyle()},   // later: 받기는 나중에(실사 외관 준비 뒤 다시 부름)
   loaded:()=>({base:!!KHR.base,real:!!KHR.loading,n:KHQ.filter(q=>q.o).length,of:KHQ.length}),get busy(){return !!KHR.busy||KHR.pend>0}};
