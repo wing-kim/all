@@ -1,11 +1,12 @@
 {
  "ver": "v107",
- "at": "2026-11-04T02:12:19.349Z",
- "file": "케이프혼타워_3D모델_v107_env (1).html",
- "sha1": "05b6a8c5ae7247615cbc4f693b338d0d60c84ed5",
+ "at": "2026-11-04T08:00:56.357Z",
+ "file": "케이프혼타워_3D모델_v107_env_detail.html",
+ "sha1": "f9c46ebcc3296d6fcf0ac57eb8996a707c127dde",
  "src": {
   "tex/aptwin_albedo": "d40e86513c54",
   "tex/asphalt_albedo": "36f76d8e0715",
+  "tex/blockpave_albedo": "59e41c086837",
   "tex/board_albedo": "aa89aa85bffc",
   "tex/brick_albedo": "01b6ee3ea937",
   "tex/brick_normal": "f35281d175ff",
@@ -13,6 +14,7 @@
   "tex/canvas_albedo": "2261fdbf7228",
   "tex/checker_albedo": "d421da8f3a72",
   "tex/court_albedo": "40b8759cfcf0",
+  "tex/farwin_albedo": "bffe10303ced",
   "tex/fence_alpha": "42a71d713705",
   "tex/granite_albedo": "e8b406861775",
   "tex/leaves_albedo": "f1620d453a0c",
@@ -36,7 +38,7 @@
   "tex/domino114_lm": "329a64045240",
   "tex/einstein116_lm": "fe964a68227c",
   "tex/customeat110_lm": "206771547c3b",
-  "tex/street_env_lm": "2581d0c05620",
+  "tex/street_env_lm": "8769a9cc00af",
   "tex/school410_ao": "e01851f5b35f",
   "tex/school410_lm": "b920c1cb29d4",
   "tex/sauna529_ao": "0a2914957f9c",
@@ -94,7 +96,7 @@
   "glb/domino114": "544b88655ba0",
   "glb/customeat110": "b48a6c29f709",
   "glb/einstein116": "8a2eddedd651",
-  "glb/street_env": "947601279917",
+  "glb/street_env": "1bc86ae50ea5",
   "glb/tree": "705e6e5896fe",
   "glb/cars": "9ba45b0d869a",
   "glb/school410": "ce442ed590ad",
@@ -138,6 +140,7 @@
   "glb/a3_se": "b8a4a017755d",
   "glb/a3_s": "d4f07e068e57",
   "glb/a3_w": "112424153801",
-  "glb/tw_detail": "d86664ce19bc"
+  "glb/tw_detail": "d86664ce19bc",
+  "glb/far_ring": "c9123a587562"
  }
 }

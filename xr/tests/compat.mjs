@@ -18,7 +18,10 @@ fs.mkdirSync(OUT + 'orig/new', { recursive: true });
 const verOf = s => +((String(s).match(/VER='v(\d+)'/) || [])[1] || 0);
 const mainSrc = execSync('git show origin/main:new/3d-model.html', { cwd: ROOT, maxBuffer: 64 << 20 }), JIMP = path.join(ROOT, 'photoreal/tools/model/jinny/import-code.html');
 const jimp = fs.existsSync(JIMP) ? fs.readFileSync(JIMP) : null, useJ = jimp && verOf(jimp) > verOf(mainSrc);
-fs.writeFileSync(OUT + 'orig/new/3d-model.html', useJ ? jimp : mainSrc);
+// 1102.s: 큰 데이터(KHDATA)를 뺀 지니 코드 판은 스케치업 가로 묶음(khSketchLoad)을 빈 채로 만들어, 그것을 '주변 모델이 보임'으로 보고 대지를 내리고 잘랐다
+// (우리 ?env=0 은 그 묶음을 만들지 않음). 같은 조건이 되게 원본 쪽 khSketchLoad 를 끈다
+const jimp2 = useJ ? String(jimp).replace('async function khSketchLoad(){', 'async function khSketchLoad(){return;') : null;
+fs.writeFileSync(OUT + 'orig/new/3d-model.html', useJ ? jimp2 : mainSrc);
 // 1102.l: 지니 주변 환경 작업이 Wing 장면에 넣은 변경(방위 화살표·논현로175길·매스 높이와 외곽선·교회·신사중 이름판, 지니 전달물 env-merge.patch 중 HTML 덩어리 4·6～10)을
 // 원본에도 적용해, 우리 쪽(?env=0: 지니 모델을 받지 않음)과 비교한다. patch 명령이 없으면(윈도우) 적용 없이 비교하고 결과에 적는다
 let jinnyPatched = false;

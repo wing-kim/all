@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.r2';
+  const VER = '1102.s';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -75,6 +75,7 @@
     xrCam = new T.PerspectiveCamera(70, 1, 0.08, 5000); xrCam.name = 'khxr-cam'; rig.add(xrCam);
     fadeMesh = new T.Mesh(new T.SphereGeometry(0.25, 16, 12), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, side: T.BackSide, depthTest: false, depthWrite: false }));
     fadeMesh.renderOrder = 10000; fadeMesh.visible = false; xrCam.add(fadeMesh);
+    Load.init();
     {   // 이동 중 시야 가장자리 어둡게: 가운데가 뚫린 원판
       const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d');
       const gr = c.createRadialGradient(128, 128, 60, 128, 128, 128); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)');
@@ -129,7 +130,8 @@
     if (S.session || S.entering) return;
     S.entering = true;
     try {
-      const wantAR = X.support.ar && Q.get('xrsession') !== 'vr';
+      // 1102.s(Jack 퀘스트): 패스스루는 피규어 모드에서만. 1:1 VR 은 패스스루 없는 immersive-vr(머리를 돌릴 때 그리지 못한 가장자리에 현실이 비치고, 패스스루 합성 비용도 든다)
+      const wantAR = mode === 'fig' && X.support.ar && Q.get('xrsession') !== 'vr';
       const sm = wantAR ? 'immersive-ar' : 'immersive-vr';
       const opt = ['hand-tracking', 'bounded-floor', 'anchors', 'hit-test'];
       if (wantAR && mode === 'fig') opt.push('plane-detection');   // 공간 정보 동의창은 피규어로 시작할 때만
@@ -155,6 +157,8 @@
     S.center = buildingCenter();
     if (mode === 'fig') { setMode('fig', { fromDesktop: true }); }
     else { setMode('vr'); placeFromDesktop(); }
+    // 1102.s: 실사 3D 를 끈 VR(스케치업·렌더(이전))도 지니 주변을 VR 단순화(lite)로. 실사 3D 를 켜면 실사 계층이 lite 를 맡는다
+    if (window.KHENV && KHENV.lite && !(window.KHPRLayer && KHPRLayer.on)) { KHENV.lite(true); S.liteByXr = true; }
     OnTop.apply(0, true);
     if (S.opt) Opt.build(); else Opt.clear();   // 화면 합치기(실사 3D)가 켜져 있었으면 걷는다
     XQ.reset();
@@ -162,7 +166,8 @@
     UI.onSessionStart();
   }
   function onEnd() {
-    R.setAnimationLoop(null); R.info.autoReset = true; clipMaterials(false); OnTop.clear();
+    R.setAnimationLoop(null); R.info.autoReset = true; clipMaterials(false); OnTop.clear(); Load.hide();
+    if (S.liteByXr) { S.liteByXr = false; if (window.KHENV && KHENV.lite && !(window.KHPRLayer && KHPRLayer.on)) KHENV.lite(false); }
     const leaving = S.mode;
     transferToDesktop(leaving);
     setVisualsFor(null);
@@ -176,7 +181,10 @@
     S.session = null; S.mode = null; Fig.placed = false; Fig.anchor = null; if (Fig.base) Fig.base.visible = false;
     if (K.resize) K.resize();
     log('세션 종료 → 웹 화면');
+    if (S.swapTo) { const m = S.swapTo; S.swapTo = null; enter(m).catch(e => { log('세션 바꾸기 실패', String(e)); swapNote(m); }); }
   }
+  function swapNote(m) { let e = document.getElementById('khxr-swap-note'); if (!e) { e = document.createElement('div'); e.id = 'khxr-swap-note'; e.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:60;padding:14px 18px;border-radius:8px;background:rgba(20,22,24,.94);color:#fff;font:15px/1.5 system-ui,sans-serif;text-align:center'; document.body.appendChild(e); }
+    e.textContent = (m === 'fig' ? '피규어(패스스루)' : 'VR') + ' 로 바꾸려면 아래 버튼을 한 번 더 눌러 주세요'; e.onclick = () => e.remove(); setTimeout(() => e.remove(), 8000); }
   function exitToWeb() { if (S.session) S.session.end(); }
   X.enter = enter; X.exit = exitToWeb;
 
@@ -636,14 +644,18 @@
     for (const h of X.ray.intersectObjects(tg, true)) { const ob = h.object; if (!ob.isMesh || !visibleForPick(ob)) continue; const m = Array.isArray(ob.material) ? ob.material[0] : ob.material; if (m && (m.visible === false || (m.transparent && m.opacity < 0.9))) continue; return h; }
     return null;
   }
-  function isUp(h) { return !!h.face && V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y > 0.6; }
+  function isUp(h) { if (!h.face) return false; const y = V().copy(h.face.normal).transformDirection(h.object.matrixWorld).y, m = Array.isArray(h.object.material) ? h.object.material[0] : h.object.material; return m && m.side === T.DoubleSide ? Math.abs(y) > 0.6 : y > 0.6; }   // 1102.s: 양면 재질 바닥(지니 대지 둘레 면 등)은 법선이 아래를 향해도 바닥
   function rampAt(pt) { if (!K.rampHit || !K.toPx) return null; const r = K.rampHit(K.toPx(pt.x, pt.z), pt.y); return r && Math.abs(r.y - pt.y) < 0.35 ? r : null; }
   function landOk(pt) {
     if (rampAt(pt)) return true;     // 계단 단·램프 위
     const L0 = curLevel();
     if (L0) return !K.walkable || Math.abs(pt.y - floorY(L0)) > 1.5 || K.walkable(pt.x, pt.z, L0);
-    const L1 = enterLevelAt(pt); return !L1 || !K.walkable || K.walkable(pt.x, pt.z, L1);   // 밖에서 건물 1층 바닥을 가리키면 그 층 걷기 판정
+    const L1 = enterLevelAt(pt); if (!L1 || !K.walkable) return true;
+    // 1102.s: 지니 env_detail 부터 정면 출입구 앞 3m 가 1층 높이 평지라 1층 바닥으로 잘못 보고 걷기 판정에서 떨어뜨렸다. 층 외곽 밖이면 바깥 땅이다
+    if (K.toPx && L1.poly && !inPoly2(K.toPx(pt.x, pt.z), L1.poly)) return true;
+    return K.walkable(pt.x, pt.z, L1);   // 밖에서 건물 1층 바닥을 가리키면 그 층 걷기 판정
   }
+  function inPoly2(p, poly) { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if (((yi > p[1]) !== (yj > p[1])) && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) c = !c; } return c; }
   // 건물 밖에서 건물 안 바닥을 가리켰을 때 들어갈 층(1층 높이 근처만)
   function enterLevelAt(pt) {
     if (!K.full || (K.I && K.I.on) || !K.bld || !K.LEVELS) return null;
@@ -687,7 +699,7 @@
     Labels.update();
     Hot.update();
     Photo.update();
-    fadeTick(dt);
+    fadeTick(dt); Load.tick(performance.now());
     for (const f of X.hooks) f(dt, time);   // 멀티플레이 등 덧붙인 모듈
     if (S.opt) Opt.check(time);
     OnTop.apply(time);
@@ -760,7 +772,8 @@
   const XQ = X.xrq = {
     level: 0, ds: [], last: 0, bad: 0, good: 0, fixed: Q.get('xrq') != null && Q.get('xrq') !== '' ? Math.max(0, Math.min(3, +Q.get('xrq') || 0)) : null,
     auto: !Q.get('xremu'),
-    reset() { this.ds = []; this.last = 0; this.bad = this.good = 0; this.set(this.fixed != null ? this.fixed : 0); },
+    // 1102.s(Jack 퀘스트: 렉이 심함): 실사 3D 를 켠 채 들어가면 한 단계 낮춰(고정 포비에이션 최대 + 실사 계층 VR 화질 1단계) 시작하고, 15초 동안 넉넉하면 올린다
+    reset() { this.ds = []; this.last = 0; this.bad = this.good = 0; this.set(this.fixed != null ? this.fixed : (window.KHPRLayer && KHPRLayer.on && this.auto ? 1 : 0)); },
     set(lv) {
       this.level = lv;
       try { const L = S.session && S.session.renderState.baseLayer; if (L && 'fixedFoveation' in L) L.fixedFoveation = lv >= 1 ? 1.0 : store.get('foveation', 0.5); } catch (e) {}
@@ -830,6 +843,26 @@
       L.slice(0, 18).forEach((s, i) => g.fillText(String(s).slice(0, 80), 14, 30 + i * 27)); this.tex.needsUpdate = true;
     }
   };
+  // VR 로딩 패널(1102.s, Jack 퀘스트: 들어가거나 VR 안에서 실사 3D 를 누른 뒤 검은 화면만 길게 보여 고장으로 오해). 머리에 붙은 작은 판에
+  // '불러오는 중 · 단계 · 경과 초'를 보이고 점이 돌아 살아 있음을 알린다. 검은 전환 구(반지름 0.25m) 안쪽 0.2m 에 두고 맨 나중에 그린다
+  const Load = {
+    m: null, cv: null, g: null, tex: null, t0: 0, last: 0, shown: false,
+    init() { this.cv = document.createElement('canvas'); this.cv.width = 640; this.cv.height = 150; this.g = this.cv.getContext('2d'); this.tex = new T.CanvasTexture(this.cv);
+      this.m = new T.Mesh(new T.PlaneGeometry(0.128, 0.03), new T.MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false }));
+      this.m.position.set(0, -0.012, -0.2); this.m.renderOrder = 10001; this.m.visible = false; xrCam.add(this.m); },
+    busy() { const P = window.KHPRLayer, pg = P && P.progress ? P.progress() : null, env = window.KHENV && KHENV.busy;
+      return { on: !!((pg && pg.busy) || env || Opt.need || (S.fade && fadeMesh.visible && fadeMesh.material.opacity > 0.6)), text: pg && pg.text ? pg.text : env ? '주변 건물 받는 중' : Opt.need ? '장면 정리 중' : '화면 준비 중' }; },
+    tick(now) { if (!this.m) return; const b = S.session ? this.busy() : { on: false };
+      if (b.on && !this.shown) { this.shown = true; this.t0 = now; }
+      if (!b.on && this.shown && now - (this.off || (this.off = now)) > 400) { this.shown = false; this.off = 0; } else if (b.on) this.off = 0;
+      const vis = this.shown && now - this.t0 > 250; this.m.visible = vis; if (!vis || now - this.last < 250) return; this.last = now;
+      const g = this.g, W = 640, H = 150, sec = ((now - this.t0) / 1000).toFixed(0), dots = '●○○○'.slice(0, 4).split(''), k = Math.floor(now / 250) % 4;
+      g.clearRect(0, 0, W, H); g.fillStyle = 'rgba(18,20,22,0.88)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, W, H, 22) : g.rect(0, 0, W, H); g.fill();
+      g.fillStyle = '#fff'; g.font = '600 40px system-ui, sans-serif'; g.fillText('불러오는 중 ' + dots.map((d, i) => (i === k ? '●' : '○')).join(''), 30, 62);
+      g.fillStyle = '#c8ccd0'; g.font = '30px system-ui, sans-serif'; g.fillText((b.text || '').slice(0, 30) + ' · ' + sec + '초', 30, 116); this.tex.needsUpdate = true; },
+    hide() { if (this.m) this.m.visible = false; this.shown = false; }
+  };
+  X.loading = () => !!(Load.m && Load.m.visible);   // 시험용
   X.fadeA = () => (fadeMesh && fadeMesh.visible ? fadeMesh.material.opacity : 0);   // 시험용: 전환 효과의 검은 정도
   function fadeTick(dt) {
     const F = S.fade; if (!F) { if (dt > 0 && dt < 0.5) S.dtAvg = S.dtAvg ? S.dtAvg * 0.95 + dt * 0.05 : dt; return; }   // 1102.r: 평소 프레임 간격(전환 밖)
@@ -1031,7 +1064,11 @@
     }
   };
   const CROPS = [[18, '건물만'], [45, '건물과 블록'], [250, '미성아파트 포함']];
-  X.setMode = m => fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); });
+  // 모드를 바꾸면서 세션 종류(패스스루 여부)가 달라져야 하면 세션을 다시 연다(1102.s). 메뉴 누르기(select)는 사용자 동작으로 쳐서 바로 새 세션을 청할 수 있다.
+  // 청이 거절되면(브라우저 정책) 웹 화면에 안내를 띄운다
+  X.setMode = m => { const needAR = m === 'fig' && X.support.ar && Q.get('xrsession') !== 'vr'; if (S.session && m !== 'web' && needAR !== !!S.ar) { swapSession(m); return; }
+    fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); }); };
+  function swapSession(m) { S.swapTo = m; const s = S.session; log('세션 바꾸기', S.sessionMode, '→', m); try { s.end(); } catch (e) { S.swapTo = null; } }
   X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.arc = arc; X.teleportTo = teleportTo; X.pickables = pickables; X.visibleForPick = visibleForPick;
   X.firstSolid = firstSolid; X.ctrls = ctrls; X.store = store; X.hooks = []; X.floorY = floorY; X.sortedLevels = sortedLevels;
   // 다른 사람 곁으로 가기(멀티플레이 모이기): li 는 그 사람이 있는 층(밖이면 -1)
@@ -1269,7 +1306,7 @@
         const g = o.geometry; if (!g.boundingBox) g.computeBoundingBox();
         if (o.isInstancedMesh) { b.makeEmpty(); for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m); b.union(bi.copy(g.boundingBox).applyMatrix4(m.premultiply(o.matrixWorld))); } }
         else b.copy(g.boundingBox).applyMatrix4(o.matrixWorld);
-        if (b.max.y < -0.3) out.add(o);
+        if (b.max.y < -1.2) out.add(o);   // 1102.s: 지니 압구정로 단차(차도 −0.30～−0.45)가 −0.3 기준에 걸려 VR 에서 도로·바닥이 통째로 사라졌다(Jack: 주변이 안 보임). 지하층은 −3.3 부터라 −1.2 로
       }
       return out;
     },
@@ -1397,12 +1434,12 @@
           { h: '입면 형태', items: radios('form', 'combo') }, { h: '창 크기', items: radios('win') }] },
         { t: '실내', sec: [
           { h: '1층 안', items: radios('g1') }, { h: '1층 옵션', items: checks($$('#sec-g1 input[type=checkbox]').map(i => i.id)) },
-          { h: '주차 방식', items: radios('sch') }, { h: '최상층', items: checks(['t-use7']) },
+          { h: '주차 방식', items: radios('sch') }, { h: '최상층', items: checks(['t-use7', 't-nost']) },   // 1102.s: 6·7층 분리 임대(VR 기능 대응표)
           { h: '내부 표시', items: inside ? buttons('[data-iv]') : [] }] },
         { t: '빛과 시간', sec: [
-          { h: '보기 방식', items: radios('vmode').filter(i => !/photo/.test(i.key)).sort((a, b) => /pr3d/.test(b.key) - /pr3d/.test(a.key)) },   // 실사 3D 를 맨 앞에(1102.e)
+          { h: '보기 방식', items: radios('vmode').filter(i => !/photo/.test(i.key)).sort((a, b) => /:real$/.test(b.key) - /:real$/.test(a.key)) },   // 실사 3D('렌더', vm-real)를 맨 앞에(1102.e, 1102.s)
           { h: '시간대', items: radios('tod') }, { h: '계절', items: radios('season') },
-          { h: '시각 (적용 버튼으로 반영)', items: range('sun-hour', v => (v | 0) + '시', [7, 9, 12, 15, 17, 19]).concat(buttons('#sun-apply')) },
+          { h: '시각 (적용 버튼으로 반영)', items: range('sun-hour', v => (v | 0) + '시', [7, 9, 12, 15, 17, 19]).concat(buttons('#sun-apply'), buttons('#sun-today'), buttons('#sun-play')) },   // 1102.s: 오늘·하루 재생도(VR 기능 대응표)
           { h: '조명', items: checks(['t-citylights']) }] },
         { t: '보기', sec: [
           { h: '현황과 신축', items: radios('era') }, { h: '미성아파트 일대', items: radios('ms') }, { h: '겹쳐 보기', items: radios('mixq') },
@@ -1497,7 +1534,7 @@
       T0.forEach(t => { const i = t.sec.findIndex(x => x.kind === 'floors'); if (i > 0) t.sec.unshift(t.sec.splice(i, 1)[0]); });
       const lt = T0.find(t => t.t === '빛과 시간');
       if (lt && !lt.sec.some(x => x.h === '시간대' && x.items.length)) lt.sec.push({ h: '', items: [{ key: 'info:sun', info: true, label: '시간대·계절·시각은 보기 방식을 실사 3D 나 렌더로 바꾸면 나타납니다' }], cols: 1 });
-      if (lt) { const i = lt.sec.findIndex(x => /^시각/.test(x.h)); if (i >= 0) lt.sec[i] = { h: '시각 (끌어서 맞추고 놓으면 적용)', kind: 'slider', items: sunSlider() }; }
+      if (lt) { const i = lt.sec.findIndex(x => /^시각/.test(x.h)); if (i >= 0) { lt.sec[i] = { h: '시각 (끌어서 맞추고 놓으면 적용)', kind: 'slider', items: sunSlider() }; const bt = buttons('#sun-today').concat(buttons('#sun-play')), j = lt.sec.findIndex(x => x.h === '조명'); if (bt.length && j >= 0) lt.sec[j] = { h: '조명 · 날짜', items: lt.sec[j].items.concat(bt) }; } }   // 1102.s: 오늘·하루 재생 단추(VR 기능 대응표). 새 구역을 더하면 판 밖으로 밀려 '조명'이 안 보였다
       return T0;
     }
     function draw() {

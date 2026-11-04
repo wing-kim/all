@@ -27,17 +27,22 @@ window.dressTowerCafe=async function(C,root,timber){
  const keepouts=[],pendants=[];let tables=0;
  function cup(x,y,z){cylinder(white,x,y+.045,z,.037,.07);cylinder(coffee,x,y+.081,z,.031,.001);mesh(new T.TorusGeometry(.025,.006,6,12),white,x+.042,y+.048,z).rotation.y=Math.PI/2;}
  function vase(x,y,z){mesh(new T.LatheGeometry([new T.Vector2(.055,0),new T.Vector2(.085,.06),new T.Vector2(.07,.14),new T.Vector2(.025,.20)],16),cream,x,y,z);for(let i=0;i<4;i++){rod(bronze,[x,y+.16,z],[x+(i-1.5)*.045,y+.38+i*.025,z+.02],.003);const leaf=mesh(new T.SphereGeometry(1,8,5),leafMaterial,x+(i-1.5)*.045,y+.34+i*.025,z+.02);leaf.scale.set(.045,.014,.065);leaf.rotation.z=i;}}
+ // 1102.s: Wing v107 실측안(DD) 1층은 ㄱ자 평면이라 예전 자리(카운터 x −8～−0.8, z −9.2 / 공용 탁자 x −2.3)가 바닥 밖·화장실과 겹쳐 둘 다 빠졌다(Jack: 카페가 이상해짐).
+ // 공용 탁자를 큰 홀 가운데 줄(x −6)로, 카운터를 큰 홀 뒷벽(z −11.4)으로 옮기고, 공용 탁자와 겹치는 원형 탁자는 건너뛴다
+ const commX=inside(-2.3,-2,1.8)&&!blocked(-2.3,-2,1.8)?-2.3:-6,commZ=-2;
  for(const [x,z] of [[-10,-8],[-10,-4],[-10,0],[-10,4],[-6,-4],[-6,0],[-6,4],[-6,7]]){
   if(!inside(x,z,1.25)||blocked(x,z,1.25))continue;
+  if(Math.abs(x-commX)<1.9&&Math.abs(z-commZ)<3.1)continue;
   cylinder(oak,x,floor+.76,z,.57,.05);cylinder(oak,x,floor+.39,z,.15,.70);cylinder(bronze,x,floor+.035,z,.33,.04);
   for(let i=0;i<24;i++){const a=i*Math.PI/12;cylinder(oak,x+Math.cos(a)*.153,floor+.39,z+Math.sin(a)*.153,.009,.67);}
   chair(x-.85,z,Math.PI/2,false,tables%2?linen:leather);chair(x+.85,z,-Math.PI/2,false,leather);vase(x,floor+.8,z);cup(x+.25,floor+.79,z+.15);tables++;keepouts.push({x,z,r:.66});
  }
  // Communal oak table on the open cafe side; leave the core corridor clear.
- if(inside(-2.3,-2,1.8)&&!blocked(-2.3,-2,1.8)){box(oak,-2.3,floor+.76,-2,1.1,.07,3.4);for(const z of [-3.3,-.7])box(oak,-2.3,floor+.38,z,.7,.72,.12);for(const z of [-3.1,-2,-.9]){chair(-3.15,z,Math.PI/2,false,linen);chair(-1.45,z,-Math.PI/2,false,leather);}vase(-2.3,floor+.8,-2);keepouts.push({x:-2.3,z:-2,w:1.1,d:3.4});}
+ if(inside(commX,commZ,1.8)&&!blocked(commX,commZ,1.8)){const X=commX,Z=commZ;box(oak,X,floor+.76,Z,1.1,.07,3.4);for(const z of [Z-1.3,Z+1.3])box(oak,X,floor+.38,z,.7,.72,.12);for(const z of [Z-1.1,Z,Z+1.1]){chair(X-.85,z,Math.PI/2,false,linen);chair(X+.85,z,-Math.PI/2,false,leather);}vase(X,floor+.8,Z);keepouts.push({x:X,z:Z,w:1.1,d:3.4});}
  // Long slatted counter remains on the cafe side of the original rear core.
- const cx=-4.4,cz=-9.2,cw=7.2,cd=1.05;
- if(inside(cx,cz,.7)&&!blocked(cx,cz,1)){
+ let cx=-4.4,cz=-9.2;const cw=7.2,cd=1.05;
+ if(!(inside(cx,cz,.7)&&inside(cx-cw/2,cz,.6)&&inside(cx+cw/2,cz,.6))){cx=-8.2;cz=-11.4;}   // 1102.s: 실측안 평면이면 큰 홀 뒷벽 쪽
+ if(inside(cx,cz,.7)&&inside(cx-cw/2,cz,.6)&&inside(cx+cw/2,cz,.6)&&!blocked(cx,cz,1)){
   box(oak,cx,floor+.50,cz,cw,.90,cd);box(dark,cx,floor+.07,cz,cw-.14,.14,cd-.14);
   for(let x=cx-cw/2+.03;x<cx+cw/2;x+=.075)box(oak,x,floor+.53,cz+cd/2+.015,.037,.84,.035);
   box(cream,cx,floor+1.015,cz,cw+.12,.13,cd+.10);

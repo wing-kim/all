@@ -30,7 +30,7 @@ await p.evaluateOnNewDocument((SMS, PAR) => {
 }, SMS, PAR);
 const cdp = await p.target().createCDPSession();
 await p.goto(BASE + '/new/3d-model.html?prsw=0&prqauto=1', { waitUntil: 'load', timeout: 180000 });
-await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-pr') && KHPRLayer.boot === '준비 완료', { timeout: 180000 });
+await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-real') && KHPRLayer.boot === '준비 완료', { timeout: 180000 });
 await new Promise(r => setTimeout(r, 2000));
 await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
 const ev = (f, ...a) => p.evaluate(f, ...a);
@@ -46,7 +46,7 @@ res.gpu = await ev(() => { const g = KHXR.renderer.getContext(), e = g.getExtens
 res.sketch = await steady(5);
 // 첫 실사 3D 전환: 고른 순간부터 외관 준비(PR.t.warm)와 그 뒤 4초까지의 프레임
 await ev(() => { __ft.length = 0; window.__t0 = performance.now(); });
-await pick('vm-pr');
+await pick('vm-real');
 await p.waitForFunction(() => KHPRLayer.t && KHPRLayer.t.warm != null, { timeout: 600000, polling: 500 }).catch(() => {});
 await new Promise(r => setTimeout(r, 4000));
 res.first = { ...(await ev(() => __ft.slice()).then(stats)), readyMs: await ev(() => Math.round(performance.now() - __t0) - 4000), warm: await ev(() => KHPRLayer.t.warm) };

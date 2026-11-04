@@ -14,7 +14,7 @@ if (dev === 'mobile') await p.emulate({ viewport: { width: 390, height: 844, dev
 else await p.setViewport({ width: 1600, height: 900 });
 const errs = []; p.on('pageerror', e => errs.push(String(e)));
 await p.goto(BASE + '/new/3d-model.html' + (process.env.QS ? '?' + process.env.QS : ''), { waitUntil: 'load', timeout: 120000 });   // QS=prq=low 등
-await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-pr'), { timeout: 60000 });
+await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-real'), { timeout: 60000 });
 const ev = (f, ...a) => p.evaluate(f, ...a);
 const res = { dev, base: BASE, at: new Date().toISOString() };
 res.gpu = await ev(() => { const g = KHXR.renderer.getContext(), e = g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; });
@@ -38,7 +38,7 @@ const measure = async (name, still) => {
   res[name] = r; console.log(name, JSON.stringify(r));
 };
 await pick('vm-render'); await measure('wing_render');
-await pick('vm-pr');
+await pick('vm-real');
 await p.waitForFunction(() => KHPRLayer.t.dress != null && KHPRLayer.t.env2 != null && KHPRLayer.t.warm != null && KHPRLayer.t.bake != null, { timeout: 90000 });
 await measure('pr_ext_glass');
 await measure('pr_ext_glass_still', true);

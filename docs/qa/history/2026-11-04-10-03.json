@@ -1,0 +1,120 @@
+{
+ "at": "2026-11-04T10:03:36.523Z",
+ "base": "http://127.0.0.1:59504",
+ "quick": false,
+ "only": [
+  "shots"
+ ],
+ "items": [
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "평균 차 5.04, 큰 차 3.63%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:out.jpg",
+   "prev": "평균 차 7.95, 큰 차 5.97%"
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "평균 차 6.71, 큰 차 4.82%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:street.jpg",
+   "prev": "평균 차 9.6, 큰 차 7.12%"
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "평균 차 3.29, 큰 차 4.2%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:1F.jpg",
+   "prev": "평균 차 3.31, 큰 차 4.21%"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "평균 차 0.18, 큰 차 0.07%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:5F.jpg",
+   "prev": "평균 차 0.18, 큰 차 0.07%"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "평균 차 20.87, 큰 차 26.88%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:B1.jpg",
+   "prev": "평균 차 20.87, 큰 차 26.88%"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "평균 차 0, 큰 차 0%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:B3.jpg",
+   "prev": "평균 차 0, 큰 차 0%"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "평균 차 3.27, 큰 차 2.18%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:out-night.jpg",
+   "prev": "평균 차 3.24, 큰 차 2.17%"
+  },
+  {
+   "group": "shots",
+   "name": "apt-now.jpg",
+   "value": "평균 차 1.5, 큰 차 0.46%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:apt-now.jpg",
+   "prev": "평균 차 1.49, 큰 차 0.46%"
+  },
+  {
+   "group": "shots",
+   "name": "apt-future.jpg",
+   "value": "평균 차 1.24, 큰 차 0.44%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": true,
+   "note": "",
+   "key": "shots:apt-future.jpg",
+   "prev": "평균 차 1.23, 큰 차 0.43%"
+  },
+  {
+   "group": "shots",
+   "name": "env-sketch.jpg",
+   "value": "평균 차 40.96, 큰 차 35.4%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:env-sketch.jpg",
+   "prev": "평균 차 40.96, 큰 차 35.4%"
+  },
+  {
+   "group": "shots",
+   "name": "env-school.jpg",
+   "value": "평균 차 13.51, 큰 차 14.19%",
+   "limit": "≤ 4 · ≤ 3%",
+   "pass": false,
+   "note": "의도한 변경이면 --accept=\"사유\"로 기준 갱신",
+   "key": "shots:env-school.jpg",
+   "prev": "평균 차 13.51, 큰 차 14.19%"
+  }
+ ]
+}

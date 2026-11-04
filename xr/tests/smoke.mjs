@@ -40,7 +40,7 @@ try {
   await ev(async () => { const s = KHXR.renderer.xr.getSession(), O = KHXRLayer.opt; let quiet = 0; for (let i = 0; i < 600 && quiet < 20; i++) { const b0 = O.nBuild; await new Promise(r => s.requestAnimationFrame(() => r())); quiet = O.need || O.nBuild !== b0 || !O.group ? 0 : quiet + 1; } });
   let calls = await frames(3);
   const vr = await ev(() => ({ mode: KHXRLayer.state.mode, sm: KHXRLayer.state.sessionMode, opt: KHXRLayer.opt.stat }));
-  ok('몰입 진입', vr.mode === 'vr', vr.sm);
+  ok('몰입 진입(패스스루 없는 immersive-vr, 1102.s)', vr.mode === 'vr' && vr.sm === 'immersive-vr', vr.sm);
   ok('외부 그리기 호출 < 200', calls < 200, calls);
   await shot('02-vr-ext');
   await ev(() => KHXRLayer.goInside()); await frames(40);

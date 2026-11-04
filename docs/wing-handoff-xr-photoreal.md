@@ -1,0 +1,45 @@
+# Wing 인계: 렌더(실사 3D)·VR 계층 (1102.s)
+
+Wing 님이 이 브랜치(`feature/xr-photoreal`)를 main 에 합치고, 앞으로 Wing 쪽 판을 올릴 때 우리 계층을 다시 맞추는 방법을 정리했습니다.
+
+## 기준판
+
+| 기준 | 파일 | SHA-1 |
+|---|---|---|
+| Wing v107 원본(Wing 과 지니를 합친 판, 2026-11-04 받음) | `케이프혼타워_3D모델_v107.html` 8,366,255 B | `f9e6e081bab8e5f3d5d9b1836196cd9ba87725ca` |
+| 지니 env_detail(주변 모델과 대지·램프 구조 변경, Wing 확인 11-04) | `케이프혼타워_3D모델_v107_env_detail.html` 10,278,471 B | `f9c46ebcc3296d6fcf0ac57eb8996a707c127dde` |
+| GitHub main | dfba839 (v93) | 이 브랜치가 포함함, `git merge-tree` 충돌 없음 |
+
+## 확인 순서
+
+1. 미리보기(`https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html`)에서 스케치업과 렌더를 세 탭에서 눌러 봅니다.
+2. 같은 화면을 Wing 님 PC 의 크롬에서 보고, 렌더 첫 전환 시간(우리 측정 1,219ms, 기준 2,000ms)을 알려 주시면 더 줄일지 정합니다.
+3. `docs/device-checklist.md` 의 퀘스트·휴대폰 항목을 봅니다.
+
+## 접점 목록 (`new/3d-model.html`)
+
+Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사 3D) 또는 `[XR]`(VR) 표시가 있습니다(60곳). 큰 갈래는 다음과 같습니다.
+
+| 접점 | 하는 일 |
+|---|---|
+| 보기 방식 라디오 | '렌더'(`vm-real`)가 실사 3D 를 켬. '렌더(이전)'는 v107 처럼 숨김 |
+| `window.KHXR` 연결 통로 | 실사·VR 계층이 renderer·scene·camera·층 목록·이동 함수를 씀 |
+| 렌더 루프 | VR 중에는 `xr/kh-xr.js` 가 그림 |
+| 주변 모델 로더(`khGlb`, `khTex`, `khKtx`) | KHDATA 대신 `new/models/` 의 meshopt .glb·KTX2 를 받음. 파일을 바로 열면 .js 사본 |
+| 지니 실사 레이어(`KHENV`) | `real(on)` 은 실사 3D 가 켬. `lite(on)` 은 VR·품질 낮음에서 단순화(먼 건물 줄인 형상, VR 아틀라스) |
+| 지니 가로수 | 우리 건물 정면·남서 모서리 앞 구간은 자름(`front`), 지니 차량은 받지 않음(실사 3D 차량과 겹침) |
+| 미성 일대 | '현재/미래(추정)' 토글 |
+| 그 밖 | 렌더러 alpha(퀘스트 패스스루), 합친 메시로 숨긴 원본을 보이는 것으로 치는 `visDeep` |
+
+## 합치는 방법
+
+이 브랜치를 그대로 main 에 병합합니다(충돌 없음). 우리 계층은 `<script src="../photoreal/kh-photoreal.js">`, `<script src="../xr/kh-xr.js">` 두 줄로 붙습니다.
+
+## Wing 이 v108 이후를 올렸을 때 다시 맞추는 절차
+
+1. Wing 새 판에서 큰 데이터(KHDATA)를 뺀 코드를 만들고, 지난 기준판 코드와 우리 `new/3d-model.html` 로 3방향 합치기를 합니다(`git merge-file`). 우리 접점은 `[PR]`/`[XR]` 표시로 찾습니다. 1102.s 에서 지니 env_detail 을 이렇게 합쳤고 충돌은 5곳이었습니다.
+2. 주변 모델과 텍스처가 바뀌었으면 `node photoreal/tools/model/jinny-import.mjs "<새 HTML>" --deps <도구 폴더>` 로 들여옵니다(`docs/jinny-import.md`). 바뀐 모델만 다시 압축하고 VR 아틀라스도 다시 굽습니다.
+3. `new/3d-model.html` 의 `KH_ENV_VER`, `photoreal/kh-photoreal.js` 와 `xr/kh-xr.js` 의 `VER` 를 같은 값으로 올립니다(다르면 페이지가 버전 불일치로 한 번 다시 열립니다).
+4. `node photoreal/tests/qa.mjs` 전체 점검. 의도한 화면 변경이면 `--accept="사유"` 로 기준 화면을 갱신합니다.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

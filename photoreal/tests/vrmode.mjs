@@ -22,7 +22,7 @@ const a = await st(); ok('스케치: 레이 보임', a.ray === true && a.vmode =
 await pick('render'); await new Promise(r => setTimeout(r, 3500));
 const b1 = await st(); ok('렌더: 레이 보임', b1.ray === true, b1);
 ok('렌더: VR 밝기 보정(노출 ≥ 0.9, 반구광 ≥ 0.3)', b1.exp >= 0.9 && b1.hemi >= 0.3, b1);
-await pick('pr3d'); await p.waitForFunction(() => KHPRLayer.on && KHPRLayer.t.ground != null && KHPRLayer.t.warm != null, { timeout: 180000 }).catch(() => {});
+await pick('real'); await p.waitForFunction(() => KHPRLayer.on && KHPRLayer.t.ground != null && KHPRLayer.t.warm != null, { timeout: 180000 }).catch(() => {});
 await new Promise(r => setTimeout(r, 3000));
 const c = await st(); ok('실사 3D: 레이 보임', c.ray === true && c.pr, c);
 ok('실사 3D(VR 안에서 전환): 하늘 있음(실사 하늘 또는 Wing 하늘)', c.bg || c.wingSky, c);
@@ -36,7 +36,7 @@ const sk1 = await sky('pr3d'); ok('실사 3D: 화면 위쪽 하늘이 밝다(평
 const menu = await p.evaluate(async () => { const U = KHXRLayer.ui; if (!U || !U.openMenu) return null; U.openMenu(); const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 5; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
   const t = U.tabs(), i = t.findIndex(x => /^빛과 시간/.test(x)); U.setTab(i); for (let k = 0; k < 5; k++) await new Promise(r => s.requestAnimationFrame(() => r()));
   return U.cells().map(c => c.key).filter(k => /vmode/.test(k)); });
-ok('VR 메뉴: 보기 방식 맨 앞이 실사 3D', menu && /pr3d/.test(menu[0] || ''), menu);
+ok('VR 메뉴: 보기 방식 맨 앞이 실사 3D', menu && /:real$/.test(menu[0] || ''), menu);
 const ms = await p.evaluate(async () => { const U = KHXRLayer.ui, s = KHXR.renderer.xr.getSession(); const t = U.tabs(), i = t.findIndex(x => /^보기/.test(x)); U.setTab(i); for (let k = 0; k < 5; k++) await new Promise(r => s.requestAnimationFrame(() => r()));
   return U.cells().map(c => c.key).filter(k => /:ms:/.test(k)); });
 ok('VR 메뉴: 보기 탭에 미성아파트 일대(현재·미래)', ms && ms.length === 2, ms);

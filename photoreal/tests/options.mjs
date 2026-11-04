@@ -19,7 +19,7 @@ const R = (axis, ids, view) => ids.map(id => ({ axis, name: id, set: [id], view 
 const AX = [
   ...R('era', ['era-now', 'era-new', 'era-cmp']),
   { axis: 'era', name: 'cmp-현황만', set: ['era-cmp', 'mixq=0'] }, { axis: 'era', name: 'cmp-신축만+윤곽', set: ['era-cmp', 'mixq=100', 't-cmpol'] }, { axis: 'era', name: 'cmp-아파트겹침', set: ['era-cmp', 't-cmpapt'] },
-  ...R('vmode', ['vm-sketch', 'vm-render', 'vm-photo']).map(s => ({ ...s, after: ['vm-pr'] })),
+  ...R('vmode', ['vm-sketch', 'vm-photo']).map(s => ({ ...s, after: ['vm-real'] })),
   ...R('tod', ['tod-am', 'tod-pm', 'tod-sunset', 'tod-night']),
   ...R('tod-int', ['tod-am', 'tod-sunset', 'tod-night'], '1F'),
   ...R('season', ['season-spring', 'season-summer', 'season-autumn', 'season-winter']),
@@ -95,7 +95,7 @@ const restore = () => p.evaluate(snap => {
     if (type === 'range' || type === 'date') { if (e.value !== v) { e.value = v; fire(e, 'input'); fire(e, 'change'); } }
     else if (type === 'checkbox') { if (e.checked !== v) { e.checked = v; fire(e, 'change'); } }
     else if (v && !e.checked) { e.checked = true; fire(e, 'change'); } }
-  if (!document.getElementById('vm-pr').checked) { const e = document.getElementById('vm-pr'); e.checked = true; fire(e, 'change'); }
+  if (!document.getElementById('vm-real').checked) { const e = document.getElementById('vm-real'); e.checked = true; fire(e, 'change'); }
 }, snap);
 const look = view => p.evaluate(v => {
   const X = window.KHXR, K = KHPRLayer.K;

@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.r2';
+  const VER = '1102.s';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -497,7 +497,7 @@
       // 1102.r: 바닥은 깊이를 한 칸 뒤로(위에 2mm 로 까는 주차 바닥 마감과 램프 끝이 같은 높이에서 다투지 않게). 램프는 따로: Wing 처럼 양면(면 방향이 섞여
       // 위에서 보면 일부 구간이 뒷면으로 빠져 안 보였다), 바닥보다 조금 어둡고 거친 콘크리트로 구분, 바닥과 만나는 끝은 램프가 이기게
       if (orig === M.bfloor) { const m = env(texMat('office-concrete', 3, { tint: 0x8a8d91, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.16 }, under: lin(0xb9bab7) }), 1.0); m.polygonOffset = true; m.polygonOffsetFactor = 1; m.polygonOffsetUnits = 2; return m; }
-      if (orig === M.ramp) { const m = env(texMat('office-concrete', 2, { tint: 0x6e7276, light: Lp, ns: 0.45, noRough: true, p: { roughness: 0.55 }, under: lin(0xb9bab7) }), 0.5); m.side = T.DoubleSide; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; return m; }
+      if (orig === M.ramp) { const m = env(texMat('office-concrete', 2, { tint: 0x7a7e82, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 }, ns: 0.45, noRough: true, p: { roughness: 0.55 }, under: lin(0xc4c5c2) }), 0.5);   /* 램프 밑면(통로 위로 지나가는 곳)이 바닥 조명(주변광 0.05)만 받아 검게 보였다: 천장판과 같은 조명 */ m.side = T.DoubleSide; m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; return m; }
       if (orig === BM2.pad) return env(texMat('office-concrete', 3, { tint: 0x96999e, light: Lp, ns: 0.2, noRough: true, p: { roughness: 0.22 } }), 0.9);
       if (orig === M.paint) return env(paint(0xf2f1ec, 0.4, 0.5, Lp));
       if (orig === M.paintY) return env(paint(0xe6b52e, 0.4, 0.5, Lp));
@@ -811,6 +811,8 @@
     EXTRA.forEach(m => { if (m.envMapIntensity !== m.userData.prEnv) m.envMapIntensity = m.userData.prEnv; });
     bakeUpdate();
     const R3D = K.R3D, night = R3D.time === 'night', inBase = K.I.on && K.Lv() && K.Lv().kind === 'base';
+    // 1102.s: 지니 압구정로 단차(erApply)가 ② 신축에서 Wing 대지 바닥(site)을 0.6m 내려, 지하 1층 천장(−0.42) 아래로 들어와 천장을 덮었다. 지하층 안에서는 대지 바닥을 숨긴다
+    if (K.site && PF_.siteBase !== inBase) { PF_.siteBase = inBase; if (inBase) { PF_.siteVis = K.site.visible; K.site.visible = false; } else if (PF_.siteVis != null) { K.site.visible = PF_.siteVis; PF_.siteVis = null; } const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); }
     todApply(!K.I.on);
     const cube = R3D.cube && R3D.cube.texture;
     if (cube) CACHE.forEach(e => { if (e && e.glass && e.m.envMap !== cube) { e.m.envMap = cube; e.m.needsUpdate = true; } });
@@ -836,7 +838,7 @@
     if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
       const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
       if (GND.poles) { GND.poles.visible = !(xr && K.I.on) && !qFar && !(xr && XRQ.level >= 2); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
-      { const G = window.KHENV && KHENV.R.grp; if (G) G.children.forEach(o => { const id = o.userData.khPack; if (id === 'a2_ground' || id === 'a3_ground') o.visible = !qFar; }); }   // 1102.p: 품질 '낮음'은 지니 2·3구역 바닥 묶음(먼 보도·도로, 메시 40개, 합치지 않음)도 숨긴다(먼 나무와 같은 규칙)
+      { const G = window.KHENV && KHENV.R.grp; if (G) G.children.forEach(o => { const id = o.userData.khPack; if (id === 'a2_ground' || id === 'a3_ground') o.visible = !qFar && !KHENV.R.lite; }); }   // 1102.s: lite(VR) 에서는 구역 바닥 묶음을 끔(실사 3D 바닥과 겹침)   // 1102.p: 품질 '낮음'은 지니 2·3구역 바닥 묶음(먼 보도·도로, 메시 40개, 합치지 않음)도 숨긴다(먼 나무와 같은 규칙)
       const gk = xr + '|' + QS.key + '|' + XRQ.level; // VR 에서 종류별 바닥은 늘 숨기고 합치기 대상에서 뺀다(1102.i): 합치기가 다시 만들어질 때 숨겨 둔 원본의 표시를 되돌려,
       // 미성 '현재' 상태에서 종류별 바닥(삼각형 약 10만, 그리기 약 5회)이 VR 묶음에 다시 들어갔다
       if (xr) GND.kind.forEach(m => { m.visible = false; m.userData.khxr = true; });
@@ -847,7 +849,7 @@
       })); } }
     NIGHT.value = night ? 1 : 0;
     lampPools(); if (POOL.m) POOL.m.visible = night && !inBase;
-    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); carLodSync(R.xr.isPresenting); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
+    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); srvGroundSync(); carLodSync(R.xr.isPresenting); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
@@ -946,6 +948,7 @@
   }
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
+  PR.progress = () => { const t = PR.t || {}, busy = PR.loading || STG.cur >= 0 || (PR.on && !(t.warm != null && t.ground != null)) || PR.settling(); return { busy: !!busy, text: busy ? ((document.getElementById('pr-stat') || {}).textContent || '준비 중') : '' }; };   // 1102.s: VR 로딩 패널이 읽는다
   PR.settling = () => !!(DR.busy || STG.cur >= 0 || (window.KHENV && KHENV.busy) || (ENV.pp && PR.t.plants == null) || (ENV.p && PR.t.env2 == null));   // 실내 화분·차량을 받아 붙이는 중 포함(처음 실내에 들어갈 때 늦게 붙어 287ms 멈춤)   // VR 이동 전환 화면이 이 동안 검은 채로 기다린다(1102.m, kh-xr.js fadeTick)
   /* VR 품질 단계(T5): XR 계층(kh-xr.js XQ)이 프레임 간격을 보고 정한 단계를 받는다. 0·1 은 XR 계층(포비에이션)만,
      2 = 가까운 나무 카드·전신주 숨김, 3 = 원경 주변 건물까지 숨김. 그림자 형식(PCF Soft)은 셰이더를 모두 다시 만들어야 해 바꾸지 않는다 */
@@ -1248,17 +1251,34 @@
     PR.stat.furnVariants = V.size;
   }
   // 지하 램프 구멍(1102.r): 'floor' = 이 층 바닥 구멍(내려가는 램프), 'ceil' = 이 층 천장 구멍 + 바로 위 지하층 바닥 구멍(올라가는 램프). 세계 좌표 [x, z] 다각형
+  // ③ 실측 바닥(1102.s): Wing 의 실측 높이 바닥 묶음(G, userData.rm/ring, 지니 env_detail 부터 ② 신축도 같이 씀)은 장면에 따로 붙고 탭·조합마다 다시 만들어져
+  // 처음 한 번 바꾸는 대지 변환(swapIn(K.site))에 들지 않았다 → 실사 3D 에서 차도·보도·경사 띠가 원래 단색(밝은 회색)으로 떴다. 메시 수가 바뀌면 다시 바꾼다
+  let srvKey = '';
+  function srvGroundSync() {
+    if (!(PR.tick % 15 === 0)) return;
+    // 대상: 실측 바닥(userData.rm/ring)과 실측안 대지 묶음(userData.sch·k, ② 신축·③ 실측 공용 바닥)
+    const GS = scene.children.filter(c => c.isGroup && c.userData && (c.userData.rm || c.userData.ring || (c.userData.sch && 'k' in c.userData)) && c.visible); if (!GS.length) { srvKey = ''; return; }
+    let n = 0; GS.forEach(G => G.traverse(o => { if (o.isMesh) n++; })); const key = GS.map(G => G.uuid).join() + ':' + n; if (key === srvKey) return; srvKey = key;
+    let k = 0; GS.forEach(G => { k += swapIn(G); }); PR.stat.srvSwap = k; if (k) { R.shadowMap.needsUpdate = true; const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); }
+  }
   // 램프 구멍 위 덮개는 그 층 실내에 있을 때만(다른 층에서는 겹쳐 쌓인 램프 통로를 가린다). 합치기(Opt)가 묶어 버리면 표시를 바꿀 수 없어 userData.khxr 로 빼 둔다(층당 그리기 1～2회)
   const RCAP = []; let rcapKey = null;
   function rampCapSync() { const L = K.I.on && K.Lv(), key = L ? L.key : ''; if (key === rcapKey) return; rcapKey = key; RCAP.forEach(c => { c.visible = c.userData.prLv === key; }); const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty && RCAP.length) O.dirty(); }
+  // 천장은 Wing 천장 구멍 전체가 아니라, 램프 면이 천장 아래 2.3m 안으로 올라오는 자리(머리 위 여유가 없는 곳)만 비운다: 구멍 전체를 비우면
+  // 그 아래 통로의 관·등·천장판까지 사라져 램프 밑면만 어둡게 보였다(B1). 램프 삼각형을 그대로 구멍 다각형으로 쓴다
+  const RCUT = new Map();
   function rampCuts(L, kind) {
-    const up = K.LEVELS.filter(l => l.kind === 'base' && l.y > L.y + 0.1).sort((a, b) => a.y - b.y)[0];
-    const src = kind === 'floor' ? (L.floorHoles || []) : (L.ceilHoles || []).concat(up ? up.floorHoles || [] : []);
-    return src.filter(h => h && h.length > 2).map(h => h.map(q => K.P(q[0], q[1])));
+    if (kind === 'floor') return (L.floorHoles || []).filter(h => h && h.length > 2).map(h => h.map(q => K.P(q[0], q[1])));
+    const yC = K.ceilOf(L), key = L.key + ':' + yC.toFixed(2); if (RCUT.has(key)) return RCUT.get(key);
+    const out = [], a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3(); scene.updateMatrixWorld(true);
+    scene.traverse(o => { if (!(o.isMesh && o.parent && o.parent.userData.ramp && o === o.parent.children[0])) return; const P = o.geometry.attributes.position, ix = o.geometry.index, n = ix ? ix.count / 3 : P.count / 3;
+      for (let t = 0; t < n; t++) { const I = k => ix ? ix.getX(t * 3 + k) : t * 3 + k; a.fromBufferAttribute(P, I(0)).applyMatrix4(o.matrixWorld); b.fromBufferAttribute(P, I(1)).applyMatrix4(o.matrixWorld); c.fromBufferAttribute(P, I(2)).applyMatrix4(o.matrixWorld);
+        const y = Math.max(a.y, b.y, c.y); if (y > yC - 2.3 && Math.min(a.y, b.y, c.y) < yC + 0.3) out.push([[a.x, a.z], [b.x, b.z], [c.x, c.z]]); } });
+    RCUT.set(key, out); return out;
   }
   // 바닥·천장 마감에 구멍 내기(1102.r): 마감판에 다각형 구멍을 직접 뚫으면(earcut) 램프 구멍이 계단·코어 구멍과 겹칠 때 삼각분할이 깨져
   // 구멍 자리를 다시 덮었다(B1 마감 면적 744.9㎡ > 바닥 698㎡). 대신 층 바닥 범위를 덮는 1024 그림에 남길 곳을 칠하고, 셰이더가 세계 좌표로 읽어 빈 곳은 버린다(3cm 단위)
-  function holeMask(m, outer, cuts, key) {
+  function holeMask(m, outer, cuts, key, inPlace) {
     if (!cuts.length) return m;
     let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; outer.forEach(([x, z]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); });
     x0 -= 1; z0 -= 1; x1 += 1; z1 += 1;
@@ -1266,7 +1286,7 @@
     const path = a => { g.beginPath(); a.forEach(([x, z], i) => { const u = (x - x0) * sx, v = (z - z0) * sz; if (i) g.lineTo(u, v); else g.moveTo(u, v); }); g.closePath(); };
     g.fillStyle = '#fff'; g.fillRect(0, 0, N, N); g.globalCompositeOperation = 'destination-out'; cuts.forEach(a => { path(a); g.fill(); });
     const t = new T.CanvasTexture(c); t.flipY = false; t.generateMipmaps = false; t.minFilter = T.LinearFilter;
-    const mm = m.clone(); mm.userData = Object.assign({}, m.userData, { prHoleMask: key, prHoleCuts: cuts });   /* prHoleCuts: 시험(ramp.mjs)이 광선 판정에 같은 구멍을 쓴다 */ if (m.userData.prMade) WARM.push(mm);
+    const mm = inPlace ? m : m.clone(); mm.userData = Object.assign(inPlace ? mm.userData : {}, inPlace ? {} : m.userData, { prHoleMask: key, prHoleCuts: cuts });   /* prHoleCuts: 시험(ramp.mjs)이 광선 판정에 같은 구멍을 쓴다 */ if (!inPlace && m.userData.prMade) WARM.push(mm);
     const prev = m.onBeforeCompile !== T.Material.prototype.onBeforeCompile ? m.onBeforeCompile : null, pk = prev ? m.customProgramCacheKey() : '';
     mm.onBeforeCompile = (sh, rr) => { if (prev) prev.call(mm, sh, rr); sh.uniforms.prHM = { value: t }; sh.uniforms.prHB = { value: new T.Vector4(x0, z0, 1 / (x1 - x0), 1 / (z1 - z0)) };
       sh.vertexShader = 'varying vec2 vPrHW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvPrHW = (modelMatrix * vec4(transformed, 1.0)).xz;');
@@ -1353,13 +1373,14 @@
       inst(boxG, MS.tray, lists.tray, ([a, b, fixed, y]) => { const m = (a + b) / 2, [x, z] = W(m, fixed); pos.set(x, y, z); q.setFromAxisAngle(yAx, alongX ? 0 : Math.PI / 2); sc.set(b - a, 0.08, 0.4); });
       inst(headG, MS.head, lists.head, ([x, z, y]) => { pos.set(x, y, z); q.identity(); sc.set(1, 1, 1); });
       // 천장판: 실내 보기에서는 위층(=천장 슬래브)이 숨겨져 천장 자리에 배경(검정)이 보였다. 밝은 회색 도장 콘크리트 천장을 층마다 깐다
-      const sh = new T.Shape(P.map(([x, z]) => new T.Vector2(x, z))), cg = new T.ShapeGeometry(sh); cg.rotateX(Math.PI / 2);
-      const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), cm0 = CE[LT.sig] || (CE[LT.sig] = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; })());
+      const sh = new T.Shape(P.map(([x, z]) => new T.Vector2(x, z)));
+      const cg = new T.ShapeGeometry(sh); cg.rotateX(Math.PI / 2);
+      const LT = levelLight(L), CE = PF_.ceil || (PF_.ceil = {}), mkCeil = (() => { const m = texMat('concrete-wall', 2.7, { tint: 0xc4c5c2, ns: 0.4, light: { amb: new T.Color(0.2, 0.2, 0.2), lm: LT.lm, box: LT.box, k: 0.6 } }); m.envMap = PE; m.envMapIntensity = 0.3; m.side = T.DoubleSide; m.userData.prMade = true; WARM.push(m); return m; }), cuts = rampCuts(L, 'ceil'), cm0 = cuts.length ? mkCeil() : CE[LT.sig] || (CE[LT.sig] = mkCeil());   /* 1102.s: 램프 천장 구멍이 있는 층은 자기 재질을 만들어 그 자리에서 가림 무늬를 단다(복제하면 층 조명 보정 등록이 빠져 어두워짐, 다각형 구멍은 외곽을 넘어 삼각분할이 깨짐) */
       // 1102.r: 램프가 지나가는 천장 구멍(이 층 ceilHoles + 바로 위 지하층 floorHoles)은 비운다. 막혀 있어 올라가는 램프가 천장에 묻혀 안 보였다
-      const cm = holeMask(cm0, P, rampCuts(L, 'ceil'), L.key + 'c');
+      const cm = cuts.length ? holeMask(cm0, P, cuts, L.key + 'c', true) : cm0;
       // 구멍 위 덮개: 실내 보기는 위층을 숨겨 구멍 너머가 검은 배경이었다. 위층 천장 높이에 구멍 모양 판을 덮어 램프가 경사 통로처럼 위로 이어져 보이게
       { const up = K.LEVELS.filter(l => l.y > L.y + 0.1).sort((a, b) => a.y - b.y)[0], cy = up ? K.ceilOf(up) - 0.02 : yC + 3;
-        rampCuts(L, 'ceil').forEach(a => { const hg = new T.ShapeGeometry(new T.Shape(a.map(([x, z]) => new T.Vector2(x, z)))); hg.rotateX(Math.PI / 2); const cap = new T.Mesh(hg, PF_.cap || (PF_.cap = (() => { const m = new T.MeshBasicMaterial({ color: 0x3b3c3e, side: T.DoubleSide }); m.userData.prMade = true; return m; })()));   /* 층 조명(라이트맵 상자) 밖이라 같은 천장 재질은 검게 나왔다: 빛을 받지 않는 짙은 회색 */ cap.position.y = cy; RCAP.push(cap); cap.castShadow = false; cap.receiveShadow = false; Object.assign(cap.userData, { prLv: L.key, prDeep: true, prNoCast: true, prSkip: true, prLit: true, prRampCap: true, khxr: true }); g.add(cap); }); }
+        rampCuts(L, 'ceil').forEach(a => { const hg = new T.ShapeGeometry(new T.Shape(a.map(([x, z]) => new T.Vector2(x, z)))); hg.rotateX(Math.PI / 2); const cap = new T.Mesh(hg, PF_.cap || (PF_.cap = (() => { const m = new T.MeshBasicMaterial({ color: 0x8c8d8a, side: T.DoubleSide }); m.userData.prMade = true; return m; })()));   /* 층 조명(라이트맵 상자) 밖이라 같은 천장 재질은 검게 나왔다: 빛을 받지 않는 콘크리트 천장색 */ cap.position.y = cy; RCAP.push(cap); cap.castShadow = false; cap.receiveShadow = false; Object.assign(cap.userData, { prLv: L.key, prDeep: true, prNoCast: true, prSkip: true, prLit: true, prRampCap: true, khxr: true }); g.add(cap); }); }
       const ce = new T.Mesh(cg, cm); ce.position.y = yC - 0.02; ce.castShadow = false; ce.receiveShadow = false; Object.assign(ce.userData, { prLv: L.key, prDeep: false, prNoCast: true, prSkip: true, prLit: true }); g.add(ce);
       const ar = aisleArrows(L, P, inside, alongX, W, [u0, u1, v0, v1]); if (ar) g.add(ar);
       const sm = stallMarks(L, inside); if (sm) g.add(sm);
@@ -1636,7 +1657,7 @@
       K.R3D.props.children.forEach(c => { if (c.userData.car && c.position.y < -1) add(c); });
       DR.groups.forEach(([g, k]) => { const l = K.LEVELS.find(q => q.key === k); if (l && l.kind === 'base') add(g); });
       // 실내에서는 250m 밖 원경 주변 건물(가까운 건물에 가려 안 보임)도 뺀다
-      const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 250) add(m); }));
+      const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 170) add(m); /* 1102.s: 250 → 170m(지니 2·3구역 건물을 VR 에도 보이면서 예산 맞춤) */ }));
     }
     const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty();
   }
@@ -1652,7 +1673,10 @@
     const tgt = Math.floor(cnt * ratio / 3) * 3; if (tgt < 60) return null;
     const [out] = S.simplify(src, pos, 3, tgt, 0.01, []); if (out.length > cnt * 0.8) return null;
     const lod = new T.BufferGeometry();
-    for (const a in g.attributes) { const A = g.attributes[a], sz = A.itemSize, arr = new Float32Array(rep.length * sz); rep.forEach((v, k) => { for (let e = 0; e < sz; e++) arr[k * sz + e] = A.getComponent ? A.getComponent(v, e) : A.array[v * sz + e]; }); lod.setAttribute(a, new T.BufferAttribute(arr, sz, A.normalized)); }
+    // 1102.s: meshopt 압축 모델의 위치·법선은 정수 양자화(normalized)라, Float32 로 옮기면 WebGL 이 정규화를 하지 않아 원래 정수값이 좌표가 되어 차가 길게 늘어났다.
+    // 원래 배열 형식(정수)을 그대로 쓰고 값은 접근자(getX…, 교차 배열도 맞게)로 읽는다
+    for (const a in g.attributes) { const A = g.attributes[a], sz = A.itemSize, C = (A.isInterleavedBufferAttribute ? A.data.array : A.array).constructor, arr = new C(rep.length * sz), get = [A.getX, A.getY, A.getZ, A.getW];
+      rep.forEach((v, k) => { for (let e = 0; e < sz; e++) arr[k * sz + e] = get[e].call(A, v); }); lod.setAttribute(a, new T.BufferAttribute(arr, sz, A.normalized)); }
     lod.setIndex(new T.BufferAttribute(out, 1)); lod.boundingSphere = g.boundingSphere; lod.boundingBox = g.boundingBox; return lod;
   }
   const CLOD = { map: new Map(), xr: null, busy: false };
@@ -2417,7 +2441,7 @@
         }
         const wg = new T.BufferGeometry(); wg.setAttribute('position', new T.Float32BufferAttribute(wp, 3)); wg.computeVertexNormals();
         const wmm = std({ color: 0x1b1c1e, roughness: 0.6, side: T.DoubleSide }); keepEnv(wmm); wmm.userData.prMade = true;
-        const wl = new T.Mesh(wg, wmm); wl.name = 'pr-wires'; wl.userData.prSkip = true;
+        const wl = new T.Mesh(wg, wmm); wl.name = 'pr-wires'; wl.userData.prSkip = true; wl.userData.khxr = true;   /* 1102.s: VR 에서 숨기는데 합치기에 들어가면 합친 메시에 남아 그려졌다 */
         const pgp = GND.poles = new T.Group(); pgp.name = 'pr-poles'; pgp.add(im, ti, wl); root.add(pgp);
         PR.stat.poles = poles.length;
       }
@@ -2495,12 +2519,14 @@
     if (on) PR.loading = true;   // 첫 그리기 미룸·자동 품질이 켜는 순간부터 받는 중으로 본다(qTick 이 다시 계산)
     if (!K) { PR.want = on; log('Wing 준비 전이라 준비되면 켭니다'); return; }   // 단추가 Wing 보다 먼저 생기므로
     if (on === PR.on) return;
+    // 1102.s: WebGL2 가 없는 기기(오래된 브라우저·일부 기기)는 실사 3D 가 검은 화면이 된다. 켜지 않고 안내한 뒤 스케치업으로 돌린다
+    if (on && !R.capabilities.isWebGL2) { gateNote('이 기기·브라우저는 WebGL2 를 지원하지 않아 렌더(실사 3D)를 쓸 수 없습니다. 스케치업으로 보여 드립니다. 최신 크롬·사파리에서 다시 열어 주세요.'); PR.loading = false; const sk = document.getElementById('vm-sketch'); if (sk && !sk.checked) { sk.checked = true; sk.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     if (on) {
       PR.t = { enable0: now() };
       const vr = document.getElementById('vm-render');
       if (window.PH && window.PH.on) window.PH.set(false);
       if (!K.R3D.on) { vr.checked = true; vr.dispatchEvent(new Event('change', { bubbles: true })); }
-      document.getElementById('vm-pr').checked = true;
+      { const vq = document.getElementById('vm-real'); if (vq) vq.checked = true; }   // 1102.s: 실사 3D = Wing v107 의 '렌더'(vm-real) 자리
       PR.on = true;
       if (window.OC2) { PR.oc2 = OC2.on; OC2.on = false; }   // 1102.o: Wing v103 의 두 번째 가림(occl2, 층(layer)으로 숨김)은 화면 합치기(Opt)가 합친 메시에 닿지 않는다. 실사 3D 동안은 끄고 첫 번째 가림(OCC)만 쓴다
       if (window.KHENV) { KHENV.real(true, true); if (CTX.data) envSchool(true); }   // 지니 실사 레이어(라이트맵·AO·보도와 가로 요소·가로수·차량)는 실사 3D 안에서(1102.l, Jack 결정)
@@ -2531,13 +2557,14 @@
     }
   }
   PR.enable = enable;
+  function gateNote(t) { let e = document.getElementById('pr-gate-note'); if (!e) { e = document.createElement('div'); e.id = 'pr-gate-note'; e.setAttribute('role', 'alert'); e.style.cssText = 'position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);z-index:50;max-width:min(92vw,460px);padding:10px 14px;border-radius:6px;background:rgba(20,22,24,.92);color:#fff;font:13px/1.45 system-ui,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.3)'; e.addEventListener('click', () => { e.remove(); }); document.body.appendChild(e); } e.textContent = t; clearTimeout(gateNote.t); gateNote.t = setTimeout(() => { e.remove(); }, 9000); }
 
   /* ================= 8. 화면 UI ================= */
   function ui() {
     const sk = document.getElementById('vm-sketch'); if (!sk) return;
     const seg = sk.closest('.seg');
-    const lb = document.createElement('label'); lb.innerHTML = '<input type="radio" name="vmode" id="vm-pr" value="pr3d"> 실사 3D';
-    seg.appendChild(lb);
+    // 1102.s: 따로 붙이던 '실사 3D' 단추(vm-pr) 대신 Wing v107 의 '렌더'(vm-real)가 실사 3D 를 켠다. 원본에 vm-real 이 없는 예전 판만 단추를 붙인다
+    if (!document.getElementById('vm-real')) { const lb = document.createElement('label'); lb.innerHTML = '<input type="radio" name="vmode" id="vm-real" value="real"> 렌더'; seg.appendChild(lb); }
     const st = document.createElement('style');
     st.textContent = `.pr-panel{position:absolute;left:12px;bottom:12px;z-index:5;background:color-mix(in srgb,var(--panel) 92%,transparent);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font:12px/1.4 var(--font);color:var(--fg);max-width:min(420px,calc(100% - 24px));-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .pr-panel b{font-weight:600}.pr-panel .r{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.pr-panel button{font:500 12px var(--font);padding:4px 8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:4px;cursor:pointer}
@@ -2548,7 +2575,7 @@
 @media (max-width:760px){.pr-panel .pr-fold{display:inline-block}.pr-panel.fold .r,.pr-panel.fold .pr-perf,.pr-panel.fold small:not(#pr-stat),.pr-panel.fold .pr-sub{display:none}.pr-panel.fold{max-width:calc(100% - 96px)}.pr-panel.fold #pr-stat{margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}`;
     document.head.appendChild(st);
     document.querySelectorAll('input[name=vmode]').forEach(r => r.addEventListener('change', e => {
-      if (e.target.value === 'pr3d') enable(true); else if (PR.on) enable(false);
+      if (e.target.value === 'real') enable(true); else if (PR.on) enable(false);
     }));
     // 조합 변경 감지: Wing 설정 패널의 입력이 바뀐 순간부터 다음 화면까지 잰다
     document.addEventListener('change', e => { PF_.shDirty = true; if (!PR.on || PR.silent) return; { const O = optApi(); if (O) O.pause(400); } const n = e.target && e.target.name; if (n && n !== 'vmode' && e.target.closest && e.target.closest('aside,.panel,#panel')) { pendingSwitch = { t: now(), what: n }; } }, true);

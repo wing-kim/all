@@ -18,7 +18,7 @@ const res = { dev, base: BASE, at: new Date().toISOString() };
 const t0 = Date.now();
 await p.goto(BASE + '/new/3d-model.html' + (process.env.QS || ''), { waitUntil: 'load', timeout: 120000 });
 res.pageLoad = Date.now() - t0;
-await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-pr'), { timeout: 60000 });
+await p.waitForFunction(() => window.KHPRLayer && KHPRLayer.K && document.getElementById('vm-real'), { timeout: 60000 });
 res.wingReady = Date.now() - t0;
 if (process.env.WAIT) { await new Promise(r => setTimeout(r, +process.env.WAIT)); res.waitedMs = +process.env.WAIT; res.prefetch = await p.evaluate(() => KHPRLayer.pre || null); }
 const frames = n => `await new Promise(r=>{let k=0;const f=()=>{if(++k>=${n})r();else requestAnimationFrame(f)};requestAnimationFrame(f)})`;
@@ -28,7 +28,7 @@ await p.evaluate(() => { const c = id => { const e = document.getElementById(id)
 await shot('0-wing-render');
 res.wingRenderInfo = await p.evaluate(() => KHPRLayer.frameInfo());
 // 켜기
-res.enable = await p.evaluate(new Function(`return (async()=>{const t=performance.now();const e=document.getElementById('vm-pr');e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));const sync=performance.now()-t;${frames(2)};const first=performance.now()-t;
+res.enable = await p.evaluate(new Function(`return (async()=>{const t=performance.now();const e=document.getElementById('vm-real');e.checked=true;e.dispatchEvent(new Event('change',{bubbles:true}));const sync=performance.now()-t;${frames(2)};const first=performance.now()-t;
   const t1=performance.now();while((KHPRLayer.t.assets==null||KHPRLayer.t.dress==null||KHPRLayer.t.env2==null||KHPRLayer.t.env==null||KHPRLayer.t.warm==null)&&performance.now()-t1<60000)await new Promise(r=>setTimeout(r,50));${frames(2)};
   return {syncMs:Math.round(sync),firstFrameMs:Math.round(first),assetsMs:KHPRLayer.t.assets,envMs:KHPRLayer.t.env,dressMs:KHPRLayer.t.dress,propsMs:KHPRLayer.t.env2,bakeMs:KHPRLayer.t.bake,warmMs:KHPRLayer.t.warm,allReadyMs:Math.round(performance.now()-t)}})()`));
 await shot('1-glass');

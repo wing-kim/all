@@ -29,14 +29,14 @@ await p.addStyleTag({ content: '.panel,#panel,aside,.side{display:none!important
 await ev(() => { const C = KHXR.controls; KHXR.camera.position.set(-5, 34, -70); C.target.set(25, 6, -10); C.update(); }); await new Promise(r => setTimeout(r, 2000));
 await p.screenshot({ path: OUT + 'qa-shots/env-sketch.jpg', type: 'jpeg', quality: 80 });
 res.sketchMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { if (!k.visible) return; n++; if (k.material.map) tex++; }); return { n, tex }; });
-ok('스케치업: 지니 재질에 텍스처 없음', res.sketchMats.n > 0 && res.sketchMats.tex === 0, res.sketchMats);
+ok('스케치업: 지니 재질 그대로(텍스처 있음, 1102.s Wing·지니 v107 규칙)', res.sketchMats.n > 0 && res.sketchMats.tex > 0, res.sketchMats);   // 1102.l 의 '무광 단색' 규칙은 Wing 요청으로 바뀜
 // 2) 실사 3D 전 네트워크
-const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|env_lmao|street_env|^tree\.(js|glb)|road_env|ground_fill|^a[23]_|tw_detail|hyundai_hs|singu_es/;   // 1102.l: 텍스처는 KTX2 를 먼저 받는다. 1102.o: 지니 v107 의 도로·바닥·2·3구역 묶음도 실사 3D 에서만
+const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|env_lmao|^tree\.(js|glb)/;   // 1102.s: 도로·바닥·가로·2·3구역 묶음은 Wing·지니 v107 처럼 스케치업에서도 받는다(스케치업 가로 묶음). 라이트맵·AO·가로수만 실사 3D 에서   // 1102.l: 텍스처는 KTX2 를 먼저 받는다. 1102.o: 지니 v107 의 도로·바닥·2·3구역 묶음도 실사 3D 에서만
 res.beforeReal = reqs.filter(r => realRe.test(r.replace(/^tex\//, '')));
 await ev(() => document.getElementById('vm-render').click()); await new Promise(r => setTimeout(r, 2500));
 res.renderMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { n++; if (k.material.map) tex++; }); return { n, tex, lm: (KHENV.R.all || []).filter(k => k.material.lightMap).length }; });
 res.afterRender = reqs.filter(r => realRe.test(r.replace(/^tex\//, '')));
-ok('스케치업·렌더에서는 라이트맵·AO·가로 요소·가로수·도로·바닥·2·3구역을 받지 않음', res.afterRender.length === 0, { before: res.beforeReal, render: res.afterRender });
+ok('스케치업·렌더에서는 라이트맵·AO·가로수를 받지 않음', res.afterRender.length === 0, { before: res.beforeReal, render: res.afterRender });
 ok('렌더: 지니 재질(텍스처 있음)·라이트맵 없음', res.renderMats.tex > 0 && res.renderMats.lm === 0, res.renderMats);
 // 3) 사우나: ② 신축 숨김, ① 현황 보임
 const pick = id => ev(id => { const e = document.getElementById(id); if (e && !e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id);
@@ -47,10 +47,10 @@ for (const id of eraIds) { await pick(id); await new Promise(r => setTimeout(r, 
 const eNew = eraIds.find(i => /new/.test(i)), eNow = eraIds.find(i => /now|exist|cur/.test(i)) || eraIds[0];
 ok('② 신축에서 사우나(sauna529) 안 보임, ① 현황에서 보임', res.sauna[eNew] === 0 && res.sauna[eNow] > 0, { eraIds, sauna: res.sauna });
 // 4) 보기 방식 × 시대 × 미성
-const modes = ['vm-sketch', 'vm-render', 'vm-pr', 'vm-photo'], msIds = ['ms-now', 'ms-future'], combo = [];
+const modes = ['vm-sketch', 'vm-render', 'vm-real', 'vm-photo'], msIds = ['ms-now', 'ms-future'], combo = [];
 for (const m of modes) {
   await pick(m);
-  if (m === 'vm-pr') { await p.waitForFunction(() => KHPRLayer.t && KHPRLayer.t.warm != null && KHPRLayer.t.dress != null, { timeout: 180000 }).catch(() => {}); await new Promise(r => setTimeout(r, 2500));
+  if (m === 'vm-real') { await p.waitForFunction(() => KHPRLayer.t && KHPRLayer.t.warm != null && KHPRLayer.t.dress != null, { timeout: 180000 }).catch(() => {}); await new Promise(r => setTimeout(r, 2500));
     // 1102.n: 신사중학교 실사 3D 기준 화면(압구정로 쪽, 서쪽 날개 실측 111m. 1102.o 부터 지니 v107 학교). 목표를 학교 상자 밖에 두어 Wing 가림이 학교를 숨기지 않게
     await ev(() => { const C = KHXR.controls; KHXR.camera.position.set(-45, 45, -95); C.target.set(-97, 8, -80); C.update(); }); await new Promise(r => setTimeout(r, 2500));
     await p.screenshot({ path: OUT + 'qa-shots/env-school.jpg', type: 'jpeg', quality: 80 });
