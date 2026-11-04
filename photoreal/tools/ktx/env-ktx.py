@@ -10,7 +10,14 @@ root = Path(__file__).resolve().parents[3]
 tex = root / 'new' / 'models' / 'tex'
 tmp = Path(tempfile.mkdtemp(prefix='khenvktx-'))
 out = {}; avg = {}
+# 1102.o: 이름을 주면 그 텍스처만 바꾸고 나머지는 지금 목록(KH.ktx·KH.avg)을 둔다(jinny-import.mjs). 목록 끝의 KH.atlas 는 env-atlas.py 가 다시 붙인다
+only = set(sys.argv[1:])
+lst = root / 'new' / 'models' / 'ktx-list.js'
+if only and lst.exists():
+    t = lst.read_text()
+    out = json.loads(re.search(r'\.ktx=(\{.*?\});KH\.avg', t).group(1)); avg = json.loads(re.search(r'KH\.avg=(\{.*?\})[;\n]', t).group(1))
 for f in sorted(tex.glob('*.js')):
+    if only and f.stem not in only: continue
     s = f.read_text()
     m = re.search(r'data:image/\w+;base64,([A-Za-z0-9+/=]+)', s)
     if not m:

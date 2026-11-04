@@ -13,11 +13,14 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 const CLI = process.argv[2]; if (!CLI) { console.error('gltfpack cli.js 경로가 필요합니다'); process.exit(1); }
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..'), M = path.join(ROOT, 'new/models');
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'khenvglb-')), list = {};
+// KH_IDS=a,b(1102.o, jinny-import.mjs): 그 모델만 다시 압축하고 나머지는 지금 bin-list.js 의 해시를 둔다
+const ONLY = process.env.KH_IDS ? new Set(process.env.KH_IDS.split(',')) : null, BL = path.join(M, 'bin-list.js');
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'khenvglb-')), list = ONLY && fs.existsSync(BL) ? JSON.parse(fs.readFileSync(BL, 'utf8').replace(/^.*?\)\.bin=/, '').replace(/;\s*$/, '')) : {};
 let a = 0, b = 0;
 for (const f of fs.readdirSync(M).filter(f => f.endsWith('.js') && !/^(kh-lib|ktx-list|bin-list)\.js$/.test(f)).sort()) {
+  if (ONLY && !ONLY.has(f.slice(0, -3))) continue;
   const m = fs.readFileSync(path.join(M, f), 'utf8').match(/data:model\/gltf-binary;base64,([A-Za-z0-9+/=]+)/); if (!m) continue;
-  const id = f.slice(0, -3); fs.writeFileSync(path.join(tmp, 'in.glb'), Buffer.from(m[1], 'base64'));
+  const id = f.slice(0, -3); if (ONLY && !ONLY.has(id)) continue; fs.writeFileSync(path.join(tmp, 'in.glb'), Buffer.from(m[1], 'base64'));
   // gltfpack(wasm)은 작업 폴더 안의 상대 경로만 읽고 쓴다
   execFileSync(process.execPath, [path.resolve(CLI), '-i', 'in.glb', '-o', 'out.glb', '-cc', '-kn', '-km', '-ke', '-kv', '-vpf', '-vnf', '-vtf'], { cwd: tmp, stdio: 'ignore' });
   const out = fs.readFileSync(path.join(tmp, 'out.glb')); fs.writeFileSync(path.join(M, id + '.glb'), out);
@@ -25,6 +28,6 @@ for (const f of fs.readdirSync(M).filter(f => f.endsWith('.js') && !/^(kh-lib|kt
   a += fs.statSync(path.join(M, f)).size; b += out.length;
   console.log(id.padEnd(14), (fs.statSync(path.join(M, f)).size / 1024 | 0) + 'KB(.js) →', (out.length / 1024 | 0) + 'KB(.glb)');
 }
-fs.writeFileSync(path.join(M, 'bin-list.js'), '(window.KH=window.KH||{tex:{},glb:{}}).bin=' + JSON.stringify(list) + ';\n');
-console.log('합계', (a / 1e6).toFixed(2) + 'MB →', (b / 1e6).toFixed(2) + 'MB', Object.keys(list).length + '개');
+fs.writeFileSync(BL, '(window.KH=window.KH||{tex:{},glb:{}}).bin=' + JSON.stringify(Object.fromEntries(Object.entries(list).sort())) + ';\n');
+console.log('합계(이번에 압축한 것)', (a / 1e6).toFixed(2) + 'MB →', (b / 1e6).toFixed(2) + 'MB', '· 목록', Object.keys(list).length + '개');
 fs.rmSync(tmp, { recursive: true, force: true });
