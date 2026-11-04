@@ -1,0 +1,91 @@
+{
+ "bundle": {
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 3586
+  },
+  "loadMs": 209689,
+  "tabs": [
+   {
+    "era": "now",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   },
+   {
+    "era": "new",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   },
+   {
+    "era": "srv",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   }
+  ],
+  "consoleErrors": [
+   "error Failed to load resource: net::ERR_FILE_NOT_FOUND"
+  ],
+  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 404/파일 없음, 다음 후보로 넘어감(원본 동작)"
+ },
+ "preview": {
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 4192
+  },
+  "loadMs": 211250,
+  "tabs": [
+   {
+    "era": "now",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   },
+   {
+    "era": "new",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   },
+   {
+    "era": "srv",
+    "on": true,
+    "boot": "준비 완료",
+    "vm": "real"
+   }
+  ],
+  "consoleErrors": [
+   "error Failed to load resource: the server responded with a status of 404 ()",
+   "error Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 404/파일 없음, 다음 후보로 넘어감(원본 동작)"
+ },
+ "diff": {
+  "now": {
+   "mean": 0.37,
+   "over40pct": 0.0
+  },
+  "new": {
+   "mean": 0.29,
+   "over40pct": 0.0
+  },
+  "srv": {
+   "mean": 0.32,
+   "over40pct": 0.0
+  }
+ }
+}
