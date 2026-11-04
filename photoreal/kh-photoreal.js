@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.n';
+  const VER = '1102.o';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -975,6 +975,19 @@
      4) Wing 의 유리 반사 지도(정육면체 6면)는 건물을 숨기고 그리는데 내 가구·가로수는 건물 밖 묶음이라 6번 더 그려졌다 → 반사 지도를 그릴 때는 숨긴다 */
   const PR_DEEP = 4.0;
   const PF_ = { shSig: '', shDirty: true, dvKey: '', rp: null, cube: null };
+  /* 1102.o: 그림자는 Wing 가림(OCC: 카메라와 보는 곳 사이 주변 매스를 숨김)과 상관없이 그린다. 그림자를 그리는 순간에만 가림으로 숨긴 매스와
+     화면 합치기(Opt)가 뺀 그 매스 구간을 되살린다. 예전에는 가림 상태가 바뀌어도 그림자를 다시 그리지 않아, 동쪽 골목에 숨긴 매스의 네모 그림자가
+     남거나 빠졌다(Jack 미리보기 확인). 가림이 바뀔 때마다 다시 그리는 방법은 이동 중 그림자를 계속 다시 그려 그리기 호출이 5천 번을 넘었다 */
+  function shadowWrap() {
+    const sm = R.shadowMap; if (sm.prWrap) return; sm.prWrap = true; const orig = sm.render;
+    sm.render = function (lights, sc, cam) {
+      if (!PR.on || !this.enabled || (!this.autoUpdate && !this.needsUpdate)) return orig.call(this, lights, sc, cam);
+      const back = [], L = K.OCC || [];
+      for (const m of L) if (!m.visible && !m.userData.khHide && !m.userData.khDropped) { m.visible = true; back.push(m); }
+      const O = optApi(), undo = O && O.dynAll ? O.dynAll() : null;
+      try { return orig.call(this, lights, sc, cam); } finally { back.forEach(m => { m.visible = false; }); if (undo) undo(); }
+    };
+  }
   function dressVisKey() {
     return (K.I.on ? 'in' : 'out') + '|' + (DR.group ? DR.group.uuid + DR.groups.length : '');
   }
@@ -1030,12 +1043,15 @@
       cc.prWrap = true;
     }
     // 1) 그림자: 해 위치·세기, 층 배치, 보이는 층, 가구·주변 건물·거리 소품 상태가 바뀔 때만 다시 계산
-    const sm = R.shadowMap;
+    const sm = R.shadowMap; shadowWrap();
     if (sm.autoUpdate) { PF_.shAuto = true; sm.autoUpdate = false; PF_.shDirty = true; }
     const sp = K.sun.position, f = v => Math.round(v * 10);
     let lgv = ''; if (K.LG) for (let i = 0; i < K.LG.length; i++) lgv += K.LG[i] && K.LG[i].visible && K.LG[i].parent ? '1' : '0';
     const sig = [f(sp.x), f(sp.y), f(sp.z), K.sun.castShadow ? 1 : 0, CUR.sig, lgv, K.bld.children.length, K.bld.visible ? 1 : 0, K.city.visible ? 1 : 0, K.ctx.visible ? 1 : 0, K.exist && K.exist.visible ? 1 : 0,
-      CTX.now ? (CTX.now.visible ? 1 : 0) + '' + (CTX.now.parent ? 1 : 0) : '-', CTX.next ? (CTX.next.visible ? 1 : 0) + '' + (CTX.next.parent ? 1 : 0) : '-', ENV.group ? 1 : 0, ENV.added.length, K.state.era].join(',');
+      CTX.now ? (CTX.now.visible ? 1 : 0) + '' + (CTX.now.parent ? 1 : 0) : '-', CTX.next ? (CTX.next.visible ? 1 : 0) + '' + (CTX.next.parent ? 1 : 0) : '-', ENV.group ? 1 : 0, ENV.added.length, K.state.era,
+      // 1102.o: 가까운 가로수 카드 ↔ 모델 바꿈, 지니 모델·실사 레이어(가로수·가로 요소) 붙음도 본다. 빠지면 카드 나무(판 3장 교차)와 바뀌기 전 매스의
+      // 그림자가 남아 동쪽 골목에 네모 조각·뾰족한 쐐기 그림자가 보였다(Jack 미리보기 확인)
+      NT.g ? (NT.g.visible ? 1 : 0) + '' + (NT.xr ? 1 : 0) : '-', window.KHENV && KHENV.R ? [(KHENV.R.bld || []).length, (KHENV.R.trees || []).length, KHENV.R.real ? 1 : 0, KHENV.R.grp && KHENV.R.grp.visible ? 1 : 0, KHENV.R.sch && KHENV.R.sch.visible ? 1 : 0, CTX.envHid ? 1 : 0].join('') : '-'].join(',');
     if (sig !== PF_.shSig) { PF_.shSig = sig; PF_.shDirty = true; }
     if (PF_.shDirty) { sm.needsUpdate = true; PF_.shDirty = false; }
   }
@@ -1253,6 +1269,7 @@
       for (const key of (OS ? ups : window.OFFICE_FLOORS || [])) await window.dressTowerOffice(C, extra, key);
       for (const key of window.PARKING_FLOORS || []) await window.dressTowerParking(C, extra, key);
       if (window.swapInteriorModels) await window.swapInteriorModels(C, extra);
+      dropFallback(extra);
       furnVariety(extra);
       placePlants(extra);
       parkingServices(extra);
@@ -1524,6 +1541,7 @@
   function nearTreeSync(xr) {
     if (!NT.g || NT.xr === xr || !GND.near) return; NT.xr = xr; NT.g.visible = !xr && PR.on;
     const z = new T.Matrix4().makeScale(0, 0, 0); NT.idx.forEach((i, k) => GND.near.setMatrixAt(i, xr ? NT.mats[k] : z)); GND.near.instanceMatrix.needsUpdate = true;
+    PF_.shDirty = true;   // 1102.o: 카드 그림자가 남지 않게
   }
   function placeTrees() {
     if (!ENV.tree || ENV.group) return;
@@ -1578,6 +1596,30 @@
   // 높이 y 가 속한 층: 바닥이 y 바로 아래(0.3m 여유)에 있는 층 중 가장 높은 층. 층 범위를 겹치게 찾으면 바닥 가까운 부품(의자 다리·화분)이 아래층으로 잡힌다
   function levelAtY(y) { let best = null, bt = -1e9; K.LEVELS.forEach(l => { const ft = K.floorTop(l); if (l.kind !== 'roof' && ft - 0.3 <= y && ft > bt) { bt = ft; best = l; } }); return best; }
   // 가구마다 층(prLv)과 '외벽에서 먼 안쪽'(prDeep: 가장 가까운 외벽선까지 PR_DEEP m 넘음)을 적어 둔다. 밖에서 볼 때 안쪽 가구는 그리지 않는다
+  // 1102.o: 모델로 바뀐 자리의 절차적 대체물(숨긴 상자 의자 등)은 지운다. 남겨 두면 tagDress 가 층 묶음으로 옮기면서 다시 보여
+  // GLB 의자와 회색 상자가 겹쳐 보였다(Jack 미리보기 확인). 모델을 못 받은 자리는 대체물이 보이는 채로 남는다.
+  // GLB 가구 자리 상자는 겹침 검사(PR.furnOverlap)용으로 남긴다
+  function dropFallback(root) {
+    root.updateMatrixWorld(true); const drop = [], boxes = [];
+    root.traverse(o => { if (!o.userData.modelSwap) return; const h = o.children.find(c => c.name === 'CC interior model'); if (!h) return;
+      o.children.forEach(c => { if (c.userData.modelFallback) drop.push(c); });
+      const fb = new T.Box3(), mb = new T.Box3(); h.traverse(k => { if (!k.isMesh) return; k.userData.prFurn = true; mb.setFromObject(k); if (mb.max.y - mb.min.y > 0.01) fb.union(mb); });   // 두께 없는 바닥판(스툴 모델 밑 1.4m 판)은 자리 상자에서 뺀다
+      fb.u = o.userData.modelSwap.url.split('/').pop(); boxes.push(fb); });
+    drop.forEach(c => c.parent.remove(c)); DR.furnBoxes = boxes; PR.stat.furnFallbackDropped = drop.length;
+  }
+  // 가구 겹침 수: 보이는 GLB 가구 자리 상자와 절반 넘게 겹치는 다른 보이는 작은 메시(가구 크기, 3m 이하) 수. 0 이어야 한다(qa env/opt 시험)
+  PR.furnOverlap = () => {
+    const S = scene, bx = DR.furnBoxes || [], bb = new T.Box3(), sz = new T.Vector3(), ib = new T.Box3(), out = [];
+    if (!DR.group || !bx.length) return { boxes: bx.length, hits: 0, list: [] };
+    S.updateMatrixWorld(true);
+    const O = optApi(), hid = O && O.hiddenSet;   // 화면 합치기가 숨긴 원본은 합친 메시로 보이므로 보이는 것으로 친다
+    const shown = o => { for (; o; o = o.parent) { if (!o.visible && !(hid && hid.has(o))) return false; if (o === S) return true; } return false; };
+    DR.group.traverse(o => { if (!o.isMesh || o.isInstancedMesh || o.userData.prFurn || !shown(o)) return; bb.setFromObject(o); if (bb.isEmpty()) return; bb.getSize(sz); if (sz.x > 3 || sz.z > 3 || sz.y > 2.5) return;
+      const cv = Math.max(1e-6, sz.x * sz.y * sz.z);
+      for (const h of bx) { if (!h.intersectsBox(bb)) continue; ib.copy(bb).intersect(h); ib.getSize(sz); const iv = sz.x * sz.y * sz.z, hs = h.getSize(new T.Vector3()), r = iv / Math.min(cv, hs.x * hs.y * hs.z);
+        if (r > 0.5 && iv > 0.005) { out.push({ mat: o.material && o.material.name, in: h.u, lv: o.userData.prLv, r: +r.toFixed(2), at: bb.getCenter(new T.Vector3()).toArray().map(v => +v.toFixed(1)) }); break; } } });
+    return { boxes: bx.length, hits: out.length, list: out.slice(0, 8) };
+  };
   function tagDress(root) {
     root.updateMatrixWorld(true);
     const polys = new Map(), box = new T.Box3(), c = new T.Vector3();
@@ -1586,6 +1628,7 @@
     let deep = 0, n = 0; const list = [];
     root.traverse(o => {
       if (!o.isMesh || o.userData.prTagged) return;
+      for (let q = o; q && q !== root; q = q.parent) if (!q.visible) return;   // 1102.o: 숨긴 대체물을 보이는 층 묶음으로 옮기지 않는다
       if (o.userData.prLv === undefined) {
         box.setFromObject(o); if (box.isEmpty()) return; box.getCenter(c);
         const L = levelAtY(c.y);

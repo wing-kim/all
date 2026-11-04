@@ -7401,7 +7401,7 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.n';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.o';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -7482,7 +7482,8 @@ function khRealLoad(){if(KH_ENV_OFF)return Promise.resolve();return KHR.loading|
   const [st,tr]=await Promise.all(['street_env','tree'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null}))),cr=null;
   KHR.grp=new THREE.Group();KHR.grp.visible=false;R3D.street.add(KHR.grp);
   if(st){st.updateMatrixWorld(true);KHR.grp.add(st);if(KH.ver['tex/street_env_lm'])tl('street_env')?lit(st,null,null,tl('street_env'),true):lit(st,await khTex('street_env_lm'));
-    const spots=[];st.traverse(k=>{if(/^tree_/.test(k.name))spots.push(k.matrixWorld.clone())});
+    const spots=[],[fx0,fz0]=P(-1300,-250),[fx1,fz1]=P(240,1465),fp=new THREE.Vector3();   // [PR] 1102.o: 우리 건물 정면 압구정로(양쪽 보도, 평면 y -250～1465) 가로수는 뺀다(1층 입구를 가림, Jack 확인)
+    st.traverse(k=>{if(!/^tree_/.test(k.name))return;fp.setFromMatrixPosition(k.matrixWorld);if(fp.x>Math.min(fx0,fx1)&&fp.x<Math.max(fx0,fx1)&&fp.z>Math.min(fz0,fz1)&&fp.z<Math.max(fz0,fz1)){KHR.treeCut=(KHR.treeCut||0)+1;return}spots.push(k.matrixWorld.clone())});
     if(tr){tr.updateMatrixWorld(true);tr.traverse(k=>{if(!k.isMesh)return;const im=new THREE.InstancedMesh(k.geometry,k.material,spots.length),m=new THREE.Matrix4();
       spots.forEach((s,i)=>im.setMatrixAt(i,m.multiplyMatrices(s,k.matrixWorld)));im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;if(k.customDepthMaterial)im.customDepthMaterial=k.customDepthMaterial;
       if(k.userData.mn==='leaves')KHR.leaf=k.material;KHR.trees.push(im);KHR.grp.add(im)})}}
@@ -7807,7 +7808,7 @@ buildContext();existBuilding();
 build();go('corner',true);
 if(new URLSearchParams(location.search).get('env')!=='0'&&new URLSearchParams(location.search).get('pr')!=='1'){let go=()=>{go=null;khLoad()};requestAnimationFrame(()=>requestAnimationFrame(()=>go&&go()));setTimeout(()=>go&&go(),1500)}   // 주변 건물 모델(지니)은 첫 화면 뒤에 (탭이 숨겨져 있으면 1.5초 뒤). ?env=0 이면 받지 않음(비교·시험용). ?pr=1(실사 3D 로 바로 켬)이면 실사 외관 준비 뒤에 실사 계층이 부른다(회선을 나눠 쓰지 않게)
 window.KHXR={renderer,scene,camera,controls,enterInt,exitInt,placeLevel,setDoll,floorTop,resize,go,walkable,get LEVELS(){return LEVELS},get I(){return I},get anim(){return anim},set anim(v){anim=v},get R3D(){return R3D},get bld(){return bld},get labels(){return labels},rampHit,rampWallX,toPx,xSeg,levelAtFoot,quietLevel,get SCH(){return SCH},get STW(){return STW}};   // [XR] VR 보기(xr/kh-xr.js) 연결 통로
-window.KHPR={M,FM,DZM,BM2,RMAT,R3D,CARC,carGlass,CAR,TEX,WT,wmat,CM2,DM,FX,MPK,CFM,CGL,ROOFL,LVCM,bld,city,ctx,exist,site,sun,hemi,amb,P,inPoly,centroid,ceilOf,floorTop,coreFor,applyTime,get state(){return state},get LEVELS(){return LEVELS},get LG(){return LG},get I(){return I},get Lv(){return Lv},DISM,get DIST(){return DIST},get KEIT(){return KEIT}};   // [PR] 실사 3D(photoreal/kh-photoreal.js) 연결 통로
+window.KHPR={OCC,M,FM,DZM,BM2,RMAT,R3D,CARC,carGlass,CAR,TEX,WT,wmat,CM2,DM,FX,MPK,CFM,CGL,ROOFL,LVCM,bld,city,ctx,exist,site,sun,hemi,amb,P,inPoly,centroid,ceilOf,floorTop,coreFor,applyTime,get state(){return state},get LEVELS(){return LEVELS},get LG(){return LG},get I(){return I},get Lv(){return Lv},DISM,get DIST(){return DIST},get KEIT(){return KEIT}};   // [PR] 실사 3D(photoreal/kh-photoreal.js) 연결 통로
 let last=performance.now();
 (function loop(now){
   requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;   // [XR] VR 중에는 xr/kh-xr.js 가 그림

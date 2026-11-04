@@ -4,3 +4,4 @@
 - 2026-11-02T05:23 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg: 1102.k: 데스크톱 고화질 화소 배율 상한 1.5(Wing 윈도우 끊김 대응), 첫 그리기 분산
 - 2026-11-02T07:24 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg: 1102.l: 지니 주변 모델(실사 3D 라이트맵·가로 요소·가로수), 신사중 실측 위치, 주변 스케치업 기준 화면 추가
 - 2026-11-03T02:32 env-school.jpg: 신사중학교 실사 3D 기준 화면 새로 만듦(서쪽 날개를 실측 111m 로 늘린 school410r, 1102.n)
+- 2026-11-04T02:40 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg, env-school.jpg: 1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강

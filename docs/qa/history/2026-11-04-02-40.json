@@ -1,0 +1,109 @@
+{
+ "at": "2026-11-04T02:40:32.227Z",
+ "base": "http://127.0.0.1:59719",
+ "quick": false,
+ "only": [
+  "shots"
+ ],
+ "items": [
+  {
+   "group": "shots",
+   "name": "out.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:out.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "street.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:street.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "1F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:1F.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "5F.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:5F.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "B1.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:B1.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "B3.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:B3.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "out-night.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:out-night.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "apt-now.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:apt-now.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "apt-future.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:apt-future.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "env-sketch.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:env-sketch.jpg"
+  },
+  {
+   "group": "shots",
+   "name": "env-school.jpg",
+   "value": "기준 갱신",
+   "limit": "",
+   "pass": true,
+   "note": "1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강",
+   "key": "shots:env-school.jpg"
+  }
+ ]
+}

@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.n';
+  const VER = '1102.o';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -1192,6 +1192,9 @@
     // 셰이더로 숨기면 후처리(SSAO 등 덮어쓰기 재질)·그림자에 숨긴 건물이 남으므로 꼭짓점 자체를 뺀다(바뀔 때 1ms 안팎)
     dynTick() {
       if (!this.dynObjs.length) return; const vis = this.dynM.map(m => visibleChain(m)), mask = vis.map(v => v ? 1 : 0).join(''); if (mask === this.dynMask) return; this.dynMask = mask;
+      this.dynApply(vis);
+    },
+    dynApply(vis) {
       for (const o of this.dynObjs) {
         const g = o.geometry, rs = g.userData.khr, on = rs.filter(r => !r[0] || vis[r[0] - 1]);
         const n = on.reduce((s, r) => s + r[2], 0); o.visible = n > 0; if (!n) continue;
@@ -1199,6 +1202,16 @@
         if (!g.index) { if (on.length === rs.length) continue; g.setIndex(new T.BufferAttribute(new Uint32Array(g.attributes.position.count), 1)); }
         const ix = g.index.array; let k = 0; for (const r of on) for (let i = 0; i < r[2]; i++) ix[k++] = r[1] + i; g.index.needsUpdate = true; g.setDrawRange(0, k);
       }
+    },
+    // 그림자 그리기 동안만 Wing 가림이 숨긴 매스 구간을 되살린다(1102.o, 실사 3D 의 shadowWrap 이 부름). 시대·미성 토글 등으로 묶음째 숨긴 매스는 그대로 뺀다.
+    // 되돌리는 함수를 돌려준다
+    dynAll() {
+      if (!this.dynObjs || !this.dynObjs.length) return null;
+      const occ = m => !m.visible && !m.userData.khHide && !m.userData.khDropped && (!m.parent || visibleChain(m.parent));
+      const vis = this.dynM.map(m => visibleChain(m) || occ(m)), mask = vis.map(v => v ? 1 : 0).join('');
+      if (mask === this.dynMask) return null;
+      this.dynApply(vis);
+      return () => this.dynApply(this.dynM.map(m => visibleChain(m)));
     },
     clear() {
       this.hidden.forEach(m => { m.visible = true; }); this.hidden = []; this.hiddenSet = null; this.sig = '';
