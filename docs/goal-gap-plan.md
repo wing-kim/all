@@ -835,4 +835,6 @@ VR 예산(흉내, 외관 시점 5곳 최대, 양안): 그리기 호출 180, 삼�
 
 **시험 보정.** (1) ramp: 위 공간이 2.3m(주차장 램프 유효 높이) 이상 남는 램프 아래쪽 위의 천장은 실제로 있는 천장이라 덮임으로 세지 않음(실사 3D 천장 구멍 기준 `rampCuts('ceil')` 과 같은 기준, 4/4). (2) vrmatrix: qa 가 읽는 'n/m 통과' 줄을 더함(전에는 통과해도 '실행 실패'로 보임). (3) 옵션 대응표: 층수 8층 실내(`floors-8-int`)는 기본 조합이 실측안이라 Wing 이 6층 고정, 해당 없음으로 처리(`docs/render-option-matrix.md`, 177/177).
 
+**단일 HTML 다시 묶기.** 위 수정 뒤(3317925) 다시 묶었습니다(`deliverables/kapehorn-tower-3d_1102.s.html`, 66,506,572 B, SHA-1 `5d2e79a3b937f278a08ee13a016e721e70300c80`). 화면 있는 크롬 156(별도 프로필, GPU)에서 file:// 로 열어 세 탭 × 렌더를 실제 마우스로 눌러 모두 실사 3D 켜짐·준비 완료, 콘솔 오류는 Wing 사진 목록 첫 후보 없음 1건(원본 동작)이고, 공개 미리보기와 화면 차는 평균 0.30～0.34, 큰 차 화소 0～0.01% 입니다(`docs/qa/1102s/bundle-headed-vs-preview.*`).
+
 **새 문서.** `docs/render-option-matrix.md`(렌더 = KHPRLayer 옵션 대응표, `photoreal/tools/option-matrix.mjs` 가 options.json 으로 만듦), `docs/report/1102.s-report.md`(최종 보고).

@@ -10,7 +10,7 @@
    "ua": "Chrome/156.0.0.0",
    "mem": 3586
   },
-  "loadMs": 209689,
+  "loadMs": 211241,
   "tabs": [
    {
     "era": "now",
@@ -34,7 +34,7 @@
   "consoleErrors": [
    "error Failed to load resource: net::ERR_FILE_NOT_FOUND"
   ],
-  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 404/파일 없음, 다음 후보로 넘어감(원본 동작)"
+  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 없음, 다음 후보로 넘어가는 원본 동작"
  },
  "preview": {
   "env": {
@@ -47,7 +47,7 @@
    "ua": "Chrome/156.0.0.0",
    "mem": 4192
   },
-  "loadMs": 211250,
+  "loadMs": 211592,
   "tabs": [
    {
     "era": "now",
@@ -72,19 +72,25 @@
    "error Failed to load resource: the server responded with a status of 404 ()",
    "error Failed to load resource: the server responded with a status of 404 ()"
   ],
-  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 404/파일 없음, 다음 후보로 넘어감(원본 동작)"
+  "note": "콘솔 오류는 Wing 사진 목록 첫 후보(../../kapehorn-media/catalog.js) 없음, 다음 후보로 넘어가는 원본 동작"
+ },
+ "file": {
+  "path": "deliverables/kapehorn-tower-3d_1102.s.html",
+  "sha1": "5d2e79a3b937f278a08ee13a016e721e70300c80",
+  "bytes": 66506572,
+  "commit": "3317925"
  },
  "diff": {
   "now": {
-   "mean": 0.37,
+   "mean": 0.34,
    "over40pct": 0.0
   },
   "new": {
-   "mean": 0.29,
-   "over40pct": 0.0
+   "mean": 0.3,
+   "over40pct": 0.01
   },
   "srv": {
-   "mean": 0.32,
+   "mean": 0.31,
    "over40pct": 0.0
   }
  }
