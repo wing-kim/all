@@ -25,8 +25,9 @@ const AX = [
   ...R('season', ['season-spring', 'season-summer', 'season-autumn', 'season-winter']),
   { axis: 'sun', name: '날짜시각-07시', set: ['sun-hour=7', 'click:sun-apply'] }, { axis: 'sun', name: '날짜시각-18시', set: ['sun-hour=18', 'click:sun-apply'] }, { axis: 'sun', name: '날짜시각-22시', set: ['sun-hour=22', 'click:sun-apply'] },
   ...R('render', ['t-citylights', '!t-hq', '!t-ao']),
-  ...R('sch', ['sch-mech', 'sch-self', 'sch-alt3', 'sch-alt4'], 'B1'),
-  ...R('sch-1F', ['sch-mech', 'sch-self', 'sch-alt3'], '1F'),
+  ...R('sch', ['sch-mech', 'sch-self', 'sch-alt3', 'sch-alt4', 'sch-dd'], 'B1'),
+  ...R('sch-1F', ['sch-mech', 'sch-self', 'sch-alt3', 'sch-alt4'], '1F'),   // 1102.o: 기본이 실측안(dd)이라 자주식3 도 바꿔 본다
+  { axis: 'sch', name: 'sch-dd-B4', set: ['sch-dd'], view: 'B4' }, ...R('era-srv', ['era-srv'], '1F'), ...R('era-srv-out', ['era-srv']),
   ...R('g1', ['g1-slant', 'g1-straight', 'g1-corner', 'g1-skin'], '1F'),
   ...R('g1-out', ['g1-slant', 'g1-straight', 'g1-corner']),
   ...R('toggle', ['!t-upstraight', 't-skin', 't-cglass', 't-cclean', 't-use7', 't-nost', 't-a4park']),
@@ -47,7 +48,7 @@ const AX = [
   ...['1F', 'B1', 'B2', 'B3', '2F', '6F', 'PH1'].map(k => ({ axis: 'level', name: 'lv-' + k, set: [], view: k })),
 ];
 // 대표 교차 조합: 굽기 변형이 겹치는 주차×1층 16개 + 마감·형태·시간대·층 구성 교차
-const SCH = ['mech', 'self', 'alt3', 'alt4'], G1 = ['slant', 'straight', 'corner', 'skin'];
+const SCH = ['mech', 'self', 'alt3', 'alt4', 'dd'], G1 = ['slant', 'straight', 'corner', 'skin'];
 const CROSS = [
   ...SCH.flatMap(s => G1.map(g => ({ axis: 'x-sch-g1', name: `x-${s}-${g}`, set: ['sch-' + s, 'g1-' + g], view: '1F' }))),
   { axis: 'x', name: 'x-brick-diagrid', set: ['em-combo', 'sty-brick', 'form-diagrid'] },

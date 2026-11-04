@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.o';
+  const VER = '1102.p';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -833,6 +833,7 @@
     if (GND.g) { const nw = K.state.era === 'new' && K.state.ms === 'future', xr = R.xr.isPresenting; GND.g.visible = !!CTX.detached.length && !inBase; GND.now.visible = !nw;
       const QL = QS.cur, qFar = !xr && QL.hideFar, qDet = !xr && QL.hideFarDetail;   // 화면 품질 단계(T4)로 숨김
       if (GND.poles) { GND.poles.visible = !(xr && K.I.on) && !qFar && !(xr && XRQ.level >= 2); GND.poles.children.forEach(o => { if (o.name !== 'pr-poles') o.visible = !xr; }); }
+      { const G = window.KHENV && KHENV.R.grp; if (G) G.children.forEach(o => { const id = o.userData.khPack; if (id === 'a2_ground' || id === 'a3_ground') o.visible = !qFar; }); }   // 1102.p: 품질 '낮음'은 지니 2·3구역 바닥 묶음(먼 보도·도로, 메시 40개, 합치지 않음)도 숨긴다(먼 나무와 같은 규칙)
       const gk = xr + '|' + QS.key + '|' + XRQ.level; // VR 에서 종류별 바닥은 늘 숨기고 합치기 대상에서 뺀다(1102.i): 합치기가 다시 만들어질 때 숨겨 둔 원본의 표시를 되돌려,
       // 미성 '현재' 상태에서 종류별 바닥(삼각형 약 10만, 그리기 약 5회)이 VR 묶음에 다시 들어갔다
       if (xr) GND.kind.forEach(m => { m.visible = false; m.userData.khxr = true; });
@@ -919,10 +920,13 @@
      ?propt=0 이면 끈다 */
   const OPT = { on: Q.get('propt') !== '0', sig: '' };
   const optApi = () => window.KHXRLayer && window.KHXRLayer.opt && window.KHXRLayer.opt.screenOn ? window.KHXRLayer.opt : null;
-  function optRoots() { return [K.bld, K.site, K.city, K.ctx, K.exist, K.R3D.props, DR.group, ENV.group, CTX.now, CTX.next, GND.g]; }
+  // 1102.p: 지니 v107 2·3구역 건물 묶음(a2_*, a3_*, hyundai_hs, singu_es, tw_detail)도 합친다(휴대폰 '낮음' 그리기 480 → 400 미만).
+  // 땅과 겹친 면 묶음(도로·보도·바닥: road_env, ground_fill, street_env, *_ground)은 합치면 그리는 순서가 바뀌어 깜빡이므로 따로 둔다(1102.m)
+  const envPacks = () => { const G = window.KHENV && KHENV.R.grp; return G ? G.children.filter(o => o.userData.khPack && !/ground/.test(o.userData.khPack)) : []; };
+  function optRoots() { return [K.bld, K.site, K.city, K.ctx, K.exist, K.R3D.props, DR.group, ENV.group, CTX.now, CTX.next, GND.g, ...envPacks()]; }
   function optSig() {
     let dv = ''; DR.groups.forEach(([g]) => { dv += g.visible ? 1 : 0; });
-    return [PF_.shSig, PF_.dvKey, dv, GND.g ? (GND.g.visible ? 1 : 0) + '' + (GND.now.visible ? 1 : 0) + GND.g.children.length : '-', ENV.added.length, DR.group ? DR.group.children.length : 0, R.xr.isPresenting ? 1 : 0].join('|');
+    return [PF_.shSig, PF_.dvKey, dv, GND.g ? (GND.g.visible ? 1 : 0) + '' + (GND.now.visible ? 1 : 0) + GND.g.children.length : '-', ENV.added.length, DR.group ? DR.group.children.length : 0, R.xr.isPresenting ? 1 : 0, envPacks().length].join('|');
   }
   function optTick() {
     const O = optApi(); if (!O || !OPT.on || R.xr.isPresenting) return;
@@ -1960,14 +1964,20 @@
     if (ESC.o || !CTX.data) return;
     const vw = CTX.data.buildings.find(b => b.src === 'vworld' && b.name === '신사중학교'); if (!vw) return;
     ESC.o = o; ESC.p0 = o.position.clone(); ESC.s0 = o.scale.clone();
-    o.updateMatrixWorld(true); let x0 = 1e9, z0 = 1e9; const v = new T.Vector3();
-    o.traverse(k => { if (!k.isMesh) return; const a = k.geometry.attributes.position; for (let i = 0; i < a.count; i += 2) { v.fromBufferAttribute(a, i).applyMatrix4(k.matrixWorld); if (v.y > 12) { x0 = Math.min(x0, v.x); z0 = Math.min(z0, v.z); } } });
-    const rx = Math.min(...vw.outline.map(q => q[0])), rz = Math.min(...vw.outline.map(q => q[1]));
-    o.position.x += rx - x0; o.position.z += rz - z0; o.scale.y *= (vw.h || 19.2) / 18.5; o.updateMatrixWorld(true);
-    PR.stat.envSchool = { dx: +(rx - x0).toFixed(1), dz: +(rz - z0).toFixed(1), sy: +((vw.h || 19.2) / 18.5).toFixed(3) };
+    // 1102.o: 서쪽 끝(x 최소)과 서쪽 날개(서쪽 끝에서 17m 안)의 남북 가운데를 브이월드 실측에 맞춘다. 지니 v107 학교는 날개 길이가 실측(111m)과 같고
+    // 북쪽에 키 큰 시설(조명탑 등)이 더해져, 예전처럼 북쪽 끝(z 최소)을 맞추면 남쪽으로 8m 넘게 밀렸다
+    o.updateMatrixWorld(true); const v = new T.Vector3(), pts = [];
+    o.traverse(k => { if (!k.isMesh || k.isLineSegments) return; const a = k.geometry.attributes.position; for (let i = 0; i < a.count; i += 2) { v.fromBufferAttribute(a, i).applyMatrix4(k.matrixWorld); if (v.y > 12) pts.push([v.x, v.z]); } });
+    if (!pts.length) { ESC.o = null; return; }
+    const x0 = Math.min(...pts.map(p => p[0])), wz = pts.filter(p => p[0] < x0 + 17).map(p => p[1]);
+    const rx = Math.min(...vw.outline.map(q => q[0])), rw = vw.outline.filter(q => q[0] < rx + 17).map(q => q[1]);
+    const dz = (Math.min(...rw) + Math.max(...rw)) / 2 - (Math.min(...wz) + Math.max(...wz)) / 2;
+    o.position.x += rx - x0; o.position.z += dz; o.scale.y *= (vw.h || 19.2) / 18.5; o.updateMatrixWorld(true);
+    PR.stat.envSchool = { dx: +(rx - x0).toFixed(1), dz: +dz.toFixed(1), sy: +((vw.h || 19.2) / 18.5).toFixed(3), wing: +(Math.max(...wz) - Math.min(...wz)).toFixed(1) };
   }
   // 지니 모델(1102.l)과 같은 건물인 브이월드·OSM id(모델 바닥 상자 겹침으로 뽑음, 신사중은 실측 자리로 옮긴 뒤). 모델·buildings.json 을 바꾸면 envCheck 기록(PR.stat.envExtra·envMissing)을 보고 고친다
-  const ENV_OUT = new Set(['14325427', '14323047', '14322497', '13789002', '14387265', '14331039', '14315229', '14338263', '14336274', '14319433', '14314303', '14191837', '14862297', '14328631', '14323408', '14068515', '14339887'].map(n => 'vw:LT_C_BLDGINFO.' + n + '_0'));
+  // 1102.p: 지니 v107(48개 모델, 2·3구역 묶음 포함)과 겹치는 브이월드 136·OSM 5동. 모델이 오기 전에도 이 목록으로 먼저 뺀다(envCheck 가 실제 겹침과 비교해 다르면 기록)
+  const ENV_OUT = new Set(['14325427','14323047','14322497','13789002','14387265','14331039','14315229','14338263','14336274','14319433','14314303','14191837','14862297','14328631','14323408','14068515','14339887','14336537','13801378','14321001','14325015','14327957','14316003','14318206','14336493','13796671','14316901','14338466','14331680','14321589','14323624','14329576','14328953','14962740','14329408','14172463','13996738','14318183','14326013','14325031','14331031','14318852','14334422','14330336','14269533','14337787','14325455','14327662','14314107','14315435','14333189','14332875','14330509','14281527','14317364','14321940','14315781','14321937','17217068','14340305','14317786','14321178','14322143','13775174','14327920','13965622','14318729','14286830','14321489','14319248','14339036','17587570','18101111','18313224','18609724','14316677','14318104','14283386','14331948','14326486','14322093','14314000','14315747','14317741','14325256','14314006','14333144','13953328','14333474','14329204','14318871','17590678','14334859','14318784','14329328','14338407','14339777','13829008','14334439','15046971','14322920','14324988','14320951','14324750','14291954','14336155','14313983','14338210','14336648','14381268','14315911','14338485','14336519','14323806','14325431','14323202','14316559','14327432','14325456','14328479','15533401','14338909','14326494','14102243','14337595','15507737','14337596','14321769','14327991','14328862','14330545','14322384','14315998','14319491','14330025','14332487'].map(n => 'vw:LT_C_BLDGINFO.' + n + '_0').concat(['357362336','469368414','497993586','1391113601','1455690663'].map(n => 'osm:' + n)));
   // 지니 모델 받기 순서(1102.l): 실사 외관 준비(PR.t.warm)가 끝난 뒤 기본 모델(?pr=1 일 때)과 실사 계층(라이트맵·가로 요소·가로수·차량)을 받는다(회선을 나눠 쓰지 않게)
   let envGoR = null; const envGoP = new Promise(r => { envGoR = r; });
   function envGo() { if (window.KHENV && PR.on) { KHENV.ready(); KHENV.real(true); } envGoR(); }
@@ -2355,6 +2365,7 @@
       if (!K.R3D.on) { vr.checked = true; vr.dispatchEvent(new Event('change', { bubbles: true })); }
       document.getElementById('vm-pr').checked = true;
       PR.on = true;
+      if (window.OC2) { PR.oc2 = OC2.on; OC2.on = false; }   // 1102.o: Wing v103 의 두 번째 가림(occl2, 층(layer)으로 숨김)은 화면 합치기(Opt)가 합친 메시에 닿지 않는다. 실사 3D 동안은 끄고 첫 번째 가림(OCC)만 쓴다
       if (window.KHENV) { KHENV.real(true, true); if (CTX.data) envSchool(true); }   // 지니 실사 레이어(라이트맵·AO·보도와 가로 요소·가로수·차량)는 실사 3D 안에서(1102.l, Jack 결정)
       document.querySelector('.app').classList.add('pr3d');
       applyAll('켜기');
@@ -2368,6 +2379,7 @@
       loadSeq();
     } else {
       PR.on = false; PR.loading = false; if (window.KHENV) KHENV.real(false); envSchool(false);
+      if (window.OC2 && PR.oc2 != null) { OC2.on = PR.oc2; PR.oc2 = null; }
       swapOut();
       if (DR.group) { scene.remove(DR.group); DR.group = null; DR.sig = ''; }
       todApply(false); TODS.set = null; optOff(); envOff(); ctxOff(); perfOff();
@@ -2407,10 +2419,11 @@
   const PF = { glass: ['combo', 'sty-glass'], brick: ['combo', 'sty-brick'], stack: ['preset', 'dsg-stack'], colonnade: ['preset', 'dsg-colonnade'] };
   const PFN = { glass: '올 글라스', brick: '벽돌 피어', stack: '스택 프레임', colonnade: '자이언트 오더 기둥' };
   function click(id, val) { const e = document.getElementById(id); if (!e) return; if (e.type === 'checkbox') { if (e.checked === val) return; e.checked = val; } else { if (e.checked) return; e.checked = true; } e.dispatchEvent(new Event('change', { bubbles: true })); }
-  // 우선 조합: 자주식3 + 1층 3안(작은 모서리문) + 기준층도 같은 선 + 마감재
+  // 우선 조합: 자주식 실측안(dd) + 1층 3안(작은 모서리문) + 마감재. 1102.o: Wing v107 은 주차 방식을 실측안 하나만 보이고(자주식1·2·3·기계식 숨김)
+  // 기준층 같은 선(t-upstraight)도 실측안에서 쓰지 않는다. 그전(1102.n 까지)은 자주식3 + 기준층 같은 선
   function preset(pf) {
     pendingSwitch = { t: now(), what: pf };
-    click('sch-alt4'); click('g1-skin'); click('t-upstraight', true);
+    click('sch-dd'); click('g1-skin');
     const [mode, id] = PF[pf] || PF.glass;
     click(mode === 'combo' ? 'em-combo' : 'em-preset');
     if (mode === 'combo') { click('form-none'); }
@@ -2429,7 +2442,7 @@
     if (!on) { if (PNL) PNL.hidden = true; return; }
     if (!PNL) {
       PNL = document.createElement('div'); PNL.className = 'pr-panel'; PNL.id = 'pr-panel';
-      PNL.innerHTML = `<button type="button" class="pr-fold" aria-expanded="false">펼치기 ▴</button><b>실사 3D · 우선 조합</b> <span class="pr-sub" style="color:var(--muted)">자주식3 · 1층 3안(문 2.4m) · 기준층 같은 선</span>
+      PNL.innerHTML = `<button type="button" class="pr-fold" aria-expanded="false">펼치기 ▴</button><b>실사 3D · 우선 조합</b> <span class="pr-sub" style="color:var(--muted)">자주식 실측안 · 1층 3안(문 2.4m)</span>
 <div class="r" id="pr-pf">${Object.keys(PF).map(k => `<button data-pf="${k}">${PFN[k]}</button>`).join('')}</div>
 <div class="r" id="pr-lv"><button data-lv="out">외관</button><button data-lv="1F">1층</button><button data-lv="B1">B1</button><button data-lv="B2">B2</button><button data-lv="B3">B3</button></div>
 <div class="r" id="pr-ms"><span style="align-self:center;color:var(--muted)">미성 일대</span><button data-ms="now">현재</button><button data-ms="future">미래(추정)</button></div>

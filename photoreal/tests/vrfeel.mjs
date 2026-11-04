@@ -35,7 +35,7 @@ const CPU = +(process.env.CPU || 1); res.cpu = CPU; const cdp = await p.target()
 const stat = ds => { const a = ds.slice().sort((x, y) => x - y); return { max: +(a[a.length - 1] || 0).toFixed(1), med: +(a[a.length >> 1] || 0).toFixed(1), missed72: ds.filter(d => d > 1000 / 72 * 1.5).length }; };
 res.base = stat(await ev(() => FT(60)));
 const tele = [];
-for (let i = 0; i < 10; i++) { tele.push(stat(await ev(async i => { const a = i * 0.9, r = 18 + (i % 3) * 8; const n0 = KHXRLayer.opt.nBuild; KHXRLayer.teleportTo(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), a); const ds = await FT(30); window.__nb = KHXRLayer.opt.nBuild - n0; return ds; }, i))); tele[i].builds = await ev(() => window.__nb); }
+for (let i = 0; i < 10; i++) { tele.push(stat(await ev(async i => { const a = i * 0.9, r = 26 + (i % 3) * 8;   /* 1102.p: 건물 밖 순간이동(실측안은 대지가 넓어 18m 자리가 건물 안 = 실내 들어가기였다. 실내 들어가기는 층 이동 시험이 본다) */ const n0 = KHXRLayer.opt.nBuild; KHXRLayer.teleportTo(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r), a); const ds = await FT(30); window.__nb = KHXRLayer.opt.nBuild - n0; return ds; }, i))); tele[i].builds = await ev(() => window.__nb); }
 const fl = [];
 for (const k of ['1F', '2F', '5F', 'B1', '1F']) { fl.push({ k, ...stat(await ev(async k => { const n0 = KHXRLayer.opt.nBuild; KHXRLayer.goLevel(KHXR.LEVELS.findIndex(l => l.key === k)); const ds = await FT(45); window.__nb = KHXRLayer.opt.nBuild - n0; window.__all = Math.round(Math.max(...FTall)); window.__ms = KHXRLayer.opt.stat && KHXRLayer.opt.stat.ms; return ds; }, k)), builds: await ev(() => window.__nb), optMs: await ev(() => window.__ms), maxAll: await ev(() => window.__all), worst: await ev(() => window.FTw) }); }
 res.teleport = tele; res.floors = fl;

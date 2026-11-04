@@ -20,7 +20,7 @@ const res = { dev, base: BASE, at: new Date().toISOString() };
 res.gpu = await ev(() => { const g = KHXR.renderer.getContext(), e = g.getExtension('WEBGL_debug_renderer_info'); return e ? g.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?'; });
 res.pixelRatio = await ev(() => KHXR.renderer.getPixelRatio());
 const pick = id => ev(id => { const e = document.getElementById(id); if (!e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id);
-await pick('sch-alt4'); await pick('g1-skin'); await pick('t-upstraight');
+await pick('sch-dd'); await pick('g1-skin');   // 1102.o: 우선 조합이 자주식 실측안(Wing v107 기본)
 // 측정 한 번: 자동 회전 4초, 프레임 간격과 한 프레임 부하
 const measure = async (name, still) => {
   await new Promise(r => setTimeout(r, 1500));

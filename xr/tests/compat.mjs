@@ -4,6 +4,7 @@
 //  Q13 진입·종료 10회 후 메모리(지오메트리·텍스처) 누수 없는지
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs';
+import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { PNG } from 'pngjs';
@@ -12,11 +13,17 @@ const BASE = process.argv.find(a => /^https?:/.test(a)) || 'http://localhost:879
 const OUT = fileURLToPath(new URL('./out/', import.meta.url));
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 fs.mkdirSync(OUT + 'orig/new', { recursive: true });
-fs.writeFileSync(OUT + 'orig/new/3d-model.html', execSync('git show origin/main:new/3d-model.html', { cwd: ROOT, maxBuffer: 64 << 20 }));
+// 1102.o: Wing v107 은 저장소(origin/main, v93)에 없고 지니 v107 파일로 들어왔다. 지니 들여오기 도구가 남긴 코드 판(큰 데이터를 뺀 v107,
+// photoreal/tools/model/jinny/import-code.html)의 Wing 판이 더 새것이면 그것을 원본으로 쓴다(지니 모델은 받지 못해 회색 매스로 남음 = 우리 ?env=0 과 같은 조건)
+const verOf = s => +((String(s).match(/VER='v(\d+)'/) || [])[1] || 0);
+const mainSrc = execSync('git show origin/main:new/3d-model.html', { cwd: ROOT, maxBuffer: 64 << 20 }), JIMP = path.join(ROOT, 'photoreal/tools/model/jinny/import-code.html');
+const jimp = fs.existsSync(JIMP) ? fs.readFileSync(JIMP) : null, useJ = jimp && verOf(jimp) > verOf(mainSrc);
+fs.writeFileSync(OUT + 'orig/new/3d-model.html', useJ ? jimp : mainSrc);
 // 1102.l: 지니 주변 환경 작업이 Wing 장면에 넣은 변경(방위 화살표·논현로175길·매스 높이와 외곽선·교회·신사중 이름판, 지니 전달물 env-merge.patch 중 HTML 덩어리 4·6～10)을
 // 원본에도 적용해, 우리 쪽(?env=0: 지니 모델을 받지 않음)과 비교한다. patch 명령이 없으면(윈도우) 적용 없이 비교하고 결과에 적는다
 let jinnyPatched = false;
-try { execSync('patch -s -F3 --no-backup-if-mismatch "' + OUT + 'orig/new/3d-model.html" < "' + fileURLToPath(new URL('./jinny-ctx.patch', import.meta.url)) + '"', { stdio: 'ignore' }); jinnyPatched = true; } catch (e) {}
+if (useJ) jinnyPatched = 'v' + verOf(jimp) + '(지니 v107 코드 판)';
+else try { execSync('patch -s -F3 --no-backup-if-mismatch "' + OUT + 'orig/new/3d-model.html" < "' + fileURLToPath(new URL('./jinny-ctx.patch', import.meta.url)) + '"', { stdio: 'ignore' }); jinnyPatched = true; } catch (e) {}
 const results = []; const ok = (n, p, d) => { results.push({ n, p: !!p, d }); console.log((p ? 'PASS' : 'FAIL') + '  ' + n + (d !== undefined ? '  ' + JSON.stringify(d) : '')); };
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'] });
 async function open(url) {

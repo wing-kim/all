@@ -4,7 +4,23 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}img{max-width:100%}[hidden]{display:none!important}.bset>.bhead{cursor:pointer;user-select:none}.bset.closed>.bhead{margin-bottom:0!important}
+.bset .bsum{font-size:12.5px;color:var(--fg);margin-top:10px;line-height:1.45}.bset .bsub>h2{font-size:12.5px;color:var(--fg);text-transform:none;letter-spacing:0;font-weight:600}.bset .btgl{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:var(--fg);cursor:pointer}
+.bset .bsub{border:0!important;box-shadow:none!important;padding:10px 0 0!important;margin:0!important;background:none!important;border-top:1px solid var(--line)!important;margin-top:10px!important;border-radius:0!important}
+.bset .bsub>h2{display:flex;justify-content:space-between;align-items:center;cursor:pointer}.bset .bsub>h2::after{content:'▾';font-size:12px}.bset .bsub.fold>h2::after{content:'▸'}.bset .bsub.fold>:not(h2){display:none!important}
+.bset.closed .bsub{display:none!important}.bset[hidden]{display:none!important}
+.srvq{margin-top:4px}.srvq[hidden]{display:none!important}
+.views button[hidden]{display:none!important}
+#lb-hq,#lb-ao,#lb-labels{display:none!important}
+body[data-era="cmp"] .xnow,body[data-era="now"] .xnow{display:none!important}
+.intui .imain button{font-weight:600}.intui .imain #exitInt{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.intui:not(.more) .chips.tx.imore{display:none!important}
+.intui .chips.tx.imore{display:flex!important}
+.app.mmin .intui .chips.tx.imain{display:flex!important}
+.app.int .intui{right:12px!important}.app.int #floorChips{max-width:calc(100% - 210px)}
+#imoreBtn[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+
+</style>
 <title>케이프혼타워 3D 모델</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -25,7 +41,7 @@
   --bg:#141917; --panel:#1b2220; --fg:#e3e8e6; --muted:#97a3a0; --line:#2f3936;
   --accent:#6fb8b1; --red:#ff6b5e;
   --scene:#1a201e; --ground:#242b29; --road:#323a38; --walk:#2b3330; color-scheme:dark}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px}
 .app{display:flex;height:100%;min-height:0}
@@ -63,7 +79,10 @@ td{padding:4px 0;border-bottom:1px solid var(--line)} td:last-child{text-align:r
 .seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:5px;overflow:hidden}
 .seg.two{grid-template-columns:1fr 1fr}
 .seg.five{grid-template-columns:1fr 1fr}
-.seg.four{grid-template-columns:repeat(4,1fr)}
+.seg.four{grid-template-columns:repeat(4,1fr)}.seg.d26{grid-template-columns:1fr 1fr}.seg.d26 label{justify-content:flex-start;flex-direction:row;gap:6px;text-align:left;padding:6px 8px;min-height:36px;font-size:12.5px;border-top:1px solid var(--line)}.seg.d26 label:nth-child(-n+2){border-top:0}.seg.d26 label:nth-child(odd){border-left:0}.seg.d26 label b{font-family:var(--mono);font-size:11px;opacity:.75;min-width:18px}.d26n{font-size:11px;font-weight:400;color:var(--muted);margin-left:6px}.d26adv{margin-top:10px}.d26adv summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:6px 0}.cmpsw{margin:4px 0 10px}.srvonly{display:none}.sch label.lift{opacity:.5;cursor:not-allowed}#sec-g1{display:none!important}body.inSrv .srvonly{display:block;margin-bottom:6px}body.inSrv .sch{pointer-events:none;opacity:.55}
+.seg.tabs.four label{font-size:13px;padding:10px 2px}
+.srvleg{font:11px var(--mono);color:var(--muted)}.srvleg .bar{display:flex;height:10px;border-radius:3px;overflow:hidden}.srvleg .bar i{flex:1}.srvleg .lab{display:flex;justify-content:space-between;margin-top:4px;font-family:var(--font);font-size:11.5px;color:var(--fg)}.srvleg .lab span:first-child{color:#7fb8f5}.srvleg .lab span:last-child{color:#ffa45c}.srvleg .z{color:#fff}.srvleg .lab2{margin-top:2px;text-align:center}
+body.srvplan .panel .sec:not(.srvkeep){display:none!important}.srvctx{padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin:6px 0 10px}.srvkey{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin:6px 0}.srvkey i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-1px}#srv-note{white-space:pre-line}.lb.sv{font-size:11px;padding:1px 6px;background:rgba(20,26,24,.72);border-color:rgba(255,255,255,.14);color:#e9eeec}.lb.sv b{margin-right:4px}.lb.sv.rt{transform:translate(calc(-100% - 10px),-50%)}.lb.sv.rt::after{content:;position:absolute;right:-10px;top:50%;width:10px;border-top:1px solid rgba(255,255,255,.55)}.lb .sub{opacity:.62;font-size:.92em}.srvh{font-size:12.5px;font-weight:600;margin:14px 0 6px;display:flex;justify-content:space-between;color:var(--fg)}.srvh output{font:11px var(--mono);color:var(--muted)}.srvchips{display:flex;flex-wrap:wrap;gap:6px}.srvchips label{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12.5px;cursor:pointer;user-select:none}.srvchips label:has(input:checked){background:var(--accent);border-color:var(--accent);color:var(--panel)}.srvchips label{position:relative}.srvchips input{position:absolute;opacity:0;pointer-events:none;left:0;top:0;width:1px;height:1px}.srvchips label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}.srvbtns{display:flex;gap:6px;margin-top:8px}.srvbtns button{font-size:12px;padding:5px 9px}.srvmore{margin-top:12px}.srvmore summary{cursor:pointer;font-size:12.5px;color:var(--muted);padding:6px 0}.srvt td,.srvt th{font-size:11.5px}
 .seg.tabs label{padding:10px 4px;font-size:14px;font-weight:600}
 .hqtag{position:absolute;right:12px;top:12px;background:var(--panel);color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:4px 10px;font:500 12px var(--font);pointer-events:none}
 .rrow{display:flex;gap:8px;flex-wrap:wrap}
@@ -287,14 +306,14 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
     <div class="labels" id="labels"></div>
     <div class="views" role="group" aria-label="시점">
       <button id="v-int" data-v="int" aria-pressed="false">내부 보기</button>
-      <button id="v-corner" data-v="corner" aria-pressed="true">코너 투시</button>
-      <button id="v-front" data-v="front" aria-pressed="false">압구정로 정면</button>
-      <button id="v-side" data-v="side" aria-pressed="false">6M도로 측면</button>
-      <button id="v-stair" data-v="stair" aria-pressed="false">출입구·램프</button>
+      <button id="v-corner" data-v="corner" hidden aria-pressed="true">코너 투시</button>
+      <button id="v-front" data-v="front" aria-pressed="false">정면</button>
+      <button id="v-side" data-v="side" hidden aria-pressed="false">6M도로 측면</button>
+      <button id="v-stair" data-v="stair" hidden aria-pressed="false">출입구·램프</button>
       <button id="v-top" data-v="top" aria-pressed="false">배치 (위)</button>
-      <button id="v-roof" data-v="roof" aria-pressed="false">옥상·태양광</button>
-      <button id="v-apt" data-v="apt" aria-pressed="false">미성아파트 방향 (조감)</button>
-      <button id="v-far" data-v="far" aria-pressed="false">원경 (우리 건물 + 미성)</button>
+      <button id="v-roof" data-v="roof" hidden aria-pressed="false">옥상·태양광</button>
+      <button id="v-apt" data-v="apt" hidden aria-pressed="false">미성아파트 방향 (조감)</button>
+      <button id="v-far" data-v="far" hidden aria-pressed="false">원경 (우리 건물 + 미성)</button>
     </div>
     <div class="intui" id="intui" data-cat="space" hidden>
       <div class="chips" id="floorChips" role="group" aria-label="층 선택"></div>
@@ -353,28 +372,89 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       </div>
     </div>
 
-    <div class="sec ctl">
-      <div class="seg tabs" role="radiogroup" aria-label="현황 신축 비교">
-        <label><input type="radio" name="era" id="era-now" value="now"> ① 현황<small>동광빌딩</small></label>
+    <div class="sec ctl" id="sec-era">
+      <h2>현황 · 신축 · 실측</h2>
+      <div class="seg tabs" role="radiogroup" aria-label="현황 신축 실측">
+        <label><input type="radio" name="era" id="era-now" value="now"> ① 현황<small>동광빌딩 · 비교</small></label>
         <label><input type="radio" name="era" id="era-new" value="new" checked> ② 신축<small>케이프혼타워</small></label>
-        <label><input type="radio" name="era" id="era-cmp" value="cmp"> ③ 비교<small>현황+신축 윤곽</small></label>
+        <label><input type="radio" name="era" id="era-srv" value="srv"> ③ 실측<small>레벨 · 지하</small></label>
+        <input type="radio" name="era" id="era-cmp" value="cmp" hidden>
       </div>
     </div>
 
     <div class="sec ctl" id="sec-cmp" hidden>
-      <h2>현황 · 신축 겹쳐 보기</h2>
+      <h2>신축과 겹쳐 비교</h2>
       <div class="row"><label for="c-mix">현황 ◀ 투명도 ▶ 신축</label><output id="o-mix">현황 50 · 신축 50</output>
         <input type="range" id="c-mix" min="0" max="100" step="5" value="50"></div>
       <div class="seg four" role="group" aria-label="빠른 선택">
-        <label><input type="radio" name="mixq" value="0"> 현황만</label>
+        <label><input type="radio" name="mixq" value="0" checked> 현황만</label>
         <label><input type="radio" name="mixq" value="30"> 현황 위주</label>
-        <label><input type="radio" name="mixq" value="50" checked> 반반</label>
+        <label><input type="radio" name="mixq" value="50"> 반반</label>
         <label><input type="radio" name="mixq" value="100"> 신축만</label>
       </div>
       <label class="chk"><input type="checkbox" id="t-cmpol"> 신축 윤곽선 (빨간 선)</label>
-      <label class="chk"><input type="checkbox" id="t-cmpapt" checked> 미성아파트도 현황 ↔ 재건축 겹쳐 보기</label>
+      <label class="chk"><input type="checkbox" id="t-cmpapt"> 미성아파트도 현황 ↔ 재건축 겹쳐 보기</label>
       <label class="chk"><input type="checkbox" id="t-cmpspin"> 천천히 돌려 보기</label>
       <table class="cmpt" id="cmp-t"></table>
+    </div>
+
+    <div class="sec ctl" id="srv-quick" hidden>
+      <h2>실측 보기</h2>
+      <label class="chk"><input type="checkbox" id="t-srvctx" checked> 주변 건물 보이기 (미성아파트 포함)</label>
+      <label class="chk"><input type="checkbox" id="t-srvunder"> <span><b>지하 보기</b> (주변 건물 숨김 · 땅 투명)</span></label>
+      <div class="note">외부 디자인 · 주차 · 내부 보기는 ② 신축 계획과 같은 메뉴(아래)를 그대로 씁니다. 자세한 실측 설정은 외부 디자인 아래에 있습니다.</div>
+    </div>
+    <div class="sec ctl" id="sec-srv" hidden>
+      <h2>실측 설정 · 레벨 · 단면</h2>
+
+      <div class="note">플라건축 「대지경계·현황레벨·지하단면 검토안」(2026.10.30) 반영. 땅 높이는 <b>압구정로 보도블럭 = 0</b> 기준이고, 1층 바닥은 보도보다 <b>15cm</b> 높습니다. 층 높이(2층 +5.4m 등)는 1층 바닥 기준입니다.</div>
+      <div class="srvkey"><span><i style="background:#f3c58e"></i>압구정로 3m 보도블럭 경사 (보도 0 → 1층 +15cm)</span><span><i style="background:#b9dcef"></i>뒷길 1m 보도블럭 경사 (도로 → 1층)</span></div>
+      <div class="seg two" role="radiogroup" aria-label="땅 표현">
+        <label><input type="radio" name="srvterr" value="plan" checked> 계획 지반<small>도로 평평 · 경사는 건물 쪽</small></label>
+        <label><input type="radio" name="srvterr" value="raw"> 측량값 그대로<small>측량점 사이 보간</small></label>
+      </div>
+      <div class="row"><label for="c-srvk">땅 높낮이 부풀리기</label><output id="o-srvk">×1</output>
+        <input type="range" id="c-srvk" min="1" max="8" step="1" value="1"></div>
+      <div class="note">×1 = 실제 비율 (1층 높이 5.4m에 비해 95cm 차이는 이 정도). 숫자를 올리면 땅 높낮이만 부풀려 보여 줍니다.</div>
+      <div class="seg two" role="radiogroup" aria-label="땅 색">
+        <label><input type="radio" name="srvgc" value="real" checked> 실제 바닥<small>차도·보도·전면공지</small></label>
+        <label><input type="radio" name="srvgc" value="height"> 높낮이 색<small>파랑 낮음 · 주황 높음</small></label>
+      </div>
+      <div class="srvleg"><div class="bar"><i style="background:#2f7fd6"></i><i style="background:#3d6a96"></i><i style="background:#56605d"></i><i style="background:#9a6d4a"></i><i style="background:#c9733a"></i><i style="background:#f07a2a"></i></div>
+        <div class="lab"><span>▼ 1층 바닥보다 낮음</span><span class="z">━ 같은 높이</span><span>높음 ▲</span></div>
+        <div class="lab2">50cm 낮음 ~ 1m 높음 · 땅 위 선 하나 = 10cm 차이</div></div>
+      <div class="seg" role="radiogroup" aria-label="단면">
+        <label><input type="radio" name="srvcut" value="none" checked> 단면 없음</label>
+        <label><input type="radio" name="srvcut" value="h"> 횡단<small>동서로 자름</small></label>
+        <label><input type="radio" name="srvcut" value="v"> 종단<small>남북으로 자름</small></label>
+      </div>
+      <div class="row" id="srv-posrow" hidden><label for="c-srvpos">단면 위치</label><output id="o-srvpos"></output>
+        <input type="range" id="c-srvpos" min="5" max="95" step="1" value="38"></div>
+      <div class="rrow"><button class="rbtn ghost2" id="srv-face" type="button">단면 정면으로 보기</button> <button class="rbtn ghost2" id="srv-cap" type="button">화면 이미지로 저장</button></div>
+      <div class="rrow" style="display:none"><button class="rbtn" id="srv-real" type="button" aria-pressed="false">📍 실제 위치 보기 (주변 건물·도로)</button></div>
+      <div class="rrow" style="display:none"><button class="rbtn" id="srv-ramp" type="button">🚗 차 출입구 · 램프 가까이 보기</button></div>
+      <h3 class="srvh">표시할 수치 <output id="o-srvlab"></output></h3>
+      <div class="srvchips" id="srv-labs"></div>
+      <div class="srvbtns"><button type="button" class="ghost" id="srv-lab-min">최소 (층 레벨만)</button><button type="button" class="ghost" id="srv-lab-all">모두</button><button type="button" class="ghost" id="srv-lab-none">끄기</button></div>
+      <h3 class="srvh">보이기</h3>
+      <label class="chk"><input type="checkbox" id="t-srvmass" checked> 우리 건물</label>
+      <div class="seg two" role="radiogroup" aria-label="건물 표현">
+        <label><input type="radio" name="srvbm" value="plan" checked> 실측안 평면<small>1층 평면 → 옥상</small></label>
+        <label><input type="radio" name="srvbm" value="model"> ② 신축 모델<small>외장 시안 포함</small></label>
+      </div>
+      <div class="seg two" role="radiogroup" aria-label="최상층" style="display:none">
+        <label><input type="radio" name="srvtop" value="ph" checked> PH1 오픈<small>6층~PH1 7.2m</small></label>
+        <label><input type="radio" name="srvtop" value="7"> 7층 분리<small>6F 3.6 + 7F 3.6</small></label>
+      </div>
+      <div class="row"><label for="c-srvop">건물 불투명도</label><output id="o-srvop">60%</output>
+        <input type="range" id="c-srvop" min="15" max="100" step="5" value="60"></div>
+      <div class="row"><label for="c-envop">주변 건물 불투명도</label><output id="o-envop">100%</output>
+        <input type="range" id="c-envop" min="0" max="100" step="5" value="100"></div>
+      <div class="note">주변 건물을 0%로 내리면 지하까지 가리는 것 없이 볼 수 있어요. 도로·바닥은 그대로이고, 땅까지 비춰 보려면 화면 표시의 <b>지하 보기</b>를 함께 켜세요.</div>
+      <details class="srvmore"><summary>층별 비교표 · 검토 메모</summary>
+        <table class="cmpt srvt" id="srv-t"></table>
+        <div class="note" id="srv-note"></div>
+      </details>
     </div>
 
     <div class="sec" id="sec-now" hidden>
@@ -419,18 +499,20 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
         </div>
         <div class="note" id="sun-info"></div>
         <label class="chk"><input type="checkbox" id="t-citylights"> 야간에 주변 건물도 불 켜기 (창마다 실내 조명)</label>
-        <label class="chk"><input type="checkbox" id="t-hq" checked> 고품질 렌더 (2배 해상도·고해상도 그림자, 느리면 자동으로 낮춤)</label>
-        <label class="chk"><input type="checkbox" id="t-ao" checked> 앰비언트 오클루전 (구석 그늘 · 끄면 빨라짐)</label>
+        <label class="chk" id="lb-hq"><input type="checkbox" id="t-hq" checked> 고품질 렌더 (2배 해상도·고해상도 그림자, 느리면 자동으로 낮춤)</label>
+        <label class="chk" id="lb-ao"><input type="checkbox" id="t-ao" checked> 앰비언트 오클루전 (구석 그늘 · 끄면 빨라짐)</label>
       </div>
     </div>
 
-    <div class="sec ctl newonly">
-      <h2>주차 방식</h2>
-      <div class="seg five sch" role="radiogroup" aria-label="주차 방식">
-        <label><input type="radio" name="sch" id="sch-mech" value="mech" checked> 기계식<small>(4.5m)</small></label>
-        <label><input type="radio" name="sch" id="sch-self" value="self"> 자주식1<small>(3.6m)</small></label>
-        <label><input type="radio" name="sch" id="sch-alt3" value="alt3"> 자주식2<small>(4.5m 비대칭)</small></label>
-        <label><input type="radio" name="sch" id="sch-alt4" value="alt4"> 자주식3<small>(4.5m B1 외부계단)</small></label>
+    <div class="sec ctl newonly" id="sec-sch">
+      <h2>주차 방식</h2><div class="note srvonly">③ 실측 탭은 자주식 실측안 평면으로 고정됩니다.</div>
+      <div class="seg two sch" role="radiogroup" aria-label="주차 방식">
+        <label><input type="radio" name="sch" id="sch-dd" value="dd" checked> 자주식<small>실측안 DD 10.30</small></label>
+        <label class="lift" title="도면이 나오면 적용합니다"><input type="radio" name="sch" id="sch-lift" value="lift" disabled> 자주식+카리프트<small>실측안 · 도면 대기</small></label>
+        <label hidden><input type="radio" name="sch" id="sch-mech" value="mech"> 기계식</label>
+        <label hidden><input type="radio" name="sch" id="sch-self" value="self"> 자주식1</label>
+        <label hidden><input type="radio" name="sch" id="sch-alt3" value="alt3"> 자주식2</label>
+        <label hidden><input type="radio" name="sch" id="sch-alt4" value="alt4"> 자주식3</label>
       </div>
     </div>
 
@@ -448,15 +530,42 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
       <label class="chk"><input type="checkbox" id="t-skin"> 외관은 원안 각진 모서리 유지 (이중외피)</label>
       <label class="chk"><input type="checkbox" id="t-cglass"> 코너 면 2층~최상층 통창 (테두리)</label>
       <label class="chk" hidden><input type="checkbox" id="t-cclean"> 코너 면 클린 글라스 (테두리 없음)</label>
-      <div class="glab">최상층 (6F 위)</div>
-      <label class="chk"><input type="checkbox" id="t-use7"> PH1 대신 7층으로 사용 (7F 바닥·천장 설치)</label>
-      <label class="chk" id="lb-nost"><input type="checkbox" id="t-nost" disabled> 6·7층 분리 임대 (내부 계단 없음, 7F 바닥 막음)</label>
       <div class="glab">자주식3 외부계단</div>
       <label class="chk" id="lb-a4park"><input type="checkbox" id="t-a4park"> 외부계단 없애고 그 자리 B1 주차 1대 추가</label>
     </div>
 
     <div class="sec ctl newonly" id="sec-ext">
-      <h2>외부 디자인</h2>
+      <h2>외부 디자인 <span class="d26n">26종 · 실사 사진 번호와 같음</span></h2>
+      <div class="seg d26" role="radiogroup" aria-label="외부 디자인 26종">
+        <label><input type="radio" name="d26" value="1" data-k="stack" data-m="p"> <b>1</b> 스택 프레임</label>
+        <label><input type="radio" name="d26" value="2" data-k="veil" data-m="p"> <b>2</b> 메탈 메시 베일</label>
+        <label><input type="radio" name="d26" value="3" data-k="arch" data-m="p"> <b>3</b> 아치 석재</label>
+        <label><input type="radio" name="d26" value="4" data-k="pixel" data-m="p"> <b>4</b> 픽셀 모자이크</label>
+        <label><input type="radio" name="d26" value="5" data-k="fold" data-m="p"> <b>5</b> 접힌 알루미늄</label>
+        <label><input type="radio" name="d26" value="6" data-k="ribbon" data-m="p"> <b>6</b> 물결 리본</label>
+        <label><input type="radio" name="d26" value="7" data-k="hfin" data-m="p"> <b>7</b> 수평 루버 그라데이션</label>
+        <label><input type="radio" name="d26" value="8" data-k="baybox" data-m="p"> <b>8</b> 돌출 박스 창</label>
+        <label><input type="radio" name="d26" value="9" data-k="hex" data-m="p"> <b>9</b> 허니콤 스크린</label>
+        <label><input type="radio" name="d26" value="10" data-k="media" data-m="p"> <b>10</b> LED 미디어 라인</label>
+        <label><input type="radio" name="d26" value="11" data-k="gblock" data-m="p"> <b>11</b> 글라스 블록</label>
+        <label><input type="radio" name="d26" value="12" data-k="perf" data-m="p"> <b>12</b> 그라데이션 타공판</label>
+        <label><input type="radio" name="d26" value="13" data-k="woodfin" data-m="p"> <b>13</b> 우드 수직 루버</label>
+        <label><input type="radio" name="d26" value="14" data-k="ceramic" data-m="p"> <b>14</b> 세라믹 튜브</label>
+        <label><input type="radio" name="d26" value="15" data-k="uglass" data-m="p"> <b>15</b> U-글라스</label>
+        <label><input type="radio" name="d26" value="16" data-k="balcony" data-m="p"> <b>16</b> 층별 발코니 띠</label>
+        <label><input type="radio" name="d26" value="17" data-k="xbrace" data-m="p"> <b>17</b> X 브레이싱 철골</label>
+        <label><input type="radio" name="d26" value="18" data-k="checker" data-m="p"> <b>18</b> 체커 프레임</label>
+        <label><input type="radio" name="d26" value="19" data-k="colonnade" data-m="p"> <b>19</b> 자이언트 오더 기둥</label>
+        <label><input type="radio" name="d26" value="20" data-k="kinetic" data-m="p"> <b>20</b> 키네틱 회전 패널</label>
+        <label><input type="radio" name="d26" value="21" data-k="terra" data-m="f"> <b>21</b> 테라코타 루버</label>
+        <label><input type="radio" name="d26" value="22" data-k="stone" data-m="f"> <b>22</b> 석재 그리드</label>
+        <label><input type="radio" name="d26" value="23" data-k="metal" data-m="f"> <b>23</b> 메탈 밴드</label>
+        <label><input type="radio" name="d26" value="24" data-k="brick" data-m="f"> <b>24</b> 벽돌 피어</label>
+        <label><input type="radio" name="d26" value="25" data-k="glass" data-m="f"> <b>25</b> 올 글라스</label>
+        <label><input type="radio" name="d26" value="26" data-k="frame" data-m="f"> <b>26</b> 원안 프레임</label>
+      </div>
+      <div id="d26sw"></div>
+      <details class="d26adv"><summary>직접 조합 (마감재 × 입면 형태)</summary>
       <div class="seg two emode" role="radiogroup" aria-label="외부 디자인 방식">
         <label><input type="radio" name="emode" id="em-combo" value="combo" checked> 직접 조합<small>마감재 + 입면 형태</small></label>
         <label><input type="radio" name="emode" id="em-preset" value="preset"> 추천 시안<small>완성안 20종</small></label>
@@ -528,9 +637,10 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
         </div>
         <div class="swr" id="sw-dsg" data-k="dsgC"><span class="swl">시안 색상</span></div>
       </div>
+      </details>
     </div>
 
-    <div class="sec ctl newonly">
+    <div class="sec ctl newonly" id="sec-win">
       <h2>창 크기</h2>
       <div class="seg five" role="radiogroup" aria-label="창 크기">
         <label><input type="radio" name="win" id="win-base" value="base" checked> 기본 창</label>
@@ -554,7 +664,11 @@ html.vmframe .app{max-width:430px;margin:0 auto;transform:translateZ(0);box-shad
 
     <div class="sec ctl">
       <h2>화면 표시</h2>
-      <label class="chk"><input type="checkbox" id="t-labels" checked> 층별 면적 · 출입구 라벨</label>
+      <div class="glab">최상층 (6F 위)</div>
+      <label class="chk"><input type="checkbox" id="t-use7"> PH1 대신 7층으로 사용 (7F 바닥·천장 설치)</label>
+      <label class="chk" id="lb-nost"><input type="checkbox" id="t-nost" disabled> 6·7층 분리 임대 (내부 계단 없음, 7F 바닥 막음)</label>
+      <div class="glab">표시</div>
+      <label class="chk" id="lb-labels"><input type="checkbox" id="t-labels" checked> 층별 면적 · 출입구 라벨</label>
       <label class="chk"><input type="checkbox" id="t-cxlab"> 주변 건물 이름</label>
       <label class="chk"><input type="checkbox" id="t-limits" checked> <span><span class="sw"></span>건축한계선 · 대지안의공지</span></label>
       <label class="chk"><input type="checkbox" id="t-frame" checked> 포털 프레임 · 퍼걸러 (포털 형태 선택 시)</label>
@@ -5275,10 +5389,16 @@ const LM={edge1:new THREE.LineBasicMaterial({color:0x1f2a28}),mull1:new THREE.Li
   edge:new THREE.LineBasicMaterial({color:0x56635f,transparent:true,opacity:.55}),mull:new THREE.LineBasicMaterial({color:0x5b6966,transparent:true,opacity:.45}),
   site:new THREE.LineDashedMaterial({color:0x222222,dashSize:1.2,gapSize:.6}),red:new THREE.LineDashedMaterial({color:0xc8322b,dashSize:.6,gapSize:.4})};
 const isDark=()=>matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'||document.documentElement.dataset.theme==='dark';
+// env-test: 스케치업 takes the 렌더-실사 palette — daylight sky gradient, warm paving, asphalt road, blue-grey sky light — in both UI themes
+// (road / walk / site / ground and the sky-light strength measured against 렌더-실사 on screen, 2026.11.03: page road and paving
+//  now read like the surveyed asphalt and pavers beside them, and walls in shade come up to the 렌더-실사 level)
+const SKP={ground:0xaeb2ab,road:0x565a60,walk:0xa9a9a5,site:0xb3b7b2,ctx:0xf2f0eb,hemi:0xe6eef6,hemiG:0xd6cfc3,hemiI:.9,sunI:.75,sun:0xfff4e4,fog:0xdfe7ec};
 function applyTheme(){
-  if(!scene.userData.int)scene.background=new THREE.Color(css('--scene'));
-  if(!scene.userData.int){M.ground.color.set(css('--ground'));M.road.color.set(css('--road'));M.walk.color.set(css('--walk'));M.site.color.set(isDark()?0x323a37:0xe9e6df)}
-  LM.red.color.set(css('--red'));LM.site.color.set(isDark()?0xc9d1ce:0x222222);M.ctx.color.set(isDark()?0x3a4341:0xf2f2f0);
+  const g=f=>{try{return f()}catch(e){return null}},sk=!g(()=>R3D.on),st=g(()=>skyTex);   // R3D / skyTex are declared further down (TDZ on the first call)
+  if(!scene.userData.int)scene.background=sk&&st?st:new THREE.Color(css('--scene'));
+  if(!scene.userData.int){M.ground.color.set(SKP.ground);M.road.color.set(SKP.road);M.walk.color.set(SKP.walk);M.site.color.set(SKP.site);
+    if(sk){hemi.color.set(SKP.hemi);hemi.groundColor.set(SKP.hemiG);hemi.intensity=SKP.hemiI;sun.color.set(SKP.sun);sun.intensity=SKP.sunI;scene.fog=new THREE.Fog(SKP.fog,220,760)}}
+  LM.red.color.set(css('--red'));LM.site.color.set(0x222222);M.ctx.color.set(SKP.ctx);
 }
 applyTheme();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
@@ -5321,7 +5441,8 @@ limits.add(line([[355,192],[355,1320]],0.08,LM.red));
 limits.add(line([[272,yRoad(272)-45],[1577,yRoad(1577)-45]],0.08,LM.red));
 limits.add(line([[240,192],[1577,192],[1577,yRoad(1577)-45]],0.08,LM.red));
 // road paint around the site: 압구정로 lanes + centre line, zebra crossings at every corner near us, stop lines, signal poles, the access road into 신사중학교
-(function(){const W=[],Y=[];const rect=(arr,x0,y0,x1,y1)=>{const [a,b]=P(Math.min(x0,x1),Math.min(y0,y1)),[c,d]=P(Math.max(x0,x1),Math.max(y0,y1));arr.push([a,b,c,d])};
+var RDP=[];   // env-test: the page's own road paint, signals, gate piers and street lamps — hidden in 렌더-실사, where models/road_env.js has them at their roadview places
+(function(){const n0=site.children.length;const W=[],Y=[];const rect=(arr,x0,y0,x1,y1)=>{const [a,b]=P(Math.min(x0,x1),Math.min(y0,y1)),[c,d]=P(Math.max(x0,x1),Math.max(y0,y1));arr.push([a,b,c,d])};
   const RX0=-1188,RX1=60,CX=-564,ST=19,GAP=37;
   // crossings over 압구정로 (y ranges), stripes run along the road
   const XW=[[-4920,-4754],[-5546,-5380],[-536,-370]];   // 가로수길 intersection + in front of the 신사중학교 entrance road (2026.10.08: none at our corner)
@@ -5344,7 +5465,7 @@ limits.add(line([[240,192],[1577,192],[1577,yRoad(1577)-45]],0.08,LM.red));
   // traffic signals: pole on the corner + mast arm over 압구정로 with a 3-light head
   const sp=SM({color:0x8c9194,metalness:.5,roughness:.4}),hd=SM({color:0x25282a,roughness:.5}),gl=new THREE.MeshBasicMaterial({color:0x37d07a});
   [[75,-4930,-1],[-1205,-5380,1]].forEach(([x,y,dir])=>{const [X,Z]=P(x,y);site.add(box(X-0.12,X+0.12,0,6.2,Z-0.12,Z+0.12,sp));const xe=X+dir*8;site.add(box(Math.min(X,xe),Math.max(X,xe),5.9,6.05,Z-0.06,Z+0.06,sp));
-    site.add(box(xe-0.2,xe+0.2,5.4,5.9,Z-0.65,Z+0.65,hd));const l=box(xe-0.22,xe-0.2,5.5,5.8,Z+0.25,Z+0.55,gl);site.add(l)})})();
+    site.add(box(xe-0.2,xe+0.2,5.4,5.9,Z-0.65,Z+0.65,hd));const l=box(xe-0.22,xe-0.2,5.5,5.8,Z+0.25,Z+0.55,gl);site.add(l)});RDP.push(...site.children.slice(n0))})();
 function hCover(par,polys,y,t,mat){(polys||[]).forEach(h=>{if(!h)return;const c=prism(h,y,t,mat,{shadow:false});c.userData.holeCover=true;c.visible=false;par.add(c)})}
 function buildGround(holes){
   dispose(siteDyn);
@@ -5376,11 +5497,12 @@ const city=new THREE.Group();city.visible=true;scene.add(city);
   trunk.count=crown.count=n;city.add(trunk,crown);
   const lm=new THREE.InstancedMesh(new THREE.BoxGeometry(.15,.02,3),new THREE.MeshBasicMaterial({color:0xf4f4f0}),400);n=0;
   for(const x of[-25.5,-30.5,-40.5,-45.5])for(let z=-240;z<240&&n<400;z+=9){o.position.set(x,0.03,z);o.updateMatrix();lm.setMatrixAt(n++,o.matrix)}lm.count=n;city.add(lm);
-  const cl=new THREE.Mesh(new THREE.BoxGeometry(.35,.02,480),new THREE.MeshBasicMaterial({color:0xe2b33c}));cl.position.set(-35.5,0.03,0);city.add(cl);
+  const cl=new THREE.Mesh(new THREE.BoxGeometry(.35,.02,480),new THREE.MeshBasicMaterial({color:0xe2b33c}));cl.position.set(-35.5,0.03,0);city.add(cl);RDP.push(lm,cl);   // env-test: city-layer lane paint, replaced by road_env in 렌더-실사
+
   // (2026.10.08) the city-layer crossing south of our corner is removed — the crossing now sits over 압구정로 in front of 신사중학교 (road paint)
 })();
 const skyTex=(()=>{const c=document.createElement('canvas');c.width=2;c.height=256;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);
-  gr.addColorStop(0,'#7fb0d6');gr.addColorStop(.55,'#c7dcea');gr.addColorStop(1,'#eef2f1');g.fillStyle=gr;g.fillRect(0,0,2,256);return new THREE.CanvasTexture(c)})();
+  gr.addColorStop(0,'#7fb0d6');gr.addColorStop(.55,'#c7dcea');gr.addColorStop(1,'#eef2f1');g.fillStyle=gr;g.fillRect(0,0,2,256);return new THREE.CanvasTexture(c)})();applyTheme();   // env-test: now the sketch sky can use it
 
 // ================= components =================
 function door([[ax,ay],[bx,by]],top,W=3.2,canopy=true,single=false){
@@ -5856,6 +5978,76 @@ const SELF={};
   };
 })();
 
+// ================= scheme C: 자주식 (실측안 · 플라건축 DD 2026.10.30 「대지경계·현황레벨·지하단면 검토안」) =================
+// 1층 평면(001) 실내 윤곽을 옥상까지 · 1F 5.4 / 2~5F 4.2 / 6F~PH1 7.2 (7층 분리 시 3.6+3.6) / PH2 옥상 +29.40 · 지하 B1 −3.30 · B2 −6.90 · B3 −10.50 · B4(기계실, 부분층) −13.20
+// 차량 램프: 뒷길 차 출입구 → 동쪽 직선(북) → 곡선(내반경 5m, 차로 3.6m) → 북쪽 띠(서) → B1, 지하층은 코어를 감싸는 반원형 램프(B1→B2→B3)
+const DD={};
+(function(){
+  const GEO={"UP": [[369.4, 210.8], [774.4, 210.8], [774.4, 424.0], [1059.0, 424.0], [1059.0, 480.4], [1259.4, 480.4], [1259.4, 786.4], [856.5, 786.4], [856.5, 1037.9], [737.1, 1037.9], [737.1, 1130.6], [369.4, 1130.6]], "WEST": [[369.4, 210.8], [774.4, 210.8], [774.4, 424.0], [856.5, 424.0], [856.5, 1037.9], [737.1, 1037.9], [737.1, 1130.6], [369.4, 1130.6]], "TERR": [[856.5, 424.0], [929.0, 424.0], [929.0, 709.6], [1259.4, 709.6], [1259.4, 786.4], [856.5, 786.4]], "HALLPH": [[929.0, 424.0], [1259.4, 424.0], [1259.4, 709.6], [929.0, 709.6]], "GARDEN": [[369.4, 210.8], [774.4, 210.8], [774.4, 424.0], [856.5, 424.0], [856.5, 603.0], [929.0, 603.0], [929.0, 688.3], [856.5, 688.3], [856.5, 1037.9], [737.1, 1037.9], [737.1, 1130.6], [369.4, 1130.6]], "XV": 856.5, "CORE": {"wc": [761.6, 424.0, 865.0, 619.0], "stair": [1030.2, 480.4, 1259.4, 603.0], "elev": [1030.2, 603.0, 1206.1, 699.0], "eps": [1206.1, 603.0, 1254.1, 709.6], "corr": [865.0, 424.0, 1030.2, 667.0], "hall": [856.5, 667.0, 1259.4, 786.4], "tdoor": [865.0, 485.8, 865.0, 560.4]}, "EPS": [929.0, 424.0, 1059.0, 480.4], "C": [1136.8, 594.5], "RI": 207.9, "RO": 358.2, "RA": [{"i": [1344.7, 937.7], "o": [1495.0, 937.7]}, {"i": [1344.7, 880.2], "o": [1495.0, 880.2]}, {"i": [1344.7, 816.2], "o": [1495.0, 816.2]}, {"i": [1344.7, 752.2], "o": [1495.0, 752.2]}, {"i": [1344.7, 688.3], "o": [1495.0, 688.3]}, {"i": [1344.7, 624.3], "o": [1495.0, 624.3]}, {"i": [1344.7, 594.5], "o": [1495.0, 594.5]}, {"i": [1342.9, 567.4], "o": [1491.9, 547.8]}, {"i": [1337.6, 540.7], "o": [1482.8, 501.8]}, {"i": [1328.9, 515.0], "o": [1467.7, 457.4]}, {"i": [1316.8, 490.6], "o": [1447.0, 415.4]}, {"i": [1301.7, 468.0], "o": [1421.0, 376.5]}, {"i": [1283.8, 447.5], "o": [1390.1, 341.3]}, {"i": [1263.4, 429.6], "o": [1354.9, 310.4]}, {"i": [1240.8, 414.5], "o": [1315.9, 284.3]}, {"i": [1216.4, 402.5], "o": [1273.9, 263.6]}, {"i": [1190.6, 393.7], "o": [1229.5, 248.6]}, {"i": [1164.0, 388.4], "o": [1183.6, 239.4]}, {"i": [1136.8, 386.7], "o": [1136.8, 236.4]}, {"i": [1078.2, 386.7], "o": [1078.2, 236.4]}, {"i": [1014.3, 386.7], "o": [1014.3, 236.4]}, {"i": [950.3, 386.7], "o": [950.3, 236.4]}, {"i": [886.4, 386.7], "o": [886.4, 236.4]}, {"i": [822.4, 386.7], "o": [822.4, 236.4]}, {"i": [785.1, 386.7], "o": [785.1, 236.4]}], "XEND": 785.1, "stB1": [[291.7, 286.0, 499.1, 388.9], [291.7, 417.4, 499.1, 520.3], [291.7, 523.4, 499.1, 623.2], [291.7, 654.8, 499.1, 756.1], [291.7, 759.3, 499.1, 860.6], [291.7, 892.3, 499.1, 993.6], [291.7, 996.7, 499.1, 1098.1], [750.8, 887.5, 961.3, 993.6]], "stB2": [[291.7, 286.0, 499.1, 388.9], [291.7, 417.4, 499.1, 520.3], [291.7, 523.4, 499.1, 623.2], [291.7, 654.8, 499.1, 756.1], [291.7, 759.3, 499.1, 860.6], [291.7, 892.3, 499.1, 993.6], [291.7, 996.7, 499.1, 1098.1], [750.8, 428.4, 961.3, 531.3], [750.8, 531.3, 961.3, 634.2], [750.8, 887.5, 961.3, 993.6]], "stB3": [[291.7, 286.0, 499.1, 388.9], [291.7, 417.4, 499.1, 520.3], [291.7, 523.4, 499.1, 623.2], [291.7, 654.8, 499.1, 756.1], [291.7, 759.3, 499.1, 860.6], [291.7, 892.3, 499.1, 993.6], [291.7, 996.7, 499.1, 1098.1], [750.8, 887.5, 961.3, 993.6]], "retailB1": [[755.6, 428.4], [961.3, 428.4], [961.3, 792.5], [755.6, 792.5]], "elecB3": [[755.6, 396.8], [961.3, 396.8], [961.3, 792.5], [755.6, 792.5]], "X2": 765.4, "entCorner": [[369.4, 1130.6], [502.6, 1130.6]], "entHall": [[977.0, 786.4], [1067.6, 786.4]], "entWest": [[369.4, 560.4], [369.4, 688.3]], "cols": [[385.4, 224.6, "r"], [385.4, 400.5, "r"], [385.4, 635.0, "r"], [385.4, 869.5, "r"], [385.4, 1109.3, "r"], [767.0, 224.6, "r"], [767.0, 1109.3, "r"]]};
+  const U=GEO.UP,G=GEO.UP,WEST=GEO.WEST,TERR=GEO.TERR,HALLPH=GEO.HALLPH,GARDEN=GEO.GARDEN,XV=GEO.XV,C=GEO.C,RI=GEO.RI,RO=GEO.RO;
+  const CRD=GEO.CORE;
+  const CORE=[{n:'화장실',r:CRD.wc},{n:'계단',r:CRD.stair},{n:'승강기',r:CRD.elev}];
+  const CORE2=[{n:'계단',r:CRD.stair},{n:'승강기',r:CRD.elev,face:'s'}];
+  const COLS=GEO.cols;
+  const H1=5.4,HT=4.2,Y6=22.2,Y7=25.8,YR=29.4,YT=YR+3.6;
+  const cp=(r,a)=>[C[0]+r*Math.cos(a),C[1]+r*Math.sin(a)];
+  // 지하 램프: 남서쪽(홀 남쪽)에서 시작해 동쪽으로 반원을 돌고 북쪽 띠를 따라 서쪽 끝(X ${XEND})에서 아래층 도착
+  function ringU(){const s=[],a0=Math.PI*0.75,a1=-Math.PI/2,n=30;for(let k=0;k<=n;k++){const a=a0+(a1-a0)*k/n;s.push({i:cp(RI,a),o:cp(RO,a)})}
+    const t=[];sampLine([C[0],C[1]-RI],[GEO.XEND,C[1]-RI],[C[0],C[1]-RO],[GEO.XEND,C[1]-RO],7,t);return s.concat(t.slice(1))}
+  DD.make=function(){COREDET.dd=CRD;
+    const BS=offsetPoly(SITE,0.45*S),B4P=clipX(BS,GEO.X2,false);
+    const RA=rampBuild(GEO.RA.map(q=>({i:q.i,o:q.o})),0.55,-3.3,0),RB=rampBuild(ringU(),-3.3,-6.9,null),RC=rampBuild(ringU(),-6.9,-10.5,null);
+    rampDims(RA,[[3,'직선'],[12,'회전부'],[22,'직선']]);rampDims(RB,[[4,'회전부'],[33,'직선']]);rampDims(RC,[[4,'회전부'],[33,'직선']]);
+    try{g90At(RA,4);g90At(RB,12)}catch(e){}
+    const hallB=rectP([CRD.corr[0],CRD.elev[3],CRD.hall[2],CRD.hall[3]]);
+    const L=[];
+    L.push({key:'B4',name:'B4',kind:'base',y:-13.2,h:2.7,poly:B4P,area:polyArea(B4P),areaTxt:'지하4층 (기계실 · 부분층)',use:'기계실 · 물탱크 · 정화조',approx:true,cols:[],center:centroid(B4P),blocks:CORE2,noLobby:true,
+      rooms:[{n:'기계실',p:clipX(B4P,CRD.corr[0],true).length>2?clipX(B4P,CRD.corr[0],true):B4P,doors:[]}],view:{pos:centroid(B4P),look:[C[0],C[1]]},stalls:[],tags:[['기계실 −13.20',centroid(B4P),0]]});
+    L.push({key:'B3',name:'B3',kind:'base',y:-10.5,h:3.6,poly:BS,area:polyArea(BS),areaTxt:'지하3층 (주차·전기실)',use:'주차 8 · 전기실',approx:true,cols:[],center:[640,640],blocks:CORE2,noLobby:true,
+      obst:[RC.low(-10.5,2.3)].filter(Boolean),rooms:[{n:'전기실 (−11.70)',p:GEO.elecB3,doors:[{e:3,t:0.5,w:50}]}],hall:hallB,view:{pos:[620,1000],look:[620,330]},stalls:GEO.stB3,
+      tags:[['⚠ 전기실 — 지하 최하층 설치 불가(KDS) · 위치 결정 필요',centroid(GEO.elecB3),0.4],['램프 B2→B3 도착',[860,360],0]]});
+    L.push({key:'B2',name:'B2',kind:'base',y:-6.9,h:3.6,poly:BS,area:polyArea(BS),areaTxt:'지하2층 주차',use:'주차 10',approx:true,cols:[],center:[640,640],blocks:CORE2,noLobby:true,
+      floorHoles:[RC.band],obst:[RB.band,RC.band],hall:hallB,view:{pos:[620,1000],look:[620,330]},stalls:GEO.stB2,tags:[['램프 B1→B2 도착',[860,360],0],['램프 B2→B3 ↓',[1000,830],0]]});
+    L.push({key:'B1',name:'B1',kind:'base',top:true,y:-3.3,h:3.3,poly:BS,area:polyArea(BS),areaTxt:'지하1층 (주차·소매점)',use:'주차 8 · 소매점',approx:true,cols:[],center:[560,640],blocks:CORE2,noLobby:true,
+      floorHoles:[RB.band],ceilHoles:[RA.open].filter(Boolean),obst:[RA.band,RB.band],hall:hallB,
+      rooms:[{n:'소매점',p:GEO.retailB1,doors:[{e:3,t:0.8,w:56}]}],view:{pos:[640,1000],look:[640,330]},stalls:GEO.stB1,
+      tags:[['차량 램프 1F→B1 도착',[830,300],0],['램프 B1→B2 ↓ (반원형)',[1000,830],0]]});
+    L.push({key:'1F',name:'1F',kind:'ground',y:0,h:H1,poly:G,area:polyArea(G),use:'휴게음식점 (카페)',cols:COLS,blocks:CORE,center:[560,700],label:true});
+    for(let f=2;f<=5;f++)L.push({key:f+'F',name:f+'F',kind:'upper',y:H1+(f-2)*HT,h:HT,poly:U,area:polyArea(U),use:'사무실',cols:COLS,blocks:CORE,center:[560,700],label:true});
+    const PH1=!state.use7;TOPST=topStair(U,XV,COLS);
+    const LITE=[{n:'계단',r:CRD.stair},{n:'승강기',r:CRD.elev,face:'s'},{n:'EPS',r:CRD.eps}],HD=[HALLPH[0][0],HALLPH[0][1]+170,HALLPH[0][1]+250],HALLB=rectP([HALLPH[0][0],CRD.elev[1],HALLPH[1][0],HALLPH[2][1]]);
+    L.push(Object.assign({key:'6F',name:'6F',dup:'lo',kind:'upper',y:Y6,h:3.6,poly:U,area:polyArea(U),use:'레스토랑 · 복층 하부',cols:COLS,blocks:CORE,center:[560,700],label:true,view:{pos:[480,560],look:TOPST.mid,h:1.7},
+      extra:(g,l)=>{if(!NOST())dupStair(g,floorTop(l),Y7+0.015)},obst:NOST()?[]:[TOPST.obst],tags:NOST()?[]:[['7F 계단 ↑',TOPST.mid,0]]},NOST()?{use:'레스토랑 (6층 단독 임대)'}:{},
+      PH1?{use:'레스토랑 · 복층 (PH1 천장까지 오픈)',env:[{poly:U,y0:Y6,y1:Y7-0.38,noCap:true}],colTop:q=>q[0]<XV?YR-0.38:Y7-0.38,htTop:YR-0.38,htNote:' (PH1 천장까지 오픈)',clearTxt:'약 6.8m 오픈 (테라스·홀 아래 3.2m)',
+        tags:[['PH1 테라스 계단 ↑',TOPST.mid,0],['오픈 (PH1 천장까지)',centroid(WEST),2.6]]}:{}));
+    const OPEN=TOPST.open,a7=PH1?0:polyArea(WEST)-(NOST()?0:polyArea(OPEN));
+    if(PH1)L.push({key:'PH1',name:'PH1',dup:'hi',kind:'upper',noCore:true,lite:true,y:Y7,h:3.6,poly:TOPST.land,area:polyArea(TOPST.land),areaTxt:'PH1 계단참',use:'테라스 레벨 · 계단참 (6F 오픈, 면적 미산입)',approx:true,cols:[],blocks:LITE,hall:HALLB,center:centroid(TOPST.land),label:false,
+      env:[{poly:WEST,y0:Y7-0.38,y1:YR-0.38,noCap:true},{poly:HALLPH,y0:Y7,y1:YR-0.38}],view:{pos:centroid(TOPST.land),look:[XV+60,(TOPST.door[0]+TOPST.door[1])/2],h:1.7},
+      extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:Y7,XV,dt:3.1,ph1:true,cols:COLS}),tags:[['테라스 출입문',[XV+10,(TOPST.door[0]+TOPST.door[1])/2],0.4],['테라스 (면적 미산입)',centroid(TERR),0],['계단 ↓ 6F',TOPST.mid,0]]});
+    else L.push({key:'7F',name:'7F',dup:'hi',kind:'upper',noCore:true,lite:true,y:Y7,h:3.6,poly:WEST,area:a7,use:NOST()?'7층 단독 임대 (홀·테라스 제외)':'복층 상부 (홀·테라스 제외)',approx:true,cols:COLS.filter(q=>q[0]<XV),blocks:LITE,hall:HALLB,center:centroid(WEST),label:true,
+      slabHoles:NOST()?[]:[OPEN],obst:NOST()?[]:[OPEN],env:[{poly:WEST,y0:Y7,y1:YR-0.38},{poly:HALLPH,y0:Y7,y1:YR-0.38}],view:{pos:centroid(WEST),look:TOPST.mid,h:1.7},
+      extra:(g,l)=>topExtra(g,l,{terr:TERR,hall:HALLPH,hd:HD,y:Y7,XV,dt:3.1,ph1:false}),tags:[['테라스 (면적 미산입)',centroid(TERR),0]].concat(NOST()?[]:[['내부 계단 ↓ 6F',TOPST.mid,0]])});
+    L.push({key:'PH2',name:'PH2',kind:'roof',lite:true,y:YR,h:3.6,poly:GARDEN,area:polyArea(GARDEN),areaTxt:'PH2 옥상정원',use:'옥상정원 (면적 미산입)',approx:true,cols:[],blocks:LITE,hall:HALLB,center:centroid(WEST),finish:M.deck,
+      extra:(g,l)=>roofExtra(g,l,{hall:HALLPH,hd:HD,dt:3.1,keep:[]}),env:[{poly:HALLPH,y0:YR,y1:YT-0.38}],label:true,tags:[['퍼걸러 (태양광 프레임)',centroid(WEST),1.8]]});
+    function ext(g,fr){
+      g.add(door(GEO.entWest,H1-0.35,2.8,true));          // 1층 출입 — 압구정로 정면
+      g.add(door(GEO.entCorner,H1-0.35,2.8,true));        // 1층 출입 — 남서 모서리
+      g.add(door(GEO.entHall,H1-0.35,2.4,true));          // 엘리베이터 홀 — 뒷길
+      g.add(RA.g,RB.g,RC.g);
+      g.add(prism(HALLPH,YT-0.38,0.38,M.slab));
+      g.add(boxPx(CRD.elev,YT,YT+1.6,M.core));
+      pvCanopy(g,WEST,YR+0.02,state.style,[]);pvRows(g,CRD.stair,YT,[]);
+    }
+    const gfaAbove=polyArea(G)+polyArea(U)*5+a7;
+    return {levels:L,ext,holes:[RA.open].filter(Boolean),top:YT+1.6,ramps:[RA,RB,RC],
+      stats:{site:'749.00㎡',ba:'≈'+polyArea(U).toFixed(2)+'㎡',bcr:(polyArea(U)/749*100).toFixed(2)+'%',gfa:'≈'+gfaAbove.toFixed(2)+'㎡',far:gfaAbove/749*100,h:'+29.40m (계단탑 약 +34.6m)',hw:false,park:'26대 (B1 8 · B2 10 · B3 8, 모델)'},
+      tags:[['태양광','옥상 퍼걸러',centroid(WEST),YR+3.2],[PH1?'PH1':'복층',PH1?'6F → PH1 테라스 계단 · 6F 오픈':'6F → 7F 내부 계단',TOPST.mid,Y6+3.2],['1F Ent','압구정로 정면',GEO.entWest[0],0.3],['1F Ent','남서 모서리',GEO.entCorner[0],0.3],
+        ['주출입구','엘리베이터 홀 (뒷길)',GEO.entHall[0],0.3],['차량','차 출입구 · 램프',GEO.RA[0].o,0.3]],
+      labelAt:[1250,640],secY:1052,stairView:{p:[26,15,22],t:[8,-2,-3]},
+      note:'플라건축 DD(2026.10.30) 대지경계·현황레벨·지하단면 검토안 기준. 1F 5.4m · 2~5F 4.2m · 6F~PH1 7.2m('+(PH1?'PH1 오픈':'7층 분리 3.6+3.6')+') · PH2 옥상 +29.40. 2층 이상은 1층 실내 윤곽(매장+코어)을 그대로 올림(기준층 평면 미수령, 가정). 지하 B1 −3.30 · B2 −6.90 · B3 −10.50 · B4 기계실 −13.20, 반원형 램프. 주차 대수·지하 실 배치는 도면 이미지 판독 근사값.'};
+  };
+})();
+
 // ================= facade systems (same plans, different skins) =================
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;return t}
 const TEX={
@@ -6170,7 +6362,7 @@ function cornerLantern(g,poly,yF,r){const k=cornerOf(poly),C=poly[k],A=poly[(k-1
 // Drawing north arrow: north points to the upper-left of the plan, ~36° above horizontal
 const NORTH_DEG=36,NV=[-Math.cos(NORTH_DEG*Math.PI/180),-Math.sin(NORTH_DEG*Math.PI/180)],EV=[-NV[1],NV[0]];
 // ================= build =================
-const state={ms:new URLSearchParams(location.search).get('ms')==='future'?'future':'now',era:'new',scheme:'mech',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
+const state={ms:new URLSearchParams(location.search).get('ms')==='future'?'future':'now',era:'new',scheme:'dd',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
 window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?[...e.parentElement.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
 const bld=new THREE.Group();scene.add(bld);
 const extG=new THREE.Group(),frG=new THREE.Group();
@@ -6193,7 +6385,7 @@ const CM={
   mirror:SM({color:0xcfdde3,metalness:.9,roughness:.05}),btn:new THREE.MeshBasicMaterial({color:0xffe08a}),sign:new THREE.MeshBasicMaterial({color:0x2f8a5a}),
   fire:SM({color:0x7a3b2e,roughness:.6}),rail:SM({color:0x5b5f62,metalness:.6,roughness:.4}),
 };
-const coreFor=L=>(L.kind==='ground'||L.kind==='upper')&&!L.noCore?COREDET[state.scheme==='self'?'self':'mech']:null;
+const coreFor=L=>(L.kind==='ground'||L.kind==='upper')&&!L.noCore?COREDET[state.scheme==='dd'&&COREDET.dd?'dd':state.scheme==='self'?'self':'mech']:null;
 function coreArea(C){const A=r=>Math.abs((r[2]-r[0])*(r[3]-r[1]))/(S*S);return A(C.wc)+A(C.stair)+A(C.elev)+A(C.eps)+A(C.corr)+A(C.hall)}
 function coreLabels(C){const wcMid=(C.wc[0]+C.wc[2])/2,v=C.wc[3]-(C.wc[3]-C.wc[1])*0.22;
   return [{n:'화장실(남)',r:[C.wc[0],C.wc[1],wcMid,v]},{n:'화장실(여)',r:[wcMid,C.wc[1],C.wc[2],v]},{n:'계단실',r:C.stair},{n:'승강기 ×2',r:C.elev},{n:'EPS·PS',r:C.eps},{n:'엘리베이터 홀',r:C.hall}]}
@@ -6580,7 +6772,7 @@ function deriveExt(){if(state.mode==='preset'){state.style='glass';state.form='n
 function build(){deriveExt();
   dispose(bld);dispose(extG);dispose(frG);LG=[];
   FXOPT.cutPx=null;
-  SCH=state.scheme==='self'?SELF.make():MECH.make(state);
+  SCH=state.scheme==='dd'?DD.make():state.scheme==='self'?SELF.make():MECH.make(state);
   FXOPT.cutW=FXOPT.cutPx?[P(...FXOPT.cutPx.a),P(...FXOPT.cutPx.b)]:null;FXOPT.cutOn=!!FXOPT.cutPx&&state.cgl!=='none';
   LEVELS=SCH.levels;
   LEVELS.forEach(L=>{L.rw=L.kind==='base'?levelRampDims(L,SCH.ramps||[]):[]});
@@ -6606,10 +6798,10 @@ function build(){deriveExt();
   const fe=document.getElementById('o-far');fe.textContent=st.far.toFixed(2)+'%';fe.classList.toggle('warn',st.far>300);
   const he=document.getElementById('o-h');he.textContent=st.h;he.classList.toggle('warn',!!st.hw);
   set('sch-note',SCH.note);
-  const mech=state.scheme!=='self';document.getElementById('sec-g1').hidden=false;{const x=document.getElementById('t-a4park'),on=state.scheme==='alt4';x.disabled=!on;x.checked=on&&state.a4park;document.getElementById('lb-a4park').classList.toggle('off',!on)}
+  const mech=state.scheme!=='self'&&state.scheme!=='dd';document.getElementById('sec-g1').hidden=false;{const x=document.getElementById('t-a4park'),on=state.scheme==='alt4';x.disabled=!on;x.checked=on&&state.a4park;document.getElementById('lb-a4park').classList.toggle('off',!on)}
   {const sec=document.getElementById('sec-g1');sec.querySelectorAll('input[name=g1],#t-upstraight,#t-skin,#t-cglass,#t-cclean').forEach(i=>{if(!mech)i.disabled=true;else if(i.name==='g1')i.disabled=false});sec.classList.toggle('dimsec',!mech);
     const cut=!!FXOPT.cutPx;['t-cglass','t-cclean'].forEach(id=>{const x=document.getElementById(id);x.disabled=!cut;x.checked=cut&&state.cgl===(id==='t-cglass'?'frame':'clean');x.closest('label').classList.toggle('off',!cut)});
-    if(!mech){['t-upstraight','t-skin'].forEach(id=>{const x=document.getElementById(id);x.checked=false;x.closest('label').classList.add('off')});set('g1-note','자주식1은 제안서(2026.05.08) 평면 고정이라 1층 안·기준층 맞춤·코너 옵션이 없습니다. 기계식 또는 자주식2를 고르면 바꿀 수 있어요.')}}document.getElementById('sec-mass').hidden=!mech||state.era==='now';
+    if(!mech){['t-upstraight','t-skin'].forEach(id=>{const x=document.getElementById(id);x.checked=false;x.closest('label').classList.add('off')});set('g1-note',state.scheme==='dd'?'자주식(실측안)은 플라 DD 2026.10.30 1층 평면 그대로라 1층 안·코너 옵션이 없습니다.':'자주식1은 제안서(2026.05.08) 평면 고정이라 1층 안·기준층 맞춤·코너 옵션이 없습니다. 기계식 또는 자주식2를 고르면 바꿀 수 있어요.')}}document.getElementById('sec-mass').hidden=!mech||state.era==='now';
   set('o-floors',state.floors+'층');set('o-h1',state.h1.toFixed(1)+'m');set('o-ht',state.ht.toFixed(1)+'m');
   if(mech){const c=SCH.cutA,over=state.upSt?'기준층(2F~)도 1층과 같은 선으로 잘라 모든 층 평면이 같습니다.':'2층 이상은 원안 사선대로 남겨 기둥 없이 캔틸레버로 덮습니다.';
     {const cb=document.getElementById('t-upstraight'),sk=document.getElementById('t-skin'),noCut=state.g1==='slant';
@@ -6646,6 +6838,7 @@ function makeLabels(){
   STREET.forEach(s=>{const [x,z]=P(...s.p);addLabel(s.t,'st',new THREE.Vector3(x,0.2,z))});
   (typeof CTXLAB!=='undefined'?CTXLAB:[]).forEach(([t,q,h,m])=>{const [x,z]=P(...q);addLabel(t,'fl',new THREE.Vector3(x,h,z),{cx:true,m})});
   (typeof EXLAB!=='undefined'?EXLAB:[]).forEach(([b,t,q,h,lot])=>{const [x,z]=P(...q);addLabel(`<b>${b}</b>${t}`,'fl',new THREE.Vector3(x,h,z),{ex:true,lot:!!lot})});
+  if(typeof SRV!=='undefined'&&SRV)SRV.labels(addLabel);
   {const [x,z]=P(760,700);addLabel('<b>★ 우리 대지</b> 투썸플레이스 (현 동광빌딩) 자리','area',new THREE.Vector3(x,1,z),{top:true})}
   {const [cx,cz]=P(820,700);[['북',NV],['동',EV],['남',[-NV[0],-NV[1]]],['서',[-EV[0],-EV[1]]]].forEach(([t,v])=>addLabel(`<b>${t}</b>`,'st dir',new THREE.Vector3(cx+v[0]*78,0.3,cz+v[1]*78),{top:true}))}
 }
@@ -6655,28 +6848,33 @@ function placeLabels(){updUp();
   const w=host.clientWidth,h=host.clientHeight,show=document.getElementById('t-labels').checked;
   labels.forEach(l=>{tmp.copy(l.v).project(camera);
     if((l.inF!=null&&!IV.lb)||(l.grp&&l.grp!=='rp'&&!IV[l.grp])||(l.grp==='rw'&&RTAIL&&(l.v.x>RTAIL[0]+0.5||l.v.z>RTAIL[1]+0.5))){l.el.hidden=true;return}
-    const want=l.top?(!I.on&&curView==='top'):l.inF!=null?(I.on&&I.li===l.inF&&(I.doll||l.v.distanceTo(camera.position)<45)):l.cx?(show&&(document.getElementById('t-cxlab').checked||curView==='top')&&!I.on&&(l.m?visDeep(l.m):city.visible)):l.ex?(show&&!I.on&&state.era!=='new'&&(!l.lot||curView==='top')):l.fl?(show&&!I.on&&state.era!=='now'):(!I.on&&show);
+    const want=l.top?(!I.on&&curView==='top'):l.inF!=null?(I.on&&I.li===l.inF&&(I.doll||l.v.distanceTo(camera.position)<45)):l.cx?(show&&(document.getElementById('t-cxlab').checked||curView==='top')&&!I.on&&(l.m?visDeep(l.m):city.visible)):l.srv?(show&&!I.on&&state.era==='srv'&&SRV.lv(l)):l.ex?(show&&!I.on&&(state.era==='now'||state.era==='cmp')&&(!l.lot||curView==='top')):l.fl?(show&&!I.on&&state.era!=='now'&&state.era!=='srv'&&!(state.era==='cmp'&&CMP.v<10)):(l.cx&&state.era==='srv')?false:(state.era==='srv'&&!l.top)?(show&&!I.on&&SRV.st.lab.st):(!I.on&&show);
     const vis=want&&tmp.z<1&&Math.abs(tmp.x)<1.1&&Math.abs(tmp.y)<1.1;
-    l.el.hidden=!vis;if(vis){l.el.style.left=((tmp.x+1)/2*w)+'px';l.el.style.top=((1-tmp.y)/2*h)+'px'}})}
+    l.el.hidden=!vis;if(vis){l.el.style.left=((tmp.x+1)/2*w)+'px';l.el.style.top=((1-tmp.y)/2*h)+'px'}});if(state.era==='srv'&&typeof SRV!=='undefined')SRV.declutter(labels)}
 
 // ---- exterior views ----
 function viewDef(v){const k=Math.max(1,SCH.top/26);
   // stay over 압구정로 (x −50…−20 m): further west the 미성 redevelopment towers would sit in front of the camera
-  return {corner:{p:[-54,14+6*k,50+8*k],t:[-3,10+3*k,1]},front:{p:[-82,8+5*k,-1],t:[-2,10+3*k,-1]},side:{p:[18*k,13*k,62*k],t:[-2,10*k,2]},
-    top:{p:[-4-NV[0]*0.8,430,2-NV[1]*0.8],t:[-4,0,2]},roof:{p:[-26,SCH.top+22,30],t:[-2,SCH.top-5,-2]},apt:{p:[260,300,500],t:[-90,70,10]},far:{p:[230,85,320],t:[-70,95,-40]},stair:SCH.stairView}[v]}
+  return {corner:{p:[-54,14+6*k,50+8*k],t:[-3,10+3*k,1]},front:{p:[-57,7+4*k,-1],t:[-2,12+3*k,-1],fov:50},side:{p:[18*k,13*k,62*k],t:[-2,10*k,2]},
+    top:{p:[-4-NV[0]*0.8,state.era==='srv'?125:430,2-NV[1]*0.8],t:[-4,0,2]},roof:{p:[-26,SCH.top+22,30],t:[-2,SCH.top-5,-2]},apt:{p:[260,300,500],t:[-90,70,10]},far:{p:[230,85,320],t:[-70,95,-40]},stair:SCH.stairView}[v]}
 let anim=null;
 let curView='corner';
-function lotVis(){if(typeof lotG!=='undefined')lotG.visible=state.era!=='new'&&curView==='top'&&!I.on}
+function lotVis(){if(typeof lotG!=='undefined')lotG.visible=state.era!=='new'&&state.era!=='srv'&&curView==='top'&&!I.on}
 // 배치(위): looking straight down every roof and road would wash out to white, so soften the lights like a map
 var ML={on:false,h:0,s:0};
 function mapLight(on){if(on&&!ML.on&&!R3D.on){ML.h=hemi.intensity;ML.s=sun.intensity;hemi.intensity=0.58;sun.intensity=0.42;ML.on=true}else if(!on&&ML.on){if(!R3D.on){hemi.intensity=ML.h;sun.intensity=ML.s}ML.on=false}}
 function go(v,instant){
+  if(state.era==='srv'&&v==='stair'&&typeof SRV!=='undefined'){SRV.rampView();return}
   if(v!=='int'){curView=v;lotVis()}mapLight(v==='top');
-  if(v==='int'){if(state.era!=='new'){state.era='new';document.getElementById('era-new').checked=true;build()}enterInt();return}
+  if(v==='int'){if(window.__FOV0&&camera.fov!==window.__FOV0){camera.fov=window.__FOV0;camera.updateProjectionMatrix()}if(state.era!=='new'&&state.era!=='srv'){state.era='new';document.getElementById('era-new').checked=true;build()}if(state.era==='srv'&&typeof SRV!=='undefined')SRV.intMode(true);enterInt();return}
   if(I.on)exitInt();
   const V=viewDef(v);document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v));
   const p1=new THREE.Vector3(...V.p),t1=new THREE.Vector3(...V.t);
-  {const a=camera.aspect||1;if(a<1&&v!=='top'){const f=Math.min(2.2,Math.pow(1/a,0.8));p1.sub(t1).multiplyScalar(f).add(t1)}}   // narrow (portrait phone) screens: step back so the whole building fits
+  {const a=camera.aspect||1;if(!window.__FOV0)window.__FOV0=camera.fov;let fov=V.fov||window.__FOV0;
+    if(a<1&&v!=='top'){let f=Math.min(2.2,Math.pow(1/a,0.8));const dx=p1.x-t1.x,XMIN=-58;if(dx<0&&p1.x<=XMIN+0.01)f=1;else if(dx<0){const fm=(XMIN-t1.x)/dx;if(f>fm){const r=f/Math.max(1,fm);f=Math.max(1,fm);fov=Math.min(75,2*Math.atan(Math.tan(fov*Math.PI/360)*r)*180/Math.PI)}}
+      if(dx<0&&p1.x<=XMIN+0.01){const r=Math.min(2.2,Math.pow(1/a,0.8));fov=Math.min(75,2*Math.atan(Math.tan(fov*Math.PI/360)*r)*180/Math.PI)}
+      p1.sub(t1).multiplyScalar(f).add(t1)}
+    if(camera.fov!==fov){camera.fov=fov;camera.updateProjectionMatrix()}}   // narrow (portrait phone) screens: step back so the whole building fits
   if(instant||matchMedia('(prefers-reduced-motion: reduce)').matches){camera.position.copy(p1);controls.target.copy(t1);anim=null;return}
   anim={p0:camera.position.clone(),t0:controls.target.clone(),p1,t1,s:performance.now()}}
 document.querySelectorAll('.views button').forEach(b=>b.addEventListener('click',()=>{if(window.PH&&PH.on&&PH.view(b.dataset.v))return;go(b.dataset.v)}));
@@ -6703,7 +6901,7 @@ const SWC=[['#f2f0eb','화이트'],['#e8dcc4','아이보리'],['#cdbfa8','샌드
 document.querySelectorAll('.swr').forEach(box=>{const k=box.dataset.k;const def=document.createElement('button');def.className='def';def.textContent='기본색';def.setAttribute('aria-pressed','true');box.appendChild(def);
   const btns=[def];SWC.forEach(([c,n])=>{const b=document.createElement('button');b.style.background=c;b.title=n;b.setAttribute('aria-label',n);b.dataset.col=c;b.setAttribute('aria-pressed','false');box.appendChild(b);btns.push(b)});
   const ci=document.createElement('input');ci.type='color';ci.value='#c9a96e';ci.title='직접 고르기';box.appendChild(ci);
-  const pick=(c,btn)=>{state[k]=c;btns.forEach(b=>b.setAttribute('aria-pressed',b===btn));applyTints()};
+  const pick=(c,btn)=>{state[k]=c;btns.forEach(b=>b.setAttribute('aria-pressed',b===btn));applyTints();if(state.era==='srv'&&typeof SRV!=='undefined')SRV.styleBld()};
   def.onclick=()=>pick(null,def);btns.slice(1).forEach(b=>b.onclick=()=>pick(b.dataset.col,b));ci.addEventListener('input',()=>pick(ci.value,null))});
 
 document.querySelectorAll('input[name=win]').forEach(r=>r.addEventListener('change',e=>{state.win=e.target.value;build()}));
@@ -6944,7 +7142,7 @@ function exitInt(){document.querySelector('.app').classList.remove('int');ring.v
   {const ST=STYLES[state.style];M.glass.opacity=ST.op||.42;M.glass1.opacity=ST.op?ST.op+.15:.82}spinUI();applyDollVis();bld.traverse(o=>{if(o.userData.well)o.visible=true});
   city.visible=document.getElementById('t-city').checked;applyB1See();
   ['intui','ihud','mini','pad'].forEach(id=>document.getElementById(id).hidden=true);
-  document.getElementById('hint').textContent='드래그 회전 · 우클릭/두 손가락 이동 · 휠 확대';camera.up.set(0,1,0);chips()}
+  document.getElementById('hint').textContent='드래그 회전 · 우클릭/두 손가락 이동 · 휠 확대';camera.up.set(0,1,0);chips();if(state.era==='srv'&&typeof SRV!=='undefined')SRV.era('srv')}
 document.getElementById('exitInt').addEventListener('click',()=>go('corner'));
 // window views
 const nS=[0.3604/1.0629,1/1.0629];
@@ -7008,10 +7206,30 @@ cv.addEventListener('pointermove',e=>{if(!I.on||!I.look){ring.visible=false;retu
 cv.addEventListener('pointerleave',()=>{ring.visible=false});
 cv.addEventListener('pointerup',e=>{if(!FP.down)return;const click=FP.moved<=5&&performance.now()-FP.down.t<600;FP.down=null;
   if(click&&I.on&&I.look){const h=pickWalk(e);if(h&&h.ok){if(I.rw)rwStop();walkTo(h);ring.visible=false}}});
-function walkTo(h){const d=controls.target.clone().sub(camera.position),p=new THREE.Vector3(h.x,h.y+1.6,h.z);
+function walkTo(h){I.back=0;const d=controls.target.clone().sub(camera.position),p=new THREE.Vector3(h.x,h.y+1.6,h.z);
   const li=h.ramp?levelAtFoot(h.y):h.li;if(li>=0&&li!==I.li)quietLevel(li);flyTo(p,p.clone().add(d),true)}
 cv.addEventListener('pointercancel',()=>{FP.down=null});
-cv.addEventListener('wheel',e=>{if(!I.on||!I.look)return;e.preventDefault();camera.fov=Math.max(38,Math.min(100,camera.fov+e.deltaY*0.04));camera.updateProjectionMatrix()},{passive:false});
+// v107: 내부 보기(걷기) 확대·축소 — 휠 / 두 손가락. 축소하면 먼저 화각이 넓어지고, 더 축소하면 뒤로 물러나 멀리서 봄 (도로에서 건물 전체 보기)
+I.back=0;
+function lookZoom(a){   // a>0 축소(멀리), a<0 확대
+  const d=new THREE.Vector3();camera.getWorldDirection(d);d.y=0;if(d.lengthSq()<1e-6)return;d.normalize();
+  if(a>0){if(camera.fov<75){camera.fov=Math.min(75,camera.fov+a*6);camera.updateProjectionMatrix();return}
+    const s=Math.min(a*2.2,50-I.back);if(s<=0)return;anim=null;camera.position.addScaledVector(d,-s);controls.target.addScaledVector(d,-s);camera.position.y+=s*0.12;controls.target.y+=s*0.12;I.back+=s}
+  else{const b=-a;if(I.back>0.01){const s=Math.min(b*2.2,I.back);anim=null;camera.position.addScaledVector(d,s);controls.target.addScaledVector(d,s);camera.position.y-=s*0.12;controls.target.y-=s*0.12;I.back-=s;return}
+    camera.fov=Math.max(38,camera.fov-b*6);camera.updateProjectionMatrix()}}
+cv.addEventListener('wheel',e=>{if(!I.on||!I.look)return;e.preventDefault();lookZoom(Math.max(-3,Math.min(3,e.deltaY/100)))},{passive:false});
+{const PT=new Map();let pd=0;
+  cv.addEventListener('pointerdown',e=>{if(!I.on)return;PT.set(e.pointerId,[e.clientX,e.clientY]);if(PT.size===2&&I.look){const [a,b]=[...PT.values()];pd=Math.hypot(a[0]-b[0],a[1]-b[1]);FP.down=null}});
+  cv.addEventListener('pointermove',e=>{if(!PT.has(e.pointerId))return;PT.set(e.pointerId,[e.clientX,e.clientY]);
+    if(PT.size===2&&I.on&&I.look&&pd>0){const [a,b]=[...PT.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);const r=(pd-d)/40;if(Math.abs(r)>=0.25){lookZoom(r);pd=d}FP.down=null}});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>cv.addEventListener(t,e=>{PT.delete(e.pointerId);if(PT.size<2)pd=0}))}
+// v107: 층 단면 보기에서 바닥을 누르면 그 자리로 들어가 걷기
+{let DD=null;cv.addEventListener('pointerdown',e=>{DD=(I.on&&I.doll&&!I.sec&&e.isPrimary)?{x:e.clientX,y:e.clientY,t:performance.now()}:null});
+  cv.addEventListener('pointerup',e=>{const d=DD;DD=null;if(!d||!I.on||!I.doll||I.sec)return;if(Math.hypot(e.clientX-d.x,e.clientY-d.y)>6||performance.now()-d.t>600||(e.button||0)!==0)return;
+    const r=cv.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera);
+    const L=Lv(),hit=new THREE.Vector3();if(!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-floorTop(L)),hit))return;
+    if(!walkable(hit.x,hit.z,L)){const [X,Z]=nearestWalk(toPx(hit.x,hit.z),L);hit.x=X;hit.z=Z}
+    controls.target.set(hit.x,floorTop(L)+0.9,hit.z);I.back=0;walkIn()})}
 const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
 function moveTo(X,Z){const L=Lv();if(I.look){if(!walkable(X,Z))return false;const p=new THREE.Vector3(X,eyeH(L),Z),d=controls.target.clone().sub(camera.position);flyTo(p,p.clone().add(d),true);return true}
   const t=new THREE.Vector3(X,floorTop(L)+0.9,Z),d=t.clone().sub(controls.target),p=camera.position.clone().add(d);flyTo(p,t,true);return true}
@@ -7118,11 +7336,15 @@ function prepGround(){groundSwap.length=0;
   siteDyn.children.forEach(c=>{if(!c.isMesh)return;worldUV(c);groundSwap.push([c,c.material,c.material===M.site?RMAT.site:RMAT.ground])})}
 // --- props: parked/driving cars on 압구정로, people, site trees, street lamps ---
 (function(){let s=11;const r=()=>{s=(s*9301+49297)%233280;return s/233280};
-  for(let k=0;k<9;k++){const lane=[-28,-33,-38,-43][k%4],z=-70+k*17+r()*6;car(R3D.props,lane,z,0,false,Math.floor(r()*7))}
+  // env-test: 압구정로 cars on the surveyed lanes (tools/build_road.py paint): right-hand traffic, southbound (+z) west of the centre
+  // yellow (lanes x −39.2, −35.5), northbound (−z) east of it (−31.1, −26.9); the blue kerb bus lanes are left clear. Queues stand
+  // behind the stop lines at the tower crossing (SB z −31.5, NB z 7.0), the rest are spaced along the block
+  const CQ=[[-39.2,-34.6,1],[-39.2,-41.4,1],[-39.2,-72,1],[-35.5,-34.8,1],[-35.5,-50,1],[-35.5,-98,1],[-31.1,10.1,-1],[-31.1,16.9,-1],[-31.1,52,-1],[-26.9,10.3,-1],[-26.9,36,-1],[-26.9,-58,-1]];
+  CQ.forEach(([x,z,d])=>{const c=car(R3D.props,x,z,0,false,Math.floor(r()*7));c.rotation.y=d>0?-Math.PI/2:Math.PI/2});
   for(let k=0;k<3;k++){const t=0.15+k*0.28,[x,z]=P(400+t*2000,yRoad(400+t*2000)+90+k%2*80);car(R3D.props,x,z,0,true,k+3)}
   const skin=[0x2f3337,0x5b4a3e,0x8a7b6b,0x3e4a5c,0x6b2f2f,0xd8d2c6].map(c=>SM({color:c,roughness:.8}));
   const person=(x,z,k)=>{const g=new THREE.Group(),m=skin[k%skin.length];const b=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.17,1.25,10),m);b.position.y=0.62;
-    const hd=new THREE.Mesh(new THREE.SphereGeometry(0.13,12,10),skin[5]);hd.position.y=1.42;g.add(b,hd);g.position.set(x,0,z);g.traverse(o=>o.castShadow=true);R3D.props.add(g)};
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(0.13,12,10),skin[5]);hd.position.y=1.42;g.add(b,hd);g.position.set(x,0,z);g.traverse(o=>o.castShadow=true);g.userData.person=true;R3D.props.add(g)};   // env-test: hidden in 렌더-실사 (khReal)
   [[150,420],[170,640],[120,900],[190,1050],[300,1290],[520,1240],[900,1150],[1100,1080],[140,300],[100,760]].forEach((q,k)=>{const [x,z]=P(...q);person(x+r()*0.6,z+r()*0.6,k)});
   // (site trees removed)
   const poleM=SM({color:0x3a3d40,metalness:.6,roughness:.4}),bulbM=new THREE.MeshBasicMaterial({color:0xfff0c8});
@@ -7130,7 +7352,7 @@ function prepGround(){groundSwap.length=0;
   [[70,-120,-1,0],[70,1330,-1,0],[1480,yRoad(1480)+40,0,1],[-1218,180,1,0],[-1218,980,1,0]].forEach(([qx,qy,dx,dy])=>{const [x,z]=P(qx,qy),hx=x+dx*1.6,hz=z+dy*1.6;
     R3D.props.add(box(x-0.09,x+0.09,0,8,z-0.09,z+0.09,poleM));R3D.props.add(box(Math.min(x,hx)-0.05,Math.max(x,hx)+0.05,7.9,8.0,Math.min(z,hz)-0.05,Math.max(z,hz)+0.05,poleM));
     R3D.props.add(box(hx-0.35,hx+0.35,7.75,7.92,hz-0.18,hz+0.18,poleM));R3D.props.add(box(hx-0.3,hx+0.3,7.72,7.75,hz-0.14,hz+0.14,bulbM));
-    const L=new THREE.PointLight(0xffd9a0,0,26,2);L.position.set(hx,7.5,hz);R3D.props.add(L);R3D.lamps.push(L)});
+    const L=new THREE.PointLight(0xffd9a0,0,26,2);L.position.set(hx,7.5,hz);R3D.props.add(L);R3D.lamps.push(L);RDP.push(...R3D.props.children.slice(-5,-1))});
   R3D.props.visible=false;
 })();
 // --- north arrow on the ground (from the drawing's 방위표) ---
@@ -7182,7 +7404,7 @@ function applyTime(){if(typeof HQ!=='undefined')hqMark();if(!R3D.on||!R3D.sky)re
   R3D.sky.material.uniforms.sunPosition.value.copy(dir);
   const skyScene=new THREE.Scene();skyScene.add(R3D.sky);if(R3D.envRT)R3D.envRT.dispose();R3D.envRT=R3D.pmrem.fromScene(skyScene,0.02);scene.add(R3D.sky);
   scene.environment=R3D.envRT.texture;scene.background=null;
-  const sd=T.el>0?dir:new THREE.Vector3(-0.4,0.6,0.3).normalize();const big=state.era==='new'&&state.ms==='future'&&city.visible&&APT_NEW;sun.position.copy(sd.multiplyScalar(big?520:140));
+  const sd=T.el>0?dir:new THREE.Vector3(-0.4,0.6,0.3).normalize();const big=city.visible&&APT_NEW&&APT_NEW.visible;sun.position.copy(sd.multiplyScalar(big?520:140));
   Object.assign(sun.shadow.camera,big?{left:-260,right:200,top:230,bottom:-230,far:1200}:{left:-70,right:70,top:70,bottom:-70,far:320});sun.shadow.camera.updateProjectionMatrix();sun.shadow.bias=big?-0.0008:-0.0004;sun.color.set(T.sun);sun.intensity=T.si;
   hemi.intensity=T.hemi;hemi.color.set(T.night?0x6070a0:0xdfe9f3);hemi.groundColor.set(T.night?0x101218:0x8c8a80);
   renderer.toneMappingExposure=T.exp;if(!I.on){M.glass.opacity=T.night?0.7:0.88;M.glass1.opacity=T.night?0.75:0.84}
@@ -7322,7 +7544,44 @@ const OLM=new THREE.LineBasicMaterial({color:0xe0362c,transparent:true,opacity:.
 const OCC=[],CTXLAB=[],EXLAB=[],tmpHit=new THREE.Vector3(),tmpHit2=new THREE.Vector3();
 // hide context blocks that sit between the camera and what it looks at (e.g. the apartments across 압구정로 in the 정면 view)
 function occl(){if(!OCC.length)return;const o=camera.position,t=controls.target,d=o.distanceTo(t),ray=new THREE.Ray(o.clone(),t.clone().sub(o).normalize());
-  OCC.forEach(m=>{const h=ray.intersectBox(m.userData.box,tmpHit),c=m.userData.box.getCenter(tmpHit2).sub(o).dot(ray.direction);m.visible=m.userData.rayOnly?!((h&&o.distanceTo(h)<d-1)||m.userData.box.distanceToPoint(o)<30):!((h&&o.distanceTo(h)<d-1)||(c>0&&c<d*0.85))})}
+  OCC.forEach(m=>{if(m.userData.khHide){m.visible=false;return}const h=ray.intersectBox(m.userData.box,tmpHit),c=m.userData.box.getCenter(tmpHit2).sub(o).dot(ray.direction);m.visible=m.userData.rayOnly?!((h&&o.distanceTo(h)<d-1)||m.userData.box.distanceToPoint(o)<30):!((h&&o.distanceTo(h)<d-1)||(c>0&&c<d*0.85))})}
+
+// v103: 우리 건물을 가리는 주변 건물은 그 시점에서만 숨김 (어느 방향에서 보든, 카메라 바로 옆 건물 포함)
+//   숨김은 visible 대신 layer 로 처리 → 다른 코드의 표시/숨김 설정과 충돌하지 않음
+const OC2={cand:[],ours:new THREE.Box3(),t:0,scan:0,hid:new Set(),last:new THREE.Vector3(1e9,0,0),lastT:new THREE.Vector3(),rc:new THREE.Raycaster(),on:true};
+function oc2InSite(x,z){const q=SITE.map(p=>P(p[0],p[1]));let c=false;for(let i=0,j=q.length-1;i<q.length;j=i++){const [xi,zi]=q[i],[xj,zj]=q[j];if((zi>z)!==(zj>z)&&x<(xj-xi)*(z-zi)/(zj-zi)+xi)c=!c}return c}
+function oc2Vis(o){for(let p=o;p;p=p.parent)if(p.visible===false)return false;return true}
+function oc2Scan(){const cand=[],ours=new THREE.Box3(),b=new THREE.Box3(),c=new THREE.Vector3();scene.updateMatrixWorld();
+  scene.traverse(m=>{if(!m.isMesh||!m.geometry)return;b.setFromObject(m);if(b.isEmpty())return;const h=b.max.y-b.min.y;b.getCenter(c);
+    const mine=oc2InSite(c.x,c.z)&&b.max.x-b.min.x<60&&b.max.z-b.min.z<60;
+    if(mine){if(h>2&&oc2Vis(m))ours.union(b);return}
+    if((h<1.2&&b.min.y<1.5)||h>400||b.min.y>40)return;
+    const big=(b.max.x-b.min.x)>60||(b.max.z-b.min.z)>60;cand.push({m,box:b.clone(),big})});
+  OC2.cand=cand;if(!ours.isEmpty())OC2.ours=ours;OC2.scan=performance.now()}
+function oc2Show(m){if(m.userData.oc2){m.layers.set(0);delete m.userData.oc2}}
+function fogFar(){const f=scene.fog;if(!f)return;if(I.on&&!I.look){}const d=camera.position.distanceTo(controls.target);
+  if(I.on){f.near=Math.max(f.near,90);return}const n=Math.max(400,d*1.6+250);f.near=n;f.far=n+Math.max(2500,d*6)}
+function occl2(){const now=performance.now();
+  if((I.on&&!(I.look&&I.back>2))||!OC2.on){if(OC2.hid.size){OC2.hid.forEach(oc2Show);OC2.hid.clear()}return}
+  if(now-OC2.scan>2500)oc2Scan();
+  const o=camera.position;if(o.distanceTo(OC2.last)<0.05&&controls.target.distanceTo(OC2.lastT)<0.05&&now-OC2.t<1000)return;
+  if(now-OC2.t<120)return;OC2.t=now;OC2.last.copy(o);OC2.lastT.copy(controls.target);
+  const B=OC2.ours;if(B.isEmpty())return;const pts=[],mn=B.min.clone().setY(Math.max(0,B.min.y)),mx=B.max,H=mx.y-mn.y;
+  for(const fy of [0.35,0.65,0.92])for(const fx of [0.1,0.5,0.9])for(const fz of [0.1,0.5,0.9])if(fx!==0.5||fz!==0.5||true)pts.push(new THREE.Vector3(mn.x+(mx.x-mn.x)*fx,mn.y+H*fy,mn.z+(mx.z-mn.z)*fz));
+  const rays=pts.map(p=>{const d=p.clone().sub(o),L=d.length();return {ray:new THREE.Ray(o.clone(),d.normalize()),L}}),hit=new THREE.Vector3(),want=new Set();
+  OC2.cand.forEach(C=>{const m=C.m;
+    if(C.box.distanceToPoint(o)<8){if(!C.big){want.add(m);return}   // 카메라가 붙어 있거나 안에 들어간 건물
+      let near=false;for(let a=0;a<8&&!near;a++){const d=new THREE.Vector3(Math.cos(a*Math.PI/4),0,Math.sin(a*Math.PI/4));OC2.rc.set(o,d);OC2.rc.far=25;OC2.rc.layers.enableAll();
+        const was=m.layers.mask;m.layers.set(0);const sd=[].concat(m.material).map(x=>x.side);[].concat(m.material).forEach(x=>x.side=THREE.DoubleSide);near=OC2.rc.intersectObject(m,false).length>0;[].concat(m.material).forEach((x,i)=>x.side=sd[i]);m.layers.mask=was}
+      if(near){want.add(m);return}}
+    let n=0;for(const r of rays){if(!r.ray.intersectBox(C.box,hit))continue;if(o.distanceTo(hit)>=r.L-1)continue;
+      if(C.big){OC2.rc.set(r.ray.origin,r.ray.direction);OC2.rc.far=r.L-1;OC2.rc.layers.enableAll();const was=m.layers.mask;m.layers.set(0);const h=OC2.rc.intersectObject(m,false);m.layers.mask=was;if(!h.length)continue}
+      n++;if(n>=2)break}
+    if(n>=2)want.add(m)});
+  [...want].forEach(m=>{const pa=m.parent;if(pa&&pa.name&&pa.children.length<40)pa.children.forEach(x=>{if(x.isMesh)want.add(x)})});   // 같은 모델(예: 미성아파트)의 다른 조각도 함께
+  OC2.hid.forEach(m=>{if(!want.has(m)){oc2Show(m);OC2.hid.delete(m)}});
+  want.forEach(m=>{if(!m.userData.oc2){m.userData.oc2=1;m.layers.set(1)}OC2.hid.add(m)})}
+window.OC2=OC2;
 function fillet(poly,k,r,n){const N=poly.length,A=poly[(k-1+N)%N],C=poly[k],B=poly[(k+1)%N],un=p=>{const l=Math.hypot(p[0],p[1]);return [p[0]/l,p[1]/l]};
   const u=un([A[0]-C[0],A[1]-C[1]]),v=un([B[0]-C[0],B[1]-C[1]]),th=Math.acos(u[0]*v[0]+u[1]*v[1]),d=r/Math.tan(th/2),bi=un([u[0]+v[0],u[1]+v[1]]),hh=r/Math.sin(th/2),O=[C[0]+bi[0]*hh,C[1]+bi[1]*hh];
   const T1=[C[0]+u[0]*d,C[1]+u[1]*d],T2=[C[0]+v[0]*d,C[1]+v[1]*d];const a1=Math.atan2(T1[1]-O[1],T1[0]-O[0]);let da=Math.atan2(T2[1]-O[1],T2[0]-O[0])-a1;
@@ -7377,8 +7636,8 @@ function onFace(grp,poly,t0,t1,y0,y1,out,thick,mat){const [a,b]=faceOf(poly),L=M
   const o=out*S,p0=[a[0]+u[0]*L*t0+n[0]*o,a[1]+u[1]*L*t0+n[1]*o],p1=[a[0]+u[0]*L*t1+n[0]*o,a[1]+u[1]*L*t1+n[1]*o];const m=seg(P(...p0),P(...p1),y0,y1,thick,mat);m.castShadow=true;grp.add(m);return m}
 const FX={glass:SM({color:0x31414c,roughness:.15,metalness:.4}),blue:SM({color:0x2456a6,roughness:.6}),white:SM({color:0xf5f5f2,roughness:.7}),stone:SM({color:0xd2c5a8,roughness:.85}),beige:SM({color:0xd9cfb8,roughness:.8}),ant:SM({color:0x9aa0a3,metalness:.5,roughness:.4})};
 // 주변 건물 실사 모델 (env-test 2026.10.30): Blender로 만든 건물(tools/build_*.py)을 첫 화면을 그린 뒤 불러와 회색 매스와 바꿈.
-// models/kh-lib.js = 공유 재질 표, models/<id>.js = 건물 GLB(형상·UV만), models/tex/<이름>.js = 텍스처(쓰는 것만, 한 번만 받음).
-// 모두 <script>로 불러오므로 깃허브 페이지와 PC에서 바로 연 파일(file://) 둘 다에서 동작. 못 불러오면 회색 매스가 그대로 남음
+// models/kh-lib.js = 공유 재질 표, models/<id>.glb = 건물(meshopt 압축), models/tex/<이름>.ktx2 = 텍스처(KTX2), 바로 연 파일(file://)은 models/<id>.js·tex/<이름>.js
+// [PR] 1102.o: 지니 v107 의 내장 데이터(KHDATA, 약 10MB)·Draco 해독기(jsDelivr)는 쓰지 않고 photoreal/tools/model/jinny-import.mjs 로 꺼내 둔 파일을 받는다
 const KHQ=[],KHM={},KHT={},KHR={base:null,loading:null,real:false,signs:[],bld:[],leaf:null,trees:[],cars:[],alley:[],grp:null,rm:null};
 function khModel(m,id,fit,also){KHQ.push({m,id,fit,also});if(m&&m.userData)m.userData.khEnvQ=id}   // [PR] khEnvQ: 실사 3D 가 모델이 오기 전에도 이 매스를 떼지 않게   // also = more masses / meshes the model replaces; fit {poly,w,d}: model is a w x d box (street face +z) fitted onto poly; no fit = modelled in page coordinates
 const khJS=(src,v)=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src+(v?'?v='+v:'');s.onload=ok;s.onerror=()=>no(new Error(src));document.head.appendChild(s)});
@@ -7392,16 +7651,22 @@ const khTexJS=n=>khJS(`models/tex/${n}.js`,KH.ver['tex/'+n]).then(()=>new Promis
 const khTex=n=>KHT[n]||(KHT[n]=(async()=>{const k=await khKtx();
   if(k&&KH.ktx&&KH.ktx[n]){try{const t=await k.loadAsync(`models/tex/${n}.ktx2?v=${KH.ktx[n]}`);t.name=n;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.LinearEncoding;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t}catch(e){console.warn('env ktx',n,e)}}
   return khTexJS(n)})());
+const khGLTF=id=>khGet(id);   // [PR] 지니 v107 코드의 Draco 로더 대신 우리 .glb(meshopt)·.js 받기(1102.o)
 const khMat=n=>KHM[n]||(KHM[n]=(async()=>{const d=KH.mat[n],o={color:new THREE.Color(...d.color),roughness:d.rough,metalness:d.metal||0};   // colours are display values, like the rest of this page
   if(d.map)o.map=await khTex(d.map);if(d.normal){o.normalMap=await khTex(d.normal);o.normalScale=new THREE.Vector2(d.nstr||1,-(d.nstr||1))}
-  if(d.alpha){o.alphaMap=await khTex(d.alpha);o.alphaTest=d.alphaTest||.5}if(d.double)o.side=THREE.DoubleSide;if(d.opacity){o.transparent=true;o.opacity=d.opacity}return SM(o)})());
+  if(d.alpha){o.alphaMap=await khTex(d.alpha);o.alphaTest=d.alphaTest||.5}if(d.double)o.side=THREE.DoubleSide;if(d.opacity){o.transparent=true;o.opacity=d.opacity}
+  const m=SM(o);m.userData.metal0=o.metalness;m.userData.col0=o.color.clone();m.userData.gain=SKG[n];KHMS.push(m);return m})());   // [PR] 스케치업은 따로 만든 무광 재질(khSketchMat)이라 지니 재질 색을 바꾸지 않는다(khSkMat 안 부름)
+// 스케치업 (no reflection probe, no tone mapping): metal / glass drawn matt, and the measured SKG gain on the colour — back to the
+// shared values for 렌더 / 렌더-실사. Order matters around linearize(): restore before it on the way in, re-apply after it on the way out
+function khSkMat(m,on){m.metalness=on?m.userData.metal0:0;const k=m.userData.gain;m.color.copy(m.userData.col0);if(!on&&k)m.color.setRGB(...[m.color.r,m.color.g,m.color.b].map((x,i)=>Math.min(1,x*k[i])))}
+const KHMS=[],khSkNow=on=>KHMS.forEach(m=>khSkMat(m,on));
 function khFit(o,poly,w,d){   // keep the street face exact (width, position) — plan outlines are often skewed — and take the depth along its normal
   const W=poly.map(q=>P(...q)),c=W.reduce((s,q)=>[s[0]+q[0]/W.length,s[1]+q[1]/W.length],[0,0]),[fa,fb]=faceOf(poly).map(q=>P(...q)),
     fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],L=Math.hypot(fb[0]-fa[0],fb[1]-fa[1]);let u=[(fb[0]-fa[0])/L,(fb[1]-fa[1])/L],n=[-u[1],u[0]];
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.o';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.p';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -7424,9 +7689,80 @@ async function khLoad0(){
     await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);
       if(/^sign_/.test(k.userData.mn)){k.visible=R3D.on&&KHR.real;KHR.signs.push(k)}}));   // blank sign boxes: 렌더-실사 only
     if(q.fit)khFit(o,q.fit.poly,q.fit.w,q.fit.d);q.o=o;o.userData.khEnv=q.id;q.m.userData.khEnv=q.id;khSketchPrep(o);o.traverse(k=>{k.userData.prSkip=true});q.m.userData.prSkip=true;   // prSkip: 실사 3D 재질 변환에서 뺌(지니 재질 그대로)   // [PR] khEnv: 실사 3D 가 이 매스를 떼어내지 않고 겹치는 브이월드·OSM 건물을 뺀다
-    const hid=new THREE.MeshBasicMaterial({visible:false});(q.also||[]).forEach(a=>{if(a.userData.box||Array.isArray(a.material)){a.material=[hid,hid];a.children.slice().forEach(k=>a.remove(k))}else a.visible=false});q.m.material=[hid,hid];q.m.children.slice().forEach(k=>q.m.remove(k));q.m.add(o);
+    const hid=new THREE.MeshBasicMaterial({visible:false});(q.also||[]).forEach(a=>{if(a.userData.box||Array.isArray(a.material)){a.material=a.userData.mat0=[hid,hid];a.children.slice().forEach(k=>a.remove(k))}else a.visible=false});q.m.material=q.m.userData.mat0=[hid,hid];/* mat0 too, or the ③ 비교 fade (ghostGroup) puts the old mass back */q.m.children.slice().forEach(k=>q.m.remove(k));q.m.add(o);
+    if(q.m.userData.box){const s1=new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3()),s0=q.m.userData.box.getSize(new THREE.Vector3());   /* a model spanning several buildings (미성, fill sets) */
+      if(s1.x*s1.z>2*s0.x*s0.z){const i=OCC.indexOf(q.m);if(i>=0)OCC.splice(i,1);q.m.visible=true}}   /* must not vanish with its host's see-through (occl) */
     delete KH.glb[q.id]}catch(e){console.warn('env model',q.id,e)}};
-  await Promise.all(qs.filter(q=>dist(q)<45).map(one));await Promise.all(qs.filter(q=>dist(q)>=45).map(one));KHR.busy=false}
+  await Promise.all(qs.filter(q=>dist(q)<45).map(one));await Promise.all(qs.filter(q=>dist(q)>=45).map(one));khDropOverlaps(qs);KHR.busy=false}   // [PR] 지니의 스케치업 가로 묶음(khSketchLoad)·미리받기(khPrefetch)는 부르지 않는다: 첫 화면에서 가로 요소를 받지 않음(1102.l 규칙), 미리받기는 실사 3D 목록이 맡음
+// env-test: 스케치업 shows the same big forms as 렌더-실사 — the roadview-based road, pavements, access lane, gate piers, poles (road_env,
+// street_env, ground_fill) — in flat colours (kh-lib 'flat' = tint x mean texture colour), no textures or baked light; the page's old
+// road paint, signals, boundary wall and piers (RDP) are hidden there and in 렌더-실사, so only plain 렌더 keeps the original drawing
+// cut-outs (fence panels, hedges, road lettering) keep their alpha map so the outline is the same; metal is drawn matt
+// (no reflection probe here, so metal would go black); street trees are 렌더-실사 only
+const KHSK={grp:null,on:true,leaf:null,trees:[]};
+// per-material gain on the flat colour, measured on screen against 렌더-실사 (6 views, ~800 samples each, 2026.11.03): 렌더-실사 / 스케치업
+const SKG={paver:[.96,.97,1],asphalt:[1.1,1.12,1.15],paver_red:[1.4,1.55,1.65],pole_grey:[1.36,1.43,1.5],kerb_granite:[.78,.79,.83],line_white:[.96,.96,.96],
+  road_text:[.8,.8,.82],paint_yellow:[.78,.76,1.95],fence_green:[.45,.47,.5],hedge:[.6,.6,.76],leaves:[1.08,1.13,1.26],bark:[.68,.74,.77],turf:[.9,.87,.86],
+  court_tile:[.82,.82,.84],stone_wall:[.6,.65,.64],brick_dark:[1.6,1.65,1.7],frame_grey:[.64,.73,.82],roof_grey:[.88,.88,.91],tile_green:[.6,.9,.92],
+  apt_glazing:[1.04,1.14,1.22],glass:[1.12,1.16,1.18],glass_shop:[1.14,1.16,1.17],glass_dark:[.7,.73,.77],stone_beige:[.66,.69,.75],concrete_board:[.6,.6,.6],
+  roof_green:[.87,.87,.92],panel_white:[.85,.86,.9],tile_white:[.8,.81,.84],tile_lime:[.78,.82,.96],stucco_grey:[.85,.87,.93],
+  roof_urethane:[.87,.87,.92],roof_teal:[.87,.87,.92],roof_brown:[.88,.88,.91],roof_light:[.88,.88,.91]};   // area 3 roofs: as roof_green / roof_grey
+// hidden only once the replacement road (road_env) is really in: file://, a blocked CDN or a missing file keep the page's own road
+function khRDP(){const h=(KHSK.on&&KHSK.road)||(R3D.on&&KHR.real&&KHR.road);RDP.forEach(m=>{m.visible=!h;m.userData.khHide=h});
+  const h2=(KHSK.on&&KHSK.a2)||(R3D.on&&KHR.real&&KHR.a2);KHA2.hide.forEach(m=>{m.visible=!h2&&!m.userData.khDropped;m.userData.khHide=h2})}
+// env-test area 2 (2026.11.03): the blocks round the 2026.11 scope out to 현대고 / 서울신구초 (tools/build_area2.py) — 스케치업 and 렌더-실사
+// only; 렌더 keeps the page's own masses there. Once loaded, the page's masses, road bands and the old page-plan 현대고 (far_hs) inside
+// the area box (and outside the 2026.11 scope, which has its own models) are hidden in those two modes, through khRDP()
+const KHA2={ids:['a2_ground','a2_n','a2_e','hyundai_hs','singu_es'],hide:[],done:false,box:[-200,245,-330,235],
+  scope:[[-149.1,150.8],[-158.1,-13.7],[-140,-148.9],[-115,-168.7],[-50.7,-166.7],[17.4,-142.2],[105.5,-105.2],[189.6,-65.7],[162.2,23.3],[158.5,147.2],[100.8,146.7],[24.4,139.7],[-23.4,135.4],[-117,148]]};
+// env-test area 3 (2026.11.03): the ring round area 2 out to x −460 … 400, z −500 … 380 (tools/build_area3.py) — 신현대아파트 north-west,
+// 신사동 / 가로수길 blocks east, the 강남대로 side south. Only where the page has no buildings of its own, paving only where it draws no
+// ground, so nothing of the page is hidden; 스케치업 and 렌더-실사 only, loaded last. tw_detail (tools/build_tw_detail.py) = the tower
+// surroundings dressing measured on these models: roof colours from the skyview, AC units, tanks, utility poles, wires, alley edge lines
+const KHA3={ids:['tw_detail','a3_ground','a3_n','a3_e','a3_se','a3_s','a3_w']};
+function khA2Collect(){if(KHA2.done)return;KHA2.done=true;const [x0,x1,z0,z1]=KHA2.box,P=KHA2.scope,b=new THREE.Box3(),c=new THREE.Vector3(),skip=new Set(RDP),out=[];
+  const ins=(x,z)=>{let k=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const [a,e]=P[i],[f,g]=P[j];if((e>z)!=(g>z)&&x<(f-a)*(z-e)/(g-e)+a)k=!k}return k};
+  KHQ.forEach(q=>{skip.add(q.m);(q.also||[]).forEach(a=>skip.add(a));if(q.o)q.o.traverse(k=>skip.add(k))});
+  [APT_NOW,APT_NEW,APT_OL].forEach(g=>g&&g.traverse(k=>skip.add(k)));
+  scene.updateMatrixWorld(true);
+  [ctx,city,site].forEach(g=>g.children.forEach(m=>{if(skip.has(m)||m.userData.mn!==undefined)return;b.setFromObject(m);if(b.isEmpty())return;
+    if(b.min.x<x0||b.max.x>x1||b.min.z<z0||b.max.z>z1||b.max.x-b.min.x>150||b.max.z-b.min.z>150)return;b.getCenter(c);if(!ins(c.x,c.z))out.push(m)}));
+  const hs=KHQ.find(q=>q.id==='far_hs');if(hs&&hs.o)out.push(hs.o);   // page-plan 현대고, replaced by the OSM-footprint hyundai_hs
+  KHA2.hide=out;console.info('env-test area 2: page objects hidden in 스케치업 / 렌더-실사',out.length)}
+function khTrees(tr,groups,grp,list,skip){const spots=[];groups.forEach(g=>g&&g.traverse(k=>{if(/^tree_/.test(k.name)&&!(skip&&skip(k)))spots.push(k.matrixWorld.clone())}));   // [PR] skip: 빼는 자리(1102.o)
+  tr.updateMatrixWorld(true);tr.traverse(k=>{if(!k.isMesh)return;const im=new THREE.InstancedMesh(k.geometry,k.material,spots.length),m=new THREE.Matrix4();
+    spots.forEach((s,i)=>im.setMatrixAt(i,m.multiplyMatrices(s,k.matrixWorld)));im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;if(k.customDepthMaterial)im.customDepthMaterial=k.customDepthMaterial;
+    im.userData.mn=k.userData.mn||k.material.name;list.push(im);grp.add(im)})}
+async function khSketchLoad(){if(KHSK.grp)return;const g=KHSK.grp=new THREE.Group(),fm={};g.visible=!R3D.on;scene.add(g);
+  const flat=async n=>fm[n]||(fm[n]=(async()=>{const d=KH.mat[n],k=SKG[n]||[1,1,1],o={color:new THREE.Color(...(d.flat||d.color).map((x,i)=>Math.min(1,x*k[i]))),roughness:Math.max(.6,d.rough)};
+    if(d.alpha){o.alphaMap=await khTex(d.alpha);o.alphaTest=d.alphaTest||.5;o.side=THREE.DoubleSide}if(d.opacity){o.transparent=true;o.opacity=d.opacity}return SM(o)})());
+  const one=async id=>{const o=(await khGLTF(id)).scene,ms=[];o.traverse(k=>{if(k.isMesh)ms.push(k)});
+    await Promise.all(ms.map(async k=>{const n=k.material.name;if(!KH.mat[n]){k.visible=false;return}k.userData.mn=n;k.material=await flat(n);k.receiveShadow=k.castShadow=true;
+      if(k.material.alphaMap)k.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,alphaMap:k.material.alphaMap,alphaTest:k.material.alphaTest})}));
+    o.updateMatrixWorld(true);g.add(o);return o};
+  const [rd,,,...a2]=await Promise.all(['road_env','street_env','ground_fill',...KHA2.ids].map(id=>one(id).catch(e=>{console.warn('env sketch',id,e);return null})));   // no street trees in 스케치업 (사용자 요청 2026.11.03)
+  KHSK.road=!!rd;KHSK.a2=a2.every(Boolean);if(KHSK.a2)khA2Collect();khRDP();
+  KHA3.ids.forEach(id=>one(id).catch(e=>console.warn('env sketch',id,e)))}   // area 3: the far ring, after everything else (not awaited)
+// once the buildings are in, quietly fetch the 렌더-실사 files (lightmaps, street / road / ground packs, textures) into the browser cache,
+// a few at a time while the page is idle, so switching to 렌더-실사 later doesn't wait on the network
+function khPrefetch(){if(window.KHDATA)return;const ids=new Set(KHQ.map(q=>q.id)),u=Object.keys(KH.ver).filter(k=>k.startsWith('tex/')?!KHT[k.slice(4)]:!ids.has(k)&&!['road_env','street_env','ground_fill',...KHA2.ids,...KHA3.ids].includes(k))   // skip what is already loaded
+    .map(k=>k.startsWith('tex/')?`models/${k}.webp?v=${KH.ver[k]}`:`models/glb/${k}.glb?v=${KH.ver[k]}`);
+  const idle=window.requestIdleCallback||(f=>setTimeout(f,200)),next=()=>{if(KHR.loading||!u.length)return;Promise.all(u.splice(0,4).map(x=>fetch(x).catch(()=>0))).then(()=>idle(next))};idle(next)}
+// env-test: prototype masses still standing where a surveyed model now sits (page masses drawn off-survey, the city-layer filler boxes)
+// are dropped: probe each mass from above at its centre and part-way to its corners; a model roof under any probe = overlap
+function khDropOverlaps(qs){const mods=[];qs.forEach(q=>q.o&&q.o.traverse(k=>{if(k.isMesh)mods.push(k)}));if(!mods.length)return;
+  scene.updateMatrixWorld(true);const rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0),v=new THREE.Vector3(),drop=[];
+  [ctx,city].forEach(g=>g.traverse(m=>{if(!m.isMesh||m.isInstancedMesh||!m.geometry||mods.includes(m))return;const t=m.geometry.type;if(t!=='ExtrudeGeometry'&&t!=='BoxGeometry')return;
+    if(qs.some(q=>q.m===m||(q.also||[]).includes(m))||[].concat(m.material).every(x=>x.visible===false))return;   // model hosts / already replaced
+    for(let p=m;p;p=p.parent)if(p===APT_NEW||p===APT_OL)return;   // the 미성 redevelopment plan is meant to overlap (③ 비교 overlay)
+    for(let p=m;p;p=p.parent)if(qs.some(q=>q.o===p))return;
+    const b=new THREE.Box3().setFromObject(m);if(b.isEmpty()||b.max.y-b.min.y<3||(b.max.x-b.min.x)*(b.max.z-b.min.z)<20)return;
+    const pos=m.geometry.attributes.position,top=[];for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i).applyMatrix4(m.matrixWorld);if(v.y>b.max.y-.05)top.push(v.clone())}if(!top.length)return;
+    const c=top.reduce((s,p)=>s.add(p),new THREE.Vector3()).divideScalar(top.length),probes=[c,...top.map(p=>c.clone().lerp(p,.6))];
+    const hit=probes.some(p=>{rc.set(new THREE.Vector3(p.x,400,p.z),dn);const h=rc.intersectObjects(mods,false).find(h=>h.object.visible!==false);return h&&h.point.y>2.5});
+    if(hit)drop.push(m)}));
+  drop.forEach(m=>{m.visible=false;m.userData.khDropped=true;const i=OCC.indexOf(m);if(i>=0)OCC.splice(i,1)});   // its label hides with it (labels follow visDeep(m))
+  console.info('env-test: dropped',drop.length,'prototype masses under surveyed models')}
 // 렌더 mode realism layer, fetched the first time 렌더 is switched on (sketch-mode visitors never download it).
 // Lighting works like a game's "baked indirect" setup and touches only the env models (the tower keeps the page's lighting):
 //  - lightmaps baked in Blender (models/tex/<id>_lm.js: sky light + bounce light, with the neighbours and tree crowns as occluders)
@@ -7459,12 +7795,14 @@ function khSky(){if(!R3D.on)return;const s=R3D.sunNow,k=KHL.k;   // day / low su
 const KHG=/^(glass|steel|car_glass)/;
 function khGlass(){if(!R3D.on||!R3D.cube)return;KHR.bld.forEach(k=>{const m=k.userData.m1;if(m&&KHG.test(k.userData.mn)){if(m.envMap!==R3D.cube.texture){m.envMap=R3D.cube.texture;m.needsUpdate=true}m.envMapIntensity=1}})}
 function khReal(on){   // the whole realism layer on / off (렌더-실사 vs 렌더 · 스케치업)
-  KHR.signs.forEach(k=>k.visible=on);KHR.bld.forEach(k=>k.material=on?k.userData.m1:k.userData.m0);if(KHR.grp)KHR.grp.visible=on;
+  KHR.signs.forEach(k=>k.visible=on);khRDP();   /* RDP + khHide: occl() (see-through) must not bring them back */KHR.lampAt&&R3D.lamps.forEach((L,i)=>{if(!L.userData.p0)L.userData.p0=L.position.clone();L.position.copy(on&&KHR.lampAt[i]?KHR.lampAt[i]:L.userData.p0)});R3D.props.children.forEach(g=>{if(g.userData.person)g.visible=!on});KHR.bld.forEach(k=>k.material=on?k.userData.m1:k.userData.m0);if(KHR.grp)KHR.grp.visible=on;
   KHR.cars.forEach(([o,n])=>{o.visible=!on;n.visible=on});KHR.alley.forEach(c=>c.visible=!on);
   if(KHR.rm)[RMAT.walk,RMAT.road].forEach((m,i)=>{const r=KHR.rm[on?1:0][i];Object.assign(m,r);if(m.map)m.map.encoding=m.userData.lin?THREE.sRGBEncoding:THREE.LinearEncoding;m.needsUpdate=true});if(typeof khStyle==='function')khStyle()}
-function khSeason(){if(!KHR.leaf)return;const mo=R3D.custom&&R3D.cdate?R3D.cdate.getMonth()+1:{spring:4,summer:7,autumn:10,winter:1}[R3D.season];
+function khSeason(){const mo=R3D.custom&&R3D.cdate?R3D.cdate.getMonth()+1:{spring:4,summer:7,autumn:10,winter:1}[R3D.season];
   const s=mo>=3&&mo<=5?[.55,.72,.32]:mo>=6&&mo<=8?[.36,.52,.24]:mo>=9&&mo<=11?[.80,.52,.16]:null,on=true;   // [PR] 가로수: 실사 3D 안에서 늘 켬(지니의 가로수 체크박스는 넣지 않음)
-  KHR.trees.forEach(t=>t.visible=on&&(t.material!==KHR.leaf||!!s));if(s){KHR.leaf.color.setRGB(...s);if(KHR.leaf.userData.lin)KHR.leaf.color.convertSRGBToLinear()}}
+  const L=KH.mat&&KH.mat.leaves,tex=L?L.flat.map((f,i)=>f/L.color[i]*SKG.leaves[i]):[1,1,1];   // 스케치업 leaves have no texture: season tint x mean leaf texture colour
+  [[KHR,1],[KHSK,0]].forEach(([T,real])=>{if(!T.leaf)return;T.trees.forEach(t=>t.visible=on&&(t.material!==T.leaf||!!s));
+    if(s){T.leaf.color.setRGB(...s.map((x,i)=>real?x:Math.min(1,x*tex[i])));if(T.leaf.userData.lin)T.leaf.color.convertSRGBToLinear()}})}
 function khRealLoad(){if(KH_ENV_OFF)return Promise.resolve();return KHR.loading||(KHR.loading=(async()=>{try{
   await khLoad();KHR.busy=true;
   const AT=await khAtlas(),P1=new Map(),tl=id=>AT&&KH.atlas.tile[id];   // [PR] 아틀라스(1102.m): 같은 바탕 재질 → 같은 실사 재질
@@ -7472,26 +7810,33 @@ function khRealLoad(){if(KH_ENV_OFF)return Promise.resolve();return KHR.loading|
     if(r){const g=k.geometry,u=g.attributes.uv2;if(u&&!sg.has(g)){sg.add(g);khAtlasUV(u,r)}let m=own?null:P1.get(k.material);if(!m){m=khPatch(k.material,AT,AT,true);if(!own)P1.set(k.material,m)}k.userData.m1=m}
     else k.userData.m1=khPatch(k.material,lm,ao);KHR.bld.push(k)})};
   await Promise.all(KHQ.filter(q=>q.o&&KH.ver['tex/'+q.id+'_lm']).map(async q=>tl(q.id)?lit(q.o,null,null,tl(q.id)):lit(q.o,...await Promise.all([khTex(q.id+'_lm'),khTex(q.id+'_ao')]))));
-  /* [PR] 신사중학교 실사 3D 판(1102.n, 지니 모델을 우리가 늘림): 서쪽 날개를 실측 ㄱ자 111m(브이월드)에 맞춰 늘려 다시 구운 school410r
+  /* [PR] 1102.o: 지니 v107 학교는 서쪽 날개가 실측(111m)만큼 길어 school410r 를 쓰지 않는다(파일은 photoreal/tools/model/jinny/school410r/ 에 보관, KH.ver 에 없으면 건너뜀).
+     신사중학교 실사 3D 판(1102.n, 지니 모델을 우리가 늘림): 서쪽 날개를 실측 ㄱ자 111m(브이월드)에 맞춰 늘려 다시 구운 school410r
      (photoreal/tools/model/jinny/build_school.py, KH_WING_Z1=-16.0). 실사 레이어가 켜진 동안만 원래 학교 대신 보인다(스케치업·렌더는 Wing 배치 그대로) */
   {const q=KHQ.find(q=>q.id==='school410');if(q&&q.o&&KH.ver.school410r){try{const g=await khGet('school410r'),r=g.scene,ms=[];r.traverse(k=>{if(k.isMesh)ms.push(k)});
     await Promise.all(ms.map(async k=>{k.castShadow=k.receiveShadow=true;k.userData.mn=k.material.name;if(KH.mat[k.material.name])k.material=await khMat(k.material.name);k.userData.mBase=k.material}));
     r.traverse(k=>{k.userData.prSkip=true});q.o.add(r);KHR.sch=r;(KHR.all=KHR.all||[]).push(...ms);
     if(tl('school410r'))lit(r,null,null,tl('school410r'));else lit(r,...await Promise.all([khTex('school410r_lm'),khTex('school410r_ao')]))}catch(e){console.warn('env school410r',e)}}}
+  KHR.lampAt=[[-21.4,9,-35],[-21.4,9,-8.5],[-43.8,9,-63],[-43.8,9,-21.5],[-43.8,9,22]].map(a=>new THREE.Vector3(...a));   // night light pools follow road_env's lamps
   // [PR] 차량(cars)은 받지 않는다: 실사 3D 가 Wing 상자 차를 자체 차량 모델로 바꾸므로 지니 차량을 더하면 같은 자리에 두 대가 겹쳤다(1102.l)
-  const [st,tr]=await Promise.all(['street_env','tree'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null}))),cr=null;
+  const [st,tr,gf,rd]=await Promise.all(['street_env','tree','ground_fill','road_env'].map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null}))),cr=null;
   KHR.grp=new THREE.Group();KHR.grp.visible=false;R3D.street.add(KHR.grp);
-  if(st){st.updateMatrixWorld(true);KHR.grp.add(st);if(KH.ver['tex/street_env_lm'])tl('street_env')?lit(st,null,null,tl('street_env'),true):lit(st,await khTex('street_env_lm'));
-    const spots=[],[fx0,fz0]=P(-1300,-250),[fx1,fz1]=P(240,1465),fp=new THREE.Vector3();   // [PR] 1102.o: 우리 건물 정면 압구정로(양쪽 보도, 평면 y -250～1465) 가로수는 뺀다(1층 입구를 가림, Jack 확인)
-    st.traverse(k=>{if(!/^tree_/.test(k.name))return;fp.setFromMatrixPosition(k.matrixWorld);if(fp.x>Math.min(fx0,fx1)&&fp.x<Math.max(fx0,fx1)&&fp.z>Math.min(fz0,fz1)&&fp.z<Math.max(fz0,fz1)){KHR.treeCut=(KHR.treeCut||0)+1;return}spots.push(k.matrixWorld.clone())});
-    if(tr){tr.updateMatrixWorld(true);tr.traverse(k=>{if(!k.isMesh)return;const im=new THREE.InstancedMesh(k.geometry,k.material,spots.length),m=new THREE.Matrix4();
-      spots.forEach((s,i)=>im.setMatrixAt(i,m.multiplyMatrices(s,k.matrixWorld)));im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;if(k.customDepthMaterial)im.customDepthMaterial=k.customDepthMaterial;
-      if(k.userData.mn==='leaves')KHR.leaf=k.material;KHR.trees.push(im);KHR.grp.add(im)})}}
+  // [PR] 땅과 겹친 면(도로·보도·바닥)은 메시마다 재질 따로(own): 합치면 그리는 순서가 바뀌어 깜빡인다(1102.m street_env 와 같음)
+  const litE=async(o,id,ao)=>{if(!KH.ver['tex/'+id+'_lm'])return;if(tl(id))lit(o,null,null,tl(id),true);else lit(o,...await Promise.all([khTex(id+'_lm'),ao?khTex(id+'_ao'):null]))};
+  if(rd){KHR.road=true;khRDP();rd.updateMatrixWorld(true);KHR.grp.add(rd);await litE(rd,'road_env',1)}   // 압구정로 road, paint, signals, lamps, signs (roadview)
+  if(gf){gf.updateMatrixWorld(true);KHR.grp.add(gf);await litE(gf,'ground_fill',1)}   // scope ground: lanes, lots, 미성 complex
+  if(st){st.updateMatrixWorld(true);KHR.grp.add(st);await litE(st,'street_env',0);
+    const [fx0,fz0]=P(-1300,-250),[fx1,fz1]=P(240,1465),fp=new THREE.Vector3(),front=k=>{fp.setFromMatrixPosition(k.matrixWorld);const c=fp.x>Math.min(fx0,fx1)&&fp.x<Math.max(fx0,fx1)&&fp.z>Math.min(fz0,fz1)&&fp.z<Math.max(fz0,fz1);if(c)KHR.treeCut=(KHR.treeCut||0)+1;return c};   // [PR] 1102.o: 우리 건물 정면 압구정로(양쪽 보도, 평면 y -250～1465) 가로수는 뺀다(1층 입구를 가림, Jack 확인)
+    if(tr){KHR.grp.updateMatrixWorld(true);KHR.treeCut=0;khTrees(tr,[st,gf],KHR.grp,KHR.trees,front);KHR.leaf=(KHR.trees.find(t=>t.userData.mn==='leaves')||{}).material||null}}
   if(cr){const tpl={};cr.children.forEach(c=>tpl[c.name]=c);
     // parked cars east of 압구정로 (압구정로8길, the alley, the 동광 / sauna forecourts) are left out in 렌더-실사 (사용자 요청)
     const w=new THREE.Vector3();scene.traverse(c=>{if(!c.userData.car)return;c.getWorldPosition(w);if(w.x>-19&&w.x<60&&w.z>-80&&w.z<90&&w.y>-1)KHR.alley.push(c)});
     R3D.props.children.filter(c=>c.userData.car&&!KHR.alley.includes(c)).forEach(c=>{const body=c.children[0],t=tpl[body.geometry===CAR.body[1]?'SUV':'Sedan'];if(!t)return;
       const n=t.clone();n.traverse(k=>{if(k.isMesh&&k.userData.mn==='car_paint')k.material=body.material});n.position.copy(c.position);n.rotation.copy(c.rotation);n.visible=false;c.userData.car=false;KHR.cars.push([c,n]);R3D.props.add(n)})}
+  const a2=await Promise.all(KHA2.ids.map(id=>khGlb(id).catch(e=>{console.warn('env model',id,e);return null})));   // area 2 (no baked maps: page lighting)
+  if(a2.every(Boolean)){a2.forEach((o,i)=>{o.userData.khPack=KHA2.ids[i];o.updateMatrixWorld(true);KHR.grp.add(o)});KHR.a2=true;khA2Collect();khRDP()}   // [PR] khPack: 실사 3D 화면 합치기가 건물 묶음(땅 제외)을 합친다(1102.p)
+  KHR.pend=(KHR.pend||0)+KHA3.ids.length;   // [PR] 늦게 오는 3구역 묶음도 받는 중으로 센다(VR 합치기가 순간이동 직후 다시 만들어지지 않게, 1102.p)
+  KHA3.ids.forEach(id=>khGlb(id).then(o=>{o.userData.khPack=id;o.updateMatrixWorld(true);KHR.grp.add(o)}).catch(e=>console.warn('env model',id,e)).finally(()=>{KHR.pend--}));   // area 3, not awaited
   const [pa,pn,as]=await Promise.all(['paver_albedo','paver_normal','asphalt_albedo'].map(khTex)),rp=(t,r)=>{t=t.clone();t.repeat.set(r,r);t.needsUpdate=true;return t};
   const g=m=>({map:m.map,normalMap:m.normalMap||null,normalScale:m.normalScale.clone()});KHR.rm=[[g(RMAT.walk),g(RMAT.road)],
     [{map:rp(pa,1/2.4),normalMap:rp(pn,1/2.4),normalScale:new THREE.Vector2(.6,-.6)},{map:rp(as,.25),normalMap:null,normalScale:RMAT.road.normalScale.clone()}]];
@@ -7529,7 +7874,7 @@ window.KHENV={ver:KH_ENV_VER,off:KH_ENV_OFF,ready:()=>khLoad(),models:()=>KHQ.fi
   lite(on){on=!!on;if(KHR.lite===on)return;KHR.lite=on;const real=R3D.on&&KHR.real;if(KHR.grp)KHR.grp.visible=real&&!on;KHR.signs.forEach(k=>k.visible=real&&!on);
     KHR.cars.forEach(([o,n])=>{o.visible=!(real&&!on);n.visible=real&&!on});khStyle()},
   real(on,later){KHR.real=!!on;if(R3D.on){khReal(KHR.real);if(KHR.real){if(!later)khRealLoad();linearize(true);khSeason();khSky()}}khStyle()},   // later: 받기는 나중에(실사 외관 준비 뒤 다시 부름)
-  loaded:()=>({base:!!KHR.base,real:!!KHR.loading,n:KHQ.filter(q=>q.o).length,of:KHQ.length}),get busy(){return !!KHR.busy}};
+  loaded:()=>({base:!!KHR.base,real:!!KHR.loading,n:KHQ.filter(q=>q.o).length,of:KHQ.length}),get busy(){return !!KHR.busy||KHR.pend>0}};
 {const li=linearize;linearize=function(on){li(on);if(on)khGlass()}}
 {const ur=updateReflections;updateReflections=function(){   // [PR] 반사 지도를 그리는 동안 그 지도를 환경 지도로 읽는 재질(지니 유리·금속, 지니 매스 자리의 실사 유리 등)을 잠시 떼어 둔다(되먹임 GL 오류, 1102.l)
   const c=R3D.cube&&R3D.cube.texture,sv=new Set();if(c&&KHQ.length)scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(m&&m.envMap===c)sv.add(m)})});sv.forEach(m=>{m.envMap=null});/* 장면 전체(숨긴 것 포함: 실사 3D 는 반사 지도를 그릴 때 합친 메시 대신 숨겨 둔 원본을 보인다) */try{return ur.apply(this,arguments)}finally{sv.forEach(m=>{m.envMap=c})}}}   // linearize resets envMapIntensity, so the probe settings go after it
@@ -7548,29 +7893,31 @@ function buildContext(){
     khModel(m,'einstein116')}
   {const p118=[[341,-1807],[382,-859],[980,-867],[941,-1549]],   // env-test: surveyed footprint (OSM 118)
     m=mass(p118,18.6,0xffffff,'ribbon','118 오피스 (약 6층)',city,{rv:3.7});
-    const ph=offsetPoly(p118,2.2*S);mass(ph,3.6,0xffffff,'ribbon',null,m,{y0:18.6,rv:3.6,detail:false,noOcc:true});
+    const ph=offsetPoly(p118,2.2*S);mass(ph,3.6,0xffffff,'ribbon',null,m,{y0:18.6,rv:3.6,detail:false,noOcc:true});khModel(m,'office118');
     onFace(m,p118,0.0,1.0,18.6,19.2,0.15,0.5,FX.stone)}
   // next block NE across 압구정로10길 (street view 2026.07): 모모성형외과 white 5F, 이비학원 glass, 모모성형외과 glass 5F with black sign band and vertical fins
   {const pw=rectQ(330,-3350,1250,-2760),mw=mass(pw,19.5,0xffffff,'wrib','모모성형외과 (흰 건물 약 5층)',city,{rv:3.8});onFace(mw,pw,0,1,18.2,19.5,0.12,0.25,FX.glass);
-    const pe=rectQ(620,-3700,1300,-3350);mass(pe,17,0xffffff,'cw','이비학원 · 민트약국',city,{rv:3.6});
+    const pe=rectQ(620,-3700,1300,-3350),me=mass(pe,17,0xffffff,'cw','이비학원 · 민트약국',city,{rv:3.6});
     const pg=rectQ(330,-4760,1350,-3700),mg=mass(pg,20.5,0xffffff,'cw','모모성형외과 (유리 건물 약 5층)',city,{rv:3.8});onFace(mg,pg,0,1,17.6,20.3,0.15,0.3,SM({color:0x1f2326,roughness:.5}));onFace(mg,pg,0.86,0.98,17.9,20.0,0.3,0.05,SM({color:0xc8323a,roughness:.5}));
-    for(let k=0;k<12;k++)onFace(mg,pg,0.04+k*0.024,0.05+k*0.024,0.4,10.5,0.35,0.06,SM({color:0x4a4038,roughness:.6}))}
+    for(let k=0;k<12;k++)onFace(mg,pg,0.04+k*0.024,0.05+k*0.024,0.4,10.5,0.35,0.06,SM({color:0x4a4038,roughness:.6}));
+    khModel(mw,'momow');khModel(mg,'momog');khModel(me,'ibi')}   // env-test: surveyed footprints (OSM w507874069 / w357338480 / w357338481 + w775465801)
   roadBand([82,-5150],[3200,-5150],420);   // 가로수길 (신사중 교차로)
   // NE of the 가로수길 crossing (street view): 하람인테리어 light-grey box, grey 7F with a glass stair tower, red-brick 4F (아인슈타인 · 학원 signs), 김상호EMK학원 white 5F
-  {const pb=rectQ(320,-6250,1150,-5420);mass(pb,15,0xc9c9c6,'grey','하람인테리어',city,{rv:15,detail:false});
+  {const pb=rectQ(320,-6250,1150,-5420),mb=mass(pb,15,0xc9c9c6,'grey','하람인테리어',city,{rv:15,detail:false});
     const ph=rectQ(450,-6850,1150,-6250),mh=mass(ph,26,0xffffff,'wrib','회색 7층 오피스',city,{rv:3.6});onFace(mh,ph,0.05,0.28,0,26.5,0.2,0.6,FX.glass);
     const pr=rectQ(300,-7900,1250,-6850),mr=mass(pr,15.5,0xffffff,'brick','적벽돌 4층 (학원·신사동주민센터 옆)',city,{rv:3.6});onFace(mr,pr,0.2,0.95,12.3,14.2,0.12,0.1,SM({color:0xeef0f4,roughness:.6}));onFace(mr,pr,0.35,0.95,8.4,9.4,0.12,0.1,SM({color:0x55308f,roughness:.6}));
-    mass(rectQ(300,-8900,1300,-7950),18,0xffffff,'wrib','김상호EMK학원 (약 5층)',city,{rv:3.6})}
+    const mk=mass(rectQ(300,-8900,1300,-7950),18,0xffffff,'wrib','김상호EMK학원 (약 5층)',city,{rv:3.6});
+    khModel(mb,'north_mid',null,[mh,mr,mk])}   // env-test: far tier — simple masses on surveyed footprints, real colours
   // next block SW past the white 3F row: ESMOD 7F grey granite (green glass shaft), 디드로메디칼 white 6F
   {const pe=rectQ(320,3990,1250,4760),me=mass(pe,26,0xffffff,'esm','에스모드서울 (약 7층)',city,{rv:3.7});onFace(me,pe,0.4,0.58,6,24,0.25,0.4,SM({color:0x5c8f7a,roughness:.15,metalness:.3}));onFace(me,pe,0.0,1.0,0,4,0.1,0.2,FX.glass);khModel(me,'esmod528')}   // env-test: surveyed footprint (OSM 106)
   {const pd=rectQ(330,4880,1500,6350);khModel(mass(pd,22.5,0xffffff,'wrib','더카리 · 디드로메디칼 (6층)',city,{rv:3.7}),'kary528')}   // env-test: surveyed footprint (OSM 104)
   // behind: 96 (white), 94 스타벅스, 5 양식당더램키친 (east neighbour on the 6M road), 3층 근생 north of 10길
   khModel(mass(mp([[712,640],[795,595],[895,745],[810,790]]),11,0xeceae4,'office','유리 커튼월 건물 (약 6층)'),'glass529');   // env-test: tools/build_block.py
-  khModel(mass(mp([[885,605],[1075,483],[1120,610],[980,720]]),14,0xe2d6bf,'office','보성파워텍 · 임도빌딩 (약 4층)'),'bosung529');
+  khModel(mass(mp([[885,605],[1075,483],[1120,610],[980,720]]),14,0xe2d6bf,'office','임도빌딩 · 스타벅스 (4~5층)'),'bosung529');
   khModel(mass(mp([[590,775],[705,700],[800,830],[720,860]]),12,0xf0eeea,'shop','양식당 더램키친 (4층)'),'lamb529');
-  mass(mp([[1200,330],[1270,320],[1330,470],[1215,475]]),12,0xe9e7e1,'office','5 (약 3층)');mass(mp([[1270,320],[1420,230],[1540,300],[1330,470]]),13,0xdcd7cd,'office','88');
+  khModel(mass(mp([[1200,330],[1270,320],[1330,470],[1215,475]]),12,0xe9e7e1,'office','5 (약 3층)'),'wpanel',null,[mass(mp([[1270,320],[1420,230],[1540,300],[1330,470]]),13,0xdcd7cd,'office','88')]);   // env-test: one building in the survey (OSM w357342230)
   // across the 6M road: 커스텀잇·세레스학원 블록 (4F, corner), 오토김밥·원조마포 wing, 우유니 (small, at the intersection)
-  // (env-test 2026.10.30) 110 화인빌딩 (신사동 528-4): roadview 2026.06–07 + S-Map — 4층 + 파라펫 약 15.2m, 흰 줄눈 모자이크 타일(벽돌 쌓기 무늬),
+  // (env-test 2026.10.30, 2026.11.03) 110 화인빌딩 (신사동 528-4): roadview 2026.06–07 + 사용자 사진 — 4층 + 파라펫 약 15.2m (주차장 쪽 4층은 3m 물러남), 흰 줄눈 모자이크 타일(벽돌 쌓기 무늬),
   // 청동색 창틀의 펀치창, 베이지 박스 포털(CUSTOM EAT) 2곳, 6M도로 쪽 남색 차양 3개와 오목한 계단실 띠창 (간판·글씨 생략) → tools/build_customeat.py
   {const pc=backF(mp([[240,625],[330,700],[430,875],[440,945],[205,1090],[75,740]])),mc=mass(pc,15.2,0xffffff,'tile','커스텀잇 · 세레스학원 건물 (4층)',city,{rv:3.55,detail:false});
     khModel(mc,'customeat110')}
@@ -7579,11 +7926,14 @@ function buildContext(){
     const q=KHQ.find(q=>q.id==='lamb529');if(q)q.also=(q.also||[]).concat(m)}
   // east of 논현로175길 / south of the intersection: 93 CU, 14 디에이치푸드, 호프만베이커리 블록, MAX STUDIO
   khModel(mass([[2548,287],[2511,-611],[2634,-796],[3001,-629],[3011,165],[2839,318]],21.1,0xeef0f0,'office','웅암빌딩 · CU (6층)'),'woongam531');/* env-test: surveyed footprint (OSM) */
-  mass(mp([[1030,1060],[1150,1005],[1185,1170],[1120,1185]]),13,0xe2d6bf,'office');
-  khModel(mass(mp([[600,1085],[720,1015],[800,1140],[660,1220]]),12,0xe7e2d8,'shop','호프만베이커리 · BOGO빌딩 (3층)'),'hoffman525');   // env-test: tools/build_block.py
+  khModel(mass(mp([[1030,1060],[1150,1005],[1185,1170],[1120,1185]]),13,0xe2d6bf,'office'),'brick611');   // env-test: surveyed footprint (OSM w1359383611)
+  khModel(mass(mp([[600,1085],[720,1015],[800,1140],[660,1220]]),21,0xe7e2d8,'shop','호프만베이커리 · BOGO빌딩 (6층)'),'hoffman525');   // env-test: tools/build_block.py
   khModel(mass(mp([[440,1150],[540,1105],[630,1240],[520,1300]]),14,0xdedad1,'shop','야키토리 요이사 건물 (4층)'),'yakitori525');khModel(mass(mp([[700,1240],[880,1160],[930,1270],[760,1330]]),16.4,0xeceae4,'shop','썬더빌딩 (5층)'),'thunder525');
-  // env-test: 헬렌비 (525-11) and 마마논마마 (525-22) had no mass in the page — models in their own placeholders (2026.07 roadview)
-  for(const id of ['helenbi525','mamanon525']){const ph=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({visible:false}));ctx.add(ph);khModel(ph,id)}
+  // env-test: 두원빌딩·헬렌비 (525-11), 마마논마마 (525-22), GOALSTUDIO (532), 큐빅디자인빌딩 (525-10) had no mass in the page — models in their own placeholders (2026.07 roadview)
+  for(const id of ['helenbi525','mamanon525','goal532','cubic525']){const ph=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({visible:false}));ctx.add(ph);khModel(ph,id)}
+  // env-test: fill-in for the 2026.11 scope (user Naver capture) — 73 small buildings with no mass in the page (OSM footprints, roadview floors / colours);
+  // near set with window depth, the two far sets flat. The placeholder box only tells the staged loader how far away each set is.
+  for(const [id,x,z] of [['fill_near',40,-40],['fill_mid_n',60,-110],['fill_mid_s',80,100]]){const ph=new THREE.Mesh(new THREE.BoxGeometry(.1,.1,.1).translate(x,0,z),new THREE.MeshBasicMaterial({visible:false}));ctx.add(ph);khModel(ph,id)}
   // church spire seen behind the 커스텀잇 block (street view)
   {const ch=mp([[90,1180],[200,1130],[260,1250],[150,1300]]);const chm=mass(ch,12,0xece8df,'office','교회');const [cx,cz]=P(...centroid(ch)),sp=new THREE.Mesh(new THREE.ConeGeometry(1.1,16,8),SM({color:0xd9d6cf,roughness:.8}));sp.position.set(cx,12+8+4,cz);sp.castShadow=true;city.add(sp);
     const tw=box(cx-1.6,cx+1.6,12,16,cz-1.6,cz+1.6,SM({color:0xe7e3da,roughness:.9}));city.add(tw);const cr=box(cx-0.05,cx+0.05,32,34.5,cz-0.05,cz+0.05,M.dark);city.add(cr);const cb=box(cx-0.6,cx+0.6,33.5,33.65,cz-0.05,cz+0.05,M.dark);city.add(cb);const cbx=new THREE.Box3(new THREE.Vector3(cx-1.6,0,cz-1.6),new THREE.Vector3(cx+1.6,35,cz+1.6));[sp,tw,cr].forEach(m=>{m.userData.box=cbx;OCC.push(m)});
@@ -7591,16 +7941,18 @@ function buildContext(){
     {const q=KHQ.find(q=>q.id==='deoksan528');if(q)q.also=(q.also||[]).concat([chm,sp,tw,cr,cb])}}
   // west across 압구정로: apartment slabs behind a stone wall, school north of the side street
   const wallM=SM({color:0x8d8377,roughness:.95}),pierM=wm('brick',0xffffff);
-  for(let y=-250;y<6900;y+=10*S){const y2=Math.min(6900,y+10*S);const [x1,z1]=P(-1400,y),[x2,z2]=P(-1380,y2);[box(x1,x2,0,2.4,z1,z2,wallM),tbox(x1-0.25,x2+0.25,0,2.9,z1,z1+0.7,pierM)].forEach(m=>{city.add(m);m.userData.box=new THREE.Box3().setFromObject(m).expandByScalar(0.3);OCC.push(m)})}
+  for(let y=-250;y<6900;y+=10*S){const y2=Math.min(6900,y+10*S);const [x1,z1]=P(-1400,y),[x2,z2]=P(-1380,y2);[box(x1,x2,0,2.4,z1,z2,wallM),tbox(x1-0.25,x2+0.25,0,2.9,z1,z1+0.7,pierM)].forEach(m=>{city.add(m);m.userData.box=new THREE.Box3().setFromObject(m).expandByScalar(0.3);OCC.push(m);RDP.push(m)})}   /* env-test: 렌더-실사 has the real 미성 brick wall and the school's tile wall instead */
   APT_NOW=new THREE.Group();APT_NEW=new THREE.Group();APT_OL=new THREE.Group();city.add(APT_NOW,APT_NEW,APT_OL);
   // Naver map (2026.10 capture, 투썸플레이스 pin) → plan px: rotation of 압구정로 + 0.335 m per map px
   const NM=(mx,my)=>{const dx=mx-1070,dy=my-640;return [600+13.95*(0.62*dx+0.78*dy),750+13.95*(-0.78*dx+0.62*dy)]};
   const nbar=(cx,cy,L,W)=>{const u=[0.785,-0.62],n=[0.62,0.785];return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>NM(cx+u[0]*a*L/2+n[0]*b*W/2,cy+u[1]*a*L/2+n[1]*b*W/2))};
   // 라이프미성 2차 (911세대): 21~29동, 15F
   {const B2=[[830,400],[880,545],[700,690],[670,515],[500,440],[260,450],[330,610],[510,650],[430,290]];
-    B2.forEach((c,k)=>mass(nbar(c[0],c[1],200,34),44,0xf3f3f1,'apt',k===1?'미성아파트 2차 (현황 15층)':null,APT_NOW,{rv:2.9}))}
+    const am=B2.map((c,k)=>mass(nbar(c[0],c[1],200,34),44,0xf3f3f1,'apt',k===1?'미성아파트 2차 (현황 15층)':null,APT_NOW,{rv:2.9}));
+    khModel(am[0],'mison2',null,am.slice(1))}   // env-test: 라이프미성 2차 21–29동 + 미성 1차 on surveyed footprints with OSM floor counts
   // 미성 1차: behind 신사중학교 (between the school and 올림픽대로), 12F
-  {[[980,40],[780,40],[580,60]].forEach((c,k)=>mass(nbar(c[0],c[1],170,34),36,0xeeeeec,'apt',k===0?'미성아파트 1차 (현황 약 12층)':null,APT_NOW,{rv:2.9}))}
+  {const a1=[[980,40],[780,40],[580,60]].map((c,k)=>mass(nbar(c[0],c[1],170,34),36,0xeeeeec,'apt',k===0?'미성아파트 1차 (현황 약 12층)':null,APT_NOW,{rv:2.9}));
+    const q=KHQ.find(q=>q.id==='mison2');if(q)q.also=(q.also||[]).concat(a1)}   // env-test: 미성 1차 (14F, OSM) is part of the mison2 model
   // redevelopment (가정): 미성 1·2차 통합 부지 — 8개 동, 최고 66층, slim glass towers on a landscaped podium
   {const park=new THREE.Group();[[[-9400,-480],[-1430,-480],[-1430,10400],[-9400,10400]],[[-10700,-5100],[-5600,-5100],[-5600,-480],[-10700,-480]]].forEach(q=>park.add(flat(q,0.025,SM({color:0xb7c3a8,roughness:1}))));APT_NEW.add(park);
     const FL=3.05,T=[[-2600,1300,66],[-2600,5000,58],[-5100,3000,62],[-5100,6700,54],[-7500,4600,60],[-7400,8600,52],[-7300,-2700,64],[-9500,-200,56]];let tall=null;
@@ -7627,23 +7979,24 @@ function buildContext(){
     const mA=mass(rectQ(-3650,-4420,-2450,-3700),18.5,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true});
     {const gm=SM({map:texRep(TEX.brick,1.6,4.2),color:0x6f6c68,roughness:.95});SCH.push(mass(rectQ(-2420,-4460,-1560,-3720),13.5,0xffffff,'office','신사중학교',sch,{mat:gm,shop:false,noOcc:true,detail:false}));
       const gT=textTex('신 사 중 학 교',768,96,'#4b4845','#d8b768','700 66px "IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif');
-      const [ax,az]=P(-1990,-4462),pl=new THREE.Mesh(new THREE.PlaneGeometry(14,1.8),new THREE.MeshBasicMaterial({map:gT}));pl.position.set(ax,11,az-0.03);pl.rotation.y=Math.PI;sch.add(pl)}
+      const [ax,az]=P(-1990,-4462),pl=new THREE.Mesh(new THREE.PlaneGeometry(14,1.8),new THREE.MeshBasicMaterial({map:gT}));pl.position.set(ax,11,az-0.03);pl.rotation.y=Math.PI;sch.add(pl);SCH.push(pl)}   // env-test: plate hides with the masses (the surveyed hall stands 20 m further north)
     SCH.push(mass(rectQ(-3650,-3700,-3150,-1250),15,0xffffff,'office',null,sch,{mat:sm,shop:false,noOcc:true}));
     // (env-test 2026.10.31) roadview 2026.06–07 → Blender 모델(tools/build_school.py → models/school410.js)이 매스·운동장·골대를 대신함 (이름판은 그대로)
     khModel(mA,'school410',null,SCH);
     // sign on the building facing the field and 압구정로
     const sgT=textTex('신사중학교',512,96,'#2f5d3a','#ffffff','700 62px "IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif');
-    {const [sx,sz]=P(-2600,-3700),pl=new THREE.Mesh(new THREE.PlaneGeometry(9,1.7),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=-Math.PI/2+Math.atan2(0,1)+Math.PI/2;pl.position.set(sx,15.2,sz+0.05);sch.add(pl)}
-    {const [sx,sz]=P(-1560,-4060),pl=new THREE.Mesh(new THREE.PlaneGeometry(7,1.3),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=Math.PI/2;pl.position.set(sx+0.05,13.6,sz);sch.add(pl)}   // 13.6 (was 15.6): stays on the curved gable of the env-test model
+    {const [sx,sz]=P(-2600,-3700),pl=new THREE.Mesh(new THREE.PlaneGeometry(9,1.7),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=-Math.PI/2+Math.atan2(0,1)+Math.PI/2;pl.position.set(sx,15.2,sz+0.05);sch.add(pl);SCH.push(pl)}
+    {const [sx,sz]=P(-1560,-4060),pl=new THREE.Mesh(new THREE.PlaneGeometry(7,1.3),new THREE.MeshBasicMaterial({map:sgT}));pl.rotation.y=Math.PI/2;pl.position.set(sx+0.05,13.6,sz);sch.add(pl);SCH.push(pl)}   // 13.6 (was 15.6); env-test: hidden once the surveyed school model is in
     // 현대고등학교: next block NE of 신사중 across the side street — field with track, long white 5F main building, gym
     roadBand([-1188,-5150],[-6200,-5150],330);
     {const hs=new THREE.Group();city.add(hs);hs.add(flat([[-6200,-11200],[-1440,-11200],[-1440,-5300],[-6200,-5300]],0.015,SM({color:0xcbbfa6,roughness:1})));
       const [hx0,hz0]=P(-4200,-9900),[hx1,hz1]=P(-1900,-6500),hg=new THREE.PlaneGeometry(Math.abs(hx1-hx0),Math.abs(hz1-hz0));hg.rotateX(-Math.PI/2);const hf=new THREE.Mesh(hg,SM({map:tt,roughness:1}));hf.position.set((hx0+hx1)/2,0.06,(hz0+hz1)/2);hs.add(hf);
       const hm=SM({map:texRep(canvasTex(64,64,(c,w,h)=>{c.fillStyle='#f1f0ec';c.fillRect(0,0,w,h);c.fillStyle='#71889a';c.fillRect(3,20,58,24);c.fillStyle='#f1f0ec';for(let x=0;x<w;x+=16)c.fillRect(x,20,2,24)}),1/3.6,1/3.6),color:0xffffff,roughness:.9});
-      mass(rectQ(-6000,-11000,-4500,-5600),18,0xffffff,'office','현대고등학교',hs,{mat:hm,shop:false,noOcc:true,detail:false});
-      mass(rectQ(-4500,-11000,-2200,-10200),15,0xffffff,'office',null,hs,{mat:hm,shop:false,noOcc:true,detail:false});
-      mass(rectQ(-2100,-11000,-1500,-10000),11,0xe2e0da,'office',null,hs,{shop:false,noOcc:true,detail:false});
-      mass(rectQ(-2900,-6420,-1560,-5480),13.5,0xffffff,'office','현대고 체육관',hs,{mat:SM({color:0x55585c,roughness:.7}),shop:false,noOcc:true,detail:false});
+      const hs1=mass(rectQ(-6000,-11000,-4500,-5600),18,0xffffff,'office','현대고등학교',hs,{mat:hm,shop:false,noOcc:true,detail:false});
+      const hs2=mass(rectQ(-4500,-11000,-2200,-10200),15,0xffffff,'office',null,hs,{mat:hm,shop:false,noOcc:true,detail:false});
+      const hs3=mass(rectQ(-2100,-11000,-1500,-10000),11,0xe2e0da,'office',null,hs,{shop:false,noOcc:true,detail:false});
+      const hs4=mass(rectQ(-2900,-6420,-1560,-5480),13.5,0xffffff,'office','현대고 체육관',hs,{mat:SM({color:0x55585c,roughness:.7}),shop:false,noOcc:true,detail:false});
+      khModel(hs1,'far_hs',null,[hs2,hs3,hs4]);   // env-test: farthest tier — page shapes, real colours only
       for(const x of[-1460])for(let y=-11200;y<-5300;y+=6*S){const [a,b]=P(x,y),[,d]=P(x,Math.min(-5300,y+6*S));hs.add(box(a-0.05,a+0.05,0,1.8,b,d,SM({color:0x8fbf3a,roughness:.6})))}}
     // basketball court south of the field
     {const [a,b]=P(-3050,-1050),[c2,d]=P(-2350,-700),ct=canvasTex(128,96,(c,w,h)=>{c.fillStyle='#4f7ea8';c.fillRect(0,0,w,h);c.strokeStyle='#fff';c.lineWidth=2;c.strokeRect(4,4,w-8,h-8);c.beginPath();c.moveTo(w/2,4);c.lineTo(w/2,h-4);c.stroke();c.beginPath();c.arc(w/2,h/2,12,0,7);c.stroke()});
@@ -7772,34 +8125,572 @@ function buildOutline(){dispose(outlineG);if(state.era!=='cmp')return;const arr=
     for(let i=0;i<W.length;i++){const a=W[i],b=W[(i+1)%W.length];arr.push(a[0],y0,a[1],b[0],y0,b[1],a[0],y1,a[1],b[0],y1,b[1]);if(Math.hypot(b[0]-a[0],b[1]-a[1])>0.8)arr.push(a[0],y0,a[1],a[0],y1,a[1])}});
   barsFrom(outlineG,arr,0.14)}
 // ③ 비교 (2026.10.09): 현황과 신축을 함께 그리고 슬라이더로 서로의 투명도를 바꿔 겹쳐 봄 (윤곽선은 선택)
-const CMP={v:50,ol:false,apt:true,spin:false,mats:new Map()};
+const CMP={v:0,ol:false,apt:false,spin:false,mats:new Map()};
 function ghostMat(m,op){let c=CMP.mats.get(m);if(!c){const ud=m.userData;m.userData={};c=m.clone();m.userData=ud;c.transparent=true;c.depthWrite=false;c.needsUpdate=true;CMP.mats.set(m,c);if(ud.prMade){c.userData.prMade=true;c.onBeforeCompile=m.onBeforeCompile;c.customProgramCacheKey=m.customProgramCacheKey}}   // [PR] 실사 재질의 반투명 사본도 셰이더 보강(굽기·월드 좌표 텍스처)을 유지   // opacity changes need no shader rebuild
   if(m.color&&c.color)c.color.copy(m.color);if(c.map!==m.map){c.map=m.map;c.needsUpdate=true}c.userData.lin=m.userData.lin;c.opacity=(m.transparent?m.opacity:1)*op;return c}
-function ghostGroup(grp,op){grp.traverse(o=>{if(!o.material)return;if(o.userData.mat0===undefined)o.userData.mat0=o.material;const orig=o.userData.mat0;
+function ghostGroup(grp,op){grp.traverse(o=>{if(!o.material)return;
+  if(o.userData.mn!==undefined){const u=o.userData;if(op>=0.999){if(u.gh){o.material=u.gh;u.gh=null}return}if(!u.gh)u.gh=o.material;o.material=Array.isArray(u.gh)?u.gh.map(m=>ghostMat(m,op)):ghostMat(u.gh,op);return}   // env-test models: fade from their current (lit) material
+  if(o.userData.mat0===undefined)o.userData.mat0=o.material;const orig=o.userData.mat0;
   if(op>=0.999){if(o.material!==orig)o.material=orig;return}o.material=Array.isArray(orig)?orig.map(m=>ghostMat(m,op)):ghostMat(orig,op)})}
 function applyCmp(){const on=state.era==='cmp',v=CMP.v/100,nOp=on?v:1,eOp=on?1-v:1;
   if(on){bld.visible=nOp>0.02;exist.visible=eOp>0.02}ghostGroup(bld,nOp);ghostGroup(exist,eOp);
-  if(APT_NOW&&state.ms!=='future'){APT_NOW.visible=true;APT_NEW.visible=false;ghostGroup(APT_NOW,1);ghostGroup(APT_NEW,1);APT_OL.visible=false}   // [PR] 현재: 겹쳐 보기 없음
-  else if(APT_NOW){const a=on&&CMP.apt;APT_NOW.visible=state.era!=='new'&&(!a||eOp>0.02);APT_NEW.visible=state.era==='new'||(a&&nOp>0.02);ghostGroup(APT_NOW,a?eOp:1);ghostGroup(APT_NEW,a?nOp:1);APT_OL.visible=on&&CMP.ol}
+  if(APT_NOW&&!on){const fut=state.ms==='future'&&(state.era==='new'||state.era==='srv');APT_NOW.visible=!fut;APT_NEW.visible=fut;ghostGroup(APT_NOW,1);ghostGroup(APT_NEW,1);APT_OL.visible=false}   // [PR] 신축·실측: 미성 일대는 '미래(추정)'를 고를 때만 재건축 가정(?ms=)
+  else if(APT_NOW){const a=on&&CMP.apt;APT_NOW.visible=!a||eOp>0.02;APT_NEW.visible=a&&nOp>0.02;ghostGroup(APT_NOW,a?eOp:1);ghostGroup(APT_NEW,a?nOp:1);APT_OL.visible=on&&CMP.ol&&a}   // 현황(비교): Wing v107 그대로
   outlineG.visible=on&&CMP.ol;const o=document.getElementById('o-mix');if(o)o.textContent=`현황 ${100-CMP.v} · 신축 ${CMP.v}`;
   const sc=document.getElementById('sec-cmp');if(sc)sc.hidden=!on;if(!I.on)controls.autoRotate=on&&CMP.spin;if(on)cmpTable()}
 function cmpTable(){const st=SCH.stats,up=LEVELS.filter(l=>l.kind==='upper').length,top=LEVELS.some(l=>l.dup==='hi');
-  const rows=[['대지면적','약 532㎡ (161평)',st.site.replace('㎡','㎡ ('+(parseFloat(st.site)/3.3058).toFixed(0)+'평)')],['지상 층수','4층 + 계단탑',`${state.scheme==='self'?6:state.floors}층${top?' + PH':''}`],['최고 높이','약 15.4m',st.h.replace(/ \(.*\)/,'')],['지상 연면적','—',st.gfa],['용적률','—',st.far.toFixed(1)+'%'],['주차','동측 노외주차',st.park.replace(/ \(.*\)/,'')]];
+  const rows=[['대지면적','약 532㎡ (161평)',st.site.replace('㎡','㎡ ('+(parseFloat(st.site)/3.3058).toFixed(0)+'평)')],['지상 층수','4층 + 계단탑',`${state.scheme==='self'||state.scheme==='dd'?6:state.floors}층${top?' + PH':''}`],['최고 높이','약 15.4m',st.h.replace(/ \(.*\)/,'')],['지상 연면적','—',st.gfa],['용적률','—',st.far.toFixed(1)+'%'],['주차','동측 노외주차',st.park.replace(/ \(.*\)/,'')]];
   document.getElementById('cmp-t').innerHTML='<tr><th></th><th>현황</th><th>신축</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="up">${r[2]}</td></tr>`).join('')}
-function applyEra(){const e=state.era;if(typeof R3D!=='undefined'&&R3D.on){applyTime();updateReflections()}bld.visible=e!=='now';exist.visible=e!=='new';lotVis();buildOutline();
-  if(APT_NOW){const fut=state.ms==='future'&&e!=='now';APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=e==='cmp'&&state.ms==='future'}applyCmp();   // [PR] 미성 일대는 '미래(추정)'를 고를 때만 재건축 가정
-  document.querySelectorAll('.newonly').forEach(x=>x.hidden=e==='now');document.getElementById('sec-now').hidden=e==='new';
+function applyEra(){const e=state.era;document.body.classList.toggle('inSrv',e==='srv');if(typeof R3D!=='undefined'&&R3D.on){applyTime();updateReflections()}bld.visible=e!=='now';exist.visible=e==='now'||e==='cmp';lotVis();buildOutline();
+  if(APT_NOW){const fut=state.ms==='future'&&(e==='new'||e==='srv');APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=false}applyCmp();   // [PR] 미성 일대는 '미래(추정)'를 고를 때만 재건축 가정(현황 탭은 Wing 의 겹쳐 보기)
+  document.querySelectorAll('.newonly').forEach(x=>x.hidden=e==='now');document.getElementById('sec-now').hidden=e==='new'||e==='srv';SRV.era(e);
   set('era-note',e==='new'?'선택한 주차 방식·외장으로 신축한 모습입니다. 좌우 건물은 현황 그대로이고, 건너편 미성아파트는 '+(state.ms==='future'?'재건축(8개 동, 최고 66층) 가정 매스입니다. 렌더 모드에서는 재건축 타워의 그림자·반사까지 반영됩니다.':'현재 모습입니다(재건축 가정은 화면 표시의 미성아파트 일대에서 미래(추정)를 고르면 보입니다).')+' 주변 건물 배치는 네이버지도, 높이는 거리뷰 사진 기준 근사값입니다.'
     :e==='now'?'현재 동광빌딩(지상 4층 적벽돌, 1층 투썸플레이스)과 좌우 건물, 건너편 미성아파트(약 15층) 현황입니다. 대지 표시(파란 선 = 현황 대지, 빨간 면 = 편입되는 3번지)는 배치 (위) 시점에서 보입니다. 주변 건물 배치는 네이버지도 기준입니다. 높이·윤곽은 사진에서 읽은 근사값입니다.'
     :'현황(동광빌딩·미성아파트) 위에 신축 윤곽(빨간 선)을 겹쳐 봅니다. 대지 표시는 배치 (위) 시점에서 보입니다. 우리 건물 신축 윤곽과 미성아파트 재건축(8개 동, 최고 66층 가정) 윤곽이 함께 그려지고, 주차 방식·매스 조정을 바꾸면 우리 건물 윤곽도 바뀝니다.')}
-document.querySelectorAll('input[name=ms]').forEach(r=>{r.checked=r.value===state.ms;r.addEventListener('change',e=>{state.ms=e.target.value;const fut=state.ms==='future'&&state.era!=='now';if(APT_NOW){APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=state.era==='cmp'&&state.ms==='future'}if(R3D.on){applyTime();updateReflections()}})});   // [PR] 미성 일대만 바꾼다(applyEra 의 applyCmp 는 재질을 원본으로 되돌린다)
-document.querySelectorAll('input[name=era]').forEach(r=>r.addEventListener('change',e=>{state.era=e.target.value;if(I.on&&state.era!=='new')exitInt();build();if(!I.on)go('corner')}));
+document.querySelectorAll('input[name=ms]').forEach(r=>{r.checked=r.value===state.ms;r.addEventListener('change',e=>{state.ms=e.target.value;const fut=state.ms==='future'&&(state.era==='new'||state.era==='srv');if(APT_NOW){APT_NOW.visible=!fut;APT_NEW.visible=fut;APT_OL.visible=false}if(R3D.on){applyTime();updateReflections()}})});   // [PR] 미성 일대만 바꾼다(applyEra 의 applyCmp 는 재질을 원본으로 되돌린다)
+document.querySelectorAll('input[name=era]').forEach(r=>r.addEventListener('change',e=>{state.era=e.target.value==='now'?'cmp':e.target.value;if(state.era==='srv'&&state.scheme!=='dd'){state.scheme='dd';const sd=document.getElementById('sch-dd');if(sd)sd.checked=true;I.key=null}if(I.on&&state.era!=='new'&&state.era!=='srv')exitInt();build();if(!I.on)go('corner')}));
+// ================= ④ 실측 (2026.11.02): 플라건축 「대지경계·현황레벨·지하단면 검토안」(DD, 2026.10.30) =================
+// 1F FFL EL±0.00 = 측량 표고 13.20m (도면의 FH 13.65 → EL+0.45, FH 13.52 → EL+0.32, FH 13.05 → EL−0.15에서 역산)
+// 기존 탭(①②③)과 섞이지 않도록 이 탭 전용 그룹(SRV.G) 하나에만 그린다. 지형 높이만 과장하고 건물·지하 깊이는 실제 축척.
+var SRV=(function(){
+  const FFL=13.20;
+  // 1층 평면도(001) 이미지 좌표 → 모델 좌표: 대지 꼭짓점 4개로 맞춤(1.309배) · 지하3층 평면도(004)는 1.583배
+  const g2m=(x,y)=>[230+(x-596)*1.309,172+(y-289)*1.309];
+  const m5=(x,y)=>[230+(x-493)*1.583,172+(y-238)*1.583];
+  const m5r=(a,b,c,d)=>{const p=m5(a,b),q=m5(c,d);return [p[0],p[1],q[0],q[1]]};
+  const PTS=[[12.75,430,152,'압구정로 차도'],[13.00,480,415,'압구정로 보도'],[13.06,522,432,'압구정로 보도'],[12.77,318,507,'압구정로 차도'],
+    [12.73,452,648,'압구정로 차도 가장자리'],[13.05,512,708,'압구정로 보도'],[12.72,452,985,'압구정로 차도 가장자리'],[13.07,505,984,'압구정로 보도'],
+    [12.93,577,1137,'모서리 보도'],[12.88,473,1177,'모서리 차도'],[13.11,645,1182,'대지 남서쪽 모서리'],[13.40,928,1083,'뒷길(6m)'],
+    [13.52,1097,1023,'뒷길(6m) · 1층 출입구 앞'],[13.65,1262,965,'뒷길(6m) · 엘리베이터 출입구 앞'],[13.90,1512,877,'뒷길(6m) · 차 출입구'],
+    [14.08,1640,833,'대지 남동쪽 모서리'],[14.15,1756,800,'뒷길(6m) 동쪽'],[13.63,687,313,'대지 북서쪽 (지금 건물 바닥)']]
+    .map(([fh,x,y,n])=>({fh,el:+(fh-FFL).toFixed(2),p:g2m(x,y),n}));
+  // 지하층 (지하층 부분 횡·종단면도 006·007)
+  const BL=[{k:'B1',y:-3.3,h:3.3,c:0x5f9fc6,use:'주차 8 · 1종근생(소매점)'},{k:'B2',y:-6.9,h:3.6,c:0x6fae7f,use:'주차 10'},
+    {k:'B3',y:-10.5,h:3.6,c:0xcfa95a,use:'주차 10 · 전기실'},{k:'B4',y:-13.2,h:2.7,c:0xc47f5f,use:'기계실 · 물탱크 · 정화조 (부분층)'}];
+  const MAT_W=-11.65,MAT_E=-14.55;   // 기초 하단: 주차부(B3 아래 약 1.15m) · B4부(1,350)
+  const X2=m5(831,0)[0];             // X2 열 — 이 동쪽만 B4
+  const NB=[{n:'북쪽 옆 땅',el:0.30,src:'종단면도 007',poly:[[230,-160],[1598,-160],[1598,172],[230,172]],at:[900,60]},
+    {n:'동쪽 옆 땅 (529-6)',el:1.95,src:'횡단면도 006',poly:[[1598,-160],[1880,-160],[1880,yRoad(1880)],[1598,872]],at:[1740,420]}];
+  const OLD_ROW={B1:null,B2:null,B3:null};
+  // 옵션은 여기 한곳에만 둔다 (나중에 외장 시안·주변 건물 옵션을 늘릴 때 LAB / st에 항목만 추가)
+  // LAB: 화면에 띄울 수치 묶음 — id는 라벨의 sg와 같고, geo가 있으면 같은 이름의 3D 표시도 함께 켜고 끈다
+  const LAB=[{id:'pt',n:'땅 높이 (측량점)',on:false,geo:true},{id:'tech',n:'도면 표기 (FH·FFL)',on:false},{id:'lv',n:'층별 높이',on:false},{id:'rp',n:'주차 램프·출입구',on:false},{id:'nb',n:'옆 땅 높이',on:false,geo:true}];
+  const st={k:1,gc:'real',terr:'plan',mass:true,under:false,bmode:'model',op:0.85,ctx:true,cut:'none',pos:38,built:false,lab:{}};
+  LAB.forEach(x=>st.lab[x.id]=x.on);
+  const SKEY='ch-srv-opts8';
+  try{const sv=JSON.parse(localStorage.getItem(SKEY)||'null');if(sv){['k','gc','terr','mass','bmode','op','ctx'].forEach(k=>{if(sv[k]!==undefined)st[k]=sv[k]});if(sv.lab)Object.assign(st.lab,sv.lab)}}catch(e){}
+  ['zn','ptn','rm','old','st'].forEach(k=>st.lab[k]=false);   // v106: 삭제한 수치 항목은 항상 끔
+  const save=()=>{try{localStorage.setItem(SKEY,JSON.stringify({k:st.k,gc:st.gc,terr:st.terr,mass:st.mass,bmode:st.bmode,op:st.op,ctx:st.ctx,lab:st.lab}))}catch(e){}};
+  const G=new THREE.Group();G.visible=false;scene.add(G);
+  const FR=new THREE.Group();G.add(FR);   // 단면 위치 표시 (잘리지 않음)
+  const planes=[],mats=[];
+  const cm=m=>{m.clippingPlanes=planes;mats.push(m);return m};
+  const SMc=o=>cm(new THREE.MeshStandardMaterial(Object.assign({roughness:.85},o)));
+  const TR=(c,op)=>SMc({color:c,transparent:true,opacity:op,depthWrite:false,side:THREE.DoubleSide});
+  const MT={
+    terr:SMc({vertexColors:true,roughness:1,side:THREE.DoubleSide,emissive:0x111111}),
+    terrS:SMc({vertexColors:true,roughness:1,side:THREE.DoubleSide,transparent:true,opacity:.28,depthWrite:false,emissive:0x111111}),
+    // 가독성(2026.11.02 수정): 색은 "FFL 기준 높낮이(파랑=낮음 · 주황=높음)"와 "문제 지점(빨강 = 전기실)" 두 가지 뜻에만 쓴다. 층·실은 무채색 + 밝은 윤곽선 + 라벨로 구분
+    wall:TR(0x8f9a96,.22),mat:TR(0x6d7774,.5),core:TR(0xaab3b0,.45),ev:TR(0x7f8a87,.6),ramp:TR(0x6b7572,.55),
+    elec:TR(0xff6b5e,.55),mech:TR(0x8e9894,.32),tank:TR(0x8e9894,.32),sep:TR(0x8e9894,.32),
+    ghost:TR(0xffffff,.07),nb:TR(0x5d6764,.85),datum:TR(0xffffff,.05),
+    pin:cm(new THREE.MeshBasicMaterial({color:0xc9d1ce})),up:cm(new THREE.MeshBasicMaterial({color:0xf08a3c})),dn:cm(new THREE.MeshBasicMaterial({color:0x4f9be8})),zero:cm(new THREE.MeshBasicMaterial({color:0xffffff})),
+    slab:{}};
+  BL.forEach(L=>MT.slab[L.k]=TR(0xdfe6e3,.16));
+  const LE={ghost:cm(new THREE.LineBasicMaterial({color:0xaab6b2,transparent:true,opacity:.35})),edge:cm(new THREE.LineBasicMaterial({color:0xc9d3cf,transparent:true,opacity:.6})),
+    slab:cm(new THREE.LineBasicMaterial({color:0xe9efed,transparent:true,opacity:.95})),
+    red:cm(new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.8})),old:cm(new THREE.LineDashedMaterial({color:0xff6b5e,dashSize:.7,gapSize:.45})),
+    c1:cm(new THREE.LineBasicMaterial({color:0x10151a,transparent:true,opacity:.45})),c5:cm(new THREE.LineBasicMaterial({color:0x10151a,transparent:true,opacity:.85}))};
+  const frameMat=new THREE.MeshBasicMaterial({color:0x6fb8b1,transparent:true,opacity:.9,depthTest:false});
+  // ---- 지형: 측점 IDW 보간 ----
+  // 계획 지반(기본): 측량점 사이를 둥글게 보간하면 도로가 울퉁불퉁해 보이므로, 도로는 평면으로 정리하고 대지 안 높이 맞춤 경사는 건물 쪽(전면공지 뒤쪽)에 몰아 둠
+  //  · 압구정로: 차도 −0.45 / 보도 −0.16 (측량 평균) — 길이 방향으로 평평
+  //  · 뒷길(6M): 측량점 직선 맞춤(서→동 오르막, 약 2.9%) — 폭 방향으로 평평
+  //  · 전면공지(3m): 보도와 같은 높이로 평평 → 건물 앞 2.5m 구간에서 +16cm 올라 1층 바닥(0)과 만남
+  //  · 뒷길 쪽 1m 띠: 도로와 같은 높이 · 엘리베이터 홀 앞 보행로: 도로 +0.45 → 0 (1/13.4)
+  const AP={road:-0.45,walk:-0.15,curb:60,band:104,wall:230+3*S};   // 압구정로 건축한계선 3m
+  const SB6=1.0*S;   // 뒷길 건축한계선 1m
+  const R6=(()=>{const q=PTS.filter(t=>/뒷길|남동쪽/.test(t.n));const n=q.length,mx=q.reduce((a,t)=>a+t.p[0],0)/n,my=q.reduce((a,t)=>a+t.el,0)/n;
+    const b=q.reduce((a,t)=>a+(t.p[0]-mx)*(t.el-my),0)/q.reduce((a,t)=>a+(t.p[0]-mx)**2,0);return x=>my+b*(x-mx)})();
+  const R6pct=()=>{const d=R6(1600)-R6(400);return (d/((1600-400)/S)*100)};
+  const RAMPX=[1345,1495];   // 1층 차 램프 차로 x 범위 (모델 px)
+  function yIn(x){if(x<369)return null;if(x<737.1)return 1130.6;if(x<856.5)return 1037.9;if(x<1345)return 786.4;if(x<=RAMPX[1])return null;return yRoad(x)-S*1.0}
+  function stripEl(x,y){const yr=yRoad(x),yi=yr-SB6;if(x<AP.wall||y<yi||y>yr)return null;if(x>=RAMPX[0]&&x<=RAMPX[1])return null;if(x>RAMPX[1])return R6(x);const t=(yr-y)/SB6;return R6(x)*(1-t)}
+  function elPlan(x,y){
+    if(x<AP.curb)return x<-1188?AP.walk:AP.road;                        // 압구정로 차도 (건너편 보도)
+    if(y>=yRoad(x)-2)return y<yRoad(x)+266?R6(Math.max(x,230)):R6(Math.max(x,230))+0.12;   // 뒷길(6M) · 그 건너 대지
+    if(x<230)return AP.walk;                                             // 압구정로 보도
+    if(x>1598){const t=Math.min(1,Math.max(0,(x-1880)/270));return 1.95*(1-t)+(R6(x)+0.12)*t}   // 동쪽 옆 대지 529-6 (+1.95) → 멀어지면 도로 높이
+    if(y<172)return 0.30;                                                // 북쪽 옆 땅
+    {const e=stripEl(x,y);if(e!=null)return e}                           // 뒷길 쪽: 도로 높이에서 건물(0)까지 경사
+    if(x<AP.wall)return AP.walk*(AP.wall-x)/(AP.wall-230);                // 전면공지 3m: 보도(0) → 1층(+15cm) 경사 — 뒷길 쪽과 같은 방식
+    return 0}
+  const elG=(x,y)=>st.terr==='raw'?elAt(x,y):elPlan(x,y);
+  function elAt(x,y){let ws=0,s=0;for(const q of PTS){const d2=(q.p[0]-x)**2+(q.p[1]-y)**2;if(d2<1)return q.el;const w=1/d2;ws+=w;s+=w*q.el}return s/ws}
+  // FFL(±0) 기준 발산형 색: 가운데 무채색, 낮을수록 파랑, 높을수록 주황 · 10cm 단위 띠로 끊어 칠해 높이 차가 계단처럼 읽힘
+  const C0=new THREE.Color(0x56605d),CL=new THREE.Color(0x2f7fd6),CH=new THREE.Color(0xf07a2a);
+  function ramp(e,out){const q=Math.round(e*10)/10;if(Math.abs(q)<0.05)return out.copy(C0);return q<0?out.copy(C0).lerp(CL,Math.min(1,-q/0.5)*0.9+0.1):out.copy(C0).lerp(CH,Math.min(1,q/1.0)*0.9+0.1)}
+  // 등고선(10cm, 50cm마다 진하게) + FFL ±0 선(흰 굵은 선): marching squares
+  function contours(xs,ys,E,nx,ny){const lv=[];for(let v=-0.6;v<=1.21;v+=0.1)lv.push(Math.round(v*10)/10);
+    const a1=[],a5=[],z=[];
+    for(const v of lv){const arr=v===0?z:(Math.abs(v*2-Math.round(v*2))<1e-6?a5:a1),y=v*st.k+0.06;
+      for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const cx=xs[i]+(xs[1]-xs[0])/2,cy=ys[j]+(ys[1]-ys[0])/2;if(!keep(cx,cy))continue;
+        const c=[[xs[i],ys[j],E[j*nx+i]],[xs[i+1],ys[j],E[j*nx+i+1]],[xs[i+1],ys[j+1],E[(j+1)*nx+i+1]],[xs[i],ys[j+1],E[(j+1)*nx+i]]],pts=[];
+        for(let k=0;k<4;k++){const A=c[k],B=c[(k+1)%4];if((A[2]<v)!==(B[2]<v)){const t=(v-A[2])/(B[2]-A[2]);pts.push([A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t])}}
+        for(let k=0;k+1<pts.length;k+=2){const [X1,Z1]=P(...pts[k]),[X2,Z2]=P(...pts[k+1]);arr.push(X1,y,Z1,X2,y,Z2)}}}
+    G.add(lines(a1,LE.c1));G.add(lines(a5,LE.c5));
+    for(let i=0;i<z.length;i+=6){const m=seg([z[i],z[i+2]],[z[i+3],z[i+5]],z[i+1]-0.02,z[i+1]+0.06,0.22,MT.zero);G.add(m)}}
+  const keep=(x,y)=>true;
+  // 실제 바닥 재료로 칠하기: 어디가 차도·보도·전면공지인지 바로 알아보게
+  const ZC={asph:new THREE.Color(0x3f4447),asph6:new THREE.Color(0x4b5053),walk:new THREE.Color(0xb7afa2),front:new THREE.Color(0xd2cbbd),slope:new THREE.Color(0xe0b57a),
+    site:new THREE.Color(0x8b9490),lot:new THREE.Color(0x6f7a6c)};
+  const ROAD6W=266,CL30=-564;   // 뒷길 폭 6m · 압구정로 중앙선(도로경계에서 15m)
+  function zoneOf(x,y){if(x<AP.curb)return x<-1188?'walk':'asph';if(y>=yRoad(x)-2)return y<yRoad(x)+ROAD6W?'asph6':'lot';
+    if(x<230)return 'walk';if(x>1598||y<172)return 'lot';if(y>yRoad(x)-S*1.2)return 'asph6';
+    if(x<AP.wall)return 'slope';return 'site'}
+  const Z2={asph:'--road',asph6:'--road',walk:'--walk',lot:'--ground',front:'--walk',slope:'--walk',site:'--walk'},_c2=new THREE.Color();
+  function gcol(e,x,y,out){if(st.gc==='height')return ramp(e,out);const z=zoneOf(x,y);out.copy(ZC[z]);
+    {const d=Math.hypot(x-900,y-700),t=Math.min(1,Math.max(0,(d-1100)/700));if(t>0)out.lerp(_c2.set(css(Z2[z])),t)}
+    if(Math.abs(e)>0.04){out.lerp(e<0?CL:CH,Math.min(.07,Math.abs(e)*0.08))}return out}   // 아주 옅게 높낮이 기운만
+  // 텍스처: 보도블럭(2m 반복) · 아스팔트
+  const PAVE=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#a9a39a';g.fillRect(0,0,w,h);const bw=w/8,bh=h/16;for(let j=0;j<16;j++)for(let i=-1;i<9;i++){const x=i*bw+(j%2)*bw/2,v=150+((i*7+j*13)%5)*8;
+      g.fillStyle=`rgb(${v+18},${v+12},${v+4})`;g.fillRect(x+1,j*bh+1,bw-2,bh-2)}});
+  const PAVE2=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#8c857b';g.fillRect(0,0,w,h);const cols=5,rows=10,bw=w/cols,bh=h/rows;
+      for(let j=0;j<rows;j++)for(let i=-1;i<=cols;i++){const x=i*bw+(j%2)*bw/2,v=212+((i*5+j*11)%4)*9;g.fillStyle=`rgb(${v},${v-4},${v-10})`;g.fillRect(x+2,j*bh+2,bw-4,bh-4)}});
+  const ASPH=canvasTex(128,128,(g,w,h)=>{g.fillStyle='#3d4245';g.fillRect(0,0,w,h);for(let k=0;k<900;k++){const v=50+Math.random()*30;g.fillStyle=`rgb(${v},${v+3},${v+5})`;g.fillRect(Math.random()*w,Math.random()*h,1.5,1.5)}});
+  const GM={pave:cm(new THREE.MeshStandardMaterial({map:PAVE,roughness:.9,side:THREE.DoubleSide})),paveIn:cm(new THREE.MeshStandardMaterial({map:PAVE,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:.85,depthWrite:false})),
+    asph:cm(new THREE.MeshStandardMaterial({map:ASPH,roughness:1,side:THREE.DoubleSide})),lot:cm(new THREE.MeshStandardMaterial({color:0x4d5652,roughness:1,side:THREE.DoubleSide})),
+    siteIn:cm(new THREE.MeshStandardMaterial({map:PAVE2,color:0xe9dcc6,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:1,depthWrite:true})),
+    slope:cm(new THREE.MeshStandardMaterial({map:PAVE2,color:0xf3c58e,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:.9,depthWrite:false})),
+    slopeS:cm(new THREE.MeshStandardMaterial({map:PAVE2,color:0xb9dcef,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:.9,depthWrite:false})),
+    curb:cm(new THREE.MeshStandardMaterial({color:0xd0ccc4,roughness:.8})),far:new THREE.MeshStandardMaterial({color:0x3a4240,roughness:1})};
+  function gOp(){const o=Math.min(.9,Math.max(.12,st.op*0.95));GM.paveIn.opacity=o;GM.siteIn.opacity=st.under?0.14:1;[GM.slope,GM.slopeS,GM.siteIn,GM.paveIn].forEach(m=>{const solid=!st.under&&st.op>=0.84;if(m===GM.slope||m===GM.slopeS)m.opacity=st.under?0.4:solid?0.97:o;m.depthWrite=solid});if(st.under)[GM.paveIn,GM.siteIn].forEach(m=>{m.opacity=0.14})
+    // 건물을 투명하게 하면(85% 미만) 바깥 도로·보도도 같이 비쳐서 지하가 보이게
+    const see=st.under||st.op<0.84,oo=st.under?0.16:see?Math.max(.25,st.op):1;[GM.pave,GM.asph,GM.lot,GM.far,GM.curb].forEach(m=>{if(m.transparent!==see){m.transparent=see;m.needsUpdate=true}m.opacity=oo;m.depthWrite=!see})
+    const s2=see&&state.era==='srv';[M.road,M.walk,M.ground,M.site].forEach(m=>{m.transparent=s2;m.opacity=s2?(st.under?0.05:0.12):1;m.depthWrite=!s2;m.needsUpdate=true})}   // 대지 안 바닥은 건물 불투명도를 따라감 → 낮추면 지하가 보임
+  // 평면 다각형을 높이 함수(1차식이면 정확)로 들어 올린 면
+  function surf(poly,elf,mat,holes,lift){const sh=poly.map(q=>new THREE.Vector2(...P(...q))),hs=(holes||[]).map(h=>h.map(q=>new THREE.Vector2(...P(...q))));
+    const tri=THREE.ShapeUtils.triangulateShape(sh,hs),all=sh.concat(...hs),src=poly.concat(...(holes||[]));
+    const pos=[],uv=[];all.forEach((v,i)=>{pos.push(v.x,gy(elf(...src[i]))+(lift||0.02),v.y);uv.push(v.x/2,v.y/2)});
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(tri.flat());g.computeVertexNormals();
+    const m=new THREE.Mesh(g,mat);m.receiveShadow=true;G.add(m);return m}
+  // 두 줄(바깥·안쪽) 사이 띠 면
+  function ribbon(outer,inner,eo,ei,mat){const pos=[],uv=[],idx=[];outer.forEach((q,i)=>{const [X1,Z1]=P(...q),[X2,Z2]=P(...inner[i]);pos.push(X1,gy(eo[i])+0.025,Z1,X2,gy(ei[i])+0.025,Z2);uv.push(X1/2,Z1/2,X2/2,Z2/2);if(i)idx.push(2*i-2,2*i-1,2*i,2*i-1,2*i+1,2*i)});
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();const m=new THREE.Mesh(g,mat);m.receiveShadow=true;G.add(m)}
+  function groundPolys(){gOp();const X0=-1250,X1=2600,Y0=-700,Y1=2300,W6=266;
+    const C=x=>yRoad(x),fl=e=>()=>e,ENV=typeof KHSK!=='undefined'&&!!KHSK.grp;   // 주변 실사 모델이 있으면 대지 밖 도로·보도·옆 대지는 그 모델을 씀
+    if(!ENV){
+    // 압구정로 차도 · 건너편 보도 · 우리 쪽 보도(연석)
+    surf([[X0,Y0],[AP.curb,Y0],[AP.curb,Y1],[X0,Y1]],fl(AP.road),GM.asph);
+    surf([[AP.curb,Y0],[230,Y0],[230,C(230)],[AP.curb,C(AP.curb)]],fl(AP.walk),GM.pave);
+    surf([[AP.curb,C(AP.curb)+W6],[230,C(230)+W6],[230,Y1],[AP.curb,Y1]],fl(AP.walk),GM.pave);
+    {const [a,b]=[P(AP.curb,Y0),P(AP.curb,Y1)];const m=seg(a,b,gy(AP.road),gy(AP.walk)+0.03,0.2,GM.curb);G.add(m)}
+    // 뒷길(6M, 서→동 오르막 평면) · 건너편 대지
+    surf([[AP.curb,C(AP.curb)],[X1,C(X1)],[X1,C(X1)+W6],[AP.curb,C(AP.curb)+W6]],x=>R6(Math.max(x,230)),GM.asph);
+    surf([[230,C(230)+W6],[X1,C(X1)+W6],[X1,Y1],[230,Y1]],x=>R6(Math.max(x,230))+0.12,GM.lot);
+    // 북쪽·동쪽 옆 대지
+    surf([[230,Y0],[X1,Y0],[X1,172],[230,172]],(x,y)=>x<=1598?0.30:elPlan(x,171),GM.lot);
+    surf([[1598,172],[1880,172],[1880,C(1880)],[1598,C(1598)]],fl(1.95),GM.lot);
+    surf([[1880,172],[X1,172],[X1,C(X1)],[1880,C(1880)]],(x,y)=>elPlan(x,Math.min(y,C(x)-3)),GM.lot);
+    }
+    const RR=R6;   // v107: 뒷길 측량 높이 그대로 → 대지 쪽 1m 띠는 도로에서 1층으로 '내려가는' 경사
+    if(ENV){   // 주변 모델의 뒷길은 평평하므로, 우리 대지 앞 구간만 측량 높이로 도로면을 덮어 깜 (동쪽 끝은 원래 도로 높이로 완만히 내려감)
+      const XE=1700,XR=2050,rh=x=>x<=XE?Math.max(R6(x),AP.walk):AP.walk+(Math.max(R6(XE),AP.walk)-AP.walk)*Math.max(0,(XR-x)/(XR-XE));
+      surf([[230,C(230)],[XR,C(XR)],[XR,C(XR)+W6],[230,C(230)+W6]],x=>rh(Math.max(230,Math.min(XR,x)))+0.015,GM.asph);
+      {const pos=[];for(let x=230;x<XR;x+=20){const x2=Math.min(XR,x+20),[Xa,Za]=P(x,C(x)+W6),[Xb,Zb]=P(x2,C(x2)+W6),y0=gy(AP.walk),ya=gy(rh(x)+0.015),yb=gy(rh(x2)+0.015);
+          pos.push(Xa,y0,Za,Xb,y0,Zb,Xb,yb,Zb, Xa,y0,Za,Xb,yb,Zb,Xa,ya,Za)}
+        const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.computeVertexNormals();const sk=new THREE.Mesh(geo,GM.curb);sk.material.side=THREE.DoubleSide;G.add(sk)}}
+    // 대지 안: 전면공지(보도블럭, 보도와 같은 높이) → 건물 앞 2.5m 경사(+15cm) → 1층 바닥
+    const ys=172,yeW=C(AP.wall);
+    surf([[230,ys],[AP.wall,ys],[AP.wall,C(AP.wall)-SB6],[230,C(230)-SB6*0.0]].slice(0,3).concat([[230,C(230)]]),(x)=>AP.walk*(AP.wall-x)/(AP.wall-230),GM.slope);   // 앞 3m 경사 (주황)
+    // 뒷길 쪽 경사 띠: 대지 경계(도로 높이) → 1m 후퇴선(1층 0) · 램프 차로는 비움, 램프 동쪽은 도로 높이
+    {const segs=[[AP.wall,RAMPX[0]],[RAMPX[1],1598]];
+      segs.forEach(([a,b],k)=>{const o=[],i=[],eo=[],ei=[];for(let x=a;x<=b+0.01;x+=Math.max(4,(b-a)/30)){const xx=Math.min(x,b);o.push([xx,C(xx)]);i.push([xx,C(xx)-SB6]);eo.push(RR(xx));ei.push(k?RR(xx):0)}
+        ribbon(o,i,eo,ei,k?GM.paveIn:GM.slopeS)})
+      // 앞 3m 띠와 뒷길 1m 띠가 만나는 남서 모서리 삼각형
+      surf([[230,C(230)],[AP.wall,C(AP.wall)],[AP.wall,C(AP.wall)-SB6]],(x,y)=>{const e=elPlan(x,Math.min(y,C(x)-0.5));return e},GM.slope)}
+    // 경사 끝단 옆면(쐐기) — 보도블럭을 경사지게 깐 두께가 보이게
+    {const wedge=(a,b,ea,eb,base)=>{const [X1,Z1]=P(...a),[X2,Z2]=P(...b),y0=gy(base),ya=gy(ea)+0.02,yb=gy(eb)+0.02;
+        const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([X1,y0,Z1,X2,y0,Z2,X2,yb,Z2, X1,y0,Z1,X2,yb,Z2,X1,ya,Z1],3));geo.computeVertexNormals();G.add(new THREE.Mesh(geo,GM.curb))};
+      wedge([230,172],[AP.wall,172],AP.walk,0,AP.walk-0.12);                         // 앞 경사 북쪽 끝
+      wedge([RAMPX[0],C(RAMPX[0])],[RAMPX[0],C(RAMPX[0])-SB6],RR(RAMPX[0]),0,-0.12);   // 뒷길 경사, 램프 쪽 끝
+      wedge([AP.wall,C(AP.wall)],[AP.wall,C(AP.wall)-SB6],RR(AP.wall),0,-0.12)}
+    // 대지 안 나머지(건물 밑·램프 둘레) = 1층 바닥 높이, 1층 램프 구멍은 비움
+    {const inner=[[AP.wall,172],[1598,172],[1598,C(1598)-SB6],[RAMPX[1],C(RAMPX[1])-SB6],[RAMPX[1],786.4],[RAMPX[0],786.4],[RAMPX[0],C(RAMPX[0])-SB6],[AP.wall,C(AP.wall)-SB6]];
+      const holes=(typeof SCH!=='undefined'&&SCH&&SCH.holes||[]).filter(h=>h&&h.length>2).map(h=>clipY(clipX(h,AP.wall+2,false),780,true)).filter(h=>h.length>2&&h.every(q=>inPoly(q,inner)));
+      try{surf(inner,fl(0),GM.siteIn,holes,0.012)}catch(e){surf(inner,fl(0),GM.siteIn,[],0.012)}}
+    // 먼 바닥(②와 같은 색, 실측 범위 밖)
+    if(!ENV){const sh=new THREE.Shape([[-3000,-3000],[3000,-3000],[3000,3000],[-3000,3000]].map(q=>new THREE.Vector2(...q)));const hole=new THREE.Path([[X0,Y0],[X1,Y0],[X1,Y1],[X0,Y1]].map(q=>{const v=P(...q);return new THREE.Vector2(v[0],-v[1])}).reverse());sh.holes.push(hole);
+      const g=new THREE.ShapeGeometry(sh);g.rotateX(-Math.PI/2);GM.far.color.set(css('--ground'));const m=new THREE.Mesh(g,GM.far);m.position.y=gy(AP.road)-0.02;G.add(m)}}
+  function terrain(){if(st.terr==='plan'&&st.gc==='real')return groundPolys();const x0=-1250,x1=2600,y0=-700,y1=2300,dx=25,nx=Math.ceil((x1-x0)/dx)+1,ny=Math.ceil((y1-y0)/dx)+1;
+    const pos=new Float32Array(nx*ny*3),col=new Float32Array(nx*ny*3),c=new THREE.Color(),E=new Float32Array(nx*ny),xs=[],ys=[];
+    for(let i=0;i<nx;i++)xs.push(x0+i*dx);for(let j=0;j<ny;j++)ys.push(y0+j*dx);
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const x=x0+i*dx,y=y0+j*dx,e=elG(x,y),[X,Z]=P(x,y),o=(j*nx+i)*3;E[j*nx+i]=e;
+      pos[o]=X;pos[o+1]=e*st.k+0.03;pos[o+2]=Z;gcol(e,x,y,c);col[o]=c.r;col[o+1]=c.g;col[o+2]=c.b}
+    contours(xs,ys,E,nx,ny);
+    const iA=[],iB=[];for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){const x=x0+(i+.5)*dx,y=y0+(j+.5)*dx;if(!keep(x,y))continue;
+      const a=j*nx+i,b=a+1,d=a+nx,e=d+1;(inPoly([x,y],SITE)?iB:iA).push(a,d,b,b,d,e)}
+    [[iA,MT.terr],[iB,MT.terrS]].forEach(([idx,m])=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos.slice(),3));
+      g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();const me=new THREE.Mesh(g,m);me.receiveShadow=true;G.add(me)})}
+  // keep the part of a polygon with y<=Y (top) or y>=Y
+  function clipY(poly,Y,top){const out=[],ins=q=>top?q[1]<=Y+1e-6:q[1]>=Y-1e-6;
+    for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];if(ins(a))out.push(a);
+      if(ins(a)!==ins(b)){const t=(Y-a[1])/(b[1]-a[1]);out.push([a[0]+(b[0]-a[0])*t,Y])}}return out}
+  const pr=(poly,y0,h,m,edge)=>{if(!poly||poly.length<3)return null;const o=prism(poly,y0,h,m,{shadow:false,edges:!!edge,edgeMat:edge||LE.edge});o.receiveShadow=false;G.add(o);return o};
+  const bx=(r,y0,y1,m)=>{const o=boxPx(r,y0,y1,m);o.castShadow=false;o.receiveShadow=false;G.add(o);
+    o.add(new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry),LE.edge));return o};
+  let CORE={stair:m5r(1030,440,1140,512),ev:m5r(1000,515,1115,575),eps:m5r(985,380,1140,440),vest:m5r(958,440,1030,510)};   // 아래에서 1층 평면 값으로 바꿈
+  const ELEC=m5r(825,380,955,630);
+  const RAMP=[[825,265],[1180,265],[1265,315],[1312,400],[1315,560],[1280,640],[1200,695],[1140,700],[1140,610],[1185,580],[1210,520],[1205,450],[1170,400],[1110,380],[825,380]].map(q=>m5(...q));
+  const RAMPN=[[825,265],[1180,265],[1240,300],[1180,380],[825,380]].map(q=>m5(...q));
+  // ---- 지상: 1층 평면도(001)를 그대로 따라 그린 윤곽을 옥상까지 올림 (단면도 006·007: 2층 이상은 매장+코어까지, 램프 위는 열림) ----
+  const c2m=(x,y)=>g2m(560+x/1.2281,260+y/1.2281);   // 001 평면 확대본(200dpi 크롭) 좌표
+  const CP=a=>a.map(q=>c2m(...q));
+  const UP=CP([[175,72],[555,72],[555,272],[822,272],[822,325],[1010,325],[1010,612],[632,612],[632,848],[520,848],[520,935],[175,935]]);
+  const RETAIL=CP([[175,72],[555,72],[555,455],[632,455],[632,848],[520,848],[520,935],[175,935]]);   // PH1(7F) 바닥 = 매장 블록
+  const R1={toil:CP([[543,272],[640,272],[640,455],[543,455]]),eps:CP([[700,272],[822,272],[822,325],[700,325]]),vest:CP([[700,325],[795,325],[795,500],[700,500]]),
+    stair:CP([[795,325],[1010,325],[1010,440],[795,440]]),ev:CP([[795,440],[960,440],[960,530],[795,530]]),av:CP([[960,440],[1005,440],[1005,540],[960,540]]),
+    hall:CP([[632,500],[1010,500],[1010,612],[632,612]]),door:CP([[270,853],[377,928],[305,1008],[205,935]]),
+    pen:CP([[700,272],[1010,272],[1010,540],[700,540]]),ewalk:CP([[660,615],[740,615],[740,850],[660,850]]),evc:CP([[835,625],[1030,625],[1030,820],[835,820]])};
+  {const rc=q=>[q[0][0],q[0][1],q[2][0],q[2][1]];CORE={stair:rc(R1.stair),ev:rc(R1.ev),eps:rc(R1.eps),vest:rc(R1.vest)}}   // 코어는 1층 평면 위치로 지하~옥상 한 줄
+  const FH={g:5.4,t:4.2,top:7.2,ph:3.6};   // 1층 5.4 · 2~5층 4.2 · 6층~PH1 7.2 (7층으로 나누면 3.6+3.6) · 옥상 코어 3.6
+  const LV2=[{k:'1F',y:0,h:FH.g},{k:'2F',y:5.4,h:4.2},{k:'3F',y:9.6,h:4.2},{k:'4F',y:13.8,h:4.2},{k:'5F',y:18.0,h:4.2}];
+  const Y6=22.2,YR=Y6+FH.top,Y7=Y6+3.6;
+  const BMt={glass:SMc({color:0xa9c3cc,transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide,metalness:.2,roughness:.2}),
+    slab:SMc({color:0xe6e9e7,transparent:true,opacity:.8,side:THREE.DoubleSide}),core:SMc({color:0xc4c9c6,transparent:true,opacity:.7,side:THREE.DoubleSide}),
+    room:SMc({color:0x9aa4a1,transparent:true,opacity:.45,depthWrite:false,side:THREE.DoubleSide}),deck:SMc({color:0xa58a6c,transparent:true,opacity:.85,side:THREE.DoubleSide}),
+    pv:SMc({color:0x2b3a4a,metalness:.5,roughness:.35,transparent:true,opacity:.9,side:THREE.DoubleSide}),open:SMc({color:0x6fb8b1,transparent:true,opacity:.1,depthWrite:false,side:THREE.DoubleSide})};
+  const BLn={edge:cm(new THREE.LineBasicMaterial({color:0xf2f6f5,transparent:true,opacity:.85})),mull:cm(new THREE.LineBasicMaterial({color:0xdfe7e5,transparent:true,opacity:.35}))};
+  function opMats(){const o=st.op;BMt.glass.opacity=.12+.45*o;BMt.slab.opacity=.25+.7*o;BMt.core.opacity=.2+.65*o;BMt.room.opacity=.15+.4*o;BMt.deck.opacity=.3+.6*o;BMt.pv.opacity=.4+.55*o;
+    BLn.edge.opacity=.45+.5*o;BLn.mull.opacity=.12+.35*o;[BMt.glass,BMt.room,BMt.open].forEach(m=>m.depthWrite=false)}
+  function mull(poly,y0,h,step,arr){const W=poly.map(q=>P(...q));for(let i=0;i<W.length;i++){const a=W[i],b=W[(i+1)%W.length],L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.round(L/step));
+    for(let k=0;k<=n;k++){const t=k/n,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;arr.push(x,y0,z,x,y0+h,z)}}}
+  function ring(poly,y,arr){const W=poly.map(q=>P(...q));for(let i=0;i<W.length;i++){const a=W[i],b=W[(i+1)%W.length];arr.push(a[0],y,a[1],b[0],y,b[1])}}
+  function planMass(){const g=new THREE.Group();g.name='planMass';G.add(g);const E=[],Mu=[];
+    const add=(poly,y0,h,m,edge)=>{if(!poly||poly.length<3||h<=0)return;const o=prism(poly,y0,h,m,{shadow:false});o.castShadow=false;o.receiveShadow=false;g.add(o);if(edge){ring(poly,y0,E);ring(poly,y0+h,E)}};
+    const seven=!!state.use7;
+    // 1층: 실내 윤곽 유리 + 코어·화장실 + 모서리 출입 전실
+    add(UP,0,0.25,BMt.slab,true);add(UP,0.25,FH.g-0.25,BMt.glass,false);mull(UP,0.25,FH.g-0.25,1.8,Mu);
+    [R1.toil,R1.eps,R1.vest].forEach(q=>add(q,0.25,3.2,BMt.room,true));
+    add(R1.door,0.25,3.0,BMt.glass,true);
+    add(R1.evc,0.02,0.04,BMt.open,true);add(R1.ewalk,0.02,0.06,BMt.room,true);
+    // 2~5층
+    LV2.slice(1).forEach(L=>{add(UP,L.y,0.3,BMt.slab,true);add(UP,L.y+0.3,L.h-0.3,BMt.glass,false);mull(UP,L.y+0.3,L.h-0.3,1.8,Mu)});
+    // 6층 + PH1 (기본: 7층 바닥 없이 6층을 PH1 천장까지 오픈) / 7층으로 나눔
+    add(UP,Y6,0.3,BMt.slab,true);
+    add(RETAIL,Y6+0.3,FH.top-0.3,BMt.glass,false);mull(RETAIL,Y6+0.3,FH.top-0.3,1.8,Mu);
+    const east=UP;   // 매장 블록 밖(화장실·코어·홀 쪽)은 6층 높이까지만 → 그 위가 PH1 테라스
+    const terr=clipX(east,RETAIL[3][0],false);
+    const strip=CP([[555,272],[632,272],[632,455],[555,455]]);
+    [terr,strip].forEach(q=>{add(q,Y6+0.3,3.9,BMt.glass,false);mull(q,Y6+0.3,3.9,1.8,Mu);add(q,Y6+4.2,0.3,BMt.deck,true)});
+    if(seven){add(RETAIL,Y7,0.3,BMt.slab,true)}else ring(RETAIL,Y7,Mu);
+    // PH2 옥상: 매장 블록 지붕(옥상정원) + 난간 + 태양광 퍼걸러, 코어는 옥상까지 올라와 계단·승강기 탑
+    add(RETAIL,YR,0.35,BMt.deck,true);
+    {const W=RETAIL.map(q=>P(...q));for(let i=0;i<W.length;i++){const m=seg(W[i],W[(i+1)%W.length],YR+0.35,YR+1.45,0.12,BMt.glass);m.receiveShadow=false;g.add(m)}}
+    {const ins=offsetPoly(RETAIL,-0.9*S),[x0,y0,x1,y1]=[Math.min(...ins.map(q=>q[0])),Math.min(...ins.map(q=>q[1])),Math.max(...ins.map(q=>q[0])),Math.max(...ins.map(q=>q[1]))];
+      for(let yy=y0;yy<y1-40;yy+=95){const xa=xsAt(ins,yy+1),xb=xsAt(ins,yy+69);if(xa.length<2||xb.length<2)continue;const l=Math.max(xa[0],xb[0]),rr=Math.min(xa[xa.length-1],xb[xb.length-1]);if(rr-l<40)continue;add([[l,yy],[rr,yy],[rr,yy+70],[l,yy+70]],YR+3.0,0.08,BMt.pv,false)}
+      for(const q of [[x0,y0],[xsAt(ins,y0+2).slice(-1)[0]||x1,y0],[x0,y1-40],[xsAt(ins,y1-42).slice(-1)[0]||x1,y1-40]]){const [X,Z]=P(...q);const c=box(X-.08,X+.08,YR+.35,YR+3.0,Z-.08,Z+.08,BMt.core);c.castShadow=false;g.add(c)}}
+    // 코어 (B4 ~ 옥상 계단탑)
+    add(R1.stair,0,YR+FH.ph,BMt.core,true);add(R1.ev,0,YR+FH.ph+1.0,BMt.core,true);
+    add(R1.pen,YR,FH.ph,BMt.glass,true);
+    g.add(lines(E,BLn.edge));g.add(lines(Mu,BLn.mull));
+    g.traverse(o=>{o.castShadow=false})}
+  function topY(){return YR+FH.ph+1}
+  // ---- 출입구 단차 · 경사 구간 · 빗물 방향 ----
+  const SPM={slope:cm(new THREE.MeshBasicMaterial({color:0xf5a54a,transparent:true,opacity:.55,side:THREE.DoubleSide,depthWrite:false})),
+    stripe:cm(new THREE.MeshBasicMaterial({color:0xffd27a,side:THREE.DoubleSide})),rain:cm(new THREE.MeshBasicMaterial({color:0x4f9be8,side:THREE.DoubleSide})),
+    warn:cm(new THREE.MeshBasicMaterial({color:0xff6b5e,side:THREE.DoubleSide}))};
+  const gy=e=>e*st.k;
+  function quadG(g,a,b,c,d,ea,eb,ec,ed,m,lift){const v=[a,b,c,d].map((q,i)=>{const [X,Z]=P(...q);return [X,gy([ea,eb,ec,ed][i])+(lift||0.06),Z]});
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([...v[0],...v[1],...v[2],...v[0],...v[2],...v[3]],3));g.add(new THREE.Mesh(geo,m))}
+  function arrowG(g,px,dir,m,len,el){const [X,Z]=P(...px),y=gy(el)+0.12,ux=dir[0],uz=dir[1],l=len||1.6,w=l*0.55;
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute([X+ux*l,y,Z+uz*l,X-uz*w,y,Z+ux*w,X+uz*w,y,Z-ux*w, X-uz*w*0.35,y,Z+ux*w*0.35,X+uz*w*0.35,y,Z-ux*w*0.35,X-ux*l*0.9-uz*w*0.35,y,Z-uz*l*0.9+ux*w*0.35, X+uz*w*0.35,y,Z-ux*w*0.35,X-ux*l*0.9+uz*w*0.35,y,Z-uz*l*0.9-ux*w*0.35,X-ux*l*0.9-uz*w*0.35,y,Z-uz*l*0.9+ux*w*0.35],3));g.add(new THREE.Mesh(geo,m))}
+  // ---- 현실 위치 표시: 대지경계선(흰 점선) · 건축한계선(빨간 점선) · 연석 · 압구정로 중앙선 · 장소 이름 ----
+  function placeLines(){const g=new THREE.Group();g.name='place';G.add(g);const y0=e=>gy(e)+0.07;
+    const dash=(a,b,ea,eb,m,dl,gl,w)=>{const [X1,Z1]=P(...a),[X2,Z2]=P(...b),L=Math.hypot(X2-X1,Z2-Z1),n=Math.max(1,Math.floor(L/(dl+gl)));
+      for(let i=0;i<n;i++){const t0=i*(dl+gl)/L,t1=Math.min(1,t0+dl/L),pa=[X1+(X2-X1)*t0,Z1+(Z2-Z1)*t0],pb=[X1+(X2-X1)*t1,Z1+(Z2-Z1)*t1],ya=y0(ea+(eb-ea)*t0);g.add(seg(pa,pb,ya,ya+0.03,w||0.14,m))}};
+    // 대지경계선
+
+    // 건축한계선: 압구정로 3m · 뒷길 1m · 옆 대지 0.5m (1층 평면 붉은 점선)
+
+    // 경사 시작선(대지 경계, 흰 실선) · 경사 끝선(후퇴선, 진한 선) · 치수 막대
+    // 압구정로 연석선 · 중앙선(노란 2줄)
+    {const a=[AP.curb,-160],b=[AP.curb,1600];const [X1,Z1]=P(...a),[X2,Z2]=P(...b);g.add(seg([X1,Z1],[X2,Z2],gy(AP.road),gy(AP.walk)+0.02,0.18,PLM.curb));
+      [-6,6].forEach(o=>{const [Xa,Za]=P(CL30+o,-160),[Xb,Zb]=P(CL30+o,1800);g.add(seg([Xa,Za],[Xb,Zb],gy(AP.road)+0.05,gy(AP.road)+0.07,0.12,PLM.yellow))})}
+    // 뒷길 중앙 점선(흰)
+    {for(let x=240;x<1990;x+=90){const a=[x,yRoad(x)+ROAD6W/2],b=[x+50,yRoad(x+50)+ROAD6W/2];dash(a,b,R6(x),R6(x+50),PLM.white,2,0,0.1)}}
+    g.traverse(o=>{o.castShadow=false})}
+  const PLM={front:cm(new THREE.MeshBasicMaterial({color:0xc4560f})),side:cm(new THREE.MeshBasicMaterial({color:0x1b5e9c})),dim:cm(new THREE.MeshBasicMaterial({color:0x6b2a00})),white:cm(new THREE.MeshBasicMaterial({color:0xf4f6f5})),red:cm(new THREE.MeshBasicMaterial({color:0xff6b5e})),curb:cm(new THREE.MeshStandardMaterial({color:0xd8d4cc})),yellow:cm(new THREE.MeshBasicMaterial({color:0xf2c14e}))};
+  function steps(){const g=new THREE.Group();g.name='steps';g.visible=st.lab.sp;G.add(g);
+    // ① 압구정로 전면공지 뒤쪽 경사 구간 (보도 −0.16 → 1층 0)
+    {const x0=AP.wall-AP.band,x1=AP.wall,ya=186,yb=yRoad(x1)-S*1.3;
+      for(let y=ya+20;y<yb-10;y+=60)arrowG(g,[x0+AP.band*0.5,y],[1,0],SPM.stripe,1.0,AP.walk/2)}
+    // ② 엘리베이터 홀 앞 보행 경사로 (도로 +0.45 → 1층 0, 1/13.4)
+    {const C=q=>c2m(...q),a=C([660,850]),b=C([740,850]),c=C([740,615]),d=C([660,615]);
+      quadG(g,a,b,c,d,0.45,0.45,0,0,SPM.slope,0.08);arrowG(g,c2m(700,700),(()=>{const [X1,Z1]=P(...c2m(700,800)),[X2,Z2]=P(...c2m(700,640)),l=Math.hypot(X2-X1,Z2-Z1);return [(X2-X1)/l,(Z2-Z1)/l]})(),SPM.stripe,1.1,0.25)}
+    // ③ 빗물: 뒷길은 동→서로 흘러 내려가고, 도로가 더 높은 매장 남쪽 벽·홀 입구·램프 입구로 흘러 들어올 수 있음
+    {const dx=-1,dz=0;for(const x of [560,820,1080,1340,1600])arrowG(g,[x,yRoad(x)+120],[dx,dz],SPM.rain,1.8,R6(x));
+      const inn=(()=>{const [X1,Z1]=P(600,yRoad(600)),[X2,Z2]=P(600,yRoad(600)-100),l=Math.hypot(X2-X1,Z2-Z1);return [(X2-X1)/l,(Z2-Z1)/l]})();
+      for(const x2 of [520,720,1000,1290])arrowG(g,[x2,yRoad(x2)+30],inn,SPM.warn,1.2,R6(x2))}
+    g.traverse(o=>{o.castShadow=false})}
+  // ---- 1층 차량 램프 (001 평면): 6M도로 차 출입구(FH 13.90 = +0.70) → 진입 마당 → 동쪽 직선(남→북) → 곡선(내반경 5m, 차로 3.6m) → 북쪽 띠(동→서) → 서쪽 끝에서 지하1층(−3.30) 도착
+  const RC=[895,432],RIN=195,ROUT=336;          // 곡선 중심·반경 (크롭 px, 41.6px/m 기준 5.0m / 8.6m)
+  const LANE=[1090,1231],NB_Y=[96,237],XEND=565,YROAD=754,YAPR=665;
+  const RAMP_EL0=0.70,RAMP_EL1=0.55,RAMP_ELB=-3.30;
+  function rampPath(){const pts=[];   // {c:[x,y], l:[x,y], r:[x,y], el}
+    const push=(cx,cy,lx,ly,rx,ry)=>pts.push({c:[cx,cy],l:[lx,ly],r:[rx,ry]});
+    for(let y=YROAD;y>=RC[1];y-=12)push((LANE[0]+LANE[1])/2,y,LANE[0],y,LANE[1],y);
+    for(let a=0;a>=-90;a-=4){const t=a*Math.PI/180,c=Math.cos(t),sn=Math.sin(t);push(RC[0]+c*(RIN+ROUT)/2,RC[1]+sn*(RIN+ROUT)/2,RC[0]+c*RIN,RC[1]+sn*RIN,RC[0]+c*ROUT,RC[1]+sn*ROUT)}
+    for(let x=RC[0];x>=XEND;x-=12)push(x,(NB_Y[0]+NB_Y[1])/2,x,NB_Y[1],x,NB_Y[0]);
+    // 높이: 도로 경계 +0.70 → 진입 마당 끝 +0.55 (평탄) → 길이에 비례해 지하1층 −3.30
+    let L=0,La=0;for(let i=1;i<pts.length;i++){const d=Math.hypot(pts[i].c[0]-pts[i-1].c[0],pts[i].c[1]-pts[i-1].c[1]);L+=d;pts[i].s=L;if(pts[i].c[1]>=YAPR&&pts[i].c[0]>1000)La=L}pts[0].s=0;
+    pts.forEach(q=>{q.el=q.s<=La?RAMP_EL0+(RAMP_EL1-RAMP_EL0)*q.s/Math.max(1,La):RAMP_EL1+(RAMP_ELB-RAMP_EL1)*(q.s-La)/(L-La)});
+    return {pts,L,La}}
+  const vy=e=>e>0?e*st.k:e;   // 땅 높이 부풀리기와 맞춤 (0 위만 부풀림)
+  function ramp1F(){const g=new THREE.Group();g.name='ramp1F';G.add(g);const {pts}=rampPath(),M=P2=>P(...c2m(...P2));
+    const pos=[],idx=[];pts.forEach((q,i)=>{const [lx,lz]=M(q.l),[rx,rz]=M(q.r),y=vy(q.el)+0.04;pos.push(lx,y,lz,rx,y,rz);if(i)idx.push(2*i-2,2*i-1,2*i,2*i-1,2*i+1,2*i)});
+    const gm=new THREE.BufferGeometry();gm.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));gm.setIndex(idx);gm.computeVertexNormals();
+    g.add(new THREE.Mesh(gm,RPM.deck));
+    // 양쪽 벽(턱) 0.9m · 테두리 선
+    ['l','r'].forEach(sd=>{const wp=[],wi=[];pts.forEach((q,i)=>{const [x,z]=M(q[sd]),y=vy(q.el);wp.push(x,y,z,x,y+0.9,z);if(i)wi.push(2*i-2,2*i-1,2*i,2*i-1,2*i+1,2*i)});
+      const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wp,3));wg.setIndex(wi);wg.computeVertexNormals();g.add(new THREE.Mesh(wg,RPM.wall))});
+    {const L1=[];['l','r'].forEach(sd=>{for(let i=1;i<pts.length;i++){const [x0,z0]=M(pts[i-1][sd]),[x1,z1]=M(pts[i][sd]);L1.push(x0,vy(pts[i-1].el)+0.06,z0,x1,vy(pts[i].el)+0.06,z1)}});g.add(lines(L1,RPM.edge))}
+    // 진행 방향 화살표 (노란 쉐브론, 약 3m 간격)
+    for(let i=4;i<pts.length-2;i+=6){const a=pts[i],b=pts[i+1],[cx,cz]=M(a.c),[nx,nz]=M(b.c),dx=nx-cx,dz=nz-cz,dl=Math.hypot(dx,dz)||1,ux=dx/dl,uz=dz/dl,px=-uz,pz=ux,y=vy(a.el)+0.08;
+      const sh=new THREE.BufferGeometry();sh.setAttribute('position',new THREE.Float32BufferAttribute([cx+ux*0.9,y,cz+uz*0.9,cx-ux*0.5+px*0.9,y,cz-uz*0.5+pz*0.9,cx-ux*0.5-px*0.9,y,cz-uz*0.5-pz*0.9],3));g.add(new THREE.Mesh(sh,RPM.arrow))}
+    // 차 출입구 표시: 도로 경계의 진입 폭 + 바닥 화살표
+    {const [ax,az]=M([LANE[0]-30,YROAD]),[bx2,bz]=M([LANE[1]+40,YROAD]),y=vy(RAMP_EL0)+0.1;g.add(seg([ax,az],[bx2,bz],y,y+0.12,0.35,RPM.gate))}
+    // 보행 출입구 (엘리베이터 홀 · 모서리 매장) 바닥 표시
+    [[775,640],[260,960]].forEach(q=>{const [x,z]=M(q);const m=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.06,24),RPM.gate);m.position.set(x,0.06,z);g.add(m)});
+    g.traverse(o=>{o.castShadow=false})}
+  const RPM={deck:cm(new THREE.MeshStandardMaterial({color:0x8a9592,emissive:0x1a1f1e,roughness:.95,side:THREE.DoubleSide})),wall:cm(new THREE.MeshStandardMaterial({color:0xb9c2bf,transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide})),
+    edge:cm(new THREE.LineBasicMaterial({color:0xf5d06a,transparent:true,opacity:.9})),arrow:cm(new THREE.MeshBasicMaterial({color:0xf5d06a,side:THREE.DoubleSide})),gate:cm(new THREE.MeshBasicMaterial({color:0xf5d06a}))};
+  let INNER,B4P;
+  function build(){dispose(G);G.add(FR);
+    INNER=offsetPoly(SITE,0.45*S);B4P=clipX(INNER,X2,false);
+    terrain();
+    // 측점
+    const pg=new THREE.Group();pg.name='pts';pg.visible=st.lab.pt;G.add(pg);
+    PTS.forEach(q=>{const [X,Z]=P(...q.p),yb=elG(...q.p)*st.k,h=0.7;const m=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,h,6),MT.pin);m.position.set(X,yb+h/2,Z);pg.add(m);
+      const s=new THREE.Mesh(new THREE.SphereGeometry(.14,12,8),Math.abs(q.el)<0.005?MT.zero:q.el>0?MT.up:MT.dn);s.position.set(X,yb+h,Z);pg.add(s)});
+    // 인접대지 (단면도 레벨)
+    const ng=new THREE.Group();ng.visible=st.lab.nb;G.add(ng);
+    NB.forEach(n=>{const o=prism(n.poly,-1.2,n.el*st.k+1.2,MT.nb,{shadow:false,edges:true,edgeMat:LE.edge});ng.add(o)});
+    // 1F FFL 기준면
+
+    // 지상 매스 (현재 선택한 주차안·층수)
+    // 흙막이·지하 외벽 (대지경계선 안쪽 0.8m)
+    wallsAround(G,offsetPoly(SITE,0.2*S),MAT_W,-0.5,0.4,MT.wall);   // 흙막이 윗면은 땅 아래 (경사면을 가리지 않게)
+    wallsAround(G,offsetPoly(B4P,0.0),MAT_E,MAT_W,0.6,MT.wall);
+    // 기초
+    pr(clipX(INNER,X2,true),MAT_W,-10.8-MAT_W,MT.mat,LE.edge);pr(B4P,MAT_E,-13.5-MAT_E,MT.mat,LE.edge);
+    placeLines();
+    if(!useModelBase()){
+    // 층 바닥판: 1F 바닥 + B1~B4
+    pr(INNER,-0.35,0.33,MT.slab.B1,LE.slab);
+    BL.forEach(L=>{const fp=L.k==='B4'?B4P:INNER;pr(fp,L.y-0.3,0.3,MT.slab[L.k],LE.slab)});
+    // 램프 (곡선 3.6m · 내반경 5m) — 층마다 같은 띠로 단순화, B3는 북측 도착부만
+    BL.forEach(L=>{if(L.k==='B4')return;pr(L.k==='B3'?RAMPN:RAMP,L.y+0.02,0.2,MT.ramp)});ramp1F();
+    // 코어 (계단·승강기·EPS/TPS·전실) — B4 바닥까지
+    bx(CORE.stair,-13.2,0,MT.core);bx(CORE.ev,-14.2,0,MT.ev);bx(CORE.eps,-10.5,0,MT.core);bx(CORE.vest,-10.5,0,MT.core);
+    // B3 전기실: FFL −11.70 (B3 바닥보다 1.2m 낮춤)
+    bx(ELEC,-11.7,-7.2,MT.elec);
+    // B4 부분층: 기계실 · 물탱크 · 정화조 (단면도에서 읽은 개략 배치)
+    const xc=CORE.stair[2],yc=CORE.eps[3];
+    pr(clipY(clipX(B4P,xc,true),yc,false),-13.2,2.35,MT.mech,LE.edge);pr(clipY(clipX(B4P,CORE.eps[0],true),yc,true),-13.2,2.35,MT.mech,LE.edge);
+    pr(clipY(clipX(B4P,CORE.eps[0],false),yc,true),-13.2,2.35,MT.sep,LE.edge);pr(clipY(clipX(B4P,xc,false),yc,false),-13.2,2.35,MT.tank,LE.edge);}
+    if(st.mass&&st.bmode==='plan'){opMats();planMass()}
+    if(useModelBase()){const ring=offsetPoly(SITE,0.45*S),B4=clipX(ring,X2,false);
+      [[0,ring],[-3.3,ring],[-6.9,ring],[-10.5,ring],[-13.2,B4]].forEach(([y,poly])=>{const l=line(poly,y+0.02,LE.slab,true);l.name='lvo';G.add(l)});
+      // 땅 아래로 내려가는 깊이 기둥 (모서리 4곳)
+      [ring[0],ring[1],ring[2],ring[3]].forEach(q=>{const [X,Z]=P(...q);const l=lines([X,0,Z,X,-10.5,Z],LE.slab);l.name='lvo';G.add(l)})}
+    // 현재 모델 지하층 높이 (비교용 빨간 점선)
+    const og=new THREE.Group();og.visible=st.lab.old;G.add(og);
+    LEVELS.forEach(L=>{if(L.kind!=='base')return;const l=line(offsetPoly(INNER,0.3*S),L.y,LE.old,true);og.add(l)});
+    G.traverse(o=>{o.castShadow=false});
+    st.built=true;cutFrame()}
+  // ---- 단면 ----
+  const ext=()=>{const [X0,Z0]=P(230,172),[X1,Z1]=P(1598,1365);return {X0,Z0,X1,Z1}};
+  function applyCut(){planes.length=0;const E=ext();
+    if(st.cut==='h')planes.push(new THREE.Plane(new THREE.Vector3(0,0,-1),E.Z0+(E.Z1-E.Z0)*st.pos/100));
+    else if(st.cut==='v')planes.push(new THREE.Plane(new THREE.Vector3(1,0,0),-(E.X0+(E.X1-E.X0)*st.pos/100)));
+    mats.forEach(m=>m.needsUpdate=true);BM.forEach(m=>m.needsUpdate=true);cutFrame();relabel();
+    const r=document.getElementById('srv-posrow');if(r)r.hidden=st.cut==='none';
+    const o=document.getElementById('o-srvpos');if(o&&planes[0]){const E2=ext(),m=st.cut==='h'?(planes[0].constant-E2.Z0):(-planes[0].constant-E2.X0);o.textContent=(st.cut==='h'?'북측 경계에서 ':'압구정로 경계에서 ')+m.toFixed(1)+'m'}}
+  function cutFrame(){dispose(FR);if(!planes[0])return;const E=ext(),y0=-15,y1=st.mass?(st.bmode==='plan'?topY():Math.min(34,(SCH&&SCH.top)||25)+1):4,t=0.12;
+    const add=(a,b)=>{const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),L=A.distanceTo(B),m=new THREE.Mesh(new THREE.BoxGeometry(t,t,L),frameMat);m.position.copy(A).add(B).multiplyScalar(.5);m.lookAt(B);m.renderOrder=12;FR.add(m)};
+    if(st.cut==='h'){const z=planes[0].constant,xa=E.X0-1,xb=E.X1+1;add([xa,y0,z],[xb,y0,z]);add([xa,y1,z],[xb,y1,z]);add([xa,y0,z],[xa,y1,z]);add([xb,y0,z],[xb,y1,z])}
+    else{const x=-planes[0].constant,za=E.Z0-1,zb=E.Z1+1;add([x,y0,za],[x,y0,zb]);add([x,y1,za],[x,y1,zb]);add([x,y0,za],[x,y1,za]);add([x,y0,zb],[x,y1,zb])}}
+  // ---- 라벨 (makeLabels에서 매번 다시 만듦) ----
+  let LB=[];
+  // 라벨 원칙(2026.11.02 수정): 짧게 쓰고, 층 높이는 건물 왼쪽 모서리 밖에 세로 '자'처럼 붙이고, 서로 겹치면 덜 중요한 것을 숨김(declutter)
+  // 쉬운 말: 1층 바닥 = 0, +는 위·높음, −는 아래·낮음. '도면 표기' 칩을 켜면 같은 자리에 도면 기호(FFL·FH·EL)로 바뀜
+  const SW=0.15,sw=v=>v+SW;   // 보도 기준 표기
+  const cmT=v=>{const a=Math.abs(v);return a<0.995?Math.round(a*100)+'cm':a.toFixed(a<10?2:1).replace(/\.?0+$/,'')+'m'};
+  const sm=v=>Math.abs(v)<0.005?'0':(v>0?'+':'−')+Math.abs(v).toFixed(1).replace(/\.0$/,'')+'m';
+  const fE=v=>Math.abs(v)<0.005?'±0.00':(v>0?'+':'−')+Math.abs(v).toFixed(2);
+  const SUB=t=>` <span class="sub">${t}</span>`;
+  const FLN=k=>({B1:'지하1층',B2:'지하2층',B3:'지하3층',B4:'지하4층'}[k]||k.replace('F','층'));
+  const ptCol=v=>Math.abs(v)<0.005?'#fff':v>0?'#ffa45c':'#7fb8f5';
+  function labels(add){LB=[];const T=st.lab.tech;
+    const L=(html,sg,fn,o={})=>{const l=add(html,'fl sv'+(sg==='lv'?' rt':''),fn(),Object.assign({srv:true,sg},o));l.fn=fn;LB.push(l)};
+    PTS.forEach(q=>{const v=sw(q.el);L(T?`<b style="color:${ptCol(v)}">EL${fE(q.el)}</b>${SUB('FH '+q.fh.toFixed(2))}`
+        :`<b style="color:${ptCol(v)}">${v>0.005?'▲':v<-0.005?'▼':'━'}${Math.abs(v)<0.005?'0':cmT(v)}</b>${st.lab.ptn?SUB(q.n):''}`,
+      'pt',()=>{const [X,Z]=P(...q.p);return new THREE.Vector3(X,elG(...q.p)*st.k+1.0,Z)},{pri:Math.abs(q.el)})});
+    const LV=y=>{const a=anchor('w');return new THREE.Vector3(a[0],y,a[1])};
+    const lvl=(name,y,h,code,pri)=>L(T?`<b>${code}</b>FFL ${fE(y)}`:`<b>${name}</b>${sm(y)}${h?SUB('층높이 '+h.toFixed(1)):''}`,'lv',()=>LV(y+0.15),{pri});
+    lvl('1층 바닥 = 보도 +15cm',0,FH.g,'1F',9);
+    BL.forEach(b=>lvl(FLN(b.k),b.y,b.h,b.k,5));
+    if(st.mass&&st.bmode==='plan'){LV2.slice(1).forEach(b=>lvl(FLN(b.k),b.y,b.h,b.k,4));
+      if(state.use7){lvl('6층',Y6,3.6,'6F',6);lvl('7층',Y7,3.6,'7F',6)}else lvl('6층+PH1',Y6,FH.top,'6F',6);
+      lvl('옥상',YR,0,'PH2',7)}
+    L(T?'<b>기초 하단</b>≈ −11.65 / −14.55':`<b>땅 파는 깊이</b>${sm(-11.7)}${SUB('기계실 쪽 '+sm(-14.6))}`,'lv',()=>LV(MAT_E-0.4),{pri:3});
+    {const M=q=>P(...c2m(...q)),T2=st.lab.tech;
+      const [x0,z0]=M([1160,800]);L(T2?'<b>Car Ent</b>FH 13.90 · EL+0.70':'<b style="color:#f5d06a">🚗 차 출입구</b>보도 기준 ▲85cm','rp',()=>new THREE.Vector3(x0,vy(RAMP_EL0)+1.2,z0),{pri:9});
+      const [x1,z1]=M([1160,640]);L(T2?'<b>램프 시작</b>EL+0.55 내려감':'<b>램프 시작</b>여기서 내려감 ↓','rp',()=>new THREE.Vector3(x1,vy(RAMP_EL1)+1.4,z1),{pri:8});
+      const [x2,z2]=M([600,166]);L(T2?'<b>B1 도착</b>FFL −3.30':'<b>지하1층 도착</b>−3.3m','rp',()=>new THREE.Vector3(x2,RAMP_ELB+1.2,z2),{pri:7});
+      const [x3,z3]=M([800,900]);L(T2?'<b>Ent (홀)</b>FH 13.65 · EL+0.45 · 1/13.4':'<b>엘리베이터 홀 입구</b>보도 기준 ▲60cm → 1층(+15cm)까지 경사로','rp',()=>new THREE.Vector3(x3,vy(0.45)+1.0,z3),{pri:6});
+      const [x4,z4]=M([215,1010]);L(T2?'<b>Ent (모서리)</b>':'<b>매장 모서리 입구</b>','rp',()=>new THREE.Vector3(x4,1.0,z4),{pri:5})}
+    {const Z=(q,e,html,pri)=>{const [x,z]=P(...q);L(html,'zn',()=>new THREE.Vector3(x,gy(e)+0.5,z),{pri})};
+      Z([-170,900],AP.road,'<b>압구정로 차도</b>30m 도로',9);Z([148,1000],AP.walk,'<b>보도</b>보도블럭 · 폭 약 4m',9);
+      Z([262,330],AP.walk,'<b>전면공지</b>대지 안 3m · 보도와 같은 높이',8);Z([900,yRoad(900)+ROAD6W*0.55],R6(900),'<b>뒷길</b>6m 도로 (압구정로8길)',8);
+      Z([600,110],0.3,'<b>북쪽 옆 대지</b>529-2',5);Z([1760,700],1.95,'<b>동쪽 옆 대지</b>529-6',5);
+      Z([1200,900],R6(1200),'<span style="color:#f4f6f5">┅ 흰 점선</span> 대지 경계 · <span style="color:#ff8a7e">┅ 빨간 점선</span> 건축한계선',3)}
+    {const [x,z]=P(...centroid(rectP(ELEC)));L(T?'<b style="color:#ff8a7e">⚠ 전기실</b>FFL −11.70 · KDS 32 10 11':'<b style="color:#ff8a7e">⚠ 전기실</b>−11.7m · 맨 아래층 설치 불가','rm',()=>new THREE.Vector3(x,-9.2,z),{pri:9})}
+    {const [x,z]=P(...centroid(rectP(CORE.stair)));L('<b>계단·엘리베이터</b>','rm',()=>new THREE.Vector3(x,-1.6,z))}
+    {const [x,z]=P(1420,560);L('<b>차 경사로</b>'+SUB('폭 3.6m'),'rm',()=>new THREE.Vector3(x,-1.4,z))}
+    {const [x,z]=P(870,900);L('<b>기계실</b>'+SUB('지하4층'),'rm',()=>new THREE.Vector3(x,-12.0,z))}
+    {const [x,z]=P(1430,700);L('<b>물탱크</b>','rm',()=>new THREE.Vector3(x,-12.0,z))}
+    {const [x,z]=P(1300,300);L('<b>정화조</b>','rm',()=>new THREE.Vector3(x,-12.0,z))}
+    NB.forEach(n=>{const [x,z]=P(...n.at);L(T?`<b>${n.n}</b>EL${fE(n.el)}${SUB(n.src)}`:`<b>${n.n}</b><span style="color:#ffa45c">보도 기준 ▲${cmT(sw(n.el))}</span>`,'nb',()=>new THREE.Vector3(x,n.el*st.k+0.6,z),{pri:2})});
+    LEVELS.forEach(b=>{if(b.kind!=='base')return;L(`<b>현재 모델 ${T?b.key:FLN(b.key)}</b>${T?'FFL '+fE(b.y):sm(b.y)}`,'old',()=>{const a=anchor('e');return new THREE.Vector3(a[0],b.y+0.3,a[1])},{pri:1})})}
+  // 층 높이 '자' 위치: 건물 북서쪽 모서리 바로 밖(라벨은 왼쪽으로 뻗어 건물을 가리지 않음) · 단면이면 잘린 면의 서/북 끝
+  function anchor(side){const pl=planes[0];
+    if(st.cut==='h'&&pl){const z=pl.constant,ypx=toPx(0,z)[1];return side==='w'?P(352,ypx):P(1650,ypx)}
+    if(st.cut==='v'&&pl){const xpx=toPx(-pl.constant,0)[0];return side==='w'?P(xpx,196):P(xpx,yRoad(xpx)+70)}
+    return side==='w'?P(352,196):P(1700,1050)}
+  // 화면에서 겹치는 라벨 정리: 층 높이 > 실 이름 > 옆 땅 > 현재 모델 > 땅 높이(차이가 큰 점 먼저) 순서로 자리를 잡고, 겹치면 숨김
+  const PRI={lv:0,bd:1,zn:1,sp:2,rp:3,rm:4,nb:5,old:6,pt:7};
+  function fogTick(){if(!scene.fog||!HZ0||state.era!=='srv')return;const d=camera.position.distanceTo(controls.target);scene.fog.near=d*1.4;scene.fog.far=d*1.4+Math.max(320,d*2.5)}
+  function declutter(list){fogTick();const v=list.filter(l=>l.srv&&!l.el.hidden);v.sort((a,b)=>(PRI[a.sg]-PRI[b.sg])||((b.pri||0)-(a.pri||0)));const R=[];
+    for(const l of v){const e=l.el;if(!l.w){l.w=e.offsetWidth;l.h=e.offsetHeight}const x=parseFloat(e.style.left),y=parseFloat(e.style.top),rt=l.sg==='lv';
+      const r0=rt?x-l.w-10:x+8,r1=y-l.h/2,r2=r0+l.w,r3=r1+l.h;
+      if(R.some(q=>r0<q[2]+3&&r2>q[0]-3&&r1<q[3]+1&&r3>q[1]-1)){e.hidden=true;continue}R.push([r0,r1,r2,r3])}}
+  function relabel(){LB.forEach(l=>l.v.copy(l.fn()))}
+  function lv(l){if(curView==='top'&&l.sg!=='pt'&&l.sg!=='nb')return false;if(!st.lab[l.sg])return false;if(l.sg==='pt'&&!st.lab.pt)return false;
+    if((l.sg==='pt'||l.sg==='rm'||l.sg==='nb')&&planes[0]&&planes[0].distanceToPoint(l.v)<-0.3)return false;return true}
+  // ---- 패널 ----
+  const f2=v=>v===0?'±0.00':(v>0?'+':'−')+Math.abs(v).toFixed(2);
+  function table(){const t=document.getElementById('srv-t');if(!t)return;const mod=k=>{const L=LEVELS.find(l=>l.key===k&&l.kind==='base');return L?L.y:null};
+    const rows=[['1F','±0.00','5.4','±0.00','—']].concat(BL.map(b=>{const m=mod(b.k),d=m==null?null:b.y-m;
+      return [b.k,f2(b.y),b.h.toFixed(1),m==null?'없음':f2(m),m==null?'신설':(Math.abs(d)<0.005?'같음':(d>0?'▲ ':'▼ ')+Math.abs(d).toFixed(2)+'m')]}));
+    rows.push(['전기실','−11.70','—','—','—']);
+    t.innerHTML='<tr><th>층</th><th>바닥 높이<br><small>1층=0</small></th><th>한 층<br>높이</th><th>현재<br>모델</th><th>차이</th></tr>'+rows.map(r=>`<tr><td>${r[0]}</td><td class="up">${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}
+  function note(){set('srv-note','· 땅 기울기: 대지 남서쪽 모서리보다 남동쪽 모서리가 약 1m 높습니다. 압구정로 차도는 1층 바닥보다 40~50cm 낮고, 뒷길(6m) 출입구 앞은 30~45cm, 차 출입구는 70cm 높습니다.\n'
+    +'· 동쪽 옆 땅(529-6)은 1층 바닥보다 약 2m 높아서, 그쪽 지하 벽·흙막이가 흙에 더 많이 밀립니다.\n'
+    +'· 땅 파는 깊이: 1층 바닥에서 주차장 쪽 약 11.7m, 기계실 쪽 약 14.6m. 뒷길 땅 높이로 재면 약 12~15.5m입니다.\n'
+    +'· 전기실: 규정(KDS 32 10 11)상 지하 맨 아래층에 둘 수 없어서, 지상층으로 올리거나(ALT_01) 지하2층 또는 지하3·4층 기계실 쪽으로 옮기는 안(ALT_02) 중에서 정해야 합니다.\n'
+    +'· 용어: FH = 측량한 땅 높이(해발), FFL = 층 바닥 높이, EL = 1층 바닥을 0으로 둔 높이. "도면 표기" 칩을 켜면 라벨에 함께 나옵니다.\n'
+    +'· 측점 위치·B4 실 배치는 도면 이미지를 읽은 근사값(±0.5m)이고, 지형은 측점 사이를 보간했습니다. 지형 높이만 과장되고 건물·지하 깊이는 실제 축척입니다.')}
+  function sync(){{const q=document.getElementById('srv-quick');if(q)q.hidden=state.era!=='srv'}document.querySelectorAll('input[name=srvtop]').forEach(r=>r.checked=(r.value==='7')===!!state.use7);const sec=document.getElementById('sec-srv');if(sec)sec.hidden=state.era!=='srv';set('o-srvk','×'+st.k);set('o-srvop',Math.round(st.op*100)+'%');
+    const n=LAB.filter(x=>st.lab[x.id]).length;set('o-srvlab',n+' / '+LAB.length)}
+  // ---- 우리 건물: ② 신축의 실제 모델(bld)을 그대로 쓰고 재질만 반투명 복제 → 외장 시안·마감·1층 안을 바꾸면 여기에도 그대로 반영 ----
+  const BM=new Map();   // 원래 재질 → 이 탭용 복제 (단면 클리핑 포함)
+  function bMat(m){let c=BM.get(m);const line=!!m.isLineBasicMaterial||!!m.isLineDashedMaterial;
+    if(!c){const ud=m.userData;m.userData={};c=m.clone();m.userData=ud;c.clippingPlanes=planes;BM.set(m,c);if(ud.prMade){c.userData.prMade=true;c.onBeforeCompile=m.onBeforeCompile;c.customProgramCacheKey=m.customProgramCacheKey}}   // [PR] 실사 재질 사본도 셰이더 보강 유지(1102.p, r128 clone 은 onBeforeCompile 을 버림)
+    if(m.color&&c.color)c.color.copy(m.color);if(c.map!==m.map){c.map=m.map;c.needsUpdate=true}if(m.metalness!=null){c.metalness=m.metalness;c.roughness=m.roughness}if(m.emissive&&c.emissive)c.emissive.copy(m.emissive);
+    const base=m.transparent?m.opacity:1,wall=st.under&&(m===M.bwall||m===M.wellwall||m===M.rampwall),op=wall?0.1:line?Math.min(1,base*(0.55+st.op)):base*st.op,tr=op<0.98;
+    if(c.transparent!==tr){c.transparent=tr;c.needsUpdate=true}c.opacity=op;c.depthWrite=!tr||st.op>0.75;return c}
+  // ③에서는 지하1층 천장판을 25cm 내려서 앞·뒤 보도블럭 경사면(0~−15cm) 아래로 감춤 → 내부 보기에서도 턱이 생기지 않게
+  function lowerB1Ceil(){LEVELS.forEach((L,i)=>{if(L.kind==='base'&&L.top&&LG[i])LG[i].traverse(o=>{const m=o.userData.srv0||o.material;if((m===M.bceil||m===M.bwall||m===M.wellwall||m===M.rampwall)&&!o.userData.srvLow){const bb=new THREE.Box3().setFromObject(o);if(bb.max.y>-0.4){o.position.y-=0.3;o.userData.srvLow=true}}})})}
+  function bandMats(){const a=[];try{Object.values(LVCM).forEach(m=>a.push(m));a.push(BM2.stripe)}catch(e){}return a}
+  function styleBld(){st.bmode='model';if(state.era!=='srv')return;lowerB1Ceil();bld.visible=st.mass&&st.bmode==='model';if(!bld.visible)return;
+    bld.traverse(o=>{if(!o.material)return;if(o.userData.srv0===undefined)o.userData.srv0=o.material;const m0=o.userData.srv0;o.material=Array.isArray(m0)?m0.map(bMat):bMat(m0);o.castShadow=false});
+    if(!useModelBase())LEVELS.forEach((L,i)=>{if(L.kind==='base'&&LG[i])LG[i].visible=false})
+    {const bm=bandMats();bld.traverse(o=>{if(o.userData.srv0!==undefined&&bm.includes(o.userData.srv0))o.visible=false})}
+    // 지하1층 천장판(1층 바닥 높이)이 앞·뒤 경사면을 덮지 않도록 바깥 보기에서는 숨김
+    LEVELS.forEach((L,i)=>{if(L.kind==='base'&&L.top&&LG[i])LG[i].traverse(o=>{if(o.userData.srv0===M.bceil||o.material===M.bceil)o.visible=false})})}   // 기계식 모델이면 지하는 실측안(B1~B4)으로 대신 보여 줌
+  // ④ 배경: 검정 대신 흐린 회청색 그라데이션 + 안개 (멀리 있는 건 흐려짐)
+  let HZ=null,HZ0=null;
+  const useModelBase=()=>st.mass&&st.bmode==='model'&&state.scheme==='dd';
+  // 내부 보기: 반투명 복제 재질을 원래대로 돌려놓고 실측 표시는 잠시 숨김 (나올 때 era('srv')로 다시 그림)
+  function intMode(on){if(!on)return;lowerB1Ceil();{const bm=bandMats();bld.traverse(o=>{if(o.userData.srv0!==undefined&&bm.includes(o.userData.srv0))o.visible=true})}G.visible=true;G.children.forEach(c=>{if(c.name==='pts'||c.name==='lvo'||c.name==='place')c.visible=false});site.position.y=-0.6;siteDyn.visible=false;haze(false);bld.visible=true;bld.traverse(o=>{if(o.userData.srv0!==undefined){o.material=o.userData.srv0;delete o.userData.srv0}});LG.forEach(g=>{if(g)g.visible=true});ctx.visible=document.getElementById('t-ctx').checked;city.visible=document.getElementById('t-city').checked}
+  function haze(on){if(scene.userData.int)return;if(scene.fog&&!(typeof R3D!=='undefined'&&R3D.on))scene.fog=null;applyTheme()}   // ②와 같은 배경 (다크 테마 공통 그라데이션)
+  // 주변 실사 모델의 바닥은 모두 평평(높이 0)이라, ③에서는 보도 높이(1층 −15cm)에 맞춰 15cm 내림
+  function envShift(){const y=state.era==='srv'?AP.walk*st.k:0;try{if(KHSK.grp)KHSK.grp.position.y=y;if(KHR.grp)KHR.grp.position.y=y}catch(e){}}
+  function ctxVis(){envShift();if(typeof R3D!=='undefined'&&R3D.street&&!I.on){const hide=state.era==='srv'&&st.under;R3D.street.visible=R3D.on&&!hide;R3D.props.visible=R3D.on&&!hide}
+    if(typeof KHSK!=='undefined'&&KHSK.grp&&!I.on){const hide=state.era==='srv'&&st.under;KHSK.grp.visible=KHSK.on&&!hide&&!(typeof R3D!=='undefined'&&R3D.on)}
+    const on=state.era!=='srv'||(st.ctx&&!st.under);city.visible=on&&document.getElementById('t-city').checked;ctx.visible=on&&document.getElementById('t-ctx').checked}
+  function panelMode(){document.body.classList.remove('srvplan')}
+  function era(e){const on=e==='srv';panelMode();if(!on&&typeof gOp==='function'){const k=st.op;st.op=1;gOp();st.op=k}if(on&&I.on){intMode(true);sync();return}G.visible=on;site.visible=true;site.position.y=on?-0.6:0;siteDyn.visible=!on;ctxVis();haze(on&&!I.on);if(on){build();applyCut();styleBld();table();note()}sync()}
+  function view(){curView='corner';lotVis();const p1=new THREE.Vector3(-78,34,80),t1=new THREE.Vector3(0,9,2);
+    if((camera.aspect||1)<1)p1.sub(t1).multiplyScalar(1.8).add(t1);anim={p0:camera.position.clone(),t0:controls.target.clone(),p1,t1,s:performance.now()}}
+  function realView(){const on=!(st.ctx&&st.lab.st);st.ctx=on;st.lab.st=on;const cx=document.getElementById('t-srvctx');if(cx)cx.checked=on;
+    const ci=document.querySelector('#srv-labs input[data-lab=st]');if(ci)ci.checked=on;ctxVis();save();sync();
+    const b=document.getElementById('srv-real');if(b){b.setAttribute('aria-pressed',on);b.textContent=on?'📍 실제 위치 보기 끄기':'📍 실제 위치 보기 (주변 건물·도로)'}
+    if(on){curView='corner';lotVis();const [tx,tz]=P(520,620),t1=new THREE.Vector3(tx,4,tz),p1=new THREE.Vector3(tx-48,9,tz+40);if((camera.aspect||1)<1)p1.sub(t1).multiplyScalar(1.6).add(t1);
+      anim={p0:camera.position.clone(),t0:controls.target.clone(),p1,t1,s:performance.now()}}}
+  function rampView(){curView='corner';lotVis();const [tx,tz]=P(...c2m(1010,450)),t1=new THREE.Vector3(tx,-0.8,tz),p1=new THREE.Vector3(tx+9,27,tz+23);
+    if((camera.aspect||1)<1)p1.sub(t1).multiplyScalar(1.7).add(t1);anim={p0:camera.position.clone(),t0:controls.target.clone(),p1,t1,s:performance.now()}}
+  function face(){if(st.cut==='none'){st.cut='h';const r=document.querySelector('input[name=srvcut][value=h]');if(r)r.checked=true;applyCut()}
+    const E=ext(),xc=(E.X0+E.X1)/2,zc=(E.Z0+E.Z1)/2;let p,t;
+    const ty=st.mass?8:-5,d=st.mass?105:66;if(st.cut==='h'){const z=planes[0].constant;t=[xc,ty,z];p=[xc,ty+2,z+d]}else{const x=-planes[0].constant;t=[x,ty,zc];p=[x-d,ty+2,zc]}
+    if((camera.aspect||1)<1){p=[t[0]+(p[0]-t[0])*1.9,p[1],t[2]+(p[2]-t[2])*1.9]}
+    anim={p0:camera.position.clone(),t0:controls.target.clone(),p1:new THREE.Vector3(...p),t1:new THREE.Vector3(...t),s:performance.now()}}
+  function wire(){const k=document.getElementById('c-srvk');if(!k)return;
+    {const sec=document.getElementById('sec-srv'),q=document.getElementById('srv-quick'),win=[...document.querySelectorAll('#panel .sec')].find(x=>(x.querySelector('h2')||{}).textContent==='창 크기');
+      if(q&&sec){sec.parentNode.insertBefore(q,sec)}if(win&&sec)win.parentNode.insertBefore(sec,win.nextSibling);
+      const sync2=()=>{if(q)q.hidden=state.era!=='srv'};document.querySelectorAll('input[name=era]').forEach(x=>x.addEventListener('change',()=>setTimeout(sync2,0)));setTimeout(sync2,0)}
+    {const u=document.getElementById('t-srvunder');if(u){u.checked=st.under;u.addEventListener('change',()=>{st.under=u.checked;setTimeout(styleBld,0);if(st.under){st.lab.lv=true;const c=document.querySelector('#srv-labs input[data-lab=lv]');if(c)c.checked=true;if(typeof makeLabels==='function')makeLabels()}gOp();ctxVis();const cx=document.getElementById('t-srvctx');if(cx)cx.disabled=st.under;save()})}}
+    ['sec-vwm','sec-srv'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('srvkeep')});{const t=document.getElementById('era-now');if(t)t.closest('.sec').classList.add('srvkeep')}
+    document.querySelectorAll('input[name=srvterr]').forEach(x=>{x.checked=x.value===st.terr;x.addEventListener('change',()=>{st.terr=x.value;if(state.era==='srv'){build();relabel()}save()})});
+    {const b=document.getElementById('srv-real');if(b){b.addEventListener('click',realView);b.textContent=(st.ctx&&st.lab.st)?'📍 실제 위치 보기 끄기':'📍 실제 위치 보기 (주변 건물·도로)'}}
+    document.querySelectorAll('input[name=srvgc]').forEach(x=>{x.checked=x.value===st.gc;x.addEventListener('change',()=>{st.gc=x.value;if(state.era==='srv')build();save()})});
+    {const b=document.getElementById('srv-ramp');if(b)b.addEventListener('click',rampView)}
+    {const c=document.getElementById('srv-cap');if(c)c.addEventListener('click',()=>document.getElementById('capBtn').click())}
+    k.addEventListener('input',()=>{st.k=+k.value;if(state.era==='srv'){build();relabel()}sync()});
+    document.querySelectorAll('input[name=srvcut]').forEach(r=>r.addEventListener('change',()=>{st.cut=r.value;const ps=document.getElementById('c-srvpos');st.pos=st.cut==='v'?66:38;ps.value=st.pos;applyCut()}));
+    document.getElementById('c-srvpos').addEventListener('input',e=>{st.pos=+e.target.value;applyCut()});
+    document.getElementById('srv-face').addEventListener('click',face);
+    // 표시할 수치: LAB 목록으로 체크 칩을 만든다
+    const box=document.getElementById('srv-labs');
+    box.innerHTML=LAB.map(x=>`<label><input type="checkbox" data-lab="${x.id}"${st.lab[x.id]?' checked':''}> ${x.n}</label>`).join('');
+    const setLab=(id,v)=>{st.lab[id]=v;const x=LAB.find(q=>q.id===id);if(x&&x.geo&&state.era==='srv')build();if((id==='rm'||id==='tech'||id==='ptn')&&typeof makeLabels==='function')makeLabels();save();sync()};
+    box.querySelectorAll('input').forEach(i=>i.addEventListener('change',()=>setLab(i.dataset.lab,i.checked)));
+    const bulk=v=>{LAB.forEach(x=>{st.lab[x.id]=typeof v==='function'?v(x):v});box.querySelectorAll('input').forEach(i=>i.checked=st.lab[i.dataset.lab]);if(state.era==='srv')build();save();sync()};
+    document.getElementById('srv-lab-min').addEventListener('click',()=>bulk(x=>x.id==='lv'));
+    document.getElementById('srv-lab-all').addEventListener('click',()=>bulk(true));
+    document.getElementById('srv-lab-none').addEventListener('click',()=>bulk(false));
+    const ms=document.getElementById('t-srvmass'),op=document.getElementById('c-srvop'),cx=document.getElementById('t-srvctx');
+    ms.checked=st.mass;op.value=Math.round(st.op*100);cx.checked=st.ctx;
+    {const row=document.querySelector('input[name=srvbm]');if(row)row.closest('.seg').hidden=true}
+    ms.addEventListener('change',()=>{st.mass=ms.checked;op.disabled=!st.mass;bld.visible=state.era!=='srv'?bld.visible:st.mass;styleBld();cutFrame();save()});
+    op.addEventListener('input',()=>{st.op=+op.value/100;opMats();gOp();styleBld();save();sync()});
+    cx.addEventListener('change',()=>{st.ctx=cx.checked;ctxVis();save()});
+    document.querySelectorAll('input[name=srvbm]').forEach(r=>{r.checked=r.value===st.bmode;r.addEventListener('change',()=>{st.bmode=r.value;panelMode();if(state.era==='srv'){build();styleBld();if(typeof makeLabels==='function')makeLabels();cutFrame()}save()})});
+    document.querySelectorAll('input[name=srvtop]').forEach(r=>{r.checked=(r.value==='7')===!!state.use7;r.addEventListener('change',()=>{const u=document.getElementById('t-use7');if(u&&u.checked!==(r.value==='7')){u.checked=r.value==='7';u.dispatchEvent(new Event('change'))}})});
+    k.addEventListener('change',save);
+    document.querySelector('input[name=srvcut][value=none]').checked=true;k.value=st.k;sync()}
+  return {G,st,era,intMode,labels,lv,view,rampView,wire,relabel,styleBld,ctxVis,declutter}})();
+SRV.wire();
+
 buildContext();existBuilding();
 // first open: browsers can restore old radio/checkbox states, so set every control from the defaults in state (1층 3안 등)
 {const chk=(n,v)=>{const r=document.querySelector(`input[name=${n}][value="${v}"]`);if(r)r.checked=true};
-  chk('era',state.era);chk('sch',state.scheme);chk('g1',state.g1);chk('emode',state.mode);chk('cfin',state.cfin);chk('form',state.cform);chk('dsg',state.pdesign);chk('win',state.win);chk('vmode','sketch');chk('mixq','50');
+  chk('era',state.era==='cmp'?'now':state.era);chk('sch',state.scheme);chk('g1',state.g1);chk('emode',state.mode);chk('cfin',state.cfin);chk('form',state.cform);chk('dsg',state.pdesign);chk('win',state.win);chk('vmode','sketch');chk('mixq','0');
   ['t-upstraight','t-skin','t-use7','t-nost','t-cglass','t-cclean','t-cmpol','t-cmpspin','t-a4park'].forEach(id=>{const x=document.getElementById(id);if(x)x.checked=false});
   document.getElementById('ext-combo').hidden=false;document.getElementById('ext-preset').hidden=true;document.getElementById('c-mix').value=CMP.v}
+// 26종 목록: 1~20은 추천 시안, 21~26은 마감재(심플 박스) — 실사 사진과 같은 번호 · 스케치업/렌더/실사 모두 같은 선택
+{const pick26=(k,m)=>{if(m==='p'){state.mode='preset';state.pdesign=k}else{state.mode='combo';state.cfin=k;state.cform='none'}
+    const c=(n,v)=>{const r=document.querySelector(`input[name=${n}][value="${v}"]`);if(r)r.checked=true};c('emode',state.mode);if(m==='p')c('dsg',k);else{c('cfin',k);c('form','none')}
+    document.getElementById('ext-combo').hidden=state.mode!=='combo';document.getElementById('ext-preset').hidden=state.mode!=='preset';sync26();build()};
+  const box=document.getElementById('d26sw'),swD=document.getElementById('sw-dsg'),swF=document.getElementById('sw-fin');if(box&&swD&&swF){box.appendChild(swD);box.appendChild(swF)}
+  const sync26=()=>{const fin=state.mode!=='preset',k=fin?(state.cform==='none'?state.cfin:null):state.pdesign,FK=['terra','stone','metal','brick','glass','frame'];
+    document.querySelectorAll('input[name=d26]').forEach(r=>r.checked=!!k&&r.dataset.k===k&&(fin?r.dataset.m==='f':r.dataset.m==='p'));
+    if(swD)swD.hidden=fin;if(swF)swF.hidden=!fin};
+  document.querySelectorAll('input[name=d26]').forEach(r=>r.addEventListener('change',()=>pick26(r.dataset.k,r.dataset.m)));
+  ['emode','dsg','cfin','form'].forEach(n=>document.querySelectorAll(`input[name=${n}]`).forEach(r=>r.addEventListener('change',()=>setTimeout(sync26,0))));
+  window.__sync26=sync26;sync26()}
 {const mix=document.getElementById('c-mix'),setMix=v=>{CMP.v=+v;mix.value=CMP.v;document.querySelectorAll('input[name=mixq]').forEach(r=>r.checked=+r.value===CMP.v);applyCmp()};
   mix.addEventListener('input',()=>setMix(mix.value));document.querySelectorAll('input[name=mixq]').forEach(r=>r.addEventListener('change',()=>setMix(r.value)));
   document.getElementById('t-cmpol').addEventListener('change',e=>{CMP.ol=e.target.checked;applyCmp()});
@@ -7814,10 +8705,10 @@ let last=performance.now();
   requestAnimationFrame(loop);if(renderer.xr.isPresenting)return;   // [XR] VR 중에는 xr/kh-xr.js 가 그림
   const dt=Math.min(0.1,(now-last)/1000);last=now;
   if(I.on&&!I.doll){if(anim){let t=Math.min(1,(now-anim.s)/800);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-    step(dt);controls.update();clampIn();occl();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
+    step(dt);controls.update();clampIn();occl();occl2();fogFar();{const d=new THREE.Vector3();camera.getWorldDirection(d);I.yaw=Math.atan2(-d.x,-d.z)}drawFrame();placeLabels();drawMini();drawCompass();return}
   if(I.on&&I.doll)step(dt);
   if(anim){let t=Math.min(1,(now-anim.s)/900);t=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;camera.position.lerpVectors(anim.p0,anim.p1,t);controls.target.lerpVectors(anim.t0,anim.t1,t);if(t>=1)anim=null}
-  controls.update();occl();drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
+  controls.update();occl();occl2();fogFar();drawFrame();placeLabels();if(I.on)drawMini();drawCompass();
 })(performance.now());
 })();
 </script>
@@ -7846,7 +8737,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v93';
+  window.CH_VER='v107';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -7922,10 +8813,13 @@ let last=performance.now();
   function render(){if(!PH.on)return;const M=PH.man;el.dataset.mode=PH.mode;el.querySelectorAll('.ph-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===PH.mode));
     const T=document.getElementById('phTitle'),F=document.getElementById('phFloors');F.innerHTML='';F.hidden=true;document.getElementById('phVars').innerHTML='';
     if(!M){T.textContent='실사';bar([],null,()=>{});empty('실사 사진 목록을 불러오지 못했습니다.<br>인터넷 연결 또는 사진 저장소(kapehorn-media)를 확인해 주세요.<br><button id="phTo3d">3D로 보기</button>');document.getElementById('phTo3d').onclick=()=>off3d();return}
+    {const era=window.CH.state.era;if(era==='now'||era==='cmp'){const d=M.now||(M.ext&&M.ext.now&&M.ext.now.now);T.innerHTML='현황<small>지금 건물</small>';
+      if(!d||!Object.keys(d.img||{}).length){bar([],null,()=>{});empty('① 현황 — 지금 건물의 실사 사진은 아직 준비 중입니다.<br>② 신축 · ③ 실측 탭에서는 외부 디자인 실사를 볼 수 있어요.<br><button id="phTo3d">3D로 보기</button>');document.getElementById('phTo3d').onclick=()=>off3d();return}
+      empty('');const angs=Object.keys(d.img).map(Number).sort((a,b)=>a-b);if(!angs.includes(PH.ang))PH.ang=angs[0];T.innerHTML=`현황<small>${ANG[PH.ang]||PH.ang+'°'}</small>`;show(d.img[String(PH.ang)],'현황');bar(angs.map(a=>[a,a+'°']),PH.ang,a=>{PH.ang=a;render()});return}}
     if(PH.mode==='ext'){const [g,k]=design(),d=M.ext[g]&&M.ext[g][k],nm=(PH.extra&&PH.extra[1]===k&&d&&d.name)||(window.CH.dname&&window.CH.dname())||(d&&d.name)||k;
       if(!d||!Object.keys(d.img||{}).length){T.innerHTML=`${nm}<small>실사 준비 중</small>`;bar([],null,()=>{});empty(`'${nm}' — 360° 실사 사진 준비 중입니다.<br><button id="phTo3d">3D로 보기</button>`);document.getElementById('phTo3d').onclick=()=>off3d();return}
       empty('');const A=(d.alt&&d.alt[window.CH.state.scheme])||{},im=a=>A[String(a)]||d.img[String(a)],angs=[...new Set(Object.keys(d.img).concat(Object.keys(A)))].map(Number).sort((a,b)=>a-b);if(!angs.includes(PH.ang))PH.ang=angs.reduce((p,a)=>Math.abs(a-PH.ang)<Math.abs(p-PH.ang)?a:p,angs[0]);
-      T.innerHTML=`${nm}<small>${d.r360?'360° · ':''}${ANG[PH.ang]||PH.ang+'°'}</small>`;
+      T.innerHTML=`${nm}<small>${window.CH.state.era==='srv'?'③ 실측 · 사진은 신축 기준 · ':''}${d.r360?'360° · ':''}${ANG[PH.ang]||PH.ang+'°'}</small>`;
       show(im(PH.ang),nm);bar(angs.map(a=>[a,a+'°']),PH.ang,a=>{PH.ang=a;render()});angs.forEach(a=>{const i=new Image();i.src=src(im(a))})}
     else{}
     if(PH.mode!=='ext'){const fl=Object.entries(M.int).filter(([k,e])=>e.status!=='hide').sort((a,b)=>a[1].order-b[1].order);if(!fl.length){empty('내부 실사 사진이 없습니다.');return}
@@ -7941,24 +8835,24 @@ let last=performance.now();
   function off3d(){const r=document.getElementById('vm-sketch');r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}))}
   // 실사 모드 잠금: 사진은 '신축 · 자주식3' 기준이라 외부 디자인(마감재·추천 시안)만 바뀜. 나머지 설정은 회색 비활성.
   // 나중에 주차 안별 사진이 생기면 manifest에 "basis":{"sch":["alt4","mech",...]} 를 넣으면 그 버튼이 다시 활성화됨
-  const SCHN={mech:'기계식',self:'자주식1',alt3:'자주식2',alt4:'자주식3'};
+  const SCHN={mech:'기계식',dd:'자주식 실측안',self:'자주식1',alt3:'자주식2',alt4:'자주식3'};
   function basis(){const b=(PH.man&&PH.man.basis)||{};return{sch:b.sch&&b.sch.length?b.sch:['alt4']}}
   function pick(id){const r=document.getElementById(id);if(r&&!r.checked){r.checked=true;r.dispatchEvent(new Event('change',{bubbles:true}))}}
   const note=document.createElement('div');note.className='ph-note';note.id='phNote';note.hidden=true;
   {const vs=document.getElementById('vm-photo').closest('.seg');vs.parentNode.insertBefore(note,vs.nextSibling)}
   function targets(){const q=s=>[...document.querySelectorAll(s)],sec=s=>{const e=document.querySelector(s);return e&&e.closest('.sec')},B=basis(),fs=document.querySelector('input[name=form]').closest('.seg');
-    return[...['era-now','era-cmp'].map(id=>document.getElementById(id).closest('label')),document.getElementById('capBtn'),
-      ...q('input[name=sch]').filter(r=>!B.sch.includes(r.value)).map(r=>r.closest('label')),
+    return[document.getElementById('capBtn'),
       document.getElementById('sec-g1'),document.getElementById('sw-fin'),fs.previousElementSibling,fs,document.getElementById('sw-form'),document.getElementById('sw-dsg'),
       sec('input[name=win]'),document.getElementById('sec-mass'),sec('#t-labels')].filter(Boolean)}
   function lock(on){const s=window.CH.state;
-    if(on){const B=basis();PH.prev={era:s.era,sch:s.scheme};if(s.era!=='new')pick('era-new');if(!B.sch.includes(s.scheme))pick('sch-'+B.sch[0]);
+    if(on){const B=basis();PH.prev={era:s.era,sch:s.scheme};
       PH.locked=targets();PH.locked.forEach(e=>{e.classList.add('phlock');e.setAttribute('aria-disabled','true');(e.matches('input,button')?[e]:[...e.querySelectorAll('input,button')]).forEach(c=>{if(!c.disabled){c.disabled=true;c.dataset.phd='1'}})});
-      {const M=PH.man||{},bs=(M.basis&&M.basis.base)||B.sch[0],nm=k=>(M.sch&&M.sch[k])||SCHN[k]||k,ex=B.sch.filter(k=>k!==bs);note.innerHTML=`실사 모드 — 외부 디자인(마감재 · 추천 시안)만 사진에 반영됩니다. 사진 기준: 신축 · ${nm(bs)}${ex.length?` (${ex.map(nm).join('·')}은 달라지는 사진만 교체)`:''}. 회색 설정은 스케치업·렌더에서 바꿀 수 있어요.`}note.hidden=false}
+      {const M=PH.man||{},bs=(M.basis&&M.basis.base)||B.sch[0],nm=k=>(M.sch&&M.sch[k])||SCHN[k]||k,ex=B.sch.filter(k=>k!==bs);note.innerHTML=`실사 모드 — ② 신축 · ③ 실측은 고른 외부 디자인의 사진을 보여줍니다 (사진 기준: 신축 · ${nm(bs)} · ① 현황 사진은 준비 중). 회색 설정은 스케치업·렌더에서 바꿀 수 있어요.`}note.hidden=false}
     else{if(PH.extra){const x=PH.extra;PH.extra=null;pick(x[0]==='preset'?'dsg-'+s.pdesign:'sty-'+s.cfin)}(PH.locked||[]).forEach(e=>{e.classList.remove('phlock');e.removeAttribute('aria-disabled')});document.querySelectorAll('[data-phd]').forEach(c=>{c.disabled=false;delete c.dataset.phd});PH.locked=null;note.hidden=true;
       const p=PH.prev;PH.prev=null;if(p){if(p.sch!==s.scheme)pick('sch-'+p.sch);if(p.era!==s.era)pick('era-'+p.era)}}}
   PH.set=async function(on){if(on===PH.on)return;PH.on=on;if(on)PH.ang=0;el.hidden=!on;app.classList.toggle('photo',on);if(on){await loadMan();applyCat();if(PH.on){lock(true);render()}}else lock(false)};
   PH.sync=()=>{if(PH.on)render()};
+  document.querySelectorAll('input[name=era]').forEach(r=>r.addEventListener('change',()=>setTimeout(PH.sync,0)));
   // 목록(00_목록.xlsx → catalog.js) 반영: '보관' 시안 버튼 숨김, 3D 없이 사진만 있는 시안은 실사 모드에서만 버튼 표시
   function applyCat(){const M=PH.man;if(!M||SRC.legacy||PH.catDone)return;PH.catDone=true;
     [['preset','dsg'],['finish','cfin']].forEach(([g,nm])=>{const r0=document.querySelector(`input[name=${nm}]`),seg=r0&&r0.closest('.seg');if(!seg)return;
@@ -8027,5 +8921,98 @@ if(Q.get('prsw')==='0'&&navigator.serviceWorker)navigator.serviceWorker.getRegis
 <script src="../xr/kh-xr.js"></script>   <!-- [XR] VR·피규어 보기 -->
 <script src="../photoreal/kh-photoreal.js"></script>   <!-- [PR] 실사 3D 보기 -->
 
+
+<script>
+// 2026.11.03: 오른쪽 메뉴 정리 — 주차 방식 · 외부 디자인 · 창 크기를 '건물 설정' 한 카드로, 카드와 각 항목을 접고 펼 수 있게
+(function(){const ids=['sec-sch','sec-ext','sec-win'],secs=ids.map(i=>document.getElementById(i)).filter(Boolean);if(!secs.length)return;
+  const w=document.createElement('div');w.className='sec ctl newonly bset closed';w.id='sec-bset';
+  w.innerHTML='<h2 class="bhead">건물 설정 <small style="font-weight:400;color:var(--muted)">주차 · 외부 디자인 · 창</small><button type="button" class="btgl" style="margin-left:auto">펼치기 ▾</button></h2><div class="bsum"></div>';
+  secs[0].parentNode.insertBefore(w,secs[0]);
+  secs.forEach(s=>{s.classList.remove('sec','newonly');s.classList.add('bsub');w.appendChild(s);const h=s.querySelector('h2');if(h)h.addEventListener('click',()=>s.classList.toggle('fold'))});
+  const btn=w.querySelector('.btgl'),set=o=>{w.classList.toggle('closed',!o);btn.textContent=o?'접기 ▴':'펼치기 ▾';try{localStorage.setItem('ch-bset',o?'1':'0')}catch(e){}};
+  w.querySelector('.bhead').addEventListener('click',()=>set(w.classList.contains('closed')));
+  let o0=false;try{o0=localStorage.getItem('ch-bset')==='1'}catch(e){}set(o0);
+  const txt=sel=>{const r=document.querySelector(sel);if(!r)return'';const l=r.closest('label');return l?[...l.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''};
+  const sum=()=>{const d=document.querySelector('input[name=d26]:checked'),dn=d?d.closest('label').textContent.trim().replace(/^(\d+)\s*/,'$1 '):'직접 조합';
+    w.querySelector('.bsum').textContent=[txt('input[name=sch]:checked')||'자주식',dn,txt('input[name=win]:checked')||'기본 창'].join(' · ')};
+  document.addEventListener('change',()=>setTimeout(sum,0));setTimeout(sum,300)})();
+</script>
+<script>
+// v102: 현황 탭 정리 · 내부 보기 버튼 정리 · 고품질 렌더/AO 항상 켜짐
+(function(){
+  const $=id=>document.getElementById(id);
+  ['t-hq','t-ao'].forEach(id=>{const x=$(id);if(x&&!x.checked){x.checked=true;x.dispatchEvent(new Event('change',{bubbles:true}))}});
+  // ① 현황에서 쓰지 않는 메뉴 표시 (신축·실측 전용)
+  const xs=[$('sec-bset'),$('sec-mass')];
+  [...document.querySelectorAll('#panel .sec')].forEach(s=>{const h=s.querySelector('h2');if(h&&/^(규모|층별 면적)/.test(h.textContent))xs.push(s)});
+  ['t-use7','t-nost','t-limits','t-frame','t-b1'].forEach(id=>{const x=$(id);if(x)xs.push(x.closest('label'))});
+  document.querySelectorAll('#panel .glab').forEach(g=>{if(/최상층/.test(g.textContent))xs.push(g)});
+  xs.filter(Boolean).forEach(e=>e.classList.add('xnow'));
+  const syncEra=()=>{document.body.dataset.era=(window.CH&&CH.state.era)||''};
+  document.querySelectorAll('input[name=era]').forEach(r=>r.addEventListener('change',()=>setTimeout(syncEra,0)));syncEra();
+  // 내부 보기: 자주 쓰는 3개(외부로 나가기 · 층 단면 보기 · 종단면 전체)를 한 줄에, 나머지는 [더보기]
+  const iu=$('intui');if(!iu)return;
+  const park=document.createElement('div');park.hidden=true;park.style.display='none';park.id='intPark';iu.appendChild(park);   // 쓰지 않는 버튼은 지우지 않고 숨겨 둠 (다른 코드가 참조)
+  const cat=$('catTabs');if(cat)park.appendChild(cat);
+  const win=iu.querySelector('[data-row=win]');if(win){win.classList.remove('tx');park.appendChild(win)}
+  ['lb','up','dim','rw'].forEach(k=>{const b=iu.querySelector('[data-iv='+k+']');if(b)park.appendChild(b)});
+  iu.dataset.cat='all';
+  const main=document.createElement('div');main.className='chips tx imain';main.setAttribute('role','group');main.setAttribute('aria-label','내부 주요 버튼');
+  const sa=$('secAllBtn');if(sa)sa.textContent='종단면 전체';
+  [$('exitInt'),$('dollBtn'),sa].filter(Boolean).forEach(b=>main.appendChild(b));
+  const mb=document.createElement('button');mb.id='imoreBtn';mb.type='button';mb.setAttribute('aria-pressed','false');mb.textContent='더보기 ▾';main.appendChild(mb);
+  const fc=$('floorChips');fc.parentNode.insertBefore(main,fc.nextSibling);
+  iu.querySelectorAll(':scope>.chips.tx:not(.imain)').forEach(r=>r.classList.add('imore'));
+  const sp=iu.querySelector('[data-row=space] .wvl');if(sp)sp.textContent='보기';
+  let open=false;try{open=localStorage.getItem('ch-imore')==='1'}catch(e){}
+  const set=o=>{open=o;iu.classList.toggle('more',o);mb.setAttribute('aria-pressed',o);mb.textContent=o?'접기 ▴':'더보기 ▾';try{localStorage.setItem('ch-imore',o?'1':'0')}catch(e){}};
+  mb.addEventListener('click',()=>set(!open));set(open);
+})();
+</script>
+<script>
+// v104: 메뉴 순서 통일 (화면 모드 → 현황·신축·실측 → 보기 방식 → 화면 표시 → 건물 설정 → 탭별 메뉴)
+//       화면 표시 정리 · 실측 보기(주변 건물 · 지하 보기)를 화면 표시 안으로
+(function(){
+  const $=id=>document.getElementById(id);
+  function run(){
+    const era=$('sec-era');if(!era)return;const panel=era.parentNode;
+    const secs=[...panel.querySelectorAll(':scope>.sec')],byH=t=>secs.find(s=>{const h=s.querySelector(':scope>h2');return h&&h.textContent.trim().startsWith(t)});
+    const view=byH('보기 방식'),disp=byH('화면 표시'),bset=$('sec-bset');
+    // 화면 표시: 주변 건물 이름 · 포털 프레임 · 지하층 투시 · 주변 도시 줄 삭제 (기능은 기본값 그대로)
+    ['t-cxlab','t-frame','t-b1','t-city'].forEach(id=>{const x=$(id);if(x){const l=x.closest('label');if(l)l.style.display='none'}});
+    // 실측 보기 → 화면 표시 안 (③ 실측에서만 보임)
+    const q=$('srv-quick');
+    if(q&&disp&&q.parentNode!==disp){q.classList.remove('sec','ctl');q.classList.add('srvq');const h=q.querySelector('h2');if(h){const g=document.createElement('div');g.className='glab';g.textContent='실측';h.replaceWith(g)}
+      q.querySelectorAll('.note').forEach(n=>n.remove());disp.appendChild(q)}
+    // 순서
+    let at=era;[view,disp,bset].forEach(s=>{if(s){at.after(s);at=s}});
+    // 실측 상세 설정이 건물 설정 카드 안으로 들어가 있으면 밖으로
+    const ss=$('sec-srv');if(ss&&bset&&bset.contains(ss))bset.after(ss);
+  }
+  run();setTimeout(run,0);setTimeout(run,1500);
+})();
+</script>
+<script>
+// v105: 화면 전체(페이지·앱 틀)가 스크롤로 밀리지 않게 고정 — 메뉴 안 스크롤만 허용
+(function(){const fix=()=>{if(window.scrollX||window.scrollY)window.scrollTo(0,0);const a=document.querySelector('.app');if(a&&(a.scrollTop||a.scrollLeft)){a.scrollTop=0;a.scrollLeft=0}
+  const v=document.getElementById('viewer');if(v&&(v.scrollTop||v.scrollLeft)){v.scrollTop=0;v.scrollLeft=0}};
+  window.addEventListener('scroll',fix,{passive:true});document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.nodeType===1&&(t.classList.contains('app')||t.id==='viewer'))fix()},{capture:true,passive:true});
+  document.addEventListener('focusin',()=>requestAnimationFrame(fix));})();
+</script>
+<script>
+// v106: ③ 실측 — 주변 건물 불투명도 (도로·바닥 제외, 주변 건물·가로수·시설물만)
+(function(){const el=document.getElementById('c-envop'),out=document.getElementById('o-envop');if(!el||!window.OC2)return;
+  let v=1;try{const x=localStorage.getItem('ch-envop');if(x!=null)v=+x}catch(e){}
+  const clone=m=>{const c=m.clone();c.transparent=true;c.userData.eoBase=m.opacity==null?1:m.opacity;c.userData.eoVis=m.visible!==false;return c};
+  function apply(){const on=window.CH&&CH.state.era==='srv'&&v<0.999;
+    OC2.cand.forEach(C=>{const m=C.m,u=m.userData;
+      if(!on){if(u.eo&&m.material===u.eoC)m.material=u.eo;delete u.eo;delete u.eoC;return}
+      if(!u.eoC||m.material!==u.eoC){u.eo=m.material;u.eoC=Array.isArray(m.material)?m.material.map(clone):clone(m.material);m.material=u.eoC}
+      [].concat(u.eoC).forEach(c=>{c.opacity=c.userData.eoBase*v;c.depthWrite=v>0.6;c.visible=c.userData.eoVis&&v>0.01})})}
+  const show=()=>{out.textContent=Math.round(v*100)+'%';el.value=Math.round(v*100)};show();
+  el.addEventListener('input',()=>{v=+el.value/100;show();try{localStorage.setItem('ch-envop',v)}catch(e){}if(!OC2.cand.length&&typeof oc2Scan==='function')oc2Scan();apply()});
+  document.querySelectorAll('input[name=era],input[name=vmode]').forEach(r=>r.addEventListener('change',()=>setTimeout(apply,300)));
+  setInterval(()=>{if(window.CH&&CH.state.era==='srv'&&v<0.999)apply()},2700);setTimeout(apply,3000)})();
+</script>
 </body>
 </html>

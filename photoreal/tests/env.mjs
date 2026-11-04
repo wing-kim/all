@@ -31,12 +31,12 @@ await p.screenshot({ path: OUT + 'qa-shots/env-sketch.jpg', type: 'jpeg', qualit
 res.sketchMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { if (!k.visible) return; n++; if (k.material.map) tex++; }); return { n, tex }; });
 ok('스케치업: 지니 재질에 텍스처 없음', res.sketchMats.n > 0 && res.sketchMats.tex === 0, res.sketchMats);
 // 2) 실사 3D 전 네트워크
-const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|env_lmao|street_env|^tree\.js/;   // 1102.l: 텍스처는 KTX2 를 먼저 받는다
+const realRe = /_lm\.(js|ktx2)|_ao\.(js|ktx2)|env_lmao|street_env|^tree\.(js|glb)|road_env|ground_fill|^a[23]_|tw_detail|hyundai_hs|singu_es/;   // 1102.l: 텍스처는 KTX2 를 먼저 받는다. 1102.o: 지니 v107 의 도로·바닥·2·3구역 묶음도 실사 3D 에서만
 res.beforeReal = reqs.filter(r => realRe.test(r.replace(/^tex\//, '')));
 await ev(() => document.getElementById('vm-render').click()); await new Promise(r => setTimeout(r, 2500));
 res.renderMats = await ev(() => { let tex = 0, n = 0; (KHENV.R.all || []).forEach(k => { n++; if (k.material.map) tex++; }); return { n, tex, lm: (KHENV.R.all || []).filter(k => k.material.lightMap).length }; });
 res.afterRender = reqs.filter(r => realRe.test(r.replace(/^tex\//, '')));
-ok('스케치업·렌더에서는 라이트맵·AO·가로 요소·가로수·차량을 받지 않음', res.afterRender.length === 0, { before: res.beforeReal, render: res.afterRender });
+ok('스케치업·렌더에서는 라이트맵·AO·가로 요소·가로수·도로·바닥·2·3구역을 받지 않음', res.afterRender.length === 0, { before: res.beforeReal, render: res.afterRender });
 ok('렌더: 지니 재질(텍스처 있음)·라이트맵 없음', res.renderMats.tex > 0 && res.renderMats.lm === 0, res.renderMats);
 // 3) 사우나: ② 신축 숨김, ① 현황 보임
 const pick = id => ev(id => { const e = document.getElementById(id); if (e && !e.checked) { e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); } }, id);
@@ -51,17 +51,21 @@ const modes = ['vm-sketch', 'vm-render', 'vm-pr', 'vm-photo'], msIds = ['ms-now'
 for (const m of modes) {
   await pick(m);
   if (m === 'vm-pr') { await p.waitForFunction(() => KHPRLayer.t && KHPRLayer.t.warm != null && KHPRLayer.t.dress != null, { timeout: 180000 }).catch(() => {}); await new Promise(r => setTimeout(r, 2500));
-    // 1102.n: 신사중학교 실사 3D 기준 화면(압구정로 쪽, 서쪽 날개를 실측 111m 로 늘린 school410r). 목표를 학교 상자 밖에 두어 Wing 가림이 학교를 숨기지 않게
+    // 1102.n: 신사중학교 실사 3D 기준 화면(압구정로 쪽, 서쪽 날개 실측 111m. 1102.o 부터 지니 v107 학교). 목표를 학교 상자 밖에 두어 Wing 가림이 학교를 숨기지 않게
     await ev(() => { const C = KHXR.controls; KHXR.camera.position.set(-45, 45, -95); C.target.set(-97, 8, -80); C.update(); }); await new Promise(r => setTimeout(r, 2500));
     await p.screenshot({ path: OUT + 'qa-shots/env-school.jpg', type: 'jpeg', quality: 80 });
-    res.school = await ev(() => { const r = KHENV.R.sch, b = r && new THREE.Box3().setFromObject(r); let v = !!r; for (let o = r; o; o = o.parent) if (!o.visible) v = false; return r ? { shown: v, south: +b.max.z.toFixed(1), north: +b.min.z.toFixed(1) } : null; });
+    // 1102.o: 지니 v107 학교(서쪽 날개가 실측 길이)를 실측 자리에 맞춘 뒤 서쪽 날개(서쪽 끝에서 17m 안, 높이 12m 위)의 남북 끝
+    res.school = await ev(() => { const q = KHENV.models().find(q => q.id === 'school410'), r = q && q.o; if (!r) return null; r.updateMatrixWorld(true); const v = new THREE.Vector3(), pts = [];
+      r.traverse(k => { if (!k.isMesh || k.isLineSegments) return; let s = true; for (let o = k; o; o = o.parent) if (!o.visible) s = false; if (!s) return; const a = k.geometry.attributes.position; for (let i = 0; i < a.count; i += 2) { v.fromBufferAttribute(a, i).applyMatrix4(k.matrixWorld); if (v.y > 12) pts.push([v.x, v.z]); } });
+      if (!pts.length) return { shown: false }; const x0 = Math.min(...pts.map(p => p[0])), wz = pts.filter(p => p[0] < x0 + 17).map(p => p[1]);
+      return { shown: true, west: +x0.toFixed(1), south: +Math.max(...wz).toFixed(1), north: +Math.min(...wz).toFixed(1), fix: KHPRLayer.stat.envSchool }; });
     res.afterPr = reqs.filter(r => realRe.test(r.replace(/^tex\//, ''))).length; res.prEnv = await ev(() => ({ real: KHENV.R.real, lm: (KHENV.R.all || []).filter(k => k.material.lightMap).length, out: (KHPRLayer.stat.envOut || []).length, school: KHPRLayer.stat.envSchool })); }
   else await new Promise(r => setTimeout(r, 1500));
   for (const e of eraIds) for (const s of msIds) { const n0 = errs.length; await pick(e); await pick(s); await new Promise(r => setTimeout(r, 500)); combo.push({ m, e, s, err: errs.length - n0 }); }
 }
 res.combo = combo;
 ok('실사 3D 를 켜면 라이트맵·가로 요소를 받고 지니 라이트맵 적용, 겹친 브이월드·OSM 건물 뺌', res.afterPr > 0 && res.prEnv.real && res.prEnv.lm > 0 && res.prEnv.out >= 10, { reqs: res.afterPr, ...res.prEnv });
-ok('실사 3D 신사중학교: 늘린 판(school410r)이 보이고 서쪽 날개 남쪽 끝이 실측(z -28.2) ±1m', res.school && res.school.shown && Math.abs(res.school.south + 28.2) <= 1, res.school);
+ok('실사 3D 신사중학교: 서쪽 날개 남북 끝이 실측(z -28.2 · -139.1) ±1m, 서쪽 끝(x -157.7) ±1m', res.school && res.school.shown && Math.abs(res.school.south + 28.2) <= 1 && Math.abs(res.school.north + 139.1) <= 1 && Math.abs(res.school.west + 157.7) <= 1, res.school);
 ok('보기 방식 4 × 시대 ' + eraIds.length + ' × 미성 2 조합에서 페이지 오류 없음(' + combo.length + '개)', combo.every(c => c.err === 0) && errs.length === 0, { errs: errs.slice(0, 3), bad: combo.filter(c => c.err) });
 fs.writeFileSync(OUT + 'env.json', JSON.stringify(res, null, 1));
 console.log('결과', oks.filter(Boolean).length + '/' + oks.length);
