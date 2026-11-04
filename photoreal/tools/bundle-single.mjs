@@ -32,7 +32,7 @@ for (const s of ['../photoreal/kh-photoreal.js', '../xr/kh-xr.js']) { const tag 
 // 가로채기(맨 앞에 둔다)
 const HOOK = `<script>/* 단일 HTML 가상 파일(1102.s, photoreal/tools/bundle-single.mjs): 요청한 때만 base64 를 풀어 blob 으로 준다 */
 (function(){var F=window.KHVFS={},U={},V='https://kh.vfs/',L=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
-function key(u){try{u=String(u);if(/^(blob|data):/.test(u))return null;var a=new URL(u,location.href).href.replace(/[?#].*$/,'');if(a.indexOf(V)===0)return a.slice(V.length);if(a.indexOf(L)===0){var r=new URL(a.slice(L.length),V+'new/').href;return r.slice(V.length)}}catch(e){}return null}
+function key(u){try{u=String(u);if(/^(blob|data):/.test(u))return null;var a=new URL(u,location.href).href.replace(/[?#].*$/,'');if(a.indexOf(V)===0)return a.slice(V.length);var o=new URL(L).origin;if(new URL(a).origin!==o&&location.protocol!=='file:')return null;var ld=new URL(L).pathname.split('/').filter(Boolean),ad=new URL(a).pathname.split('/').filter(Boolean),i=0;while(i<ld.length&&i<ad.length-1&&ld[i]===ad[i])i++;var rel=Array(ld.length-i).fill('..').concat(ad.slice(i)).join('/');var r=new URL(rel,V+'new/').href;return r.indexOf(V)===0?decodeURIComponent(r.slice(V.length)):null}catch(e){}return null}   /* 페이지 폴더 기준 상대 경로(../ 포함)를 가상 new/ 기준으로 */
 function url(u){var k=key(u);if(k==null||!F[k])return null;if(U[k])return U[k];var d=F[k],b=atob(d[1]),n=b.length,x=new Uint8Array(n);for(var i=0;i<n;i++)x[i]=b.charCodeAt(i);F[k]=[d[0],''];return U[k]=URL.createObjectURL(new Blob([x],{type:d[0]}))}
 window.__khVfsUrl=url;
 var f0=window.fetch;window.fetch=function(i,o){var u=typeof i==='string'?i:i&&i.url,b=u&&url(u);return f0.call(this,b||i,o)};
