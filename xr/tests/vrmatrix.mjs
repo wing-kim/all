@@ -75,4 +75,5 @@ fs.writeFileSync(DOC, md.join('\n') + '\n');
 const pass = enter && res.unexplained.length === 0 && errs.length === 0;
 console.log(JSON.stringify({ page: res.page, vis: visRows.length, vrCells: res.vrCells, ok: res.ok, alt: res.alt, no: res.no, na: res.na, unexplained: res.unexplained, errs: errs.slice(0, 3) }));
 console.log(pass ? 'PASS' : 'FAIL', 'VR 기능 대응표: 이유 없는 \'안 됨\' 0');
+console.log(`\n${pass ? 1 : 0}/1 통과`);   // qa.mjs 가 읽는 결과 줄
 await b.close(); process.exit(pass ? 0 : 1);

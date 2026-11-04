@@ -12,7 +12,7 @@
 
 | 범위 | 파일 | 내용 |
 |---|---|---|
-| Wing 페이지 | `new/3d-model.html` | v107 원본 + 지니 env_detail 코드 + 우리 접점(`[PR]`, `[XR]` 표시 60곳). 큰 데이터(KHDATA)는 빼고 `new/models/` 에서 받음 |
+| Wing 페이지 | `new/3d-model.html` | v107 원본 + 지니 env_detail 코드 + 우리 접점(`[PR]`, `[XR]` 표시 64줄). 큰 데이터(KHDATA)는 빼고 `new/models/` 에서 받음 |
 | 주변 모델 | `new/models/` | 지니 모델(meshopt .glb, 파일을 바로 연 경우용 .js), 텍스처 KTX2, 라이트맵 아틀라스, VR 아틀라스 |
 | 실사 3D | `photoreal/` | 실사 계층, 구운 빛(`bake/`), 텍스처·가구(`tex/`, `assets/`, 무료·오픈 라이선스, `photoreal/README.md` 에 출처), 주변 건물 자료(`context/`, 브이월드·OSM), 도구(`tools/`), 시험(`tests/`) |
 | VR | `xr/` | VR 계층(`xr/kh-xr.js`), 시험(`xr/tests/`) |
@@ -26,8 +26,16 @@
 2. 휴대폰과 퀘스트에서 `docs/device-checklist.md` 의 항목을 봅니다.
 3. 작업 폴더에서 `node photoreal/tests/qa.mjs` 로 전체 점검을 돌립니다(약 60분, 보고서 `docs/qa/report.md`).
 
+## 원본과 같은지
+
+세 탭(현황·신축·③ 실측) × 보기 방식을 원본(Wing v107 + 지니 env_detail 단일 HTML)과 같은 시점에서 찍어 비교하는 시험 `photoreal/tests/tabmodes.mjs` 를 넣었습니다. 스케치업은 0.23～0.32%, 실사(사진)는 0%, 숨긴 렌더(이전)는 0.07～2.8%(타워 유리 반사, 우리 반사 지도 되먹임 오류 수정 때문) 다릅니다. 렌더는 원본의 지니 렌더-실사 대신 실사 3D 가 켜지는 것이 의도한 차이입니다. 렌더에서 Wing 옵션 177개 상태가 같은 뜻으로 동작하는지는 `docs/render-option-matrix.md`, VR 메뉴 대응은 `docs/vr-feature-matrix.md` 입니다.
+
+## 단일 HTML
+
+`node photoreal/tools/bundle-single.mjs` 가 페이지와 실사 3D·VR 파일, 주변 모델·텍스처를 한 HTML(`dist/kapehorn-tower-3d_<판>.html`, 약 63MB, 바깥 CDN 없음)로 묶습니다. 파일을 바로 열어도(file://) 렌더가 켜집니다. `dist/` 는 `.gitignore` 로 빠져 있습니다.
+
 ## 점검 결과
 
-전체 점검 합격 기록은 `docs/qa/report.md` 와 `docs/goal-gap-plan.md` §20 에 있습니다.
+전체 점검 결과는 `docs/qa/report.md`, 판별 정리는 `docs/report/1102.s-report.md`, 작업 기록은 `docs/goal-gap-plan.md` §20～§22 입니다.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

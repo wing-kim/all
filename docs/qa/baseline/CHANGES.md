@@ -7,3 +7,4 @@
 - 2026-11-04T02:40 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg, env-school.jpg: 1102.o: 정면 압구정로 가로수 뺌(out·street), 실내 가구 대체물 상자 제거(5F 등), 그림자 맵 갱신 보강
 - 2026-11-04T04:02 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg, env-school.jpg: 1102.p: Wing v107(실측안 기본·새 메뉴·스케치업 하늘·바닥 색), 지니 v107 주변 48개 모델, 실사 3D 우선 조합 자주식 실측안
 - 2026-11-04T07:58 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg, env-school.jpg: 1102.r: 남서 모서리 앞 가로수 2그루 자르기, 지니 가로수 겹침 28그루 정리, 지니 2·3구역 유리 반사 보정
+- 2026-11-04T16:04 out.jpg, street.jpg, 1F.jpg, 5F.jpg, B1.jpg, B3.jpg, out-night.jpg, apt-now.jpg, apt-future.jpg, env-sketch.jpg: 1102.s: 지니 env_detail 대지·램프 입구·압구정로 단차(out·street), 1층 카페 실측안 배치(1F), 스케치업 주변을 지니 v107 재질로(env-sketch), VR 주차 차량 NaN·늘어남 수정. env-school 은 원인 미확인이라 기준 유지(되돌림)

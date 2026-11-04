@@ -1647,8 +1647,11 @@
   const UBH = { key: '', hid: [] };
   function underHide() {
     const xr = R.xr.isPresenting, L = K.I.on && K.Lv && K.Lv(), on = xr && L && L.kind !== 'base';
-    const key = on ? 'on|' + L.key + '|' + K.LEVELS.length + '|' + (DR.group ? DR.group.uuid : '') : '';
-    if (on) UBH.hid.forEach(o => { if (o.visible) o.visible = false; });
+    /* 1102.s: VR 외관에서는 우리 주변 건물의 세부 층(돌림띠 ctx_trim·간판 ctx_sign·난간 ctx_metal·상가 앞면 ctx_shop·원경 유리 ctx_far_glass, 양안 그리기 10·삼각형 약 18만)을 그리지 않는다.
+       지니 2·3구역 건물을 VR 에 되살리며 넘은 예산(그리기 180·삼각형 108.5만, 기준 170·100만)을 맞춤. 매스·지붕·벽 재질은 그대로라 윤곽은 같다 */
+    const ext = xr && !K.I.on;
+    const key = on ? 'on|' + L.key + '|' + K.LEVELS.length + '|' + (DR.group ? DR.group.uuid : '') : ext ? 'ext|' + [CTX.now, CTX.next].map(G => G ? G.uuid + G.children.length : '').join() : '';
+    if (on || ext) UBH.hid.forEach(o => { if (o.visible) o.visible = false; });
     if (key === UBH.key) return; UBH.key = key;
     UBH.hid.forEach(o => { o.visible = true; }); UBH.hid = [];
     if (on) {
@@ -1659,6 +1662,8 @@
       // 실내에서는 250m 밖 원경 주변 건물(가까운 건물에 가려 안 보임)도 뺀다
       const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 170) add(m); /* 1102.s: 250 → 170m(지니 2·3구역 건물을 VR 에도 보이면서 예산 맞춤) */ }));
     }
+    if (ext) { const add = o => { if (o && o.visible) { o.visible = false; UBH.hid.push(o); } };
+      [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (m.isMesh && /^ctx_(trim|sign|metal|shop|far_glass)$/.test(m.name)) add(m); })); }
     const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty();
   }
   /* 1102.r: VR 에서는 차량 모델(15대, 약 11만 삼각형)을 꼭짓점은 그대로 두고 인덱스만 줄인 판(meshoptimizer 0.22 단순화, MIT, vendor/meshopt_simplifier.js)으로 바꾼다.

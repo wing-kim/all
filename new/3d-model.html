@@ -7659,7 +7659,7 @@ const khGLTF=id=>khGet(id);   // [PR] 지니 v107 코드의 Draco 로더 대신 
 const khMat=n=>KHM[n]||(KHM[n]=(async()=>{const d=KH.mat[n],o={color:new THREE.Color(...d.color),roughness:d.rough,metalness:d.metal||0};   // colours are display values, like the rest of this page
   if(d.map)o.map=await khTex(d.map);if(d.normal){o.normalMap=await khTex(d.normal);o.normalScale=new THREE.Vector2(d.nstr||1,-(d.nstr||1))}
   if(d.alpha){o.alphaMap=await khTex(d.alpha);o.alphaTest=d.alphaTest||.5}if(d.double)o.side=THREE.DoubleSide;if(d.opacity){o.transparent=true;o.opacity=d.opacity}
-  const m=SM(o);m.userData.metal0=o.metalness;m.userData.col0=o.color.clone();m.userData.gain=SKG[n];KHMS.push(m);return m})());   // [PR] 스케치업은 따로 만든 무광 재질(khSketchMat)이라 지니 재질 색을 바꾸지 않는다(khSkMat 안 부름)
+  const m=SM(o);m.userData.metal0=o.metalness;m.userData.col0=o.color.clone();m.userData.gain=SKG[n];if(!R3D.on)khSkMat(m,false);KHMS.push(m);return m})());   // [PR] 1102.s: 지니 v107 그대로 되돌림(스케치업 첫 화면에서 받은 재질도 스케치업 색 이득을 받게. 1102.l 의 khSkMat 뺌은 무광 단색 규칙과 함께 없앰)
 // 스케치업 (no reflection probe, no tone mapping): metal / glass drawn matt, and the measured SKG gain on the colour — back to the
 // shared values for 렌더 / 렌더-실사. Order matters around linearize(): restore before it on the way in, re-apply after it on the way out
 function khSkMat(m,on){m.metalness=on?m.userData.metal0:0;const k=m.userData.gain;m.color.copy(m.userData.col0);if(!on&&k)m.color.setRGB(...[m.color.r,m.color.g,m.color.b].map((x,i)=>Math.min(1,x*k[i])))}
@@ -8822,7 +8822,8 @@ var SRV=(function(){
     // (11.04) 차 출입구: 도로 위로 나간 램프 점(바닥 · 차로 색 · 옆벽)을 뒷길 경계선까지 당기고 도로면 높이에 맞춤
     if(typeof DD!=='undefined'&&DD.RA&&DD.RA.g){const RA=DD.RA,R=erRing(),top=px=>gy(R.rh(px)+0.01)+0.025,v=new THREE.Vector3(),w=new THREE.Vector3(),N2=2*RA.sm.length,a0=RA.sm[0].i,b0=[RA.sm[0].o[0],yRoad(RA.sm[0].o[0])];RA.g.updateMatrixWorld(true);
       const edgeY=px=>a0[1]+(b0[1]-a0[1])*Math.max(0,Math.min(1,(px-a0[0])/(b0[0]-a0[0]))),ms=[];   // 당긴 램프 끝선 (서쪽 시작점 → 동쪽 도로 경계)
-      RA.g.traverse(m=>{if(!m.isMesh||!m.geometry||!m.geometry.attributes.position)return;for(let a=m;a&&a!==RA.g;a=a.parent)if(a.userData&&a.userData.car!==undefined)return;const p=m.geometry.attributes.position;if(!m.userData.c0)m.userData.c0=p.array.slice();
+      RA.g.traverse(m=>{if(!m.isMesh||!m.geometry||!m.geometry.attributes.position)return;for(let a=m;a&&a!==RA.g;a=a.parent)if(a.userData&&(a.userData.car!==undefined||a.userData.prCar))return;const p=m.geometry.attributes.position;if(!m.userData.c0||m.userData.c0.length!==p.array.length)m.userData.c0=p.array.slice();   /* [PR] 1102.s: 실사 3D 주차 차량(prCar)은 빼고, 형상이 바뀐 메시(VR 단순화 차량 등)는 원본 좌표를 다시 받음. 안 그러면 짧은 옛 좌표로 덮어 NaN·늘어난 차가 됐다 */
+      
         const wall=m.material===M.rampwall||m.userData.srv0===M.rampwall;const c0=m.userData.c0;let lo=1e9,hi=-1e9;for(let i=1;i<c0.length;i+=3){lo=Math.min(lo,c0[i]);hi=Math.max(hi,c0[i])}ms.push({m,p,c0,wall,deck:!wall&&p.count===N2,lane:hi-lo>0.3,inv:new THREE.Matrix4().copy(m.matrixWorld).invert()})});
       const deck=ms.find(o=>o.deck),rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0);
       [false,true].forEach(paint=>ms.forEach(({m,p,c0,wall,deck:dk,lane,inv})=>{if(paint===(wall||dk)||paint&&!lane)return;   // 차로 색 띠만 (화살표 상자는 그대로)

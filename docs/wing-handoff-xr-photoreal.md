@@ -15,10 +15,13 @@ Wing 님이 이 브랜치(`feature/xr-photoreal`)를 main 에 합치고, 앞으�
 1. 미리보기(`https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html`)에서 스케치업과 렌더를 세 탭에서 눌러 봅니다.
 2. 같은 화면을 Wing 님 PC 의 크롬에서 보고, 렌더 첫 전환 시간(우리 측정 1,219ms, 기준 2,000ms)을 알려 주시면 더 줄일지 정합니다.
 3. `docs/device-checklist.md` 의 퀘스트·휴대폰 항목을 봅니다.
+4. 서버 없이 보려면 단일 HTML(`kapehorn-tower-3d_1102.s.html`)을 크롬으로 엽니다. 렌더를 누르면 실사 3D 가 켜집니다(사파리는 확인 전).
+
+원본과 같은지는 `photoreal/tests/tabmodes.mjs`(세 탭 × 보기 방식 화면 비교, 원본 HTML 경로를 인자로), 렌더에서 Wing 옵션이 같은 뜻으로 동작하는지는 `docs/render-option-matrix.md` 입니다.
 
 ## 접점 목록 (`new/3d-model.html`)
 
-Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사 3D) 또는 `[XR]`(VR) 표시가 있습니다(60곳). 큰 갈래는 다음과 같습니다.
+Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사 3D) 또는 `[XR]`(VR) 표시가 있습니다(64줄). 큰 갈래는 다음과 같습니다.
 
 | 접점 | 하는 일 |
 |---|---|
@@ -40,6 +43,9 @@ Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사
 1. Wing 새 판에서 큰 데이터(KHDATA)를 뺀 코드를 만들고, 지난 기준판 코드와 우리 `new/3d-model.html` 로 3방향 합치기를 합니다(`git merge-file`). 우리 접점은 `[PR]`/`[XR]` 표시로 찾습니다. 1102.s 에서 지니 env_detail 을 이렇게 합쳤고 충돌은 5곳이었습니다.
 2. 주변 모델과 텍스처가 바뀌었으면 `node photoreal/tools/model/jinny-import.mjs "<새 HTML>" --deps <도구 폴더>` 로 들여옵니다(`docs/jinny-import.md`). 바뀐 모델만 다시 압축하고 VR 아틀라스도 다시 굽습니다.
 3. `new/3d-model.html` 의 `KH_ENV_VER`, `photoreal/kh-photoreal.js` 와 `xr/kh-xr.js` 의 `VER` 를 같은 값으로 올립니다(다르면 페이지가 버전 불일치로 한 번 다시 열립니다).
-4. `node photoreal/tests/qa.mjs` 전체 점검. 의도한 화면 변경이면 `--accept="사유"` 로 기준 화면을 갱신합니다.
+4. `node photoreal/tests/qa.mjs` 전체 점검(원본 비교는 `KH_ORIG=<새 원본 HTML>` 으로). 의도한 화면 변경이면 `--accept="사유"` 로 기준 화면을 갱신합니다.
+5. `node photoreal/tools/bundle-single.mjs` 로 단일 HTML 을 다시 묶습니다.
+
+지니 코드 쪽에서 우리가 고친 곳도 `[PR]` 표시가 있습니다. 1102.s 에서 더한 것은 두 곳입니다. 스케치업 첫 화면 재질에 지니 원본처럼 스케치업 색 이득을 다시 주는 것(`khSkMat`), 차 출입구 코드(`erApply`)가 우리 주차 차량(`prCar`)을 건드리지 않게 하고 형상이 바뀐 메시는 원래 좌표를 다시 받게 한 것입니다.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
