@@ -10,7 +10,7 @@
   if (window.KHXRLayer) return;
   const VER = '1102.u';
   const Q = new URLSearchParams(location.search);
-  const SRC = 'https://kh.vfs/xr/kh-xr.js';
+  const SRC = (document.currentScript && /^https?:/.test(document.currentScript.src || '') && !/kh\.vfs/.test(document.currentScript.src)) ? document.currentScript.src : 'https://kh.vfs/xr/kh-xr.js';   // v112: 깃허브(나눈 파일)에서는 실제 주소
   const BASE = new URL('./', SRC).href;
   const X = window.KHXRLayer = { ver: VER, log: [] };
   const log = (...a) => { const t = a.join(' '); X.log.push(t); if (X.log.length > 200) X.log.shift(); console.log('[khxr]', t); };
