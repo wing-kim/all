@@ -68,7 +68,7 @@ if (want('reg')) {
   await regTest('ux', XRT, 'ux.mjs', [BASE], {}, 1);   // 계단 걷기: 맥 부하로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   await regTest('ux pr=1', XRT, 'ux.mjs', [BASE, '--page=new/3d-model.html?pr=1'], {}, 1);   // 계단 걷기가 셰이더 준비로 한 프레임 멈추면 두 단을 건너뛴다(한 번 재시도)
   if (!QUICK) await regTest('mp', XRT, 'mp.mjs', [BASE], {}, 2);   // 공개 중계망(Nostr) 타이밍: 두 번까지 재시도
-  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel', 'vrload', 'env', 'furn', 'shadow', 'ramp', 'devices']) await regTest(t, HERE, t + '.mjs', [], {}, t === 'vrfeel' ? 1 : 0);   // vrfeel: 감속 없는 층 이동 50ms 기준은 맥 부하로 한 번씩 80ms 가 난다(1102.m, 한 번 재시도)   // env: 지니 주변 모델(1102.l)   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
+  for (const t of ['mobile', 'perfui', 'opt', 'ctxloss', 'quality', 'vrmode', 'vrfeel', 'vrload', 'vrmove', 'env', 'furn', 'shadow', 'ramp', 'devices']) await regTest(t, HERE, t + '.mjs', [], {}, t === 'vrfeel' ? 1 : 0);   // vrfeel: 감속 없는 층 이동 50ms 기준은 맥 부하로 한 번씩 80ms 가 난다(1102.m, 한 번 재시도)   // env: 지니 주변 모델(1102.l)   // vrfeel: 패스스루 알파·이동 끊김·레이 커서(1102.k)
   // 1102.s: 세 탭 × 보기 방식 원본(Wing v107 + 지니 env_detail 단일 HTML) 비교. 원본 파일이 없으면(다른 PC) 건너뜀. 경로는 KH_ORIG 로 바꿈
   { const O = process.env.KH_ORIG || '/Users/jaehwak/Downloads/케이프혼타워_3D모델_v107_env_detail.html'; if (!QUICK && fs.existsSync(O)) await regTest('tabmodes', HERE, 'tabmodes.mjs', [BASE, O]); }
   if (!QUICK) {
@@ -104,7 +104,7 @@ if (want('budget')) {
   // VR 이동 끊김(퀘스트 CPU 흉내 4배 감속, IWER): 순간이동 10번·층 이동 5번 뒤 화면이 보이는 동안 가장 긴 프레임
   { await run(HERE, 'vrfeel.mjs', [], { CPU: '4' }); const v = readJ(path.join(HERE, 'out/vrfeel.json'));
     if (v && v.move) { add('budget', 'VR 순간이동 뒤 가장 긴 프레임(CPU 4배)', v.move.teleportMax + 'ms', v.move.teleportMax <= 100, '≤ 100ms', `72Hz 기준 놓친 프레임 ${v.move.missed72}(감속 때문에 평소도 놓침, 정상 상태 중앙값 ${v.move.baseMed}ms)`, { unstable: true });
-      add('budget', 'VR 층 이동 뒤 보이는 동안 가장 긴 프레임(CPU 4배)', v.move.floorMax + 'ms', v.move.floorMax <= 120, '≤ 120ms', '무거운 일은 검은 전환 화면에서(1102.j: 597ms, 합치기 2번)', { unstable: true }); } }
+      add('budget', 'VR 층 이동 뒤 보이는 동안 가장 긴 프레임(CPU 4배)', v.move.floorMax + 'ms', v.move.floorMax <= 700, '≤ 700ms', '1102.v: 검은 화면 없이 바로 옮겨 층 바꾸기·합치기 멈춤 한 번이 보임(예전 기준 120ms 는 검은 화면 뒤에서 같은 일을 하던 전제)', { unstable: true }); } }
   if (!QUICK) { await run(HERE, 'winsim.mjs', [], { CPU: '1', SHADER_MS: '0', DPR: '2' }); const w = readJ(path.join(HERE, 'out/winsim.json'));
     if (w && w.state) add('budget', '맥 정상 조건 자동 품질', w.state.q, w.state.q === 'high', '높음 유지', `화소 ${w.state.rendererPR}/${w.state.composerPR}, 정상 상태 ${w.steady2.medMs}ms`); }
   const pf = readJ(path.join(ROOT, 'photoreal/prefetch.json')); if (pf) add('budget', '미리받기 목록', +(pf.bytes / 1e6).toFixed(2) + 'MB', pf.bytes / 1e6 <= TH.prefetchMB, '≤ ' + TH.prefetchMB + 'MB');

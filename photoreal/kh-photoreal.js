@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.u';
+  const VER = '1102.v';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -180,12 +180,15 @@
   function loadEnv() { return skyLoad('day'); }
   /* 1102.u(Jack 퀘스트: VR 실사감 부족): 실사 하늘(큐브)을 만들기 전에 VR 에 들어가면 VR 중에는 큐브를 만들 수 없어 Wing 하늘이 보여야 하는데 검게 나왔다
      (페이지를 열자마자 VR 에 들어가면 90초가 지나도 하늘이 검음, 에뮬레이터 확인). 렌더 대상 없이 그리는 하늘 구(사진을 안쪽에 입힌 큰 구, 머리를 따라 움직임)를 대신 보인다 */
+  // 1102.v(Jack: 열자마자 VR 에 들어가면 환경광이 약해 어두움): VR 세션 중에는 하늘 큐브·환경광을 만들 수 없다(렌더 대상 결과가 0, XR 카메라 바꿔치기를 꺼도 같음).
+  // VR 버튼을 누른 순간(세션이 열리기 전) 하늘 사진이 받아져 있으면 바로 큐브·환경광을 만든다. 하늘 사진은 실사 3D 를 켜자마자 먼저 받는다(enable)
+  PR.preVR = () => { if (!PR.on || skyBG || skyCur.busy) return; skyCur.key = ''; skyUpdate(); };
   const XD = PR.xd = { m: null, key: '', busy: false };   // PR.xd: 진단용
   async function xrDome(key, azW) {
     if (XD.busy || (XD.key === key && XD.m)) return; XD.busy = true;
     const sd = await skyLoad(key); XD.busy = false; if (!sd) return;
-    if (!XD.m) { XD.m = new T.Mesh(new T.SphereGeometry(800, 48, 24), new T.MeshBasicMaterial({ side: T.BackSide, depthWrite: false, fog: false })); XD.m.name = 'pr-xr-sky'; XD.m.frustumCulled = false; XD.m.renderOrder = -10; XD.m.userData.khxr = true; XD.m.userData.prSkip = true; XD.m.visible = false; scene.add(XD.m); }
-    XD.m.material.map = sd.tex; XD.m.material.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]); XD.m.material.needsUpdate = true;
+    if (!XD.m) { XD.m = new T.Mesh(new T.SphereGeometry(800, 48, 24), new T.MeshBasicMaterial({ side: T.BackSide, depthWrite: false, fog: false, toneMapped: false })); XD.m.name = 'pr-xr-sky';   /* 1102.v: 화면 배경 하늘처럼 톤 매핑 없이(노출 0.78 이 걸려 어둡게 보였다) */ XD.m.frustumCulled = false; XD.m.renderOrder = -10; XD.m.userData.khxr = true; XD.m.userData.prSkip = true; XD.m.visible = false; scene.add(XD.m); }
+    XD.m.material.map = sd.tex; XD.m.material.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key] * 1.28);   /* 1102.v: 큐브 배경(시험 위쪽 밝기 61.3)과 맞춤(구 47.6) */ XD.m.material.needsUpdate = true;
     XD.m.rotation.y = (Math.PI - 2 * Math.PI * sd.sunU) - azW; XD.key = key;
   }
   async function skyUpdate() {
@@ -1679,17 +1682,22 @@
     /* 1102.s: VR 외관에서는 우리 주변 건물의 세부 층(돌림띠 ctx_trim·간판 ctx_sign·난간 ctx_metal·상가 앞면 ctx_shop·원경 유리 ctx_far_glass, 양안 그리기 10·삼각형 약 18만)을 그리지 않는다.
        지니 2·3구역 건물을 VR 에 되살리며 넘은 예산(그리기 180·삼각형 108.5만, 기준 170·100만)을 맞춤. 매스·지붕·벽 재질은 그대로라 윤곽은 같다 */
     const ext = xr && !K.I.on;
-    const key = on ? 'on|' + L.key + '|' + K.LEVELS.length + '|' + (DR.group ? DR.group.uuid : '') : ext ? 'ext|' + [CTX.now, CTX.next].map(G => G ? G.uuid + G.children.length : '').join() : '';
+    const key = on ? 'on|' + L.key + '|' + K.LEVELS.length + '|' + (DR.group ? DR.group.uuid : '') + '|' + (window.KHENV ? KHENV.Q.filter(q => q.o).length + (KHENV.R.grp ? KHENV.R.grp.children.length : 0) : '') : ext ? 'ext|' + [CTX.now, CTX.next].map(G => G ? G.uuid + G.children.length : '').join() : '';
     if (on || ext) UBH.hid.forEach(o => { if (o.visible) o.visible = false; });
     if (key === UBH.key) return; UBH.key = key;
     UBH.hid.forEach(o => { o.visible = true; }); UBH.hid = [];
+    if (window.KHENV && CTX.envHid) KHENV.models().forEach(m => { m.o.visible = false; });   // 1102.v: 지하층에서는 지니 건물을 숨기는 규칙(envHid)을 되살림이 덮지 않게
     if (on) {
       const add = o => { if (o && o.visible) { o.visible = false; UBH.hid.push(o); } };
       K.LEVELS.forEach((l, i) => { if (l.kind === 'base') add(K.LG[i]); });
       K.R3D.props.children.forEach(c => { if (c.userData.car && c.position.y < -1) add(c); });
       DR.groups.forEach(([g, k]) => { const l = K.LEVELS.find(q => q.key === k); if (l && l.kind === 'base') add(g); });
+      // 1102.v: 실내 VR 은 지니 구역 묶음(90m 밖)과 지니 건물(120m 밖)도 뺀다(가까운 건물에 가려 거의 안 보임, 실내 1층 115만 → 예산 안). 묶음 뿌리를 숨기면 다음 합치기에서 빠진다
+      if (L.kind !== 'base' && window.KHENV) { const b2 = new T.Box3(), c2 = new T.Vector3(), far = (o, r) => { b2.setFromObject(o); if (b2.isEmpty()) return false; b2.getCenter(c2); return Math.hypot(c2.x, c2.z) > r; };
+        const G = KHENV.R.grp; if (G) G.children.forEach(o => { if (o.userData.khPack && far(o, 90)) add(o); });
+        KHENV.Q.forEach(q => { if (q.o && far(q.o, 120)) add(q.o); }); }
       // 실내에서는 250m 밖 원경 주변 건물(가까운 건물에 가려 안 보임)도 뺀다
-      const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 170) add(m); /* 1102.s: 250 → 170m(지니 2·3구역 건물을 VR 에도 보이면서 예산 맞춤) */ }));
+      const bb = new T.Box3(), c = new T.Vector3(); [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (!m.isMesh) return; bb.setFromObject(m); if (bb.isEmpty()) return; bb.getCenter(c); if (Math.hypot(c.x, c.z) > 170 || /^ctx_(trim|sign|metal|shop|far_glass|roof)$/.test(m.name)) add(m);   /* roof: 위를 향한 지붕면은 실내 눈높이에서 보이지 않음 */ /* 1102.v: 실내 VR 도 외관처럼 세부 층(돌림띠·간판·난간·상가 앞면·원경 유리)을 뺀다(실내 1층 115만 → 예산 안) */ /* 1102.s: 250 → 170m(지니 2·3구역 건물을 VR 에도 보이면서 예산 맞춤) */ }));
     }
     if (ext) { const add = o => { if (o && o.visible) { o.visible = false; UBH.hid.push(o); } };
       [CTX.now, CTX.next].forEach(G => G && G.children.forEach(m => { if (m.isMesh && /^ctx_(trim|sign|metal|shop|far_glass)$/.test(m.name)) add(m); })); }
@@ -1718,11 +1726,11 @@
   // 머리 위치로 고르면 순간이동·층 이동마다 형상이 바뀌어 VR 합치기를 다시 해 287ms 멈췄다(전체 점검). VR 은 대지 둘레에서 보므로 고정 기준으로 한 번만 정한다
   const CLOD_FAR = 12;
   function carLodSync(xr) {
-    const ck = xr + '|' + ENV.added.length + '|' + (ENV.added.length ? ENV.added[0].id + '.' + ENV.added[ENV.added.length - 1].id : ''); if (CLOD.xr === ck || CLOD.busy) return;   // 1102.t: 외장을 바꾸면 같은 수의 차를 새로 놓으므로 개체 번호도 본다(새 차가 단순화되지 않아 VR 94.5만)   // 조합을 바꾸면 차량을 다시 놓으므로 개수도 본다
+    const inside = !!(xr && K.I.on); const ck = xr + '|' + inside + '|' + ENV.added.length + '|' + (ENV.added.length ? ENV.added[0].id + '.' + ENV.added[ENV.added.length - 1].id : ''); if (CLOD.xr === ck || CLOD.busy) return;   // 1102.t: 외장을 바꾸면 같은 수의 차를 새로 놓으므로 개체 번호도 본다(새 차가 단순화되지 않아 VR 94.5만)   // 조합을 바꾸면 차량을 다시 놓으므로 개수도 본다
     const cars = ENV.added.filter(c => c.userData.prCar), meshes = []; cars.forEach(c => c.traverse(k => { if (k.isMesh && k.geometry.attributes.position) { k.userData.clodCar = c; meshes.push(k); } }));
     if (!meshes.length) return;
     const wp = new T.Vector3();
-    const pick = (k, e) => { if (!xr || !e.lod) return k.userData.clod0; k.userData.clodCar.getWorldPosition(wp); return e.far && Math.hypot(wp.x, wp.z) > CLOD_FAR ? e.far : e.lod; };
+    const pick = (k, e) => { if (!xr || !e.lod) return k.userData.clod0; k.userData.clodCar.getWorldPosition(wp); return e.far && (inside || Math.hypot(wp.x, wp.z) > CLOD_FAR) ? e.far : e.lod; };   // 1102.v: 실내에서는 차가 모두 유리 너머라 더 줄인 판
     const apply = () => { let ch = false; meshes.forEach(k => { const e = CLOD.map.get(k.userData.clod0 || k.geometry); if (!e) return; if (!k.userData.clod0) k.userData.clod0 = k.geometry; const g = pick(k, e); if (k.geometry !== g) { k.geometry = g; ch = true; } }); CLOD.xr = ck; const O = window.KHXRLayer && KHXRLayer.opt; if (ch && O && O.dirty) O.dirty(); };   // 형상이 실제로 바뀐 때만 다시 합친다
     if (!xr || meshes.every(k => CLOD.map.has(k.userData.clod0 || k.geometry))) return apply();
     CLOD.busy = true;
@@ -2590,6 +2598,7 @@
     if (on && !R.capabilities.isWebGL2) { gateNote('이 기기·브라우저는 WebGL2 를 지원하지 않아 렌더(실사 3D)를 쓸 수 없습니다. 스케치업으로 보여 드립니다. 최신 크롬·사파리에서 다시 열어 주세요.'); PR.loading = false; const sk = document.getElementById('vm-sketch'); if (sk && !sk.checked) { sk.checked = true; sk.dispatchEvent(new Event('change', { bubbles: true })); } return; }
     if (on) {
       PR.t = { enable0: now() };
+      skyLoad(bakeSlot() === 'night' ? 'night' : bakeSlot() === 'sunset' ? 'sunset' : 'day');   // 1102.v: 하늘 사진을 먼저 받는다(VR 버튼을 누를 때 바로 환경광을 만들 수 있게)
       const vr = document.getElementById('vm-render');
       if (window.PH && window.PH.on) window.PH.set(false);
       if (!K.R3D.on) { vr.checked = true; vr.dispatchEvent(new Event('change', { bubbles: true })); }

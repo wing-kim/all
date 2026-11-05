@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.u';
+  const VER = '1102.v';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -129,6 +129,7 @@
   async function enter(mode) {
     if (S.session || S.entering) return;
     S.entering = true;
+    try { if (window.KHPRLayer && KHPRLayer.preVR) KHPRLayer.preVR(); } catch (e) {}   // 1102.v: 세션이 열리기 전에 실사 하늘·환경광을 만든다
     try {
       // 1102.s(Jack 퀘스트): 패스스루는 피규어 모드에서만. 1:1 VR 은 패스스루 없는 immersive-vr(머리를 돌릴 때 그리지 못한 가장자리에 현실이 비치고, 패스스루 합성 비용도 든다)
       const wantAR = mode === 'fig' && X.support.ar && Q.get('xrsession') !== 'vr';
@@ -239,7 +240,7 @@
   function sortedLevels() { return (K.LEVELS || []).map((L, i) => ({ i, y: floorY(L), L })).sort((a, b) => a.y - b.y); }
   function goLevel(li) {
     if (!K.full) return;
-    fade(() => {
+    jump(() => {
       if (!K.I.on) K.enterInt();
       if (K.I.doll) K.setDoll(false);
       K.placeLevel(li, true);
@@ -257,7 +258,7 @@
   }
   function goOutside() {
     if (!K.full) return;
-    fade(() => {
+    jump(() => {
       if (K.I.on) K.exitInt();
       wingTarget();
       const sp = outsideSpot(); placeUser(sp.p, yawOf(sp.p, sp.c));     // 늘 건물 정면이 잘 보이는 자리로
@@ -266,7 +267,7 @@
   }
   function goInside() { const L = sortedLevels(); const g = L.findIndex(s => s.L.key === '1F'); if (L.length) goLevel(L[g >= 0 ? g : 0].i); }
   function goView(btn) {     // 시점 프리셋: 원본 버튼을 누르고 그 시점 자리로 사용자를 옮김
-    fade(() => {
+    jump(() => {
       btn.click();
       setTimeout(() => {
         const { p, t } = wingTarget();
@@ -546,7 +547,7 @@
     if (u.pressUI) { const h = u.pressUI; u.pressUI = null; const moved = UI.pressEnd(c); if (!moved && u.uiHit && u.uiHit.key === h.key) UI.activate(h); return; }
     if (u.pinchHold) { u.pinchHold = false; Grab.update(); return; }
     if (S.mode === 'fig' && !u.isHand) { Fig.selectEnd(c); return; }
-    if (u.aim) { u.aim = false; const pt = u.hit; if (pt) fade(() => teleportTo(pt), 0.6); u.hit = null; X.marker.visible = false; }
+    if (u.aim) { u.aim = false; const pt = u.hit; if (pt) jump(() => teleportTo(pt), true); u.hit = null; X.marker.visible = false; }
   }
   const prevBtn = new WeakMap();
   function pollGamepads(dt, time) {
@@ -760,6 +761,15 @@
   };
 
   /* ================= 8. 화면 전환 효과 ================= */
+  /* 1102.v(Jack: 이동할 때마다 '불러오는 중'·검은 화면이 거슬림, 원칙 = 로딩 없이 바로 보이기): 텔레포트·층 이동·밖으로·시점 이동은 검은 페이드 없이 그 프레임에 옮기고,
+     VR 합치기는 다음 프레임에 바로 한 번 한다(예전: 검은 화면 0.3～1.5초 동안 합치기·실사 계층 정리를 기다림). tp: 텔레포트면 그 뒤 5초는 로딩 판을 띄우지 않는다 */
+  function jump(fn, tp) {
+    if (!S.session) { fn(); return; }
+    S.fade = null; if (fadeMesh) fadeMesh.visible = false;
+    try { fn(); } catch (e) { log('이동 오류', e.message); }
+    if (S.opt) { Opt.need = true; Opt.due = performance.now(); }
+    S.moved = performance.now(); if (tp) S.tpQuiet = performance.now() + 5000;
+  }
   function fade(fn, dur = 0.35) {
     if (!S.session) { fn(); return; }
     S.fade = { t: 0, dur, fn, done: false };
@@ -851,7 +861,7 @@
       this.m = new T.Mesh(new T.PlaneGeometry(0.128, 0.03), new T.MeshBasicMaterial({ map: this.tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false }));
       this.m.position.set(0, -0.012, -0.2); this.m.renderOrder = 10001; this.m.visible = false; xrCam.add(this.m); },
     busy() { const P = window.KHPRLayer, pg = P && P.progress ? P.progress() : null, env = window.KHENV && KHENV.busy;
-      return { on: !!((pg && pg.busy) || env || Opt.need || (S.fade && fadeMesh.visible && fadeMesh.material.opacity > 0.6)), text: pg && pg.text ? pg.text : env ? '주변 건물 받는 중' : Opt.need ? '장면 정리 중' : '화면 준비 중' }; },
+      return { on: !!((pg && pg.busy) || env || (S.fade && fadeMesh.visible && fadeMesh.material.opacity > 0.6)) && !(S.tpQuiet && performance.now() < S.tpQuiet), text: pg && pg.text ? pg.text : env ? '주변 건물 받는 중' : Opt.need ? '장면 정리 중' : '화면 준비 중' }; },
     // 1102.u: 무엇이 끝나지 않아도 20초가 지나면 판을 닫는다. 닫기 전 3초는 이유('준비가 늦어 닫습니다: …')를 보이고, 그 일이 끝날 때까지 다시 띄우지 않는다
     tick(now) { if (!this.m) return; let b = S.session ? this.busy() : { on: false };
       if (b.on && this.timed) b = { on: false }; else if (!b.on) this.timed = false;
@@ -861,7 +871,7 @@
       this.whyT = 0;
       if (b.on && !this.shown) { this.shown = true; this.t0 = now; }
       if (!b.on && this.shown && now - (this.off || (this.off = now)) > 400) { this.shown = false; this.off = 0; } else if (b.on) this.off = 0;
-      const vis = this.shown && now - this.t0 > 250; this.m.visible = vis; if (!vis || now - this.last < 250) return; this.last = now;
+      const vis = this.shown && now - this.t0 > 1500;   /* 1102.v: 1.5초 넘게 이어질 때만(짧은 받기는 표시 없이). 합치기(Opt.need)는 판 이유에서 뺌 */ this.m.visible = vis; if (!vis || now - this.last < 250) return; this.last = now;
       const g = this.g, W = 640, H = 150, sec = ((now - this.t0) / 1000).toFixed(0), dots = '●○○○'.slice(0, 4).split(''), k = Math.floor(now / 250) % 4;
       g.clearRect(0, 0, W, H); g.fillStyle = 'rgba(18,20,22,0.88)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, W, H, 22) : g.rect(0, 0, W, H); g.fill();
       g.fillStyle = '#fff'; g.font = '600 40px system-ui, sans-serif'; g.fillText('불러오는 중 ' + dots.map((d, i) => (i === k ? '●' : '○')).join(''), 30, 62);
@@ -1052,7 +1062,7 @@
     selectEnd(c) {
       const t = this.target; this.target = null; X.marker.scale.setScalar(1);
       if (!t || t.c !== c) return;
-      fade(() => this.enterAt(t.p), 0.6);
+      jump(() => this.enterAt(t.p));
     },
     enterAt(p) {
       setMode('vr');
@@ -1077,10 +1087,10 @@
   X.setMode = m => { const needAR = m === 'fig' && X.support.ar && Q.get('xrsession') !== 'vr'; if (S.session && m !== 'web' && needAR !== !!S.ar) { swapSession(m); return; }
     fade(() => { if (m === 'vr' && S.mode === 'fig') { setMode('vr'); placeFromDesktop(); } else setMode(m); }); };
   function swapSession(m) { S.swapTo = m; const s = S.session; log('세션 바꾸기', S.sessionMode, '→', m); try { s.end(); } catch (e) { S.swapTo = null; } }
-  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.arc = arc; X.teleportTo = teleportTo; X.pickables = pickables; X.visibleForPick = visibleForPick;
+  X.goLevel = goLevel; X.stepFloor = stepFloor; X.goOutside = goOutside; X.goInside = goInside; X.outsideSpot = outsideSpot; X.arc = arc; X.teleportTo = teleportTo; X.jumpTo = (pt, yaw) => jump(() => teleportTo(pt, yaw), true); X.pickables = pickables; X.visibleForPick = visibleForPick;
   X.firstSolid = firstSolid; X.ctrls = ctrls; X.store = store; X.hooks = []; X.floorY = floorY; X.sortedLevels = sortedLevels;
   // 다른 사람 곁으로 가기(멀티플레이 모이기): li 는 그 사람이 있는 층(밖이면 -1)
-  X.goTo = (pt, yaw, li) => fade(() => {
+  X.goTo = (pt, yaw, li) => jump(() => {
     if (li >= 0 && K.full && K.LEVELS[li]) { if (!K.I.on) K.enterInt(); if (K.I.doll) K.setDoll(false); if (K.I.li !== li) K.placeLevel(li, true); wingTarget(); placeUser(V(pt.x, floorY(K.LEVELS[li]), pt.z), yaw); }
     else { if (K.I && K.I.on) K.exitInt(); wingTarget(); placeUser(V(pt.x, pt.y, pt.z), yaw); }
     afterChange();
@@ -1921,7 +1931,7 @@
       const i = hs[0].object.userData.i;
       return { key: 'hot:' + i, where: 'hot', distance: hs[0].distance, cell: { key: 'hot:' + i, i, act: () => Hot.go(i) } };
     },
-    go(i) { const h = this.list[i]; if (!h) return; fade(() => { placeUser(h.at, yawOf(h.at, h.door)); afterChange(); UI.toast(h.name); }, 0.5); }
+    go(i) { const h = this.list[i]; if (!h) return; jump(() => { placeUser(h.at, yawOf(h.at, h.door)); afterChange(); UI.toast(h.name); }); }
   };
 
   /* ================= 12-2. 실사 사진 액자 ================= */

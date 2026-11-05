@@ -44,7 +44,8 @@ res.move = { teleportMax: tMax, floorMax: fMax, missed72: miss, baseMed: res.bas
 if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
 console.log('이동', JSON.stringify({ tele, fl }));
 ok('순간이동 10번: 이동 뒤 가장 긴 프레임 ≤ 100ms', tMax <= 100, { tMax, each: tele.map(x => x.max) });
-ok('층 이동 5번: 화면이 보이는 동안 가장 긴 프레임 ≤ ' + (CPU > 1 ? 120 : 50) + 'ms', fMax <= (CPU > 1 ? 120 : 50), { fMax, each: fl.map(x => x.k + ':' + x.max + '(검은 화면 포함 ' + x.maxAll + ')') });
+// 1102.v: 층 이동은 검은 화면 없이 바로 옮기고 다음 프레임에 VR 합치기를 한 번 한다(Jack: 검은 화면·로딩 판이 거슬림). 그 한 번의 멈춤(층 바꾸기 + 합치기, CPU 4배에서 500～600ms)이 보이므로 기준을 120 → 700ms(CPU 4배), 50 → 400ms(감속 없음, 실측 254～320ms)로. 퀘스트는 앱이 멈춰도 시간 왜곡(ATW)으로 머리 움직임은 이어진다
+ok('층 이동 5번: 화면이 보이는 동안 가장 긴 프레임 ≤ ' + (CPU > 1 ? 700 : 400) + 'ms', fMax <= (CPU > 1 ? 700 : 400), { fMax, each: fl.map(x => x.k + ':' + x.max + '(검은 화면 포함 ' + x.maxAll + ')') });
 // 3) 레이: 메뉴를 열고 가운데 칸을 오른손으로 겨눔
 res.ray = await ev(async () => { const U = KHXRLayer.ui; U.openMenu(); await F(8); const P = U.panel(); P.updateMatrixWorld(true);
   const cell = U.cells().find(c => c.act) || U.cells()[0], to = U.cellPoint(cell), c = KHEMU.controllers.right, from = new THREE.Vector3(0.15, 1.3, -0.1), loc = KHXRLayer.rig.worldToLocal(to.clone());

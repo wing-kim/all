@@ -12,7 +12,7 @@ await p.waitForFunction(() => window.KHXRLayer && KHXRLayer.support && window.KH
 const st = () => p.evaluate(async () => {
   const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 15; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
   const R = KHXR.renderer; let ray = null; { const g = R.xr.getController(1).getObjectByName('khxr-ray'); if (g) { ray = g.visible; g.traverse(o => { if (o !== g && !o.visible) ray = false; }); } }   // 1102.k: 레이는 선 대신 얇은 원기둥 묶음(khxr-ray)
-  return { vmode: (document.querySelector('input[name=vmode]:checked') || {}).value, ray, exp: +R.toneMappingExposure.toFixed(3), hemi: +KHPR.hemi.intensity.toFixed(3), bg: !!KHXR.scene.background, wingSky: !!(KHPR.R3D.sky && KHPR.R3D.sky.visible), pr: !!KHPRLayer.on };
+  return { vmode: (document.querySelector('input[name=vmode]:checked') || {}).value, ray, exp: +R.toneMappingExposure.toFixed(3), hemi: +KHPR.hemi.intensity.toFixed(3), bg: !!KHXR.scene.background, wingSky: !!(KHPR.R3D.sky && KHPR.R3D.sky.visible), dome: !!(KHPRLayer.xd && KHPRLayer.xd.m && KHPRLayer.xd.m.visible), pr: !!KHPRLayer.on };
 });
 const pick = v => p.evaluate(v => { const e = document.querySelector('input[name=vmode][value=' + v + ']'); e.checked = true; e.dispatchEvent(new Event('change', { bubbles: true })); }, v);
 await p.evaluate(() => KHXRLayer.enter('vr'));
@@ -25,14 +25,14 @@ ok('렌더: VR 밝기 보정(노출 ≥ 0.9, 반구광 ≥ 0.3)', b1.exp >= 0.9 
 await pick('real'); await p.waitForFunction(() => KHPRLayer.on && KHPRLayer.t.ground != null && KHPRLayer.t.warm != null, { timeout: 180000 }).catch(() => {});
 await new Promise(r => setTimeout(r, 3000));
 const c = await st(); ok('실사 3D: 레이 보임', c.ray === true && c.pr, c);
-ok('실사 3D(VR 안에서 전환): 하늘 있음(실사 하늘 또는 Wing 하늘)', c.bg || c.wingSky, c);
+ok('실사 3D(VR 안에서 전환): 하늘 있음(실사 하늘·Wing 하늘·VR 하늘 구)', c.bg || c.wingSky || c.dome, c);   // 1102.u: VR 중에는 실사 하늘 큐브를 못 만들어 하늘 구(dome)를 쓴다
 // 화면으로 하늘 확인: VR 에뮬레이터 화면(양안이 캔버스에 그려짐) 위쪽 15% 의 평균 밝기와 파란 기운. 검은 하늘이면 밝기가 20 아래
 const sky = async tag => { const png = await p.screenshot({ encoding: 'base64', clip: { x: 0, y: 0, width: 1280, height: 120 } });
   if (process.env.SAVE) (await import('node:fs')).writeFileSync('out/vr-sky-' + tag + '.png', Buffer.from(png, 'base64'));
   return p.evaluate(async u => { const i = await new Promise(r => { const m = new Image(); m.onload = () => r(m); m.src = u; }); const cv = document.createElement('canvas'); cv.width = i.width; cv.height = i.height; const g = cv.getContext('2d'); g.drawImage(i, 0, 0);
     const d = g.getImageData(0, 0, i.width, i.height).data; let L = 0, B = 0, n = 0; for (let k = 0; k < d.length; k += 16) { L += (d[k] + d[k + 1] + d[k + 2]) / 3; B += d[k + 2] - d[k]; n++; } return { lum: +(L / n).toFixed(1), blue: +(B / n).toFixed(1) }; }, 'data:image/png;base64,' + png); };
 if (process.env.SAVE) await p.screenshot({ path: 'out/vr-full-pr3d.jpg', type: 'jpeg', quality: 70 });
-const sk1 = await sky('pr3d'); ok('실사 3D: 화면 위쪽 하늘이 밝다(평균 밝기 ≥ 60)', sk1.lum >= 60, sk1);
+const sk1 = await sky('pr3d'); ok('실사 3D: 화면 위쪽 하늘이 밝다(평균 밝기 ≥ 60, VR 하늘 구면 ≥ 40·파란 기운 ≥ 30)', c.dome ? sk1.lum >= 40 && sk1.blue >= 30 : sk1.lum >= 60, { ...sk1, dome: c.dome });   // 1102.v: 하늘 구는 PC 실사 하늘과 같은 사진이라 천정이 짙은 파랑(Wing 하늘 기준 60 은 맞지 않음). 검은 하늘은 밝기 20 아래
 const menu = await p.evaluate(async () => { const U = KHXRLayer.ui; if (!U || !U.openMenu) return null; U.openMenu(); const s = KHXR.renderer.xr.getSession(); for (let i = 0; i < 5; i++) await new Promise(r => s.requestAnimationFrame(() => r()));
   const t = U.tabs(), i = t.findIndex(x => /^빛과 시간/.test(x)); U.setTab(i); for (let k = 0; k < 5; k++) await new Promise(r => s.requestAnimationFrame(() => r()));
   return U.cells().map(c => c.key).filter(k => /vmode/.test(k)); });

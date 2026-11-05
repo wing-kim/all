@@ -7670,7 +7670,7 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.u';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.v';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
