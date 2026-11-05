@@ -111,7 +111,7 @@ async function flicker(P, tag, views) {
       S.push(await shot(P));
     }
     await P.p.evaluate(() => { const c = KHXR.camera; c.position.copy(c.userData.p0); KHXR.controls.target.copy(c.userData.t0); delete c.userData.p0; delete c.userData.t0; });
-    const r = await P.p.evaluate(async (S, MVv, OLDF) => {
+    const r = await P.p.evaluate(async (S, MVv, OLDF, OLDE) => {
       const { w, h, D, mk } = await window.__qaImg(S); const band = { near: [0, 0, 0], mid: [0, 0, 0], far: [0, 0, 0] };
       const fl = (x, y) => { if (x < 4 || y < 4 || x >= w - 4 || y >= h - 4) return false; const m0 = mk(x, y); if (m0.up !== 1 || m0.grp === 4 || m0.dist < 1.5) return false; /* 1.5m 안은 카메라 이동이 실제 움직임으로 보인다 */ for (let a = -4; a <= 4; a += 2) for (let c = -4; c <= 4; c += 2) { const q = mk(x + c, y + a); if (q.up !== 1 || Math.abs(q.dist - m0.dist) > 0.04 * m0.dist + 0.1) return false; } return true; }; /* 이웃 화소의 거리가 매끄럽게 이어지는 면만(책상 윗면과 그 뒤 바닥의 경계 같은 단차 제외) */
       for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) { if (!fl(x, y)) continue; const m = mk(x, y);
@@ -120,15 +120,17 @@ async function flicker(P, tag, views) {
         a /= D.length - 1; band[b][0] += a; band[b][1]++; if (a > 12) band[b][2]++; }
       // 화면 전체(나무 제외): 형상 가장자리(차선·줄눈·창틀)의 자글거림을 포함한 값
       let as = 0, an = 0, ah = 0, au = 0; const PPR = h / (2 * Math.tan(KHXR.camera.fov * Math.PI / 360));   /* 1102.r: 카메라 이동으로 실제로 0.5화소 넘게 움직이는 가까운 것(시차)은 깜빡임이 아니라 움직임이다. 예전 1.5m 고정 규칙은 퀘스트 한 눈(화소 배율 2)에서 1.5～4.5m 의 화분·의자 가장자리를 깜빡임으로 셌다 */
-      for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const m = mk(x, y); if (m.grp === 4 || (m.dist > 0 && (m.dist < 1.5 || (!OLDF && MVv / m.dist * PPR > 0.5)))) continue; /* 실제 움직임 */ const i = (y * w + x) * 4; let a = 0;
+      for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { const m0 = mk(x, y), m = { ...m0 }; if (!OLDF && !OLDE) { const K5 = (D.length - 1) * MVv * PPR; for (let a2 = -2; a2 <= 2; a2++) for (let c2 = -24; c2 <= 24; c2++) { const yy = y + a2, xx = x + c2; if (xx < 0 || xx >= w || yy < 0 || yy >= h) continue; const q = mk(xx, yy); if (q.dist > 0 && Math.abs(c2) <= K5 / q.dist + 2 && (m.dist <= 0 || q.dist < m.dist)) m.dist = q.dist; } }   /* 1102.t: 가림 경계(가까운 의자·기둥이 먼 배경 위를 지나가는 화소)는 그 화소의 판정 거리가 배경이라 시차가 작게 계산돼 깜빡임으로 셌다. 카메라가 옆으로만 움직이므로, 가로 24·세로 2화소 안에서 측정 동안(5번 이동) 이 화소까지 밀려올 수 있는 물체 중 가장 가까운 것의 거리로 본다(OLDE=1 이면 예전식) */
+        if (m0.grp === 4 || (m.dist > 0 && (m.dist < 1.5 || (!OLDF && MVv / m.dist * PPR > 0.5)))) continue; /* 실제 움직임 */ const i = (y * w + x) * 4; let a = 0;
         for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1; as += a; an++; if (a > 12) { ah++;
           /* 시차 설명(1102.r): 화면이 s 화소 옆으로 밀리기만 하면 프레임 차이는 가로 기울기 × s 다. 카메라가 오른쪽으로 가면 화면은 왼쪽으로 밀린다. 실제 차이가 그 예상의 2배 + 4 를 넘는 화소만 '설명 안 되는 깜빡임'(진짜 자글거림)으로 센다 */
-          if (m.dist > 0) { const s = MVv / m.dist * PPR, L = (j, q) => (D[q][j] + D[q][j + 1] + D[q][j + 2]) / 3; let g = 0; for (let k = 0; k < D.length - 1; k++) { const xl = Math.max(0, x - 1), xr = Math.min(w - 1, x + 1); g += Math.abs(L((y * w + xr) * 4, k) - L((y * w + xl) * 4, k)) / (xr - xl); } g /= D.length - 1; if (a > 2 * g * Math.min(s, 1) + 4) au++; } else au++; } }
+          if (m.dist > 0) { const s = MVv / m.dist * PPR, L = (j, q) => (D[q][j] + D[q][j + 1] + D[q][j + 2]) / 3; let g = 0; for (let k = 0; k < D.length - 1; k++) { const xl = Math.max(0, x - 1), xr = Math.min(w - 1, x + 1); g += Math.abs(L((y * w + xr) * 4, k) - L((y * w + xl) * 4, k)) / (xr - xl); } g /= D.length - 1; if (a > 2 * g * Math.min(s, 1) + 4) { au++; window.__qaSave && (window.__qaHi || (window.__qaHi = [])).push(x, y, 2); } else window.__qaSave && (window.__qaHi || (window.__qaHi = [])).push(x, y, 1); } else { au++; window.__qaSave && (window.__qaHi || (window.__qaHi = [])).push(x, y, 2); } } }
       if (window.__qaSave) { const cv2 = document.createElement('canvas'); cv2.width = w; cv2.height = h; const g2 = cv2.getContext('2d'), id = g2.createImageData(w, h);
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = (y * w + x) * 4; let a = 0; for (let k = 1; k < D.length; k++) a += Math.abs((D[k][i] + D[k][i + 1] + D[k][i + 2]) - (D[k - 1][i] + D[k - 1][i + 1] + D[k - 1][i + 2])) / 3; a /= D.length - 1;
-          const f = fl(x, y); id.data[i] = Math.min(255, a * 12); id.data[i + 1] = f ? 90 : D[0][i + 1] * 0.25; id.data[i + 2] = f ? 0 : D[0][i + 2] * 0.25; id.data[i + 3] = 255; } g2.putImageData(id, 0, 0); window.__qaHeat = cv2.toDataURL(); }
+          const f = fl(x, y); id.data[i] = Math.min(255, a * 12); id.data[i + 1] = f ? 90 : D[0][i + 1] * 0.25; id.data[i + 2] = f ? 0 : D[0][i + 2] * 0.25; id.data[i + 3] = 255; } const HI = window.__qaHi || []; for (let j = 0; j < HI.length; j += 3) for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { const i = ((HI[j + 1] + dy) * w + HI[j] + dx) * 4; if (i < id.data.length) { id.data[i] = 255; id.data[i + 1] = HI[j + 2] === 2 ? 255 : 0; id.data[i + 2] = HI[j + 2] === 2 ? 0 : 255; } }   /* 전체 깜빡임에 센 화소: 분홍 = 시차로 설명됨, 노랑 = 설명 안 됨 */
+        window.__qaHi = []; g2.putImageData(id, 0, 0); window.__qaHeat = cv2.toDataURL(); }
       const o = { all: { flick: +(as / an).toFixed(2), hiPct: +(ah / an * 100).toFixed(2), unexplainedPct: +(au / an * 100).toFixed(2) } }; for (const [k, [s, n, hi]] of Object.entries(band)) o[k] = n > 200 ? { flick: +(s / n).toFixed(2), hiPct: +(hi / n * 100).toFixed(2), px: n } : null; return o;
-    }, S, MV, !!process.env.OLDFL);   // OLDFL=1: 1102.q 까지의 측정식(1.5m 만 뺌)
+    }, S, MV, !!process.env.OLDFL, !!process.env.OLDE);   // OLDFL=1: 1102.q 까지의 측정식(1.5m 만 뺌)
     const key = tag + ':' + v + (low ? '-low' : '');
     if (process.env.SAVE) { const png = await P.p.evaluate(() => window.__qaHeat); if (png) fs.writeFileSync(OUT + 'flick-' + key.replace(/:/g, '-') + '.png', Buffer.from(png.split(',')[1], 'base64')); }
     res.flicker[key] = { ...r, cover };

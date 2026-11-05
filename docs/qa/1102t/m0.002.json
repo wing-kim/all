@@ -1,0 +1,371 @@
+{
+ "base": "http://127.0.0.1:8803",
+ "qs": "",
+ "at": "2026-11-04T23:48:52.604Z",
+ "flicker": {
+  "pc:street": {
+   "all": {
+    "flick": 0.93,
+    "hiPct": 0.77,
+    "unexplainedPct": 0.74
+   },
+   "near": {
+    "flick": 0.27,
+    "hiPct": 0.01,
+    "px": 227647
+   },
+   "mid": {
+    "flick": 0.21,
+    "hiPct": 0.02,
+    "px": 343542
+   },
+   "far": {
+    "flick": 0.91,
+    "hiPct": 1.08,
+    "px": 19774
+   },
+   "cover": [
+    66.6,
+    19.6,
+    12.8,
+    0.1,
+    0.9
+   ]
+  },
+  "pc:1F": {
+   "all": {
+    "flick": 0.5,
+    "hiPct": 0.73,
+    "unexplainedPct": 0.2
+   },
+   "near": {
+    "flick": 0.42,
+    "hiPct": 0.02,
+    "px": 213620
+   },
+   "mid": {
+    "flick": 0.1,
+    "hiPct": 0.02,
+    "px": 31279
+   },
+   "far": {
+    "flick": 0.01,
+    "hiPct": 0,
+    "px": 642
+   },
+   "cover": [
+    1.3,
+    93.6,
+    5.1,
+    0,
+    0
+   ]
+  },
+  "pc:B1": {
+   "all": {
+    "flick": 0.39,
+    "hiPct": 0.05,
+    "unexplainedPct": 0.01
+   },
+   "near": {
+    "flick": 0.52,
+    "hiPct": 0,
+    "px": 359935
+   },
+   "mid": {
+    "flick": 0.07,
+    "hiPct": 0,
+    "px": 52625
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "pc:5F": {
+   "all": {
+    "flick": 0.37,
+    "hiPct": 0.47,
+    "unexplainedPct": 0.11
+   },
+   "near": {
+    "flick": 0.14,
+    "hiPct": 0.04,
+    "px": 190764
+   },
+   "mid": {
+    "flick": 0.1,
+    "hiPct": 0,
+    "px": 15120
+   },
+   "far": null,
+   "cover": [
+    1,
+    95,
+    3.9,
+    0,
+    0
+   ]
+  },
+  "pc:1F-low": {
+   "all": {
+    "flick": 0.62,
+    "hiPct": 1.01,
+    "unexplainedPct": 0.35
+   },
+   "near": {
+    "flick": 0.5,
+    "hiPct": 0.36,
+    "px": 179669
+   },
+   "mid": null,
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 288
+   },
+   "cover": [
+    0.3,
+    95.6,
+    4.1,
+    0,
+    0
+   ]
+  },
+  "pc:B1-low": {
+   "all": {
+    "flick": 0.31,
+    "hiPct": 0.1,
+    "unexplainedPct": 0.01
+   },
+   "near": {
+    "flick": 0.66,
+    "hiPct": 0,
+    "px": 230463
+   },
+   "mid": {
+    "flick": 0.38,
+    "hiPct": 0,
+    "px": 207
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "phone:street": {
+   "all": {
+    "flick": 0.88,
+    "hiPct": 1.34,
+    "unexplainedPct": 1.3
+   },
+   "near": {
+    "flick": 0.29,
+    "hiPct": 0.03,
+    "px": 359992
+   },
+   "mid": {
+    "flick": 0.21,
+    "hiPct": 0,
+    "px": 168046
+   },
+   "far": {
+    "flick": 0.98,
+    "hiPct": 2.15,
+    "px": 5952
+   },
+   "cover": [
+    63.9,
+    30.8,
+    5.2,
+    0,
+    0
+   ]
+  },
+  "phone:1F": {
+   "all": {
+    "flick": 0.38,
+    "hiPct": 0.68,
+    "unexplainedPct": 0.06
+   },
+   "near": {
+    "flick": 0.64,
+    "hiPct": 0.03,
+    "px": 319470
+   },
+   "mid": {
+    "flick": 0.1,
+    "hiPct": 0,
+    "px": 40728
+   },
+   "far": {
+    "flick": 0.02,
+    "hiPct": 0,
+    "px": 2587
+   },
+   "cover": [
+    2.1,
+    87.4,
+    10.5,
+    0,
+    0
+   ]
+  },
+  "phone:B1": {
+   "all": {
+    "flick": 0.32,
+    "hiPct": 0.11,
+    "unexplainedPct": 0.01
+   },
+   "near": {
+    "flick": 0.97,
+    "hiPct": 0,
+    "px": 387956
+   },
+   "mid": {
+    "flick": 0.14,
+    "hiPct": 0,
+    "px": 82820
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "eye:street": {
+   "all": {
+    "flick": 0.84,
+    "hiPct": 0.62,
+    "unexplainedPct": 0.47
+   },
+   "near": {
+    "flick": 0.34,
+    "hiPct": 0.29,
+    "px": 610696
+   },
+   "mid": {
+    "flick": 0.25,
+    "hiPct": 0.04,
+    "px": 796947
+   },
+   "far": {
+    "flick": 0.17,
+    "hiPct": 0.03,
+    "px": 119838
+   },
+   "cover": [
+    61.9,
+    26.6,
+    11.1,
+    0.1,
+    0.3
+   ]
+  },
+  "eye:1F": {
+   "all": {
+    "flick": 0.4,
+    "hiPct": 0.61,
+    "unexplainedPct": 0.08
+   },
+   "near": {
+    "flick": 0.59,
+    "hiPct": 0.08,
+    "px": 727613
+   },
+   "mid": {
+    "flick": 0.09,
+    "hiPct": 0.01,
+    "px": 116709
+   },
+   "far": {
+    "flick": 0.02,
+    "hiPct": 0,
+    "px": 4925
+   },
+   "cover": [
+    1.8,
+    91.4,
+    6.9,
+    0,
+    0
+   ]
+  },
+  "eye:B1": {
+   "all": {
+    "flick": 0.38,
+    "hiPct": 0.19,
+    "unexplainedPct": 0.05
+   },
+   "near": {
+    "flick": 0.78,
+    "hiPct": 0,
+    "px": 1024327
+   },
+   "mid": {
+    "flick": 0.09,
+    "hiPct": 0,
+    "px": 194545
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "eye:5F": {
+   "all": {
+    "flick": 0.49,
+    "hiPct": 0.73,
+    "unexplainedPct": 0.14
+   },
+   "near": {
+    "flick": 0.29,
+    "hiPct": 0.4,
+    "px": 585163
+   },
+   "mid": {
+    "flick": 0.1,
+    "hiPct": 0.07,
+    "px": 53644
+   },
+   "far": null,
+   "cover": [
+    1.5,
+    93.2,
+    5.3,
+    0,
+    0
+   ]
+  }
+ },
+ "alias": {},
+ "still": {},
+ "ui": {},
+ "mem": null,
+ "shots": [],
+ "errors": [
+  "pc 404 /kapehorn-media/catalog.js?v=1793836133161",
+  "pc Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "pc 404 /favicon.ico",
+  "pc Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "phone 404 /kapehorn-media/catalog.js?v=1793836171116",
+  "phone Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "eye 404 /kapehorn-media/catalog.js?v=1793836197365",
+  "eye Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

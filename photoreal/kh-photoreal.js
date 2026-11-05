@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.s';
+  const VER = '1102.t';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -849,7 +849,7 @@
       })); } }
     NIGHT.value = night ? 1 : 0;
     lampPools(); if (POOL.m) POOL.m.visible = night && !inBase;
-    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); srvGroundSync(); carLodSync(R.xr.isPresenting); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
+    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); srvGroundSync(); carLodSync(R.xr.isPresenting); furnLodSync(R.xr.isPresenting && !K.I.on); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
@@ -1153,7 +1153,8 @@
       if (!mat || R.xr.isPresenting) return rbd.call(this, cam, sc, geo, mat, obj, grp);
       if (gl.isContextLost() && !props.get(mat).currentProgram) return;   // 컨텍스트를 잃은 동안 새 셰이더를 만들면 three 가 빈 로그(null)를 읽다 멈춘다
       // 실사 3D 가 켜져 있을 때만(1102.k: Wing 렌더 모드에서 반사 지도를 미루면 다시 그리기(gateRefl)가 돌지 않아 유리가 어둡게 남았다)
-      if (!sc || !(PR.on || PR.loading) || (K.R3D && K.R3D.busy)) return rbd.call(this, cam, sc, geo, mat, obj, grp);   // PR.loading: 켜기 직전 Wing 렌더 전환(반사 지도)도
+      // 1102.t: '렌더'를 고른 순간(vm-real 체크, 아직 PR.on 전) Wing setRender 의 반사 지도 갱신이 렌더 재질 셰이더 25개 정도를 한 번에 만들어 윈도우 흉내에서 3.7초 멈췄다. 그 순간도 미룬다
+      if (!sc || !(PR.on || PR.loading || realPick()) || (K.R3D && K.R3D.busy)) return rbd.call(this, cam, sc, geo, mat, obj, grp);   // PR.loading: 켜기 직전 Wing 렌더 전환(반사 지도)도
       // 반사 지도(정육면체)는 화면과 셰이더 변형이 달라 currentProgram 이 있어도 처음 그릴 때 새로 만든다: 재질마다 정육면체에 처음 그리는 것을 따로 센다
       // 미루는 곳은 Wing 장면(scene)을 화면·합성 단계 버퍼(SSAO 의 장면 버퍼 등, 합성기를 다시 만들면 바뀐다)에 그릴 때와 Wing 반사 지도뿐.
       // 하늘 정육면체는 다른 장면이라, 장면을 굽는 환경 지도(PMREM fromScene, CubeUV 버퍼: 지하 바닥 광택)는 버퍼 종류로 빼서 미루지 않는다(빠지면 어둡거나 광택이 없다). 정지 화면 찍기(PR.still)도
@@ -1173,6 +1174,7 @@
       return r;
     };
   }
+  let vmReal = null; function realPick() { if (!vmReal || !vmReal.isConnected) vmReal = document.getElementById('vm-real'); return !!(vmReal && vmReal.checked); }
   PR.gate = GATE;   // 진단용
   // 반사 지도를 그리다 미룬 재질이 있으면 잠시 뒤 다시 그린다(frame 에서 부른다)
   function gateRefl() {
@@ -1669,14 +1671,14 @@
   /* 1102.r: VR 에서는 차량 모델(15대, 약 11만 삼각형)을 꼭짓점은 그대로 두고 인덱스만 줄인 판(meshoptimizer 0.22 단순화, MIT, vendor/meshopt_simplifier.js)으로 바꾼다.
      법선·uv 는 원래 꼭짓점 것을 그대로 쓴다. 같은 차종은 형상을 같이 쓰므로 형상마다 한 번만 만든다. 화면은 그대로 */
   // 위치·법선(0.1 단위)이 같은 꼭짓점을 붙여(모서리 날은 법선이 달라 그대로) 줄인다. 꼭짓점마다 따로인 모델(차량)도 줄어든다
-  function weldLod(S, g, ratio) {
+  function weldLod(S, g, ratio, err) {
     const P = g.attributes.position, N = g.attributes.normal, n = P.count, ix = g.index, W = new Map(), rep = [], re = new Uint32Array(n);
     for (let i = 0; i < n; i++) { const key = Math.round(P.getX(i) * 1000) + ',' + Math.round(P.getY(i) * 1000) + ',' + Math.round(P.getZ(i) * 1000) + (N ? '|' + Math.round(N.getX(i) * 10) + ',' + Math.round(N.getY(i) * 10) + ',' + Math.round(N.getZ(i) * 10) : '');
       let w = W.get(key); if (w === undefined) { w = rep.length; W.set(key, w); rep.push(i); } re[i] = w; }
     const cnt = ix ? ix.count : n, src = new Uint32Array(cnt); for (let i = 0; i < cnt; i++) src[i] = re[ix ? ix.getX(i) : i];
     const pos = new Float32Array(rep.length * 3); rep.forEach((v, k) => { pos[k * 3] = P.getX(v); pos[k * 3 + 1] = P.getY(v); pos[k * 3 + 2] = P.getZ(v); });
     const tgt = Math.floor(cnt * ratio / 3) * 3; if (tgt < 60) return null;
-    const [out] = S.simplify(src, pos, 3, tgt, 0.01, []); if (out.length > cnt * 0.8) return null;
+    const [out] = S.simplify(src, pos, 3, tgt, err || 0.01, []);   // err: 모델 크기 대비 허용 오차(1102.t: 먼 차·창가 가구는 0.03) if (out.length > cnt * 0.8) return null;
     const lod = new T.BufferGeometry();
     // 1102.s: meshopt 압축 모델의 위치·법선은 정수 양자화(normalized)라, Float32 로 옮기면 WebGL 이 정규화를 하지 않아 원래 정수값이 좌표가 되어 차가 길게 늘어났다.
     // 원래 배열 형식(정수)을 그대로 쓰고 값은 접근자(getX…, 교차 배열도 맞게)로 읽는다
@@ -1685,21 +1687,50 @@
     lod.setIndex(new T.BufferAttribute(out, 1)); lod.boundingSphere = g.boundingSphere; lod.boundingBox = g.boundingBox; return lod;
   }
   const CLOD = { map: new Map(), xr: null, busy: false };
+  // 1102.t: 대지 중심(원점)에서 CLOD_FAR(12) m 넘게 떨어진 차는 더 줄인 판(삼각형 20% 목표, 허용 오차 3%)을 쓴다(가까운 차는 45% 그대로). VR 외관 삼각형 목표 90만 이하.
+  // 머리 위치로 고르면 순간이동·층 이동마다 형상이 바뀌어 VR 합치기를 다시 해 287ms 멈췄다(전체 점검). VR 은 대지 둘레에서 보므로 고정 기준으로 한 번만 정한다
+  const CLOD_FAR = 12;
   function carLodSync(xr) {
-    const ck = xr + '|' + ENV.added.length; if (CLOD.xr === ck || CLOD.busy) return;   // 조합을 바꾸면 차량을 다시 놓으므로 개수도 본다
-    const meshes = []; ENV.added.forEach(c => { if (!c.userData.prCar) return; c.traverse(k => { if (k.isMesh && k.geometry.attributes.position) meshes.push(k); }); });
+    const ck = xr + '|' + ENV.added.length + '|' + (ENV.added.length ? ENV.added[0].id + '.' + ENV.added[ENV.added.length - 1].id : ''); if (CLOD.xr === ck || CLOD.busy) return;   // 1102.t: 외장을 바꾸면 같은 수의 차를 새로 놓으므로 개체 번호도 본다(새 차가 단순화되지 않아 VR 94.5만)   // 조합을 바꾸면 차량을 다시 놓으므로 개수도 본다
+    const cars = ENV.added.filter(c => c.userData.prCar), meshes = []; cars.forEach(c => c.traverse(k => { if (k.isMesh && k.geometry.attributes.position) { k.userData.clodCar = c; meshes.push(k); } }));
     if (!meshes.length) return;
-    const apply = () => { meshes.forEach(k => { const e = CLOD.map.get(k.userData.clod0 || k.geometry); if (!e) return; if (!k.userData.clod0) k.userData.clod0 = k.geometry; k.geometry = xr && e.lod ? e.lod : k.userData.clod0; }); CLOD.xr = ck; const O = window.KHXRLayer && KHXRLayer.opt; if (O && O.dirty) O.dirty(); };
+    const wp = new T.Vector3();
+    const pick = (k, e) => { if (!xr || !e.lod) return k.userData.clod0; k.userData.clodCar.getWorldPosition(wp); return e.far && Math.hypot(wp.x, wp.z) > CLOD_FAR ? e.far : e.lod; };
+    const apply = () => { let ch = false; meshes.forEach(k => { const e = CLOD.map.get(k.userData.clod0 || k.geometry); if (!e) return; if (!k.userData.clod0) k.userData.clod0 = k.geometry; const g = pick(k, e); if (k.geometry !== g) { k.geometry = g; ch = true; } }); CLOD.xr = ck; const O = window.KHXRLayer && KHXRLayer.opt; if (ch && O && O.dirty) O.dirty(); };   // 형상이 실제로 바뀐 때만 다시 합친다
     if (!xr || meshes.every(k => CLOD.map.has(k.userData.clod0 || k.geometry))) return apply();
     CLOD.busy = true;
     (window.__khSimp || (window.__khSimp = loadScript(BASE + 'vendor/meshopt_simplifier.js?v=' + VER).then(() => MeshoptSimplifier.ready).then(() => MeshoptSimplifier).catch(() => null)))
       .then(S => { if (!S) { CLOD.busy = false; return; }
-      meshes.forEach(k => { const g = k.userData.clod0 || k.geometry; if (CLOD.map.has(g)) return; let lod = null;
-        try { lod = weldLod(S, g, 0.45); } catch (e) { log('차량 단순화 실패', e && e.message); }
-        CLOD.map.set(g, { lod }); });
-      { let a = 0, b = 0, n = 0; CLOD.map.forEach((e, g) => { const t = (g.index ? g.index.count : g.attributes.position.count) / 3; a += t; b += e.lod ? e.lod.index.count / 3 : t; if (e.lod) n++; }); PR.stat.carLod = { geos: CLOD.map.size, reduced: n, tris: [Math.round(a), Math.round(b)] }; }
+      meshes.forEach(k => { const g = k.userData.clod0 || k.geometry; if (CLOD.map.has(g)) return; let lod = null, far = null;
+        try { lod = weldLod(S, g, 0.45); far = lod ? weldLod(S, g, 0.2, 0.03) : null; } catch (e) { log('차량 단순화 실패', e && e.message); }
+        CLOD.map.set(g, { lod, far }); });
+      { let a = 0, b = 0, c = 0, n = 0; CLOD.map.forEach((e, g) => { const t = (g.index ? g.index.count : g.attributes.position.count) / 3; a += t; b += e.lod ? e.lod.index.count / 3 : t; c += e.far ? e.far.index.count / 3 : e.lod ? e.lod.index.count / 3 : t; if (e.lod) n++; }); PR.stat.carLod = { geos: CLOD.map.size, reduced: n, tris: [Math.round(a), Math.round(b), Math.round(c)] }; }
       CLOD.busy = false; CLOD.xr = null; if (R.xr.isPresenting === xr) apply();
     }).catch(() => { CLOD.busy = false; });
+  }
+  /* 1102.t: VR 외관에서 창가 띠 가구(유리 너머로만 보임, 1층 띠가 한 눈 약 6.1만 삼각형)도 차량과 같은 방식의 단순화 판(삼각형 25% 목표)으로 바꾼다.
+     VR 외관 삼각형 99.9만 → 목표 90만 이하. 실내로 들어가면(또는 VR 을 나가면) 원래 형상으로 되돌린다. 형상마다 한 번만 만든다 */
+  const FLOD = { map: new Map(), key: null, busy: false };
+  function furnLodSync(ext0) {
+    // 층 이동 중에는 '건물 밖'이 잠깐 켜졌다 꺼질 수 있다. 그때마다 형상을 바꾸면 합치기를 두 번 다시 해 지하 1층 이동에서 약 420ms 멈췄다(CPU 4배). 밖이 12프레임 이어진 뒤에만 줄인 판으로
+    // 셈은 이 함수 호출 수(FLOD.f)로 한다: 퀘스트 VR 중에는 창 rAF(PR.tick)가 멈춘다
+    FLOD.f = (FLOD.f || 0) + 1; if (!ext0) FLOD.out = 0; else if (!FLOD.out) FLOD.out = FLOD.f; const ext = !!ext0 && FLOD.f - FLOD.out >= 12;
+    // 외장·조합을 바꾸면 가구가 원래 형상으로 다시 놓이므로(같은 무리), 열쇠가 같아도 8프레임마다 실제 형상이 맞는지 본다(외장 전환 직후 한동안 원래 가구가 그려져 VR 94.5만으로 잡혔다)
+    const ck = ext + '|' + (DR.group ? DR.group.uuid + DR.groups.length : ''); if (FLOD.busy || (FLOD.key === ck && (!ext || FLOD.f % 8))) return;
+    const meshes = []; DR.groups.forEach(([g]) => { if (!/-band$/.test(g.name)) return; g.traverse(k => { if (k.isMesh && k.geometry && k.geometry.attributes.position && !k.userData.prCar) meshes.push(k); }); });
+    const apply = () => { let ch = false; meshes.forEach(k => { const e = FLOD.map.get(k.userData.flod0 || k.geometry); if (!e) return; if (!k.userData.flod0) k.userData.flod0 = k.geometry; const g = ext && e.lod ? e.lod : k.userData.flod0; if (k.geometry !== g) { k.geometry = g; ch = true; } }); FLOD.key = ck; const O = window.KHXRLayer && KHXRLayer.opt; if (ch && O && O.dirty) O.dirty(); };   // 바뀐 것이 있을 때만 다시 합친다(층 이동마다 합치기 943ms)
+    if (!meshes.length) { FLOD.key = ck; return; }
+    if (FLOD.key === ck && meshes.every(k => { const e = FLOD.map.get(k.userData.flod0 || k.geometry); return !e || !e.lod || k.geometry === e.lod; })) return;
+    if (!ext || meshes.every(k => FLOD.map.has(k.userData.flod0 || k.geometry))) return apply();
+    FLOD.busy = true;
+    (window.__khSimp || (window.__khSimp = loadScript(BASE + 'vendor/meshopt_simplifier.js?v=' + VER).then(() => MeshoptSimplifier.ready).then(() => MeshoptSimplifier).catch(() => null)))
+      .then(S => { if (!S) { FLOD.busy = false; return; }
+        const seen = new Set(); meshes.forEach(k => { const g = k.userData.flod0 || k.geometry; if (FLOD.map.has(g) || seen.has(g)) return; seen.add(g); let lod = null;
+          try { lod = weldLod(S, g, 0.25, 0.03); } catch (e) { log('가구 단순화 실패', e && e.message); }
+          FLOD.map.set(g, { lod }); });
+        { let a = 0, b = 0, n = 0; FLOD.map.forEach((e, g) => { const t = (g.index ? g.index.count : g.attributes.position.count) / 3; a += t; b += e.lod ? e.lod.index.count / 3 : t; if (e.lod) n++; }); PR.stat.furnLod = { geos: FLOD.map.size, reduced: n, tris: [Math.round(a), Math.round(b)] }; }
+        FLOD.busy = false; FLOD.key = null; if ((R.xr.isPresenting && !K.I.on) === ext) apply();
+      }).catch(() => { FLOD.busy = false; });
   }
   /* 1102.r: 지니 가로수(실사 레이어)가 보이면 그 자리 5m 안의 우리 가로수(모델 8그루·가까운 나무 모델·그림 카드)는 숨긴다. 압구정로 보도에서 두 나무가 나란히 서 보였다.
      VR·품질 '낮음'(지니 가로수 꺼짐)에서는 우리 나무를 그대로 둔다 */

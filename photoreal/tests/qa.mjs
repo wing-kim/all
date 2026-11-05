@@ -21,7 +21,7 @@ fs.mkdirSync(path.join(QA, 'history'), { recursive: true }); fs.mkdirSync(path.j
 
 /* ---------- 기준값(계획 문서 docs/goal-gap-plan.md 의 기준) ---------- */
 const TH = {
-  pcCalls: 1000, pcFps: 60, phoneLowCalls: 400, vrCalls: 170, vrCap: 200, vrTris: 1e6, vrFig: 200, texMB: 150, prefetchMB: 18, first10: 12000, revisit10: 3000,
+  pcCalls: 1000, pcFps: 60, phoneLowCalls: 400, vrCalls: 170, vrCap: 200, vrTris: 9e5, vrFig: 200, texMB: 150, prefetchMB: 18, first10: 12000, revisit10: 3000,
   winMax: 2000, floorHi: 1.0, allHi: 2.0, satPct: 1.0, ceilBlack: 5.0, nightRatio: 1.0, sunset: -20, ctxSpread: 2.0, leafCV: 0.40, shotDiff: 4.0, shotBig: 3.0,
 };
 const items = [];   // { group, name, value, limit, pass, note, unstable, key }
@@ -94,7 +94,7 @@ if (want('budget')) {
     const mc = Math.max(...ext.map(e => e.calls)), mi = Math.max(...int.map(e => e.calls)), mt = Math.max(...ext.map(e => e.tris));
     add('budget', 'VR 외관 그리기 호출(최대, IWER)', mc, mc <= TH.vrCalls, '≤ ' + TH.vrCalls);
     add('budget', 'VR 실내 그리기 호출(최대)', mi, mi <= TH.vrCap, '≤ ' + TH.vrCap);
-    add('budget', 'VR 외관 삼각형(최대)', mt, mt <= TH.vrTris, '≤ 1,000,000'); }
+    add('budget', 'VR 외관 삼각형(최대)', mt, mt <= TH.vrTris, '≤ 900,000', '1102.t: 100만 → 90만(여유 확보 목표)'); }
   const cp = readJ(path.join(XRT, 'out/compat.json'));
   if (cp) { const p8 = cp.find(x => /^P8/.test(x.n)); const c = p8 && p8.d && p8.d.fig && p8.d.fig.calls; add('budget', 'VR 가상 방 피규어 그리기 호출(compat P8)', c != null ? c : '없음', c != null && c < TH.vrFig, '< ' + TH.vrFig, want('reg') ? '' : '직전 compat 결과'); }
   // 윈도우 PC 흉내(1102.k): CPU 4배 감속·화소 배율 1.5·셰이더 링크 80ms. 첫 실사 전환의 가장 긴 프레임(고치기 전 5.4초)과 정상 상태

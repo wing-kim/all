@@ -1,0 +1,371 @@
+{
+ "base": "http://127.0.0.1:8803",
+ "qs": "",
+ "at": "2026-11-04T23:45:34.575Z",
+ "flicker": {
+  "pc:street": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 227647
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 343542
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 19774
+   },
+   "cover": [
+    66.7,
+    19.2,
+    13.2,
+    0,
+    0.9
+   ]
+  },
+  "pc:1F": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 213620
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 31279
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 642
+   },
+   "cover": [
+    1.3,
+    93.6,
+    5.1,
+    0,
+    0
+   ]
+  },
+  "pc:B1": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 359935
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 52625
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "pc:5F": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 190764
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 15120
+   },
+   "far": null,
+   "cover": [
+    1,
+    95,
+    3.9,
+    0,
+    0
+   ]
+  },
+  "pc:1F-low": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 179669
+   },
+   "mid": null,
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 288
+   },
+   "cover": [
+    0.3,
+    95.6,
+    4.1,
+    0,
+    0
+   ]
+  },
+  "pc:B1-low": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 230463
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 207
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "phone:street": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 359992
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 168046
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 5952
+   },
+   "cover": [
+    63.9,
+    30.8,
+    5.2,
+    0,
+    0
+   ]
+  },
+  "phone:1F": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 319470
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 40728
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 2587
+   },
+   "cover": [
+    2.1,
+    87.4,
+    10.5,
+    0,
+    0
+   ]
+  },
+  "phone:B1": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 387956
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 82820
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "eye:street": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 610696
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 796947
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 119838
+   },
+   "cover": [
+    61.9,
+    26.6,
+    11.1,
+    0.1,
+    0.3
+   ]
+  },
+  "eye:1F": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 727613
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 116709
+   },
+   "far": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 4925
+   },
+   "cover": [
+    1.8,
+    91.4,
+    6.9,
+    0,
+    0
+   ]
+  },
+  "eye:B1": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 1024327
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 194545
+   },
+   "far": null,
+   "cover": [
+    0,
+    100,
+    0,
+    0,
+    0
+   ]
+  },
+  "eye:5F": {
+   "all": {
+    "flick": 0,
+    "hiPct": 0,
+    "unexplainedPct": 0
+   },
+   "near": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 585162
+   },
+   "mid": {
+    "flick": 0,
+    "hiPct": 0,
+    "px": 53644
+   },
+   "far": null,
+   "cover": [
+    1.5,
+    93.2,
+    5.3,
+    0,
+    0
+   ]
+  }
+ },
+ "alias": {},
+ "still": {},
+ "ui": {},
+ "mem": null,
+ "shots": [],
+ "errors": [
+  "pc 404 /kapehorn-media/catalog.js?v=1793835935115",
+  "pc Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "pc 404 /favicon.ico",
+  "pc Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "phone 404 /kapehorn-media/catalog.js?v=1793835971654",
+  "phone Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "eye 404 /kapehorn-media/catalog.js?v=1793835996779",
+  "eye Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}

@@ -7662,15 +7662,15 @@ const khMat=n=>KHM[n]||(KHM[n]=(async()=>{const d=KH.mat[n],o={color:new THREE.C
   const m=SM(o);m.userData.metal0=o.metalness;m.userData.col0=o.color.clone();m.userData.gain=SKG[n];if(!R3D.on)khSkMat(m,false);KHMS.push(m);return m})());   // [PR] 1102.s: 지니 v107 그대로 되돌림(스케치업 첫 화면에서 받은 재질도 스케치업 색 이득을 받게. 1102.l 의 khSkMat 뺌은 무광 단색 규칙과 함께 없앰)
 // 스케치업 (no reflection probe, no tone mapping): metal / glass drawn matt, and the measured SKG gain on the colour — back to the
 // shared values for 렌더 / 렌더-실사. Order matters around linearize(): restore before it on the way in, re-apply after it on the way out
-function khSkMat(m,on){m.metalness=on?m.userData.metal0:0;const k=m.userData.gain;m.color.copy(m.userData.col0);if(!on&&k)m.color.setRGB(...[m.color.r,m.color.g,m.color.b].map((x,i)=>Math.min(1,x*k[i])))}
-const KHMS=[],khSkNow=on=>KHMS.forEach(m=>khSkMat(m,on));
+function khSkMat(m,on){m.metalness=on?m.userData.metal0:0;const k=m.userData.gain;m.color.copy(m.userData.col0);if(m.userData.lin)m.color.convertSRGBToLinear();if(!on&&k)m.color.setRGB(...[m.color.r,m.color.g,m.color.b].map((x,i)=>Math.min(1,x*k[i])))}
+const KHMS=[],khSkNow=on=>KHMS.forEach(m=>khSkMat(m,on));   // [PR] 1102.t: khSkMat 이 이미 선형으로 바뀐 재질(userData.lin)에 표시값(col0)을 그대로 넣어, 렌더 상태에서 렌더로 다시 들어가면(setRender(true) 두 번, linearize 는 건너뜀) 색이 바랬다(신사중 트랙). 선형 재질이면 변환해 넣는다
 function khFit(o,poly,w,d){   // keep the street face exact (width, position) — plan outlines are often skewed — and take the depth along its normal
   const W=poly.map(q=>P(...q)),c=W.reduce((s,q)=>[s[0]+q[0]/W.length,s[1]+q[1]/W.length],[0,0]),[fa,fb]=faceOf(poly).map(q=>P(...q)),
     fm=[(fa[0]+fb[0])/2,(fa[1]+fb[1])/2],L=Math.hypot(fb[0]-fa[0],fb[1]-fa[1]);let u=[(fb[0]-fa[0])/L,(fb[1]-fa[1])/L],n=[-u[1],u[0]];
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.s';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.t';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -8749,13 +8749,23 @@ var SRV=(function(){
       if(e[m]>ER.MAX){const a=t[m],b=t[(m+1)%3],c=t[(m+2)%3],h=L(a,b,.5);q.push([a,h,c],[h,b,c]);continue}
       t.forEach(v=>v.forEach((u,j)=>out[j].push(...u)))}
     const ng=new THREE.BufferGeometry();ks.forEach((k,j)=>ng.setAttribute(k,new THREE.Float32BufferAttribute(out[j],W[j],A[j].normalized)));return ng}
+  // [PR] 1102.t: erSplit 은 위치만 보고 자르므로, 위치·색인이 같은 모델(렌더-실사 판은 uv·uv2 만 다름)은 처음 자른 결과의 무게중심 좌표(원래 삼각형 번호 + 세 꼭짓점 무게)로 다른 속성을 다시 섞는다. 결과는 erSplit 과 같다
+  const ERC=new Map();function erKey(g){let h=2166136261,h2=0;const mx=v=>{h=Math.imul(h^v,16777619)>>>0;h2=(h2*31+v)|0};const a=g.attributes.position;mx(a.count);for(let i=0;i<a.count;i++){mx(Math.round(a.getX(i)*1e5)|0);mx(Math.round(a.getY(i)*1e5)|0);mx(Math.round(a.getZ(i)*1e5)|0)}if(g.index){const d=g.index.array;mx(d.length);for(let i=0;i<d.length;i++)mx(d[i])}return h+'|'+h2}
+  function erSplitC(g){const ks=Object.keys(g.attributes),ix=g.index,P=g.attributes.position,n=ix?ix.count:P.count,vi=i=>ix?ix.getX(i):i,ck=erKey(g);let C=ERC.get(ck);
+    if(!C){const pos=new Float32Array(n*3),bc=new Float32Array(n*3),tr=new Float32Array(n);for(let i=0;i<n;i++){const v=vi(i);pos[i*3]=P.getX(v);pos[i*3+1]=P.getY(v);pos[i*3+2]=P.getZ(v);bc[i*3+i%3]=1;tr[i]=(i/3)|0}
+      const t=new THREE.BufferGeometry();t.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));t.setAttribute('__bc',new THREE.Float32BufferAttribute(bc,3));t.setAttribute('__tri',new THREE.Float32BufferAttribute(tr,1));
+      const o=erSplit(t);if(!o)return null;C={pos:o.attributes.position.array,bc:o.attributes.__bc.array,tri:o.attributes.__tri.array};ERC.set(ck,C)}
+    const N=C.tri.length,ng=new THREE.BufferGeometry();
+    ks.forEach(k=>{const a=g.attributes[k],w=a.itemSize;let out;if(k==='position')out=Array.from(C.pos);else{out=new Array(N*w);const get=(i,c)=>c===0?a.getX(i):c===1?a.getY(i):c===2?a.getZ(i):a.getW(i);
+        for(let v=0;v<N;v++){const t=Math.round(C.tri[v]),b0=C.bc[v*3],b1=C.bc[v*3+1],b2=C.bc[v*3+2],i0=vi(t*3),i1=vi(t*3+1),i2=vi(t*3+2);for(let c=0;c<w;c++)out[v*w+c]=b0*get(i0,c)+b1*get(i1,c)+b2*get(i2,c)}}
+      ng.setAttribute(k,new THREE.Float32BufferAttribute(out,w,a.normalized))});return ng}
   function erPrep(r){if(r.userData.er)return r.userData.er;const E=r.userData.er={ms:[],edges:[],k:null};const asph=[];
     r.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(r.matrixWorld).invert(),I4=new THREE.Matrix4();
     r.traverse(m=>{if(!m.isMesh||!m.geometry||!m.geometry.attributes.position)return;const g=m.geometry;if(!g.boundingBox)g.computeBoundingBox();
       const b=g.boundingBox.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv,m.matrixWorld));
       if(b.max.x<ER.XW2-ER.R-1||b.min.x>ER.XB+1||b.max.z<ER.Z0-1||b.min.z>ER.Z1+1)return;
       if(!m.matrix.equals(I4)&&!(m.parent===r||m.parent&&m.parent.matrix.equals(I4)))return;   // 노드 변환이 있는 메시는 건너뜀
-      const g1=erSplit(g);if(!g1)return;const p=g1.attributes.position,N=p.count,base=new Float32Array(N),kind=new Uint8Array(N),px=new Float32Array(N),pz=new Float32Array(N),fz=new Float32Array(N),reg=new Uint8Array(N),as=ER.ASPH.test(erMn(m));
+      const g1=erSplitC(g);if(!g1)return;   /* [PR] 1102.t: 같은 바닥 모델(스케치업·렌더-실사 두 벌)을 두 번 자르지 않게 자른 모양을 위치 기준으로 재사용(윈도우 흉내 첫 렌더 전환 4초 멈춤) */const p=g1.attributes.position,N=p.count,base=new Float32Array(N),kind=new Uint8Array(N),px=new Float32Array(N),pz=new Float32Array(N),fz=new Float32Array(N),reg=new Uint8Array(N),as=ER.ASPH.test(erMn(m));
       for(let i=0;i<N;i++){base[i]=p.getY(i);px[i]=p.getX(i);pz[i]=p.getZ(i);fz[i]=erFz(p.getZ(i))}
       for(let i=0;i<N;i+=3){const xs=[px[i],px[i+1],px[i+2]],zs=[p.getZ(i),p.getZ(i+1),p.getZ(i+2)],ys=[base[i],base[i+1],base[i+2]],flat=Math.max(...ys)<0.08;
         const cx=(xs[0]+xs[1]+xs[2])/3,bd=erBand(cx);if(flat&&(erInReg(cx,(zs[0]+zs[1]+zs[2])/3)||typeof SITE!=='undefined'&&xs.every((x,j)=>inPoly([x*S+OX,zs[j]*S+OY],SITE))))reg[i]=reg[i+1]=reg[i+2]=as&&erMn(m)!=='asphalt'&&cx*S+OX<=AP.curb?2:1;

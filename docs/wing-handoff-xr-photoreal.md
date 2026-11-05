@@ -1,4 +1,4 @@
-# Wing 인계: 렌더(실사 3D)·VR 계층 (1102.s)
+# Wing 인계: 렌더(실사 3D)·VR 계층 (1102.t)
 
 Wing 님이 이 브랜치(`feature/xr-photoreal`)를 main 에 합치고, 앞으로 Wing 쪽 판을 올릴 때 우리 계층을 다시 맞추는 방법을 정리했습니다.
 
@@ -15,13 +15,13 @@ Wing 님이 이 브랜치(`feature/xr-photoreal`)를 main 에 합치고, 앞으�
 1. 미리보기(`https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html`)에서 스케치업과 렌더를 세 탭에서 눌러 봅니다.
 2. 같은 화면을 Wing 님 PC 의 크롬에서 보고, 렌더 첫 전환 시간(우리 측정 1,219ms, 기준 2,000ms)을 알려 주시면 더 줄일지 정합니다.
 3. `docs/device-checklist.md` 의 퀘스트·휴대폰 항목을 봅니다.
-4. 서버 없이 보려면 단일 HTML(`kapehorn-tower-3d_1102.s.html`)을 크롬으로 엽니다. 렌더를 누르면 실사 3D 가 켜집니다(사파리는 확인 전).
+4. 서버 없이 보려면 단일 HTML(`kapehorn-tower-3d_1102.t.html`)을 크롬으로 엽니다. 렌더를 누르면 실사 3D 가 켜집니다(사파리는 확인 전).
 
 원본과 같은지는 `photoreal/tests/tabmodes.mjs`(세 탭 × 보기 방식 화면 비교, 원본 HTML 경로를 인자로), 렌더에서 Wing 옵션이 같은 뜻으로 동작하는지는 `docs/render-option-matrix.md` 입니다.
 
 ## 접점 목록 (`new/3d-model.html`)
 
-Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사 3D) 또는 `[XR]`(VR) 표시가 있습니다(64줄). 큰 갈래는 다음과 같습니다.
+Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사 3D) 또는 `[XR]`(VR) 표시가 있습니다(67줄). 큰 갈래는 다음과 같습니다.
 
 | 접점 | 하는 일 |
 |---|---|
@@ -47,5 +47,7 @@ Wing 파일에서 우리가 손댄 곳은 모두 줄 끝 주석에 `[PR]`(실사
 5. `node photoreal/tools/bundle-single.mjs` 로 단일 HTML 을 다시 묶습니다.
 
 지니 코드 쪽에서 우리가 고친 곳도 `[PR]` 표시가 있습니다. 1102.s 에서 더한 것은 두 곳입니다. 스케치업 첫 화면 재질에 지니 원본처럼 스케치업 색 이득을 다시 주는 것(`khSkMat`), 차 출입구 코드(`erApply`)가 우리 주차 차량(`prCar`)을 건드리지 않게 하고 형상이 바뀐 메시는 원래 좌표를 다시 받게 한 것입니다.
+
+1102.t 에서 지니 코드 쪽에 더한 것은 두 곳입니다. 하나는 압구정로 단차의 바닥 자르기(`erSplit`)를 위치·색인이 같은 모델이면 한 번만 하도록 `erSplitC`·`erKey` 로 감싼 것입니다. 스케치업 바닥 모델과 렌더-실사 바닥 모델은 위치가 같고 uv 만 달라, 처음 자른 결과의 무게중심 좌표(원래 삼각형 번호와 세 꼭짓점 무게)로 나머지 속성을 다시 섞습니다. 결과는 `erSplit` 과 같고, 윈도우 흉내에서 첫 렌더 전환 한 프레임 4초 멈춤의 큰 부분이 없어졌습니다. 다른 하나는 `khSkMat` 이 이미 선형으로 바뀐 재질(`userData.lin`)에 표시값(`col0`)을 그대로 넣던 것을 선형으로 바꿔 넣게 한 것입니다. 렌더 상태에서 렌더로 다시 들어가면(`setRender(true)` 두 번, `linearize` 는 건너뜀) 신사중 트랙 같은 색이 바랬습니다. 지니 새 판을 합칠 때 이 두 곳(`[PR] 1102.t` 주석)을 다시 확인해 주세요.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
