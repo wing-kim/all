@@ -12,7 +12,7 @@
 
 | 범위 | 파일 | 내용 |
 |---|---|---|
-| Wing 페이지 | `new/3d-model.html` | v107 원본 + 지니 env_detail 코드 + 우리 접점(`[PR]`, `[XR]` 표시 67줄). 큰 데이터(KHDATA)는 빼고 `new/models/` 에서 받음 |
+| Wing 페이지 | `new/3d-model.html` | v107 원본 + 지니 env_detail 코드 + 우리 접점(`[PR]`, `[XR]` 표시 68줄). 큰 데이터(KHDATA)는 빼고 `new/models/` 에서 받음 |
 | 주변 모델 | `new/models/` | 지니 모델(meshopt .glb, 파일을 바로 연 경우용 .js), 텍스처 KTX2, 라이트맵 아틀라스, VR 아틀라스 |
 | 실사 3D | `photoreal/` | 실사 계층, 구운 빛(`bake/`), 텍스처·가구(`tex/`, `assets/`, 무료·오픈 라이선스, `photoreal/README.md` 에 출처), 주변 건물 자료(`context/`, 브이월드·OSM), 도구(`tools/`), 시험(`tests/`) |
 | VR | `xr/` | VR 계층(`xr/kh-xr.js`), 시험(`xr/tests/`) |
@@ -36,6 +36,6 @@
 
 ## 점검 결과
 
-전체 점검 결과는 `docs/qa/report.md`, 판별 정리는 `docs/report/1102.t-report.md`(직전 판 `1102.s-report.md`), 작업 기록은 `docs/goal-gap-plan.md` §20～§23 입니다.
+전체 점검 결과는 `docs/qa/report.md`, 판별 정리는 `docs/report/1102.u-report.md`(직전 판 `1102.t-report.md`), 작업 기록은 `docs/goal-gap-plan.md` §20～§24 입니다.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

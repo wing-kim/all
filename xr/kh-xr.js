@@ -8,7 +8,7 @@
 (function () {
   'use strict';
   if (window.KHXRLayer) return;
-  const VER = '1102.t';
+  const VER = '1102.u';
   const Q = new URLSearchParams(location.search);
   const SRC = (document.currentScript && document.currentScript.src) || location.href;
   const BASE = new URL('./', SRC).href;
@@ -852,7 +852,13 @@
       this.m.position.set(0, -0.012, -0.2); this.m.renderOrder = 10001; this.m.visible = false; xrCam.add(this.m); },
     busy() { const P = window.KHPRLayer, pg = P && P.progress ? P.progress() : null, env = window.KHENV && KHENV.busy;
       return { on: !!((pg && pg.busy) || env || Opt.need || (S.fade && fadeMesh.visible && fadeMesh.material.opacity > 0.6)), text: pg && pg.text ? pg.text : env ? '주변 건물 받는 중' : Opt.need ? '장면 정리 중' : '화면 준비 중' }; },
-    tick(now) { if (!this.m) return; const b = S.session ? this.busy() : { on: false };
+    // 1102.u: 무엇이 끝나지 않아도 20초가 지나면 판을 닫는다. 닫기 전 3초는 이유('준비가 늦어 닫습니다: …')를 보이고, 그 일이 끝날 때까지 다시 띄우지 않는다
+    tick(now) { if (!this.m) return; let b = S.session ? this.busy() : { on: false };
+      if (b.on && this.timed) b = { on: false }; else if (!b.on) this.timed = false;
+      if (b.on && this.shown && now - this.t0 > 20000) { this.timed = true; this.why = b.text; this.whyT = now; log('로딩 판 시간 초과', b.text, X.loadWhy ? X.loadWhy() : ''); b = { on: false }; }
+      if (this.whyT && now - this.whyT < 3000) { this.m.visible = true; if (now - this.last >= 250) { this.last = now; const g = this.g; g.clearRect(0, 0, 640, 150); g.fillStyle = 'rgba(60,40,18,0.9)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, 640, 150, 22) : g.rect(0, 0, 640, 150); g.fill();
+        g.fillStyle = '#fff'; g.font = '600 36px system-ui, sans-serif'; g.fillText('준비가 늦어 닫습니다', 30, 60); g.fillStyle = '#e8dcc8'; g.font = '28px system-ui, sans-serif'; g.fillText(String(this.why || '').slice(0, 30), 30, 112); this.tex.needsUpdate = true; } return; }
+      this.whyT = 0;
       if (b.on && !this.shown) { this.shown = true; this.t0 = now; }
       if (!b.on && this.shown && now - (this.off || (this.off = now)) > 400) { this.shown = false; this.off = 0; } else if (b.on) this.off = 0;
       const vis = this.shown && now - this.t0 > 250; this.m.visible = vis; if (!vis || now - this.last < 250) return; this.last = now;
@@ -860,9 +866,11 @@
       g.clearRect(0, 0, W, H); g.fillStyle = 'rgba(18,20,22,0.88)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, W, H, 22) : g.rect(0, 0, W, H); g.fill();
       g.fillStyle = '#fff'; g.font = '600 40px system-ui, sans-serif'; g.fillText('불러오는 중 ' + dots.map((d, i) => (i === k ? '●' : '○')).join(''), 30, 62);
       g.fillStyle = '#c8ccd0'; g.font = '30px system-ui, sans-serif'; g.fillText((b.text || '').slice(0, 30) + ' · ' + sec + '초', 30, 116); this.tex.needsUpdate = true; },
-    hide() { if (this.m) this.m.visible = false; this.shown = false; }
+    hide() { if (this.m) this.m.visible = false; this.shown = false; this.timed = false; this.whyT = 0; }
   };
   X.loading = () => !!(Load.m && Load.m.visible);   // 시험용
+  X.loadTimedOut = () => !!Load.timed;   // 시험용
+  X.loadWhy = () => { const P = window.KHPRLayer; return (P && P.busyWhy ? P.busyWhy() : '') + (window.KHENV && KHENV.busy ? ' env' : '') + (Opt.need ? ' opt' : '') + (S.fade ? ' fade' : ''); };   // 시험용: 판을 띄우는 이유
   X.fadeA = () => (fadeMesh && fadeMesh.visible ? fadeMesh.material.opacity : 0);   // 시험용: 전환 효과의 검은 정도
   function fadeTick(dt) {
     const F = S.fade; if (!F) { if (dt > 0 && dt < 0.5) S.dtAvg = S.dtAvg ? S.dtAvg * 0.95 + dt * 0.05 : dt; return; }   // 1102.r: 평소 프레임 간격(전환 밖)

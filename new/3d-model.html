@@ -7670,7 +7670,7 @@ function khFit(o,poly,w,d){   // keep the street face exact (width, position) �
   if((fm[0]-c[0])*n[0]+(fm[1]-c[1])*n[1]<0)n=[-n[0],-n[1]];u=[n[1],-n[0]];   // n = out of the street face, u = viewer's right
   const dot=(q,v)=>(q[0]-c[0])*v[0]+(q[1]-c[1])*v[1],t=W.map(q=>dot(q,n)),n0=Math.min(...t),n1=dot(fm,n),uc=dot(fm,u);
   o.rotation.y=Math.atan2(n[0],n[1]);o.scale.set(L/w,1,(n1-n0)/d);o.position.set(c[0]+u[0]*uc+n[0]*(n0+n1)/2,0,c[1]+u[1]*uc+n[1]*(n0+n1)/2)}
-const KH_ENV_VER='1102.t';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
+const KH_ENV_VER='1102.u';   // [PR] 지니 주변 모델 판(models/ 를 바꾸면 올림)
 const KH_ENV_OFF=new URLSearchParams(location.search).get('env')==='0';   // [PR] ?env=0: 지니 모델을 받지 않음(비교·시험용)
 const khLoad=()=>KHR.base||(KHR.base=KH_ENV_OFF?Promise.resolve():khLoad0());
 /* [PR] 최적화 2·3번(1102.m): http(s) 에서는 모델을 base64 를 품은 .js 대신 meshopt 로 압축한 .glb(photoreal/tools/model/env-glb.mjs, 목록 models/bin-list.js)를
@@ -7902,8 +7902,8 @@ function khLod(on){const swap=()=>{let t0=0,t1=0,ch=0;KHQ.forEach(q=>{if(!q.o)re
   if(on&&!(R3D.on&&KHR.real))on=false;   // 실사 3D(실사 레이어)일 때만. 스케치업 VR 은 지니 외곽선·스케치 재질이라 그대로 둔다
   if(!on||KHQ.every(q=>!q.o||q.lod))return swap();
   khLodLib().then(S=>{if(!S||!KHR.lite)return;const v=new THREE.Vector3(),t=performance.now();
-    KHQ.forEach(q=>{if(!q.o||q.lod)return;q.lod=true;const c=new THREE.Box3().setFromObject(q.o).getCenter(v),d=Math.hypot(c.x,c.z),r=d<15?1:d<30?.4:d<80?.22:.1;if(r>=1)return;   /* 1102.s: 2·3구역 건물을 VR 에도 되살리며 예산 맞추려 조금 더 줄임 */
-      q.o.traverse(k=>{if(!k.isMesh||k.isLineSegments||k.userData.lodG)return;try{const n=khLodGeo(S,k.geometry,r,r<.2?.25:.12);if(n)k.userData.lodG=n;else KHR.lodNull=(KHR.lodNull||0)+1}catch(e){KHR.lodErr=String(e)}})});
+    KHQ.forEach(q=>{if(!q.o||q.lod)return;q.lod=true;const c=new THREE.Box3().setFromObject(q.o).getCenter(v),d=Math.hypot(c.x,c.z),r=d<30?1:d<100?.5:d<200?.28:.13;if(r>=1)return;   /* [PR] 1102.u: VR 바닥 원경을 줄여 아낀 예산으로 덜 줄임(Jack 퀘스트: 주변 건물이 엉뚱한 모양). 1102.s 는 15m 밖 40%·30m 밖 22%·80m 밖 10%, 1102.u 는 30m 밖 50%·100m 밖 28%·200m 밖 13% */
+      q.o.traverse(k=>{if(!k.isMesh||k.isLineSegments||k.userData.lodG)return;try{const n=khLodGeo(S,k.geometry,r,r<.2?.08:.05);if(n)k.userData.lodG=n;else KHR.lodNull=(KHR.lodNull||0)+1}catch(e){KHR.lodErr=String(e)}})});
     KHR.lodMs=(KHR.lodMs||0)+Math.round(performance.now()-t);if(KHR.lite)swap()})}
 /* [PR] 1102.s(Jack 퀘스트: VR 에서 주변 건물이 안 보임): lite(VR·낮음)에서 지니 묶음 전체를 끄면 2·3구역 건물 묶음(khPack)까지 꺼지는데, 그 자리의 Wing 매스는
    KHA2.hide 로 계속 숨어 있어 주변이 비었다. lite 에서는 건물 묶음만 남기고(재질은 VR 아틀라스·단색), 도로·바닥·가로 묶음과 가로수는 끈다 */
@@ -7913,7 +7913,7 @@ function khPackLite(){const G=KHR.grp;if(!G)return;const on=!!KHR.lite,todo=[];G
   c.traverse(k=>{if(!k.isMesh||k.isLineSegments)return;const u=k.userData;if(!u.mPack)u.mPack=k.material;if(!u.gPack)u.gPack=k.geometry;const want=on&&!Array.isArray(u.mPack)?khPackMat(u.mPack):u.mPack;if(k.material!==want)k.material=want;
     const gw=on&&u.lodG?u.lodG:u.gPack;if(k.geometry!==gw)k.geometry=gw;if(on&&u.lodG===undefined)todo.push(k)})});
   // 거리별 단순화(지니 건물과 같은 규칙, 묶음은 30m 밖이라 50%·30%·12%): 처음 한 번 비동기
-  if(todo.length)khLodLib().then(S=>{if(!S)return;const v=new THREE.Vector3();todo.forEach(k=>{if(k.userData.lodG!==undefined)return;k.userData.lodG=null;try{const b=new THREE.Box3().setFromObject(k).getCenter(v),d=Math.hypot(v.x,v.z),r=d<60?.3:.12,n=k.userData.gPack.index?khLodGeo(S,k.userData.gPack,r,r<.2?.25:.12):null;if(n)k.userData.lodG=n}catch(e){KHR.lodErr=String(e)}});if(KHR.lite)khPackLite()});
+  if(todo.length)khLodLib().then(S=>{if(!S)return;const v=new THREE.Vector3();todo.forEach(k=>{if(k.userData.lodG!==undefined)return;k.userData.lodG=null;try{const b=new THREE.Box3().setFromObject(k).getCenter(v),d=Math.hypot(v.x,v.z),r=d<60?.6:d<160?.3:.13,n=k.userData.gPack.index?khLodGeo(S,k.userData.gPack,r,r<.2?.08:.05):null;if(n)k.userData.lodG=n}catch(e){KHR.lodErr=String(e)}});if(KHR.lite)khPackLite()});
   const O=window.KHXRLayer&&KHXRLayer.opt;if(O&&O.dirty)O.dirty()}
 function khSch(){const r=KHR.sch;if(!r||!r.parent)return;const on=R3D.on&&KHR.real;r.visible=on;r.parent.children.forEach(c=>{if(c!==r&&!c.isLineSegments)c.visible=!on})}   // [PR] 늘린 학교(1102.n)와 원래 학교 바꿔 보이기
 function khStyle(){khSch();const sk=!R3D.on;   /* [PR] 1102.s: 스케치업은 Wing·지니 v107 처럼 지니 재질(렌더-실사 팔레트) 그대로, 1102.l 의 무광 단색+외곽선 규칙은 Wing 요청으로 뺌 */
