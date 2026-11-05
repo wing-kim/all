@@ -1,0 +1,125 @@
+{
+ "bundle": {
+  "nav": [
+   "0.0s file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-",
+   "target other blob:null/1caec811-d510-43ca-a034-590e93cb37ee",
+   "target other blob:null/1caec811-d510-43ca-a034-590e93cb37ee",
+   "target other blob:null/1caec811-d510-43ca-a034-590e93cb37ee",
+   "target other blob:null/1caec811-d510-43ca-a034-590e93cb37ee"
+  ],
+  "url": "file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-3d_1102.v.html",
+  "loadMs": 17706,
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 3586
+  },
+  "res": [
+   {
+    "era": "now",
+    "fail": "TargetCloseError: Protocol error (Input.dispatchMouseEvent): Target closed"
+   },
+   {
+    "era": "new",
+    "fail": "Error: Execution context was destroyed"
+   },
+   {
+    "era": "srv",
+    "fail": "Error: Attempted to use detached Frame '41A3DDB57200C5CF707DEC1B4F5E9086'."
+   }
+  ],
+  "errs": [
+   "error Failed to load resource: net::ERR_FILE_NOT_FOUND"
+  ],
+  "errsAll": 2
+ },
+ "preview": {
+  "nav": [
+   "0.3s https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js",
+   "target other blob:https://evyfjae.github.io/55203429-daa3-46b2-bbcb-0401e8d7e39d",
+   "target other blob:https://evyfjae.github.io/55203429-daa3-46b2-bbcb-0401e8d7e39d",
+   "target other blob:https://evyfjae.github.io/55203429-daa3-46b2-bbcb-0401e8d7e39d",
+   "target other blob:https://evyfjae.github.io/55203429-daa3-46b2-bbcb-0401e8d7e39d",
+   "target other blob:https://evyfjae.github.io/d6183bc9-fbb5-4066-b63f-4e925c177a0c",
+   "target other blob:https://evyfjae.github.io/d6183bc9-fbb5-4066-b63f-4e925c177a0c",
+   "target other blob:https://evyfjae.github.io/d6183bc9-fbb5-4066-b63f-4e925c177a0c",
+   "target other blob:https://evyfjae.github.io/d6183bc9-fbb5-4066-b63f-4e925c177a0c",
+   "target other blob:https://evyfjae.github.io/06e294a5-182b-43bd-8039-2cac11769d2b",
+   "target other blob:https://evyfjae.github.io/06e294a5-182b-43bd-8039-2cac11769d2b",
+   "target other blob:https://evyfjae.github.io/06e294a5-182b-43bd-8039-2cac11769d2b",
+   "target other blob:https://evyfjae.github.io/06e294a5-182b-43bd-8039-2cac11769d2b",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js"
+  ],
+  "url": "https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html",
+  "loadMs": 1952945,
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 4192
+  },
+  "res": [
+   {
+    "era": "now",
+    "clickEra": true,
+    "clickReal": true,
+    "ms": 940591,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "new",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 944052,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "srv",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46153,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   }
+  ],
+  "errs": [
+   "error Failed to load resource: the server responded with a status of 404 ()",
+   "error Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "errsAll": 3
+ }
+}
