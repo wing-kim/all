@@ -14,7 +14,7 @@
   if (window.KHPRLayer) return;
   const VER = '1102.u';
   const Q = new URLSearchParams(location.search);
-  const SRC = 'https://kh.vfs/photoreal/kh-photoreal.js';
+  const SRC = (document.currentScript && /^https?:/.test(document.currentScript.src || '') && !/kh\.vfs/.test(document.currentScript.src)) ? document.currentScript.src : 'https://kh.vfs/photoreal/kh-photoreal.js';   // v112: 깃허브(나눈 파일)에서는 실제 주소
   const BASE = new URL('./', SRC).href;
   const PR = window.KHPRLayer = { ver: VER, on: false, t: {}, log: [], stat: {} };
   const log = (...a) => { const t = a.join(' '); PR.log.push(t); if (PR.log.length > 200) PR.log.shift(); console.log('[khpr]', t); };
