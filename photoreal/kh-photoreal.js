@@ -12,7 +12,7 @@
 (function () {
   'use strict';
   if (window.KHPRLayer) return;
-  const VER = '1102.t';
+  const VER = '1102.u';
   const Q = new URLSearchParams(location.search);
   const SRC = 'https://kh.vfs/photoreal/kh-photoreal.js';
   const BASE = new URL('./', SRC).href;
@@ -43,7 +43,7 @@
     (function tk() { PR.tick = (PR.tick || 0) + 1; requestAnimationFrame(tk); })();
     let lastTick = -1;
     shaderGate();
-    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; { const rt = R.getRenderTarget(); if (rt && rt.isWebGLCubeRenderTarget) return; }   /* 반사 지도(정육면체)를 그리는 중에는 건너뜀: 유리 환경 지도를 다시 붙여 되먹임 GL 오류가 났다(1102.l) */ if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
+    scene.onBeforeRender = (function (prev) { return function () { if (prev) prev.apply(this, arguments); if (!PR.on) return; { const rt = R.getRenderTarget(); if (rt && rt.isWebGLCubeRenderTarget) return; }   /* 반사 지도(정육면체)를 그리는 중에는 건너뜀: 유리 환경 지도를 다시 붙여 되먹임 GL 오류가 났다(1102.l) */ if (R.xr.isPresenting && PR.tick === lastTick) PR.tick++;   /* 1102.u: 퀘스트는 몰입 중 창 rAF 가 멈춰 PR.tick 이 얼었다. 그것으로 재는 '받는 중'(GATE.defer 60프레임 등)이 끝나지 않아 VR '불러오는 중' 판이 닫히지 않았다(Jack 퀘스트). VR 에서는 그리기마다 올린다 */ if (R.xr.isPresenting || PR.tick !== lastTick) { lastTick = PR.tick; frame(); } }; })(scene.onBeforeRender);
     // 실사 3D 를 고르기 전에 자산을 낮은 우선순위로 미리 받아 둔다(데이터 절약 모드·느린 회선 제외). 고르는 순간 대부분 저장본에서 읽는다.
     // ?pr=1 로 바로 켜는 경우는 미리받기가 실제 필요한 요청과 대역을 다투므로 하지 않는다(켜는 순간 남은 미리받기도 멈춘다)
     // 1102.k: 스케치업·렌더처럼 실사를 쓰지 않을 때 첫 화면과 다투지 않게 8초 뒤 브라우저가 한가할 때 시작한다(예전 2.5초). 느린 회선·저사양 기기는 받지 않는다(prefetch)
@@ -178,6 +178,16 @@
     }, undefined, () => { log('하늘 실패', key); delete SKYD[key]; fail('하늘', () => skyLoad(key)); res(null); }))));
   }
   function loadEnv() { return skyLoad('day'); }
+  /* 1102.u(Jack 퀘스트: VR 실사감 부족): 실사 하늘(큐브)을 만들기 전에 VR 에 들어가면 VR 중에는 큐브를 만들 수 없어 Wing 하늘이 보여야 하는데 검게 나왔다
+     (페이지를 열자마자 VR 에 들어가면 90초가 지나도 하늘이 검음, 에뮬레이터 확인). 렌더 대상 없이 그리는 하늘 구(사진을 안쪽에 입힌 큰 구, 머리를 따라 움직임)를 대신 보인다 */
+  const XD = PR.xd = { m: null, key: '', busy: false };   // PR.xd: 진단용
+  async function xrDome(key, azW) {
+    if (XD.busy || (XD.key === key && XD.m)) return; XD.busy = true;
+    const sd = await skyLoad(key); XD.busy = false; if (!sd) return;
+    if (!XD.m) { XD.m = new T.Mesh(new T.SphereGeometry(800, 48, 24), new T.MeshBasicMaterial({ side: T.BackSide, depthWrite: false, fog: false })); XD.m.name = 'pr-xr-sky'; XD.m.frustumCulled = false; XD.m.renderOrder = -10; XD.m.userData.khxr = true; XD.m.userData.prSkip = true; XD.m.visible = false; scene.add(XD.m); }
+    XD.m.material.map = sd.tex; XD.m.material.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]); XD.m.material.needsUpdate = true;
+    XD.m.rotation.y = (Math.PI - 2 * Math.PI * sd.sunU) - azW; XD.key = key;
+  }
   async function skyUpdate() {
     const R3D = K.R3D, slot = bakeSlot(), key = slot === 'night' ? 'night' : slot === 'sunset' ? 'sunset' : 'day';
     const d = K.sun.position, azW = Math.atan2(d.z, d.x);
@@ -185,9 +195,11 @@
     // VR 중에는 하늘 큐브·환경광을 만들지 않는다(1102.h): VR 안에서 실사 3D 로 바꾸면 큐브 촬영 결과가 모두 0 이라(XR 을 잠시 꺼도 같음) 하늘이 검게 나왔다.
     // 그동안은 아래 frame 규칙(useSky = 지금 시간대 하늘이 만들어졌을 때만)에 따라 Wing 하늘·환경광을 쓰고, VR 을 나오면 바로 만든다.
     // VR 에 들어가기 전에 실사 3D 를 켜 두면 하늘이 미리 만들어져 VR 에서도 실사 하늘이 보인다
-    if (R.xr.isPresenting) { skyCur.xrWait = true; return; }
+    if (R.xr.isPresenting) { skyCur.xrWait = true; xrDome(key, azW); return; }
     skyCur.busy = true;
     const sd = await skyLoad(key); if (!sd) { skyCur.busy = false; return; }
+    // 1102.u: 받는 동안 VR 에 들어갔으면 지금 큐브를 만들면 0(검정)이 되어 그 하늘로 굳었다(열자마자 VR 에 들어가면 하늘이 끝내 검음). VR 을 나올 때 만들고 그동안은 하늘 구
+    if (R.xr.isPresenting) { skyCur.busy = false; skyCur.xrWait = true; xrDome(key, azW); return; }
     // 구 안쪽에 사진을 입혀 돌린 장면 → 큐브 카메라(배경) → PMREM(환경광)
     const sc = new T.Scene(), geo = new T.SphereGeometry(100, 64, 32), mat = new T.MeshBasicMaterial({ map: sd.tex, side: T.BackSide, depthWrite: false });
     mat.color.setScalar({ day: 1, sunset: 0.6, night: 0.12 }[key]);   // 석양은 노출을 낮추므로(T12) 하늘은 덜 낮춘다(0.75 → 0.6: 화면 전체가 오후보다 20% 넘게 어둡게, 1102)   // 야간 사진은 달·지평선 빛이 있어 Wing 야간 노출(1.35)에서 밝게 보이므로 낮춘다
@@ -823,8 +835,10 @@
     const useSky = skyBG && !inBase && skyCur.key === wantSky;   // 새 시간대 하늘을 받기 전에는 Wing 하늘을 보인다
     // VR 피규어(패스스루) 모드는 XR 계층이 배경·Wing 하늘을 비워 현실이 보이게 한다. 여기서 실사 하늘을 다시 넣으면 현실이 가려졌다(1102.k, 흉내 시험 투명 화소 0.04%)
     const figXR = R.xr.isPresenting && window.KHXRLayer && KHXRLayer.state && KHXRLayer.state.mode === 'fig';
+    const dome = !!(R.xr.isPresenting && !figXR && !useSky && !inBase && XD.m && XD.key === wantSky);
+    if (XD.m) { XD.m.visible = dome; if (dome) { const hc = (window.KHXRLayer && KHXRLayer.xrCam) || window.KHXR.camera; hc.getWorldPosition(XD.m.position); } }
     if (!figXR) {
-      if (R3D.sky) R3D.sky.visible = !useSky;
+      if (R3D.sky) R3D.sky.visible = !useSky && !dome;
       if (useSky && scene.background !== skyBG) scene.background = skyBG; else if (!useSky && scene.background === skyBG) scene.background = null;
     }
     if (DIST) DIST.visible = (!K.I.on || !inBase) && !QS.cur.hideFar;
@@ -849,7 +863,7 @@
       })); } }
     NIGHT.value = night ? 1 : 0;
     lampPools(); if (POOL.m) POOL.m.visible = night && !inBase;
-    nearTreeModels(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); srvGroundSync(); carLodSync(R.xr.isPresenting); furnLodSync(R.xr.isPresenting && !K.I.on); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
+    nearTreeModels(); seasonLeaves(); nearTreeSync(R.xr.isPresenting); streetLeafSync(R.xr.isPresenting); treeDedupe(); underHide(); rampCapSync(); srvGroundSync(); carLodSync(R.xr.isPresenting); furnLodSync(R.xr.isPresenting && !K.I.on); if (PR.tick % 90 === 0) [DR.group, ENV.group, NT.g].forEach(g => g && a2c(g));   // 늦게 붙는 화분·가로수도 if (NT.g) NT.g.visible = !R.xr.isPresenting && !inBase && (!GND.g || GND.g.visible);
     if (CTX.towers) { let n = 0; CTX.towers.forEach(t => { if (t.bb && !t.mesh.visible && n < 8) TWH.box.value[n++].set(t.bb[0], t.bb[1], t.bb[2], t.bb[3]); }); TWH.n.value = n; }
     if (envDay && !inBase && skyCur.key === wantSky && scene.environment !== envDay) { if (scene.environment && scene.environment !== PR.lastEnv) PR.wingEnv = scene.environment; scene.environment = envDay; PR.lastEnv = envDay; }
     // 내 가구 묶음은 해당 층 묶음의 표시 상태를 따른다(내부 보기의 층 숨김·인형집 보기)
@@ -934,7 +948,8 @@
     return [PF_.shSig, PF_.dvKey, dv, GND.g ? (GND.g.visible ? 1 : 0) + '' + (GND.now.visible ? 1 : 0) + GND.g.children.length : '-', ENV.added.length, DR.group ? DR.group.children.length : 0, R.xr.isPresenting ? 1 : 0, envPacks().length].join('|');
   }
   function optTick() {
-    const O = optApi(); if (!O || !OPT.on || R.xr.isPresenting) return;
+    const O = optApi(); if (O && R.xr.isPresenting) O.hold = 0;   // 1102.u: 화면 합치기 보류 표시가 VR 진입 직전 값으로 남아 VR '불러오는 중' 판이 닫히지 않았다(VR 합치기는 XR 계층이 맡음)
+    if (!O || !OPT.on || R.xr.isPresenting) return;
     if (!O.roots) O.screenOn(optRoots);
     // 받는 중(외관 단계·셰이더 준비·가구)에는 다시 합치기를 미룬다(1102.k): 로딩 중 구성이 바뀔 때마다 전체를 동기식으로 다시 합쳐 끊겼다.
     // 미루는 동안은 원본을 그대로 그린다. 최대 10초(그 뒤 한 번 합치고 다시 미룸)
@@ -949,6 +964,8 @@
   function optOff() { const O = optApi(); if (O) O.screenOff(); OPT.sig = ''; }
   PR.opt = OPT; PR.optSet = on => { OPT.on = !!on; if (!on) optOff(); };
   PR.progress = () => { const t = PR.t || {}, busy = PR.loading || STG.cur >= 0 || (PR.on && !(t.warm != null && t.ground != null)) || PR.settling(); return { busy: !!busy, text: busy ? ((document.getElementById('pr-stat') || {}).textContent || '준비 중') : '' }; };   // 1102.s: VR 로딩 패널이 읽는다
+  PR.busyWhy = () => { const t = PR.t || {}, O = optApi(), w = []; if (t.warm == null) w.push('warm'); if (t.dress == null) w.push('dress'); if (DR.busy) w.push('DR'); if (STG.cur >= 0) w.push('stg'); if (PR.tick - GATE.defer < 60) w.push('gate'); if (GATE.reT) w.push('reT');
+    if (O && (O.need || O.hold || QS.nb !== O.nBuild)) w.push('opt'); if (PR.on && t.ground == null) w.push('ground'); if (ENV.pp && t.plants == null) w.push('plants'); if (ENV.p && t.env2 == null) w.push('env2'); if (PR.loading) w.push('L'); return w.join(','); };   // 진단용(1102.u)
   PR.settling = () => !!(DR.busy || STG.cur >= 0 || (window.KHENV && KHENV.busy) || (ENV.pp && PR.t.plants == null) || (ENV.p && PR.t.env2 == null));   // 실내 화분·차량을 받아 붙이는 중 포함(처음 실내에 들어갈 때 늦게 붙어 287ms 멈춤)   // VR 이동 전환 화면이 이 동안 검은 채로 기다린다(1102.m, kh-xr.js fadeTick)
   /* VR 품질 단계(T5): XR 계층(kh-xr.js XQ)이 프레임 간격을 보고 정한 단계를 받는다. 0·1 은 XR 계층(포비에이션)만,
      2 = 가까운 나무 카드·전신주 숨김, 3 = 원경 주변 건물까지 숨김. 그림자 형식(PCF Soft)은 셰이더를 모두 다시 만들어야 해 바꾸지 않는다 */
@@ -1601,6 +1618,16 @@
     scene.add(g); NT.g = g; NT.xr = null; PR.stat.nearTrees = NT.idx.length;
   }
   // 화면: 모델 보이고 카드 0 크기 / VR: 모델 숨기고 카드 되살림
+  /* 1102.u(Jack 퀘스트: VR 에서 엉뚱한 나무): VR·품질 낮음은 지니 가로수(계절 색)를 끄고 우리 나무 그림 카드·모델을 쓰는데, 그 잎은 계절과 상관없이 연두라
+     가을 화면에 연두 나무가 섞여 보였다. 지니 khSeason 의 잎 색(봄 .55,.72,.32 · 여름 .36,.52,.24 · 가을 .80,.52,.16, 겨울은 그대로)을 여름 대비 비율로 우리 잎에 곱한다 */
+  const SEA = { key: '', mats: new Map() };
+  function seasonLeaves() {
+    const R3D = K.R3D, mo = R3D.custom && R3D.cdate ? R3D.cdate.getMonth() + 1 : ({ spring: 4, summer: 7, autumn: 10, winter: 1 })[R3D.season] || 7;
+    const s = mo >= 3 && mo <= 5 ? [.55, .72, .32] : mo >= 6 && mo <= 8 ? [.36, .52, .24] : mo >= 9 && mo <= 11 ? [.80, .52, .16] : [.36, .52, .24], f = s.map((x, i) => x / [.36, .52, .24][i]);
+    const list = []; if (GND.leafMat) list.push(GND.leafMat); [ENV.group, NT.g].forEach(g => g && g.traverse(o => { if (o.isMesh && o.material && /leaves/i.test(o.material.name || '') && !list.includes(o.material)) list.push(o.material); }));
+    const key = f.join() + '|' + list.length; if (key === SEA.key) return; SEA.key = key;
+    list.forEach(m => { if (!SEA.mats.has(m)) SEA.mats.set(m, m.color.clone()); const c0 = SEA.mats.get(m); m.color.setRGB(c0.r * f[0], c0.g * f[1], c0.b * f[2]); });
+  }
   function nearTreeSync(xr) {
     if (!NT.g || NT.xr === xr || !GND.near) return; NT.xr = xr; NT.g.visible = !xr && PR.on;
     const z = new T.Matrix4().makeScale(0, 0, 0); NT.idx.forEach((i, k) => GND.near.setMatrixAt(i, xr ? NT.mats[k] : z)); GND.near.instanceMatrix.needsUpdate = true;
@@ -1611,7 +1638,7 @@
     const g = ENV.group = new T.Group(); g.name = 'pr-street';
     const tree = normModel(ENV.tree.clone(true), 1, false), b = new T.Box3().setFromObject(tree), h = b.max.y - b.min.y;
     // 잎 카드: 양면, 알파 잘라내기(정렬 없이 그려 퀘스트에서도 가볍다), 가을 톤은 Wing 계절에 맞춰 약하게
-    tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; leafLit(m); if (K.R3D.season === 'autumn') m.color.setRGB(1.08, 1.0, 0.82); } m.userData.lin = true; m.needsUpdate = true; } });
+    tree.traverse(o => { if (o.isMesh && o.material) { const m = o.material; m.side = T.DoubleSide; if (/leaves/i.test(m.name)) { m.alphaTest = 0.45; m.transparent = false; leafLit(m); }   /* 계절 색은 seasonLeaves(1102.u) */ m.userData.lin = true; m.needsUpdate = true; } });
     const walk = px => 1365 - 0.3604 * (px - 230) + 305;
     // 예전 위치에서 압구정로 쪽 우리 건물 앞(x=120, y 0～1365) 네 그루는 뺐다
     // 압구정로 건너편 보도(x=-1240)도 우리 건물 정면(y -200～1400)을 가리는 세 그루는 뺐다
@@ -2276,7 +2303,7 @@
     const tree = normModel(ENV.tree.clone(true), 1, false), bb = new T.Box3().setFromObject(tree), sz = bb.getSize(new T.Vector3()), w = Math.max(sz.x, sz.z);
     // 조명 없이 원래 색(알베도)만 찍는다: 장면에서 다시 해·하늘빛을 받으므로 두 번 어두워지지 않게. 잎 안쪽은 조금 어둡게
     tree.traverse(o => { if (o.isMesh && o.material) { const s0 = o.material, leaf = /leaves/i.test(s0.name);
-      const m = new T.MeshBasicMaterial({ map: s0.map || null, color: s0.color ? s0.color.clone().multiplyScalar(leaf ? 0.9 : 0.75) : new T.Color(0.4, 0.33, 0.25), side: T.DoubleSide, alphaTest: leaf ? 0.45 : 0, transparent: false });
+      const m = new T.MeshBasicMaterial({ map: s0.map || null, color: s0.color ? (SEA.mats.get(s0) || s0.color).clone().multiplyScalar(leaf ? 0.9 : 0.75) : new T.Color(0.4, 0.33, 0.25), side: T.DoubleSide, alphaTest: leaf ? 0.45 : 0, transparent: false });
       o.material = m; } });
     const sc = new T.Scene(); sc.add(tree);
     const rt = rt0 || new T.WebGLRenderTarget(512, 512, { generateMipmaps: true, minFilter: T.LinearMipmapLinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat });
@@ -2372,16 +2399,20 @@
         g.computeVertexNormals(); g.computeBoundingSphere();
         const m = new T.Mesh(g, M[k]); m.name = 'pr-gnd-' + k; m.receiveShadow = true; m.userData.prSkip = true; m.matrixAutoUpdate = false; m.updateMatrix();
         (set === 'now' ? nowG : root).add(m); GND.kind.push(m);
-        if (XC[k]) { const c = new T.Color(XC[k]).convertSRGBToLinear(); for (let i = 0; i < b.p.length; i += 3) { xp.push(b.p[i], b.p[i + 1], b.p[i + 2]); xc.push(c.r, c.g, c.b); } }
+        // 1102.u: VR 바닥은 대지 중심 450m 안 삼각형만(한 눈 5.4만 중 4.3만이 500m 밖, 길에서는 건물에 가려 거의 안 보임). 아낀 예산은 지니 건물 단순화를 덜 하는 데 씀
+        if (XC[k]) { const c = new T.Color(XC[k]).convertSRGBToLinear(); for (let i = 0; i + 8 < b.p.length; i += 9) { const cx = (b.p[i] + b.p[i + 3] + b.p[i + 6]) / 3, cz = (b.p[i + 2] + b.p[i + 5] + b.p[i + 8]) / 3; if (cx * cx + cz * cz > 450 * 450) continue; for (let q = 0; q < 9; q += 3) { xp.push(b.p[i + q], b.p[i + q + 1], b.p[i + q + 2]); xc.push(c.r, c.g, c.b); } } }
       });
       if (!xp.length) return;
+      // 1102.u(Jack 퀘스트: VR 렌더에서 주변이 비어 보임): VR 은 지니 구역 바닥 묶음(a2·a3_ground)을 끄는데, 그 자리의 Wing 대지는 지니 단차가 잘라 내 바닥이 없어
+      // 하늘이 비쳤다(대지 둘레 30m, 파란 거울처럼 보임). 대지보다 낮은 받침면(-0.62m, 450m, 삼각형 2개)을 같은 묶음에 넣어 메운다(그리기 수 그대로)
+      if (set === 'all') { const y = -0.62, h = 450, c = new T.Color(XC.road).convertSRGBToLinear(); xp.push(-h, y, -h, -h, y, h, h, y, h, -h, y, -h, h, y, h, h, y, -h); for (let q = 0; q < 6; q++) xc.push(c.r, c.g, c.b); }
       const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(xp, 3)); g.setAttribute('color', new T.Float32BufferAttribute(xc, 3)); g.computeVertexNormals(); g.computeBoundingSphere();
       const m = new T.Mesh(g, xm); m.name = 'pr-gnd-xr'; m.visible = false; m.receiveShadow = true; m.userData.prSkip = true; m.matrixAutoUpdate = false; m.updateMatrix();
       (set === 'now' ? nowG : root).add(m); GND.xr.push(m);
     });
     // 3) 나무(그림 카드 인스턴스): 350m 안은 그림자도 드리운다
     const card = GND.card = treeCard(), tg = treeGeo(card.aspect), tm = leafLit(std({ map: card.tex, alphaTest: 0.42, roughness: 0.9, metalness: 0, side: T.DoubleSide }));
-    tm.envMapIntensity = 0.3; keepEnv(tm); tm.userData.prMade = true;
+    tm.envMapIntensity = 0.3; keepEnv(tm); tm.userData.prMade = true; GND.leafMat = tm;
     const dm = new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking, map: card.tex, alphaTest: 0.42, side: T.DoubleSide });
     const lists = { near: [], far: [], now: [] };
     D.trees.forEach(t => { const p = [t[0], t[1]]; if (wing(p)) return; if (onTower(p)) { lists.now.push(t); return; } lists[Math.hypot(t[0], t[1]) < 350 ? 'near' : 'far'].push(t); });
