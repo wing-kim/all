@@ -1,0 +1,166 @@
+{
+ "bundle": {
+  "nav": [
+   "0.0s file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-",
+   "target other blob:null/ac21c93b-ce0c-4910-a4cd-214bb6c48aec",
+   "target other blob:null/ac21c93b-ce0c-4910-a4cd-214bb6c48aec",
+   "target other blob:null/ac21c93b-ce0c-4910-a4cd-214bb6c48aec",
+   "target other blob:null/ac21c93b-ce0c-4910-a4cd-214bb6c48aec",
+   "target other blob:null/9ce79232-0b69-49d0-896a-601183e64195",
+   "target other blob:null/9ce79232-0b69-49d0-896a-601183e64195",
+   "target other blob:null/9ce79232-0b69-49d0-896a-601183e64195",
+   "target other blob:null/9ce79232-0b69-49d0-896a-601183e64195",
+   "target other blob:null/f154dd2f-ff5b-4c12-b5f7-e84011ce394e",
+   "target other blob:null/f154dd2f-ff5b-4c12-b5f7-e84011ce394e",
+   "target other blob:null/f154dd2f-ff5b-4c12-b5f7-e84011ce394e",
+   "target other blob:null/f154dd2f-ff5b-4c12-b5f7-e84011ce394e"
+  ],
+  "url": "file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-3d_1102.u.html",
+  "loadMs": 210994,
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 3586
+  },
+  "res": [
+   {
+    "era": "now",
+    "clickEra": true,
+    "clickReal": true,
+    "ms": 96491,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "new",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46229,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "srv",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46224,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   }
+  ],
+  "errs": [
+   "error Failed to load resource: net::ERR_FILE_NOT_FOUND"
+  ],
+  "errsAll": 2
+ },
+ "preview": {
+  "nav": [
+   "0.3s https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js",
+   "target other blob:https://evyfjae.github.io/dffd1902-d23b-499c-bbf5-1098606b3079",
+   "target other blob:https://evyfjae.github.io/dffd1902-d23b-499c-bbf5-1098606b3079",
+   "target other blob:https://evyfjae.github.io/dffd1902-d23b-499c-bbf5-1098606b3079",
+   "target other blob:https://evyfjae.github.io/dffd1902-d23b-499c-bbf5-1098606b3079",
+   "target other blob:https://evyfjae.github.io/9ac64f11-a05e-4168-ac3c-601a9587d55d",
+   "target other blob:https://evyfjae.github.io/9ac64f11-a05e-4168-ac3c-601a9587d55d",
+   "target other blob:https://evyfjae.github.io/9ac64f11-a05e-4168-ac3c-601a9587d55d",
+   "target other blob:https://evyfjae.github.io/9ac64f11-a05e-4168-ac3c-601a9587d55d",
+   "target other blob:https://evyfjae.github.io/31096d6b-99c4-494c-bed2-b6bf124d3da5",
+   "target other blob:https://evyfjae.github.io/31096d6b-99c4-494c-bed2-b6bf124d3da5",
+   "target other blob:https://evyfjae.github.io/31096d6b-99c4-494c-bed2-b6bf124d3da5",
+   "target other blob:https://evyfjae.github.io/31096d6b-99c4-494c-bed2-b6bf124d3da5",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js",
+   "target service_worker https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/kh-pr-sw.js"
+  ],
+  "url": "https://evyfjae.github.io/kapehorn-preview/xr-photoreal/new/3d-model.html",
+  "loadMs": 212434,
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 4192
+  },
+  "res": [
+   {
+    "era": "now",
+    "clickEra": true,
+    "clickReal": true,
+    "ms": 96664,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "new",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46234,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "srv",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46288,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   }
+  ],
+  "errs": [
+   "error Failed to load resource: the server responded with a status of 404 ()",
+   "error Failed to load resource: the server responded with a status of 404 ()"
+  ],
+  "errsAll": 3
+ }
+}

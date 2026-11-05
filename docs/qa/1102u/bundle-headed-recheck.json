@@ -1,0 +1,82 @@
+{
+ "bundle": {
+  "nav": [
+   "0.0s file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-",
+   "target other blob:null/9f9a7520-abac-427d-9d4c-778649c90d61",
+   "target other blob:null/9f9a7520-abac-427d-9d4c-778649c90d61",
+   "target other blob:null/9f9a7520-abac-427d-9d4c-778649c90d61",
+   "target other blob:null/9f9a7520-abac-427d-9d4c-778649c90d61",
+   "target other blob:null/1b6e775e-e72d-442f-957b-b1b9aac076e0",
+   "target other blob:null/1b6e775e-e72d-442f-957b-b1b9aac076e0",
+   "target other blob:null/1b6e775e-e72d-442f-957b-b1b9aac076e0",
+   "target other blob:null/1b6e775e-e72d-442f-957b-b1b9aac076e0",
+   "target other blob:null/162af1d1-966e-495b-8bde-d93096106abb",
+   "target other blob:null/162af1d1-966e-495b-8bde-d93096106abb",
+   "target other blob:null/162af1d1-966e-495b-8bde-d93096106abb",
+   "target other blob:null/162af1d1-966e-495b-8bde-d93096106abb"
+  ],
+  "url": "file:///Users/jaehwak/Documents/Kapehorn/etc/kapehorn%20tower/deliverables/kapehorn-tower-3d_1102.u.html",
+  "loadMs": 212292,
+  "env": {
+   "webgl2": true,
+   "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5, Unspecified Version)",
+   "webgpu": true,
+   "adapter": true,
+   "pr": "object",
+   "xr": "object",
+   "ua": "Chrome/156.0.0.0",
+   "mem": 3586
+  },
+  "res": [
+   {
+    "era": "now",
+    "clickEra": true,
+    "clickReal": true,
+    "ms": 97004,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "new",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46400,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   },
+   {
+    "era": "srv",
+    "clickEra": true,
+    "clickReal": "already",
+    "ms": 46435,
+    "on": true,
+    "boot": "준비 완료",
+    "busy": false,
+    "vm": "real",
+    "prog": {
+     "busy": false,
+     "text": ""
+    },
+    "note": "실사 3D · 우선 조합 자주식 실측안 · 1층 3안(문 2.4m)\n올 글라스\n벽돌 피어\n스택 프레임\n자이언트 오더 기둥\n외관\n1층\nB1\nB2\nB3\n미성 일대\n현재\n미래(추정)\n품질\n자동(높음)\n높음\n보통\n낮음\n성능"
+   }
+  ],
+  "errs": [
+   "error Failed to load resource: net::ERR_FILE_NOT_FOUND"
+  ],
+  "errsAll": 2
+ }
+}
