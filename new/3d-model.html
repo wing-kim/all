@@ -6408,7 +6408,7 @@ function cornerLantern(g,poly,yF,r){const k=cornerOf(poly),C=poly[k],A=poly[(k-1
 // Drawing north arrow: north points to the upper-left of the plan, ~36° above horizontal
 const NORTH_DEG=36,NV=[-Math.cos(NORTH_DEG*Math.PI/180),-Math.sin(NORTH_DEG*Math.PI/180)],EV=[-NV[1],NV[0]];
 // ================= build =================
-const state={ms:new URLSearchParams(location.search).get('ms')==='future'?'future':'now',era:'srv',scheme:'dd',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
+const state={ms:new URLSearchParams(location.search).get('ms')==='future'?'future':'now',era:new URLSearchParams(location.search).get('era')==='new'?'new':'srv',scheme:'dd',floors:6,h1:5.4,ht:4.2,frame:true,g1:'skin',upSt:false,skin:false,use7:false,nost:false,style:'glass',form:'none',win:'base',design:'none',cgl:'none',finC:null,dsgC:null,formC:null,a4park:false,mode:'combo',cfin:'glass',cform:'none',pdesign:'stack',dl:[],skinD:null,formD:null,skinOn:false};
 window.CH={state,dname:()=>{const id=state.mode==='preset'?'dsg-'+state.pdesign:'sty-'+state.cfin,e=document.getElementById(id);return e?[...e.parentElement.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join('').trim():''}};   // 실사 보기(PH)가 지금 고른 디자인을 읽음
 const bld=new THREE.Group();scene.add(bld);
 const extG=new THREE.Group(),frG=new THREE.Group();
@@ -7639,7 +7639,7 @@ function oc2Gnd(m){if(m.userData.gnd!==undefined)return m.userData.gnd;let g=fal
 const EH={on:false,set:new Set()};
 function ehMine(m){for(let p=m;p;p=p.parent)if(p===bld||p.name==='pr-dress'||p.name==='khxr-proxy')return true;const b=new THREE.Box3().setFromObject(m);if(b.isEmpty())return false;const c=b.getCenter(new THREE.Vector3());
   return oc2InSite(c.x,c.z)&&b.max.x-b.min.x<60&&b.max.z-b.min.z<60&&b.max.y-b.min.y>2&&b.min.y>-20}
-const EHR=new Set();
+const EHR=window.EHR=new Set();
 function envHide(on,why){why=why||'op';if(on)EHR.add(why);else EHR.delete(why);on=EHR.size>0;
   if(on){if(!EH.on){OC2.hid.forEach(oc2Show);OC2.hid.clear();OC2.on=false;EH.on=true}
     scene.traverse(m=>{if(!(m.isMesh||m.isLine||m.isPoints||m.isSprite)||m.userData.eh||m===ring||ring.children.includes(m))return;if(ovl&&(()=>{for(let p=m;p;p=p.parent)if(p===ovl)return true;return false})())return;
@@ -9048,7 +9048,7 @@ let last=performance.now();
 //   찾는 순서: ../../kapehorn-media/ (깃허브 all/new/ 와 PC C:\github\all\new\ 둘 다 같은 상대경로) → wing-kim.github.io 절대주소 → 예전 render/ 폴더
 //   한 파일(포함용) 버전은 사진이 이 HTML 안에 <script type="text/plain" id="ph:경로"> 로 들어 있음
 (function(){
-  window.CH_VER='v111';
+  window.CH_VER='v112';
   const CANDS=window.PH_SOURCES||[{base:'../../kapehorn-media/',hd:'../../kapehorn-media-hd/',file:'catalog.js'},
     {base:'https://wing-kim.github.io/kapehorn-media/',hd:'https://wing-kim.github.io/kapehorn-media-hd/',file:'catalog.js'},
     {base:'render/',file:'manifest.js',legacy:true}];
@@ -11661,6 +11661,14 @@ var qrcode = function() {
       let n=0;const w=setInterval(()=>{const Y=window.KHXRLayer;if(Y&&Y.enter){clearInterval(w);Y.enter('vr').catch(e=>noVR('VR을 시작하지 못했습니다 ('+(e.message||e)+'). 한 번 더 눌러 주세요.'))}else if(++n>40){clearInterval(w);noVR('VR 기능을 아직 불러오는 중입니다. 잠시 후 다시 눌러 주세요.')}},250)}).catch(()=>noVR())};
   const b=document.getElementById('vrQrBtn');if(b)b.addEventListener('click',()=>open());
 })();
+</script>
+<script>
+// v112: ?diag=1 — 렌더 실내 가구 진단판 (휴대폰에서 캡처용)
+(function(){if(!/[?&]diag=1/.test(location.search))return;const d=document.createElement('div');d.style.cssText='position:fixed;left:4px;bottom:4px;z-index:99999;max-width:96vw;background:rgba(0,0,0,.82);color:#9f9;font:11px/1.35 monospace;padding:6px 8px;border-radius:6px;white-space:pre-wrap;pointer-events:none';document.body.appendChild(d);
+  setInterval(()=>{try{const P=window.KHPRLayer||{},K=window.KHXR,S=P.stat||{};let dg=null,vis=0,tot=0;K.scene.traverse(o=>{if(o.name==='pr-dress')dg=o});if(dg)dg.traverse(o=>{if(!o.isMesh)return;tot++;let v=true;for(let a=o;a;a=a.parent)if(!a.visible)v=false;if(v)vis++});
+    let px=0;K.scene.traverse(o=>{if(o.name==='khxr-proxy')px+=o.children.length});
+    const lg=(P.log||[]).map(String).filter(x=>/꾸밈|실패|품질|가구/.test(x)).slice(-6);
+    d.textContent=[window.CH_VER+' era='+(window.CH&&CH.state.era)+' 내부='+K.I.on+' 층='+(K.I.on?K.LEVELS[K.I.li].key:'-')+' 렌더='+!!P.on+' 품질='+((P.q&&P.q.key)||'-'),'가구: 만든시간='+S.dressMs+'ms 개수='+S.dressObjects+' 묶음='+(dg?'있음 보임='+dg.visible:'없음')+' 보이는메시='+vis+'/'+tot+' 합친메시='+px,'진행: '+JSON.stringify(P.progress?P.progress():''),'숨김이유='+[...(window.EHR||[])].join(',')].concat(lg).join('\n')}catch(e){d.textContent='diag err '+e.message}},1500)})();
 </script>
 </body>
 </html>
